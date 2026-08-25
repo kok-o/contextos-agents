@@ -299,6 +299,21 @@ try {
     console.log(`[OK] Detected project stack: ${stackDetection.detected.join(', ')}`);
   }
 
+  // ── Create mcp_config.json ───────────────────────────────────────────────────
+  const mcpConfigPath = path.join(targetPath, 'mcp_config.json');
+  if (!fs.existsSync(mcpConfigPath)) {
+    const defaultMcpConfig = {
+      mcpServers: {
+        "contextos": {
+          command: "node",
+          args: ["./.agents/mcp/server.mjs", "--dir", "."]
+        }
+      }
+    };
+    fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
+    console.log('[OK] Created default MCP configuration (.agents/mcp_config.json)');
+  }
+
   // ── Apply profile if requested or auto ──────────────────────────────────────
   const selectedProfile = flags.profile || (flags.auto ? stackDetection.recommendedProfile : null);
   if (selectedProfile) {

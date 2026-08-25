@@ -1,6 +1,6 @@
 {
   "name": "koko-contextos-agents",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Install a .agents folder into your project to teach AI assistants best practices: UI/UX, architecture, security, and engineering workflow skills.",
   "bin": {
     "koko-contextos-agents": "./bin/index.js"
@@ -20,6 +20,7 @@
     ".agents/adapters",
     ".agents/core",
     ".agents/generated",
+    ".agents/mcp",
     "benchmarks/gemini-issues.js"
   ],
   "scripts": {
@@ -30,7 +31,7 @@
     "benchmark:live": "node benchmarks/run-live-benchmark.js",
     "lint:md": "markdownlint README.md CONTRIBUTING.md '.agents/core/skills/**/*.md' --ignore '.agents/generated/**' --config .markdownlint.json",
     "test": "node --test --test-concurrency=1 tests/install.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js",
-    "prepublishOnly": "npm run validate && npm run build"
+    "prepublishOnly": "npm run validate && cd contextos-mcp && npm install && npm run build:bundle && cd .. && npm run build"
   },
   "keywords": [
     "ai",
