@@ -1,0 +1,76 @@
+# Template workflow for swarm-code GitHub Action
+#
+# Copy this file to your repo's .github/workflows/ directory.
+#
+# Triggers:
+#   1. Issue comments containing "@swarm <task>"
+#   2. Manual dispatch with a task input
+#
+# Required secrets:
+#   - ANTHROPIC_API_KEY (or OPENAI_API_KEY or GEMINI_API_KEY)
+#
+# Usage:
+#   Comment on an issue: "@swarm fix the auth bug in src/auth.ts"
+#   Or dispatch manually from Actions tab with a task description.
+
+name: Swarm Agent
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task for swarm to execute'
+        required: true
+        type: string
+      agent:
+        description: 'Agent backend'
+        required: false
+        default: 'direct-llm'
+        type: choice
+        options:
+          - direct-llm
+          - opencode
+          - claude-code
+          - codex
+          - aider
+      max_budget:
+        description: 'Max budget (USD)'
+        required: false
+        default: '5.00'
+        type: string
+
+# Only run on issue comments that contain @swarm
+# This prevents the action from running on every comment
+jobs:
+  swarm:
+    name: Run Swarm
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # For issue_comment: only run if comment contains @swarm
+    # Fork detection is handled by security.ts (uses gh pr view --json isCrossRepository)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '@swarm'))
+
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run swarm-code
+        uses: kingjulio8238/swarm-code@main
+        with:
+          task: ${{ github.event.inputs.task || '' }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          agent: ${{ github.event.inputs.agent || 'direct-llm' }}
+          max_budget: ${{ github.event.inputs.max_budget || '5.00' }}

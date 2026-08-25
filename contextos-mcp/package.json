@@ -1,0 +1,67 @@
+{
+  "name": "contextos-mcp",
+  "version": "0.1.0",
+  "description": "ContextOS Execution Layer and MCP Server",
+  "type": "module",
+  "bin": {
+    "contextos-mcp": "./bin/mcp.mjs"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "bin"
+  ],
+  "scripts": {
+    "dev": "tsx src/main.ts",
+    "build": "tsc && cp src/core/runtime.py dist/core/",
+    "start": "node dist/main.js",
+    "cli": "tsx src/cli.ts",
+    "swarm": "tsx src/main.ts",
+    "bench:oolong": "tsx benchmarks/oolong_synth.ts",
+    "bench:longbench": "tsx benchmarks/longbench_narrativeqa.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src/ tests/",
+    "lint:fix": "biome check --fix src/ tests/",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "swarm",
+    "coding-agent",
+    "orchestrator",
+    "rlm",
+    "recursive-language-model",
+    "llm",
+    "cli",
+    "agent",
+    "opencode",
+    "worktree",
+    "parallel",
+    "ai"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/kingjulio8238/swarm-code#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kingjulio8238/swarm-code.git"
+  },
+  "dependencies": {
+    "@mariozechner/pi-ai": "^0.55.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
+    "esbuild": "^0.27.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "minimatch": ">=10.2.1"
+  }
+}

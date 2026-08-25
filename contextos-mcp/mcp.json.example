@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "swarm-cli": {
+      "command": "npx",
+      "args": ["swarm-cli", "mcp", "--dir", "."],
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+      }
+    }
+  }
+}

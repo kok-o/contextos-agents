@@ -1,0 +1,88 @@
+name: 'swarm-code'
+description: 'Run swarm-code coding agent orchestrator on your repo. Trigger from issue comments or workflow dispatch.'
+author: 'swarm-code'
+
+branding:
+  icon: 'git-branch'
+  color: 'orange'
+
+inputs:
+  task:
+    description: >
+      The task for swarm to execute. For issue_comment triggers, this is
+      auto-extracted from the comment body (@swarm <task>). For workflow_dispatch,
+      provide the task here.
+    required: false
+    default: ''
+  anthropic_api_key:
+    description: 'Anthropic API key (for Claude models)'
+    required: false
+  openai_api_key:
+    description: 'OpenAI API key (for GPT/O3 models)'
+    required: false
+  gemini_api_key:
+    description: 'Google Gemini API key'
+    required: false
+  agent:
+    description: 'Agent backend to use (direct-llm, opencode, claude-code, codex, aider)'
+    required: false
+    default: 'direct-llm'
+  model:
+    description: 'Orchestrator model override (e.g., claude-sonnet-4-6, gpt-4o)'
+    required: false
+    default: ''
+  max_budget:
+    description: 'Maximum budget in USD (hard cap: $50)'
+    required: false
+    default: '5.00'
+
+outputs:
+  success:
+    description: 'Whether swarm completed successfully'
+  pr_url:
+    description: 'URL of the created pull request (empty if no changes)'
+  cost_usd:
+    description: 'Total cost in USD'
+  threads_completed:
+    description: 'Number of threads that completed successfully'
+  threads_failed:
+    description: 'Number of threads that failed'
+  elapsed_s:
+    description: 'Total elapsed time in seconds'
+  answer:
+    description: 'Swarm answer (truncated to 1000 chars)'
+  skipped:
+    description: 'Whether the action was skipped (security check failed or no trigger)'
+  skip_reason:
+    description: 'Reason for skipping (if skipped)'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install swarm-code
+      shell: bash
+      run: npm install -g swarm-code
+
+    - name: Configure git
+      shell: bash
+      run: |
+        git config user.name "swarm-code[bot]"
+        git config user.email "swarm-code[bot]@users.noreply.github.com"
+
+    - name: Run swarm action
+      shell: bash
+      env:
+        INPUT_TASK: ${{ inputs.task }}
+        INPUT_ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        INPUT_OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        INPUT_GEMINI_API_KEY: ${{ inputs.gemini_api_key }}
+        INPUT_AGENT: ${{ inputs.agent }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_MAX_BUDGET: ${{ inputs.max_budget }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: npx tsx ${{ github.action_path }}/action/entrypoint.ts

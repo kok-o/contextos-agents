@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "contextos": {
+      "command": "node",
+      "args": [
+        "C:/Users/esenb/Desktop/my_geni/contextos-mcp/dist/mcp/server.js",
+        "--dir",
+        "C:/Users/esenb/Desktop/my_geni"
+      ]
+    }
+  }
+}

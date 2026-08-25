@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.venv/
+.claude/
+trajectories/
+.swarm-worktrees/
+*.tgz
+.DS_Store

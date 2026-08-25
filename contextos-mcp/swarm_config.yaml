@@ -1,0 +1,110 @@
+# Swarm CLI Configuration
+# Extends RLM config (arXiv:2512.24601) with swarm orchestration fields
+
+# ── RLM settings (inherited) ────────────────────────────────────────────────
+
+# Maximum iterations per query before giving up
+max_iterations: 20
+
+# Maximum recursive sub-agent depth
+max_depth: 3
+
+# Maximum total sub-queries across all depths
+max_sub_queries: 50
+
+# Truncate REPL output beyond this many characters
+truncate_len: 5000
+
+# Preview lines shown in context metadata
+metadata_preview_lines: 20
+
+# ── Swarm settings ──────────────────────────────────────────────────────────
+
+# Max concurrent threads (worktrees active simultaneously)
+max_threads: 5
+
+# Max threads per session
+max_total_threads: 20
+
+# Per-thread timeout (5 minutes)
+thread_timeout_ms: 300000
+
+# Per-thread cost cap (USD)
+max_thread_budget_usd: 1.00
+
+# Total session cost cap (USD)
+max_session_budget_usd: 10.00
+
+# Default agent backend (opencode, claude-code, codex, aider, direct-llm)
+default_agent: opencode
+
+# Use persistent OpenCode server mode (reduces cold-start latency)
+# When enabled, swarm manages `opencode serve` instances and connects via HTTP API
+opencode_server_mode: true
+
+# Default model for coding agents (provider/model-id format)
+default_model: anthropic/claude-sonnet-4-6
+
+# Auto model selection — routes tasks to cheapest capable model
+auto_model_selection: true
+
+# Compression strategy for thread results (structured, llm-summary, diff-only, truncate)
+compression_strategy: structured
+
+# Max tokens for compressed results
+compression_max_tokens: 1000
+
+# Directory for worktrees (relative to repo root)
+worktree_base_dir: .swarm-worktrees
+
+# Automatically cleanup worktrees after session
+auto_cleanup_worktrees: true
+
+# ── Episodic memory ────────────────────────────────────────────────────────
+# Records successful thread strategies to disk for cross-session learning
+
+# Enable episodic memory
+episodic_memory_enabled: false
+
+# Memory storage directory
+memory_dir: ~/.swarm/memory
+
+# ── Thread cache persistence ──────────────────────────────────────────────
+# Extend subthread cache to survive across sessions
+
+# Enable disk persistence for thread cache
+thread_cache_persist: false
+
+# Cache storage directory
+thread_cache_dir: ~/.swarm/cache
+
+# Cache TTL in hours (expired entries auto-cleaned)
+thread_cache_ttl_hours: 24
+
+# Retry failed threads (0 = no retry, 1 = one retry, max 3)
+thread_retries: 1
+
+# ── Model slots ────────────────────────────────────────────────────────────
+# Override the model used for specific task types (empty = auto-select)
+# Format: provider/model-id (e.g., anthropic/claude-sonnet-4-6)
+
+# model_slot_execution:       # coding, fixing, building
+# model_slot_search:          # finding files, researching docs
+# model_slot_reasoning:       # analysis, debugging, review
+# model_slot_planning:        # design, architecture, strategy
+
+# ── Hooks ─────────────────────────────────────────────────────────────────
+# Deterministic lifecycle hooks. Create .swarm/hooks.yaml in your project:
+#
+# post_thread:
+#   - command: "npx tsc --noEmit"
+#     on_failure: warn    # warn (log) or block (reject thread)
+# post_merge:
+#   - command: "npm test"
+#     on_failure: block
+# post_session:
+#   - command: "echo 'Session complete'"
+#     on_failure: warn
+#
+# Hooks follow the back-pressure pattern: success is silent (nothing added
+# to context), only errors are surfaced. This keeps the agent's context clean.

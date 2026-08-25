@@ -1,0 +1,45 @@
+#!/usr/bin/env node
+
+/**
+ * swarm — Swarm-Native Coding Agent CLI
+ *
+ * This shim boots the CLI entry point. It tries the compiled dist first,
+ * then falls back to tsx for development.
+ */
+
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, join } from "node:path";
+import { existsSync } from "node:fs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const distEntry = join(__dirname, "..", "dist", "main.js");
+
+if (existsSync(distEntry)) {
+	// Production: use compiled JS (pathToFileURL needed for Windows)
+	await import(pathToFileURL(distEntry).href);
+} else {
+	// Development: use tsx to run TypeScript directly
+	const srcEntry = join(__dirname, "..", "src", "main.ts");
+	const { register } = await import("node:module");
+
+	// Try to register tsx loader, then import
+	try {
+		const tsxPath = join(__dirname, "..", "node_modules", "tsx", "dist", "esm", "index.mjs");
+		if (existsSync(tsxPath)) {
+			register(pathToFileURL(tsxPath).href);
+		}
+		await import(pathToFileURL(srcEntry).href);
+	} catch {
+		// Fallback: spawn tsx as a child process
+		const { spawn } = await import("node:child_process");
+		const tsxBin = join(__dirname, "..", "node_modules", ".bin", "tsx");
+		const child = spawn(tsxBin, [srcEntry, ...process.argv.slice(2)], {
+			stdio: "inherit",
+		});
+		child.on("exit", (code) => process.exit(code ?? 1));
+		child.on("error", (err) => {
+			console.error(`Failed to start swarm: ${err.message}`);
+			process.exit(1);
+		});
+	}
+}

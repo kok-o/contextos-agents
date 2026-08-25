@@ -1,0 +1,3 @@
+# Only some fields set
+max_threads: 8
+compression_strategy: diff-only
