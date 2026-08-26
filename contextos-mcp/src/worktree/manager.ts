@@ -117,7 +117,7 @@ export class WorktreeManager {
 			try {
 				await git(["worktree", "remove", "--force", wtPath], this.repoRoot);
 			} catch {
-				rmSync(wtPath, { recursive: true, force: true });
+				rmSync(wtPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			}
 		}
 
@@ -231,7 +231,7 @@ export class WorktreeManager {
 		} catch {
 			// Force remove the directory if git worktree remove fails
 			if (existsSync(info.path)) {
-				rmSync(info.path, { recursive: true, force: true });
+				rmSync(info.path, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			}
 			// Prune stale worktree entries
 			try {
@@ -271,7 +271,7 @@ export class WorktreeManager {
 		try {
 			const { readdirSync } = await import("node:fs");
 			if (existsSync(this.baseDir) && readdirSync(this.baseDir).length === 0) {
-				rmSync(this.baseDir, { recursive: true, force: true });
+				rmSync(this.baseDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			}
 		} catch {
 			/* non-fatal */
