@@ -24,6 +24,13 @@ Skills loaded: react, typescript, ui-ux-pro, ponytail-mindset
 
 ---
 
+## Skill Architecture (Context Efficiency)
+
+Skills are loaded on-demand. To keep the agent context window efficient:
+1. **Keep `SKILL.md` under 500 lines**: Put detailed reference material in separate files.
+2. **Use progressive disclosure**: Use a `references/` directory for deep context and load those files only when specifically needed by the task.
+3. **Use `scripts/`**: Place executable scripts in a `scripts/` directory alongside the skill.
+
 ## Skill Registry
 
 All skills live in `.agents/core/skills/`. Here is what each does and when to use it:
@@ -76,9 +83,10 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 
 ---
 
-## Automatic Skill Activation Rules
+## Automatic Skill Activation Rules (Proactive Routing)
 
-The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded.
+The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded. 
+**PROACTIVE ROUTING RULE**: If a user request matches a skill trigger, DO NOT simply answer them ad-hoc. You must proactively load the skill and follow its workflow. Skills contain multi-step workflows, checklists, and quality gates that always produce better results than an unstructured response.
 
 ### By Task Type
 
@@ -175,6 +183,7 @@ Required output before proceeding:
 - File list per task
 - Test requirement per task
 - Risk assessment
+- **If UI domain, read and incorporate `.interface-design/system.md` design memory**
 - **STOP — do not write code until plan is approved**
 
 ---
@@ -188,6 +197,7 @@ Rules:
 - Commit after each atomic task
 - Limit blast radius: only touch files in the current task's plan
 - Write tests first (TDD for logic, BDD for UI)
+- If establishing new UI tokens or aesthetic changes, update `.interface-design/system.md` to preserve design memory
 
 ---
 
@@ -309,6 +319,13 @@ These rules apply regardless of which skills are loaded:
 - No code before spec + plan are approved in interactive development (proceed directly to BUILD when standalone/benchmark code is requested)
 - Blast radius limited to files in current task's plan
 - One atomic commit per task
+
+### Completion Protocol
+When finishing a workflow or task, always report your final status clearly using one of the following:
+- **DONE** — completed with evidence.
+- **DONE_WITH_CONCERNS** — completed, but list specific concerns.
+- **BLOCKED** — cannot proceed; state blocker and what was tried.
+- **NEEDS_CONTEXT** — missing info; state exactly what is needed.
 
 ---
 

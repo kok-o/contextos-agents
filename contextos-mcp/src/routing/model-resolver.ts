@@ -9,15 +9,23 @@
  * This preserves the RLM loop for all backends — the orchestrator always uses pi-ai's completeSimple().
  */
 
-import type { Api, Model } from "@mariozechner/pi-ai";
+import { type Model } from "@mariozechner/pi-ai";
+import { PROVIDER_KEYS, getModels, getProviders } from "@mariozechner/pi-ai";
 
-const { getModels, getProviders } = await import("@mariozechner/pi-ai");
-
-const PROVIDER_KEYS: Record<string, string> = {
-	anthropic: "ANTHROPIC_API_KEY",
-	openai: "OPENAI_API_KEY",
-	google: "GEMINI_API_KEY",
+// Patch global fetch to bypass WAFs that block Node.js by default
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async function(url: any, options?: RequestInit) {
+	if (url.toString().includes("air-outer.com") || url.toString().includes("agentrouter.org")) {
+		options = options || {};
+		options.headers = {
+			...options.headers,
+			"User-Agent": "OpenCode"
+		};
+	}
+	return originalFetch.apply(this, [url, options]);
 };
+
+type Api = "openai-completions" | "openai-responses";
 
 const DEFAULT_MODELS: Record<string, string> = {
 	anthropic: "claude-sonnet-4-6",
@@ -106,6 +114,42 @@ function createOpenRouterModel(modelId: string): Model<"openai-completions"> {
 	};
 }
 
+/**
+ * Create a synthetic pi-ai Model for AgentRouter (OpenAI-compatible API).
+ */
+function createAgentRouterModel(modelId: string): Model<"openai-completions"> {
+	const shortId = modelId.replace("agentrouter/", "");
+	const apiKey = process.env.OPENAI_API_KEY || "";
+	return {
+		id: shortId,
+		name: shortId,
+		api: "openai-completions",
+		provider: "openai",
+		baseUrl: "https://agentrouter.org/v1",
+		reasoning: false,
+		input: ["text"],
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: 128000,
+		maxTokens: 4096,
+		headers: {
+			Authorization: `Bearer ${apiKey}`
+		},
+		compat: {
+			supportsStore: false,
+			supportsDeveloperRole: false,
+			supportsReasoningEffort: false,
+			supportsUsageInStreaming: true,
+			maxTokensField: "max_tokens",
+			requiresToolResultName: false,
+			requiresAssistantAfterToolResult: false,
+			requiresThinkingAsText: false,
+			requiresMistralToolIds: false,
+			thinkingFormat: "openai",
+			supportsStrictMode: false,
+		},
+	};
+}
+
 export interface ResolvedModel {
 	model: Model<Api>;
 	provider: string;
@@ -129,6 +173,48 @@ export function resolveModel(modelId: string, warnFn?: (msg: string) => void): R
 	// OpenRouter models — create synthetic model
 	if (modelId.startsWith("openrouter/")) {
 		return { model: createOpenRouterModel(modelId), provider: "openrouter" };
+	}
+
+	// AgentRouter models — create synthetic model
+	if (modelId.startsWith("agentrouter/")) {
+		return { model: createAgentRouterModel(modelId), provider: "agentrouter" };
+	}
+
+	// Transparent proxy via OPENAI_BASE_URL
+	if (process.env.OPENAI_BASE_URL && !modelId.includes("/")) {
+		const apiKey = process.env.OPENAI_API_KEY || "";
+		const syntheticModel: Model<"openai-completions"> = {
+			id: modelId,
+			name: modelId,
+			api: "openai-completions",
+			provider: "openai",
+			baseUrl: process.env.OPENAI_BASE_URL,
+			reasoning: false,
+			input: ["text"],
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: 128000,
+			maxTokens: 4096,
+			headers: apiKey ? { 
+				Authorization: `Bearer ${apiKey}`,
+				"User-Agent": "OpenCode"
+			} : {
+				"User-Agent": "OpenCode"
+			},
+			compat: {
+				supportsStore: false,
+				supportsDeveloperRole: false,
+				supportsReasoningEffort: false,
+				supportsUsageInStreaming: true,
+				maxTokensField: "max_tokens",
+				requiresToolResultName: false,
+				requiresAssistantAfterToolResult: false,
+				requiresThinkingAsText: false,
+				requiresMistralToolIds: false,
+				thinkingFormat: "openai",
+				supportsStrictMode: false,
+			},
+		};
+		return { model: syntheticModel, provider: "openai" };
 	}
 
 	// Standard pi-ai model lookup
