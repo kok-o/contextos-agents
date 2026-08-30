@@ -48,8 +48,13 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | Skill | File | Activate When |
 |-------|------|--------------|
 | **ui-ux-pro** | `ui-ux-pro/SKILL.md` | Any UI task — planning guide, design decisions, color systems |
+| **brutalist-design** | `brutalist-design/SKILL.md` | When explicitly asked for brutalist, high contrast, industrial, or sharp UI |
+| **minimalist-design** | `minimalist-design/SKILL.md` | When explicitly asked for clean, minimal, editorial, or Notion-like UI |
+| **soft-design** | `soft-design/SKILL.md` | When explicitly asked for calm, soft, premium, or low-contrast UI |
+| **redesign-audit** | `redesign-audit/SKILL.md` | When tasked to audit or redesign an existing complex UI codebase without breaking it |
 | **impeccable-design** | `impeccable-design/SKILL.md` | REVIEW phase for UI — run as hard QA checklist before shipping |
 | **react** | `react/SKILL.md` | React component work |
+| **react-best-practices** | `react-best-practices/SKILL.md` | Deep React component refactoring, hooks, and strict pattern enforcement |
 | **nextjs** | `nextjs/SKILL.md` | Next.js App Router, Server Actions, routing |
 | **typescript** | `typescript/SKILL.md` | Type-safe code, generics, config |
 | **state-management** | `state-management/SKILL.md` | Zustand, TanStack Query, client/server state |
@@ -75,6 +80,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 |-------|------|--------------|
 | **security** | `security/SKILL.md` | Any feature with auth, data access, user input |
 | **performance** | `performance/SKILL.md` | Optimization tasks, Core Web Vitals |
+| **vercel-optimize** | `vercel-optimize/SKILL.md` | Edge caching, Vercel deployments, Next.js optimization |
 | **testing** | `testing/SKILL.md` | Vitest, RTL, Playwright, TDD/BDD testing |
 | **docker** | `docker/SKILL.md` | Dockerfiles, multi-stage, container security, compose |
 | **decisions** | `decisions/SKILL.md` | Making architectural choices |
@@ -130,6 +136,30 @@ role: Chief Security Officer (audit) → Senior Developer (build)
 trigger: "performance" OR "slow" OR "optimize" OR "Core Web Vitals" OR "lighthouse"
 load: [performance, system-design]
 role: Performance Engineer
+
+trigger: "vercel" OR "edge" OR "cache" OR "deploy to vercel"
+load: [vercel-optimize, performance]
+role: Performance Engineer
+
+trigger: "refactor react" OR "hooks best practices" OR "react patterns"
+load: [react-best-practices, react]
+role: Senior Frontend Developer
+
+trigger: "brutalist" OR "sharp" OR "industrial"
+load: [brutalist-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "minimalist" OR "clean" OR "notion style"
+load: [minimalist-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "soft" OR "premium" OR "calm"
+load: [soft-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "redesign" OR "audit UI" OR "fix layout"
+load: [redesign-audit, impeccable-design]
+role: Senior Designer
 
 trigger: "review" OR "PR" OR "before merge" OR "check the code"
 load: [engineering-workflow (review phase), impeccable-design (if UI)]
