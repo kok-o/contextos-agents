@@ -12,6 +12,7 @@ High-precision operational standard designed specifically to harness the high sp
 ## When to Use
 
 Activate whenever:
+
 - Executing non-trivial code modifications, refactoring, bug fixes, or architecture design.
 - The user requires maximum rigor, reliability, and precision from Gemini.
 - Handling complex multi-file changes where accidental side-effects must be zero.
