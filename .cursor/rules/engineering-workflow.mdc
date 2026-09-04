@@ -304,6 +304,11 @@ Only ship when all gates are green.
 - [ ] Vercel Preview Deployment is successful and manually verified
 - [ ] Core Web Vitals pass in the preview environment (LCP < 2.5s, CLS < 0.1, INP < 200ms)
 
+### Operational Self-Improvement (Required)
+
+Before completing a workflow, you must review the session for durable learnings (project quirks, command fixes, pitfalls, or patterns that save time).
+Write these learnings to `.agents/learnings.md`. Do not log obvious facts or one-time transient errors. If no durable learning occurred, state "No durable learnings this session" in your final output.
+
 ---
 
 ## Anti-Patterns to Never Do
@@ -335,4 +340,12 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+## Completion Status Protocol
+
+When completing a task or workflow, you must explicitly report your final status as the last part of your output:
+- **DONE** — completed with evidence.
+- **DONE_WITH_CONCERNS** — completed, but list concerns.
+- **BLOCKED** — cannot proceed; state blocker and what was tried.
+- **NEEDS_CONTEXT** — missing info; state exactly what is needed.
 

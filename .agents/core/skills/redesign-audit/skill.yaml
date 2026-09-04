@@ -1,0 +1,8 @@
+name: redesign-audit
+description: Audits and upgrades existing web codebases with high-end typography, color, layout, and interaction polish.
+tags:
+  - ui
+  - design
+  - audit
+  - refactor
+version: 1.0.0

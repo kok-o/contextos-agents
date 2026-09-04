@@ -1,0 +1,151 @@
+# ContextOS — react-best-practices
+
+> React and Next.js performance optimization guidelines from Vercel Engineering.
+
+# Vercel React Best Practices
+
+## Overview
+
+Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 70 rules across 8 categories, prioritized by impact to guide automated refactoring, code generation, and production review.
+
+## When to Use
+
+- When authoring new React functional components or Next.js App Router pages.
+- When implementing data fetching (client or server-side Server Actions, RSC).
+- When reviewing pull requests for rendering bottlenecks or memory leaks.
+- When optimizing bundle size, eliminating network waterfalls, or improving Core Web Vitals (LCP, INP, CLS).
+
+## Rules & Patterns
+
+### Rule Categories by Priority
+
+| Priority | Category | Impact | Prefix |
+|----------|----------|--------|--------|
+| 1 | Eliminating Waterfalls | CRITICAL | `async-` |
+| 2 | Bundle Size Optimization | CRITICAL | `bundle-` |
+| 3 | Server-Side Performance | HIGH | `server-` |
+| 4 | Client-Side Data Fetching | MEDIUM-HIGH | `client-` |
+| 5 | Re-render Optimization | MEDIUM | `rerender-` |
+| 6 | Rendering Performance | MEDIUM | `rendering-` |
+| 7 | JavaScript Performance | LOW-MEDIUM | `js-` |
+| 8 | Advanced Patterns | LOW | `advanced-` |
+
+### 1. Eliminating Waterfalls (CRITICAL)
+
+- `async-cheap-condition-before-await` - Check cheap sync conditions before awaiting flags or remote values.
+- `async-defer-await` - Move await into branches where actually used.
+- `async-parallel` - Use `Promise.all()` for independent asynchronous operations.
+- `async-dependencies` - Use better-all for partial dependencies.
+- `async-api-routes` - Start promises early, await late in API routes.
+- `async-suspense-boundaries` - Use Suspense to stream content progressively.
+
+### 2. Bundle Size Optimization (CRITICAL)
+
+- `bundle-barrel-imports` - Import directly from specific modules, avoid broad barrel files (`index.ts`).
+- `bundle-analyzable-paths` - Prefer statically analyzable import paths to avoid bloated traces.
+- `bundle-dynamic-imports` - Use `next/dynamic` or `React.lazy()` for heavy interactive components.
+- `bundle-defer-third-party` - Load analytics and logging scripts after hydration.
+- `bundle-conditional` - Load modules only when feature flags or user actions require them.
+- `bundle-preload` - Preload assets on hover or focus for perceived instant navigation.
+
+### 3. Server-Side Performance (HIGH)
+
+- `server-auth-actions` - Always authenticate server actions like API routes.
+- `server-cache-react` - Use `React.cache()` for per-request deduplication.
+- `server-cache-lru` - Use LRU cache for cross-request caching.
+- `server-dedup-props` - Avoid duplicate serialization in RSC props.
+- `server-hoist-static-io` - Hoist static I/O to module level.
+- `server-no-shared-module-state` - Avoid module-level mutable request state in RSC/SSR.
+- `server-serialization` - Minimize data passed across the server-client boundary.
+- `server-parallel-fetching` - Restructure components to parallelize fetches.
+- `server-after-nonblocking` - Use `after()` for non-blocking operations like analytics logging.
+
+### 4. Client-Side Data Fetching (MEDIUM-HIGH)
+
+- `client-swr-dedup` - Use SWR or TanStack Query for automatic request deduplication.
+- `client-event-listeners` - Deduplicate global event listeners.
+- `client-passive-event-listeners` - Use passive listeners for scroll and touch.
+- `client-localstorage-schema` - Version and minimize data stored in localStorage.
+
+### 5. Re-render Optimization (MEDIUM)
+
+- `rerender-defer-reads` - Don't subscribe to state only used in callbacks.
+- `rerender-memo` - Extract expensive work into memoized components.
+- `rerender-memo-with-default-value` - Hoist default non-primitive props.
+- `rerender-dependencies` - Use primitive dependencies in effects and callbacks.
+- `rerender-derived-state` - Subscribe to derived booleans, not raw high-frequency values.
+- `rerender-derived-state-no-effect` - Derive state during render, never in `useEffect`.
+- `rerender-functional-setstate` - Use functional `setState` for stable callback references.
+- `rerender-lazy-state-init` - Pass initializer functions to `useState` for expensive computations.
+- `rerender-transitions` - Use `startTransition` for non-urgent state updates.
+- `rerender-use-deferred-value` - Defer expensive renders to keep input responsive.
+- `rerender-no-inline-components` - Never define subcomponents inside component render bodies.
+
+### 6. Rendering Performance (MEDIUM)
+
+- `rendering-content-visibility` - Use `content-visibility: auto` for long offscreen lists.
+- `rendering-hoist-jsx` - Extract static JSX elements outside components.
+- `rendering-conditional-render` - Use ternary (`condition ? <Comp /> : null`), not `&&` to avoid 0 rendering.
+- `rendering-usetransition-loading` - Prefer `useTransition` for loading state indicators.
+
+### 7. JavaScript Performance (LOW-MEDIUM)
+
+- `js-index-maps` - Build `Map` for repeated lookups instead of repeated array searches.
+- `js-cache-property-access` - Cache object properties in tight loops.
+- `js-early-exit` - Return early from functions to avoid nested complexity.
+- `js-hoist-regexp` - Hoist RegExp creation outside loops and functions.
+- `js-set-map-lookups` - Use `Set` / `Map` for O(1) lookups.
+
+### 8. Advanced Patterns (LOW)
+
+- `advanced-effect-event-deps` - Don't put `useEffectEvent` results in effect deps.
+- `advanced-event-handler-refs` - Store event handlers in refs for stable listener attachments.
+- `advanced-init-once` - Initialize app singletons once per lifecycle.
+
+## Code Examples
+
+```tsx
+// [GOOD] Parallel server fetching without waterfall
+import { cache } from 'react';
+
+export const getUser = cache(async (id: string) => {
+  return db.user.findUnique({ where: { id } });
+});
+
+export default async function UserPage({ params }: { params: { id: string } }) {
+  // Parallel dispatch
+  const userPromise = getUser(params.id);
+  const postsPromise = getPosts(params.id);
+
+  const [user, posts] = await Promise.all([userPromise, postsPromise]);
+
+  return (
+    <main>
+      <h1>{user.name}</h1>
+      <PostList posts={posts} />
+    </main>
+  );
+}
+```
+
+## Validation Checklist
+
+- [ ] All independent async fetches use `Promise.all()` instead of sequential `await`.
+- [ ] Direct imports used instead of barrel file imports for large libraries.
+- [ ] No `useEffect` used for deriving computed state from props or state.
+- [ ] Heavy interactive modals/drawers loaded dynamically via `next/dynamic`.
+- [ ] Server actions perform authentication checks before data mutations.
+- [ ] Zero subcomponents defined inside the body of parent components.
+
+## Common Mistakes
+
+- Writing sequential `await fetchA(); await fetchB();` creating avoidable network waterfalls.
+- Importing from package root barrel files triggering full bundle inclusion.
+- Setting state inside `useEffect` in response to prop changes.
+- Serializing full database models with sensitive or unused fields to Client Components.
+
+## Integration Notes
+
+- Pairs with `react` and `nextjs` skills for idiomatic App Router patterns.
+- Complements `performance` for Lighthouse and Core Web Vitals verification.
+

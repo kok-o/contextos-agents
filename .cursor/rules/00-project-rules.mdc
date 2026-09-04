@@ -32,6 +32,13 @@ Skills loaded: react, typescript, ui-ux-pro, ponytail-mindset
 
 ---
 
+## Skill Architecture (Context Efficiency)
+
+Skills are loaded on-demand. To keep the agent context window efficient:
+1. **Keep `SKILL.md` under 500 lines**: Put detailed reference material in separate files.
+2. **Use progressive disclosure**: Use a `references/` directory for deep context and load those files only when specifically needed by the task.
+3. **Use `scripts/`**: Place executable scripts in a `scripts/` directory alongside the skill.
+
 ## Skill Registry
 
 All skills live in `.agents/core/skills/`. Here is what each does and when to use it:
@@ -49,8 +56,13 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | Skill | File | Activate When |
 |-------|------|--------------|
 | **ui-ux-pro** | `ui-ux-pro/SKILL.md` | Any UI task — planning guide, design decisions, color systems |
+| **brutalist-design** | `brutalist-design/SKILL.md` | When explicitly asked for brutalist, high contrast, industrial, or sharp UI |
+| **minimalist-design** | `minimalist-design/SKILL.md` | When explicitly asked for clean, minimal, editorial, or Notion-like UI |
+| **soft-design** | `soft-design/SKILL.md` | When explicitly asked for calm, soft, premium, or low-contrast UI |
+| **redesign-audit** | `redesign-audit/SKILL.md` | When tasked to audit or redesign an existing complex UI codebase without breaking it |
 | **impeccable-design** | `impeccable-design/SKILL.md` | REVIEW phase for UI — run as hard QA checklist before shipping |
 | **react** | `react/SKILL.md` | React component work |
+| **react-best-practices** | `react-best-practices/SKILL.md` | Deep React component refactoring, hooks, and strict pattern enforcement |
 | **nextjs** | `nextjs/SKILL.md` | Next.js App Router, Server Actions, routing |
 | **typescript** | `typescript/SKILL.md` | Type-safe code, generics, config |
 | **state-management** | `state-management/SKILL.md` | Zustand, TanStack Query, client/server state |
@@ -76,6 +88,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 |-------|------|--------------|
 | **security** | `security/SKILL.md` | Any feature with auth, data access, user input |
 | **performance** | `performance/SKILL.md` | Optimization tasks, Core Web Vitals |
+| **vercel-optimize** | `vercel-optimize/SKILL.md` | Edge caching, Vercel deployments, Next.js optimization |
 | **testing** | `testing/SKILL.md` | Vitest, RTL, Playwright, TDD/BDD testing |
 | **docker** | `docker/SKILL.md` | Dockerfiles, multi-stage, container security, compose |
 | **decisions** | `decisions/SKILL.md` | Making architectural choices |
@@ -84,9 +97,10 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 
 ---
 
-## Automatic Skill Activation Rules
+## Automatic Skill Activation Rules (Proactive Routing)
 
-The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded.
+The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded. 
+**PROACTIVE ROUTING RULE**: If a user request matches a skill trigger, DO NOT simply answer them ad-hoc. You must proactively load the skill and follow its workflow. Skills contain multi-step workflows, checklists, and quality gates that always produce better results than an unstructured response.
 
 ### By Task Type
 
@@ -130,6 +144,30 @@ role: Chief Security Officer (audit) → Senior Developer (build)
 trigger: "performance" OR "slow" OR "optimize" OR "Core Web Vitals" OR "lighthouse"
 load: [performance, system-design]
 role: Performance Engineer
+
+trigger: "vercel" OR "edge" OR "cache" OR "deploy to vercel"
+load: [vercel-optimize, performance]
+role: Performance Engineer
+
+trigger: "refactor react" OR "hooks best practices" OR "react patterns"
+load: [react-best-practices, react]
+role: Senior Frontend Developer
+
+trigger: "brutalist" OR "sharp" OR "industrial"
+load: [brutalist-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "minimalist" OR "clean" OR "notion style"
+load: [minimalist-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "soft" OR "premium" OR "calm"
+load: [soft-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "redesign" OR "audit UI" OR "fix layout"
+load: [redesign-audit, impeccable-design]
+role: Senior Designer
 
 trigger: "review" OR "PR" OR "before merge" OR "check the code"
 load: [engineering-workflow (review phase), impeccable-design (if UI)]
@@ -183,6 +221,7 @@ Required output before proceeding:
 - File list per task
 - Test requirement per task
 - Risk assessment
+- **If UI domain, read and incorporate `.interface-design/system.md` design memory**
 - **STOP — do not write code until plan is approved**
 
 ---
@@ -196,6 +235,7 @@ Rules:
 - Commit after each atomic task
 - Limit blast radius: only touch files in the current task's plan
 - Write tests first (TDD for logic, BDD for UI)
+- If establishing new UI tokens or aesthetic changes, update `.interface-design/system.md` to preserve design memory
 
 ---
 
@@ -317,6 +357,13 @@ These rules apply regardless of which skills are loaded:
 - No code before spec + plan are approved in interactive development (proceed directly to BUILD when standalone/benchmark code is requested)
 - Blast radius limited to files in current task's plan
 - One atomic commit per task
+
+### Completion Protocol
+When finishing a workflow or task, always report your final status clearly using one of the following:
+- **DONE** — completed with evidence.
+- **DONE_WITH_CONCERNS** — completed, but list specific concerns.
+- **BLOCKED** — cannot proceed; state blocker and what was tried.
+- **NEEDS_CONTEXT** — missing info; state exactly what is needed.
 
 ---
 

@@ -106,7 +106,33 @@ const SKILL_RULES = [
 ];
 
 /**
+ * @typedef {Object} SkillIndexItem
+ * @property {string} name - Skill unique identifier
+ * @property {string} description - Brief summary of the skill
+ * @property {string} path - Relative path to the skill markdown document
+ */
+
+/**
+ * @typedef {Object} ResolveSkillsOptions
+ * @property {string} [prompt] - Free-form prompt text describing the current task
+ * @property {string[]} [files] - List of file paths currently touched or opened
+ * @property {string} [phase] - Active lifecycle phase (Define, Plan, Build, Verify, Review, Ship)
+ * @property {string} [domain] - Engineering domain override (Frontend, Backend, Architecture, Full-Stack, DevOps)
+ */
+
+/**
+ * @typedef {Object} ResolvedSkillsResult
+ * @property {string} domain - Identified technical domain
+ * @property {string} phase - Current pipeline phase
+ * @property {string} role - Specialized GStack agent role
+ * @property {string[]} skills - Resolved list of minimal skill identifiers
+ */
+
+/**
  * Builds a compact, progressive index of all available skills.
+ *
+ * @param {string} [projectDir=process.cwd()] - Target root directory of the project
+ * @returns {SkillIndexItem[]} Array of indexed skill metadata objects
  */
 function buildSkillIndex(projectDir = process.cwd()) {
   const shared = require(path.join(AGENTS_DIR, 'adapters', 'shared.js'));
@@ -139,6 +165,9 @@ function buildSkillIndex(projectDir = process.cwd()) {
 
 /**
  * Resolves the minimal set of skills for a given prompt, file list, and phase.
+ *
+ * @param {ResolveSkillsOptions} [options={}] - Task context options
+ * @returns {ResolvedSkillsResult} Resolved domain, role, and activated skill names
  */
 function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' } = {}) {
   const selectedSkills = new Set();
@@ -201,6 +230,9 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' }
 
 /**
  * Formats resolved skills into a clean ContextOS declaration string.
+ *
+ * @param {ResolvedSkillsResult} resolution - Resolution result from resolveSkills
+ * @returns {string} ContextOS formatted header string matching Step 0 format
  */
 function formatDeclaration(resolution) {
   return `[DOMAIN: ${resolution.domain}] [PHASE: ${resolution.phase}] [ROLE: ${resolution.role}]\nSkills loaded: ${resolution.skills.join(', ')}`;

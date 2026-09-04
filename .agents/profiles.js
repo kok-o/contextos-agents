@@ -16,6 +16,25 @@ const path = require('path');
 const AGENTS_DIR = path.join(__dirname);
 const PROFILES_DIR = path.join(AGENTS_DIR, 'core', 'profiles');
 
+/**
+ * @typedef {Object} ProfileConfig
+ * @property {string} id - Profile unique slug
+ * @property {string} name - Human-readable profile title
+ * @property {string} description - Summary of the profile's purpose
+ * @property {string[]} prefer_skills - Priority skills favored by this profile
+ * @property {string[]} exclude_skills - Skills filtered out for this profile
+ * @property {string[]} generate_docs - Documentation templates to generate
+ * @property {string[]} skip_docs - Documentation to skip
+ * @property {Object} enforce - Invariant rules to enforce
+ * @property {Object} defaults - Default parameters
+ */
+
+/**
+ * Parses a profile YAML string into a structured ProfileConfig object.
+ *
+ * @param {string} text - Raw YAML profile file content
+ * @returns {ProfileConfig} Structured profile configuration
+ */
 function parseYamlProfile(text) {
   const result = {
     id: '',
@@ -61,6 +80,11 @@ function parseYamlProfile(text) {
   return result;
 }
 
+/**
+ * Lists all available project profiles defined in core/profiles.
+ *
+ * @returns {ProfileConfig[]} Array of profile configurations
+ */
 function listProfiles() {
   if (!fs.existsSync(PROFILES_DIR)) return [];
   const files = fs.readdirSync(PROFILES_DIR).filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
@@ -73,6 +97,12 @@ function listProfiles() {
   });
 }
 
+/**
+ * Finds a profile by its slug ID or title.
+ *
+ * @param {string} name - Profile identifier or name
+ * @returns {ProfileConfig|null} Found profile or null
+ */
 function getProfile(name) {
   if (!name) return null;
   const clean = name.toLowerCase().trim();
@@ -127,7 +157,17 @@ function removeActiveProfile(projectDir = process.cwd()) {
 }
 
 /**
- * Auto-detect tech stack from project files.
+ * @typedef {Object} StackDetectionResult
+ * @property {string[]} detected - List of identified technologies and frameworks
+ * @property {string} recommendedProfile - Recommended profile identifier
+ * @property {string[]} recommendedSkills - Recommended skill IDs for the detected stack
+ */
+
+/**
+ * Auto-detect tech stack from project files and suggest best profile and skills.
+ *
+ * @param {string} [projectDir=process.cwd()] - Target directory to inspect
+ * @returns {StackDetectionResult} Detected stack and recommendations
  */
 function detectStack(projectDir = process.cwd()) {
   const detected = [];

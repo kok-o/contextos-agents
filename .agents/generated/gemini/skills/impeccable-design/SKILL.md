@@ -82,6 +82,8 @@ Based on [pbakaus/impeccable](https://github.com/pbakaus/impeccable) — determi
 | L9 | Full-width everything | Max content width: `max-w-7xl` centered |
 | L10 | Missing grid alignment | Use CSS Grid or Tailwind `grid` — not absolute positioning |
 | L11 | Arbitrary high z-indexes | **NEVER** use `z-[999]` or `z-50` manually. Rely on DOM order + Radix/shadcn Portals which already handle modal elevation correctly |
+| L12 | Default Rhythm | Break the 'Hero → 3 Features → CTA' structure. Build structurally diverse pages tailored to the content. |
+| L13 | Symmetric card grids everywhere | Use asymmetric layouts (e.g., bento boxes, masonry, alternating left/right) to reduce the AI-generated feel. |
 
 ### Components (Rules K1–K11)
 

@@ -1,0 +1,141 @@
+# ContextOS — brutalist-design
+
+> Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics.
+
+# SKILL: Industrial Brutalism & Tactical Telemetry UI
+
+## Overview
+
+Advanced proficiency in architecting web interfaces that synthesize mid-century Swiss Typographic design, industrial manufacturing manuals, and retro-futuristic aerospace/military terminal interfaces. This discipline requires absolute mastery over rigid modular grids, extreme typographic scale contrast, purely utilitarian color palettes, and the programmatic simulation of analog degradation (halftones, CRT scanlines, bitmap dithering). The objective is to construct digital environments that project raw functionality, mechanical precision, and high data density, deliberately discarding conventional consumer UI patterns.
+
+## When to Use
+
+- When building data-heavy telemetry dashboards, analytics monitors, trading systems, or developer command centers.
+- When creating editorial portfolios, archival indexes, or technical documentation sites requiring an industrial blueprint aesthetic.
+- When explicitly prompted for "brutalist", "tactical", "terminal", "Swiss print", or "mechanical" aesthetics.
+
+## Rules & Patterns
+
+### 1. Visual Archetypes
+
+Pick ONE per project and commit to it. Do not alternate or mix both modes within the same interface.
+
+#### 1.1 Swiss Industrial Print
+Derived from 1960s corporate identity systems and heavy machinery blueprints.
+- **Characteristics:** High-contrast light modes (newsprint/off-white substrates). Reliance on monolithic, heavy sans-serif typography. Unforgiving structural grids outlined by visible dividing lines. Aggressive, asymmetric use of negative space punctuated by oversized, viewport-bleeding numerals or letterforms. Heavy use of primary red as an alert/accent color.
+
+#### 1.2 Tactical Telemetry & CRT Terminal
+Derived from classified military databases, legacy mainframes, and aerospace Heads-Up Displays (HUDs).
+- **Characteristics:** Dark mode exclusivity. High-density tabular data presentation. Absolute dominance of monospaced typography. Integration of technical framing devices (ASCII brackets, crosshairs). Application of simulated hardware limitations (phosphor glow, scanlines, low bit-depth rendering).
+
+### 2. Typographic Architecture
+
+Typography is the primary structural and decorative infrastructure. Imagery is secondary. The system demands extreme variance in scale, weight, and spacing.
+
+#### 2.1 Macro-Typography (Structural Headers)
+- **Classification:** Neo-Grotesque / Heavy Sans-Serif.
+- **Optimal Web Fonts:** Neue Haas Grotesk (Black), Inter (Extra Bold/Black), Archivo Black, Roboto Flex (Heavy), Monument Extended.
+- **Scale:** Deployed at massive scales using fluid typography (e.g., `clamp(4rem, 10vw, 15rem)`).
+- **Tracking (Letter-spacing):** Extremely tight, often negative (`-0.03em` to `-0.06em`), forcing glyphs to form solid architectural blocks.
+- **Leading (Line-height):** Highly compressed (`0.85` to `0.95`).
+- **Casing:** Exclusively uppercase for structural impact.
+
+#### 2.2 Micro-Typography (Data & Telemetry)
+- **Classification:** Monospace / Technical Sans.
+- **Optimal Web Fonts:** JetBrains Mono, IBM Plex Mono, Space Mono, VT323, Courier Prime.
+- **Scale:** Fixed and small (`10px` to `14px` / `0.7rem` to `0.875rem`).
+- **Tracking:** Generous (`0.05em` to `0.1em`) to simulate mechanical typewriter spacing or terminal matrices.
+- **Leading:** Standard to tight (`1.2` to `1.4`).
+- **Casing:** Exclusively uppercase. Used for all metadata, navigation, unit IDs, and coordinates.
+
+#### 2.3 Textural Contrast (Artistic Disruption)
+- **Classification:** High-Contrast Serif.
+- **Optimal Web Fonts:** Playfair Display, EB Garamond, Times New Roman.
+- **Implementation Parameters:** Used exceedingly sparingly. Must be subjected to heavy post-processing (halftone filters, 1-bit dithering) to degrade vector perfection and create textural juxtaposition against the clean sans-serifs.
+
+### 3. Color System
+
+The color architecture is uncompromising. Gradients, soft drop shadows, and modern translucency are strictly prohibited. Colors simulate physical media or primitive emissive displays.
+
+**CRITICAL: Choose ONE substrate palette per project and use it consistently. Never mix light and dark substrates within the same interface.**
+
+#### Swiss Industrial Print (Light):
+- **Background:** `#F4F4F0` or `#EAE8E3` (Matte, unbleached documentation paper).
+- **Foreground:** `#050505` to `#111111` (Carbon Ink).
+- **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). This is the ONLY accent color. Used for strike-throughs, thick structural dividing lines, or vital data highlights.
+
+#### Tactical Telemetry (Dark):
+- **Background:** `#0A0A0A` or `#121212` (Deactivated CRT. Avoid pure `#000000`).
+- **Foreground:** `#EAEAEA` (White phosphor). This is the primary text color.
+- **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). Same red, same rules.
+- **Terminal Green (`#4AF626`):** Optional. Use ONLY for a single specific UI element (e.g., one status indicator or one data readout) — never as a general text color. If it doesn't serve a clear purpose, omit it entirely.
+
+### 4. Layout and Spatial Engineering
+
+- **The Blueprint Grid:** Strict adherence to CSS Grid architectures. Elements do not float; they are anchored precisely to grid tracks and intersections.
+- **Visible Compartmentalization:** Extensive utilization of solid borders (`1px` or `2px solid`) to delineate distinct zones of information. Horizontal rules (`<hr>`) frequently span the entire container width to segregate operational units.
+- **Bimodal Density:** Layouts oscillate between extreme data density (tightly packed monospace metadata clustered together) and vast expanses of calculated negative space framing macro-typography.
+- **Geometry:** Absolute rejection of `border-radius`. All corners must be exactly 90 degrees to enforce mechanical rigidity.
+
+### 5. UI Components and Symbology
+
+- **Syntax Decoration:** Utilization of ASCII characters to frame data points (`[ DELIVERY SYSTEMS ]`, `< RE-IND >`, `>>>`, `///`).
+- **Industrial Markers:** Prominent integration of registration (`®`), copyright (`©`), and trademark (`™`) symbols functioning as structural geometric elements rather than legal text.
+- **Technical Assets:** Integration of crosshairs (`+`) at grid intersections, repeating vertical lines (barcodes), thick horizontal warning stripes, and randomized string data (`REV 2.6`, `UNIT / D-01`) to simulate active mechanical processes.
+
+### 6. Textural and Post-Processing Effects
+
+- **Halftone and 1-Bit Dithering:** Dot-matrix effects via `mix-blend-mode: multiply` overlays combined with SVG radial dot patterns.
+- **CRT Scanlines:** `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px)` on terminal backgrounds.
+- **Mechanical Noise:** Low-opacity SVG static filter on the DOM root to introduce physical grain.
+
+### 7. Web Engineering Directives
+
+1. **Grid Determinism:** Utilize `display: grid; gap: 1px;` with contrasting parent/child background colors to generate mathematically perfect, razor-thin dividing lines without complex border declarations.
+2. **Semantic Rigidity:** Construct the DOM using precise semantic tags (`<data>`, `<samp>`, `<kbd>`, `<output>`, `<dl>`) to accurately reflect the technical nature of the telemetry.
+3. **Typography Clamping:** Implement CSS `clamp()` functions exclusively for macro-typography to ensure massive text scales aggressively while maintaining structural integrity across viewports.
+
+## Code Examples
+
+```tsx
+export function TelemetryModule({ unitId, status, metrics }: { unitId: string; status: string; metrics: { label: string; val: string }[] }) {
+  return (
+    <div className="border-2 border-black dark:border-white bg-[#F4F4F0] dark:bg-[#0A0A0A] font-mono p-4 rounded-none">
+      <div className="flex justify-between border-b border-black/30 dark:border-white/30 pb-2 mb-4 text-xs tracking-widest uppercase">
+        <span>[ UNIT // {unitId} ]</span>
+        <span className="text-[#E61919] font-bold">&lt; STATUS: {status} &gt;</span>
+      </div>
+      <div className="grid grid-cols-2 gap-px bg-black/20 dark:bg-white/20">
+        {metrics.map(m => (
+          <div key={m.label} className="bg-[#F4F4F0] dark:bg-[#0A0A0A] p-2">
+            <div className="text-[10px] text-black/60 dark:text-white/60 tracking-wider">{m.label}</div>
+            <div className="text-sm font-bold tracking-tight">{m.val}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## Validation Checklist
+
+- [ ] Strict rejection of `border-radius` (all corners 0px / 90 degrees).
+- [ ] Substrate consistency: 100% committed to either Swiss Light or Tactical CRT Dark.
+- [ ] Pure black (`#000000`) avoided for backgrounds.
+- [ ] Monospace typography used for all telemetry, coordinates, and metadata labels.
+- [ ] Dividing lines engineered using solid borders or 1px grid track gaps.
+- [ ] No soft gradients, standard drop shadows, or floating cards.
+
+## Common Mistakes
+
+- Mixing Swiss Industrial Print and Tactical Telemetry substrates within the same view.
+- Introducing rounded corners (`rounded-md`, `rounded-full`) or pill buttons.
+- Using generic body typefaces without tracking adjustments.
+- Applying subtle pastel colors instead of raw carbon ink, off-white, and hazard red.
+
+## Integration Notes
+
+- Complements `impeccable-design` for QA checks on contrast and typography.
+- Pairs with `web-accessibility` to guarantee high-contrast readability (AAA ratio).
+

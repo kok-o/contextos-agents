@@ -38,6 +38,13 @@ Skills loaded: react, typescript, ui-ux-pro, ponytail-mindset
 
 ---
 
+## Skill Architecture (Context Efficiency)
+
+Skills are loaded on-demand. To keep the agent context window efficient:
+1. **Keep `SKILL.md` under 500 lines**: Put detailed reference material in separate files.
+2. **Use progressive disclosure**: Use a `references/` directory for deep context and load those files only when specifically needed by the task.
+3. **Use `scripts/`**: Place executable scripts in a `scripts/` directory alongside the skill.
+
 ## Skill Registry
 
 All skills live in `.agents/core/skills/`. Here is what each does and when to use it:
@@ -55,8 +62,13 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | Skill | File | Activate When |
 |-------|------|--------------|
 | **ui-ux-pro** | `ui-ux-pro/SKILL.md` | Any UI task — planning guide, design decisions, color systems |
+| **brutalist-design** | `brutalist-design/SKILL.md` | When explicitly asked for brutalist, high contrast, industrial, or sharp UI |
+| **minimalist-design** | `minimalist-design/SKILL.md` | When explicitly asked for clean, minimal, editorial, or Notion-like UI |
+| **soft-design** | `soft-design/SKILL.md` | When explicitly asked for calm, soft, premium, or low-contrast UI |
+| **redesign-audit** | `redesign-audit/SKILL.md` | When tasked to audit or redesign an existing complex UI codebase without breaking it |
 | **impeccable-design** | `impeccable-design/SKILL.md` | REVIEW phase for UI — run as hard QA checklist before shipping |
 | **react** | `react/SKILL.md` | React component work |
+| **react-best-practices** | `react-best-practices/SKILL.md` | Deep React component refactoring, hooks, and strict pattern enforcement |
 | **nextjs** | `nextjs/SKILL.md` | Next.js App Router, Server Actions, routing |
 | **typescript** | `typescript/SKILL.md` | Type-safe code, generics, config |
 | **state-management** | `state-management/SKILL.md` | Zustand, TanStack Query, client/server state |
@@ -82,6 +94,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 |-------|------|--------------|
 | **security** | `security/SKILL.md` | Any feature with auth, data access, user input |
 | **performance** | `performance/SKILL.md` | Optimization tasks, Core Web Vitals |
+| **vercel-optimize** | `vercel-optimize/SKILL.md` | Edge caching, Vercel deployments, Next.js optimization |
 | **testing** | `testing/SKILL.md` | Vitest, RTL, Playwright, TDD/BDD testing |
 | **docker** | `docker/SKILL.md` | Dockerfiles, multi-stage, container security, compose |
 | **decisions** | `decisions/SKILL.md` | Making architectural choices |
@@ -90,9 +103,10 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 
 ---
 
-## Automatic Skill Activation Rules
+## Automatic Skill Activation Rules (Proactive Routing)
 
-The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded.
+The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded. 
+**PROACTIVE ROUTING RULE**: If a user request matches a skill trigger, DO NOT simply answer them ad-hoc. You must proactively load the skill and follow its workflow. Skills contain multi-step workflows, checklists, and quality gates that always produce better results than an unstructured response.
 
 ### By Task Type
 
@@ -136,6 +150,30 @@ role: Chief Security Officer (audit) → Senior Developer (build)
 trigger: "performance" OR "slow" OR "optimize" OR "Core Web Vitals" OR "lighthouse"
 load: [performance, system-design]
 role: Performance Engineer
+
+trigger: "vercel" OR "edge" OR "cache" OR "deploy to vercel"
+load: [vercel-optimize, performance]
+role: Performance Engineer
+
+trigger: "refactor react" OR "hooks best practices" OR "react patterns"
+load: [react-best-practices, react]
+role: Senior Frontend Developer
+
+trigger: "brutalist" OR "sharp" OR "industrial"
+load: [brutalist-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "minimalist" OR "clean" OR "notion style"
+load: [minimalist-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "soft" OR "premium" OR "calm"
+load: [soft-design, ui-ux-pro]
+role: Senior Designer
+
+trigger: "redesign" OR "audit UI" OR "fix layout"
+load: [redesign-audit, impeccable-design]
+role: Senior Designer
 
 trigger: "review" OR "PR" OR "before merge" OR "check the code"
 load: [engineering-workflow (review phase), impeccable-design (if UI)]
@@ -189,6 +227,7 @@ Required output before proceeding:
 - File list per task
 - Test requirement per task
 - Risk assessment
+- **If UI domain, read and incorporate `.interface-design/system.md` design memory**
 - **STOP — do not write code until plan is approved**
 
 ---
@@ -202,6 +241,7 @@ Rules:
 - Commit after each atomic task
 - Limit blast radius: only touch files in the current task's plan
 - Write tests first (TDD for logic, BDD for UI)
+- If establishing new UI tokens or aesthetic changes, update `.interface-design/system.md` to preserve design memory
 
 ---
 
@@ -323,6 +363,13 @@ These rules apply regardless of which skills are loaded:
 - No code before spec + plan are approved in interactive development (proceed directly to BUILD when standalone/benchmark code is requested)
 - Blast radius limited to files in current task's plan
 - One atomic commit per task
+
+### Completion Protocol
+When finishing a workflow or task, always report your final status clearly using one of the following:
+- **DONE** — completed with evidence.
+- **DONE_WITH_CONCERNS** — completed, but list specific concerns.
+- **BLOCKED** — cannot proceed; state blocker and what was tried.
+- **NEEDS_CONTEXT** — missing info; state exactly what is needed.
 
 ---
 
@@ -462,6 +509,146 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+
+## Skill: brutalist-design
+
+# SKILL: Industrial Brutalism & Tactical Telemetry UI
+
+## Overview
+
+Advanced proficiency in architecting web interfaces that synthesize mid-century Swiss Typographic design, industrial manufacturing manuals, and retro-futuristic aerospace/military terminal interfaces. This discipline requires absolute mastery over rigid modular grids, extreme typographic scale contrast, purely utilitarian color palettes, and the programmatic simulation of analog degradation (halftones, CRT scanlines, bitmap dithering). The objective is to construct digital environments that project raw functionality, mechanical precision, and high data density, deliberately discarding conventional consumer UI patterns.
+
+## When to Use
+
+- When building data-heavy telemetry dashboards, analytics monitors, trading systems, or developer command centers.
+- When creating editorial portfolios, archival indexes, or technical documentation sites requiring an industrial blueprint aesthetic.
+- When explicitly prompted for "brutalist", "tactical", "terminal", "Swiss print", or "mechanical" aesthetics.
+
+## Rules & Patterns
+
+### 1. Visual Archetypes
+
+Pick ONE per project and commit to it. Do not alternate or mix both modes within the same interface.
+
+#### 1.1 Swiss Industrial Print
+Derived from 1960s corporate identity systems and heavy machinery blueprints.
+- **Characteristics:** High-contrast light modes (newsprint/off-white substrates). Reliance on monolithic, heavy sans-serif typography. Unforgiving structural grids outlined by visible dividing lines. Aggressive, asymmetric use of negative space punctuated by oversized, viewport-bleeding numerals or letterforms. Heavy use of primary red as an alert/accent color.
+
+#### 1.2 Tactical Telemetry & CRT Terminal
+Derived from classified military databases, legacy mainframes, and aerospace Heads-Up Displays (HUDs).
+- **Characteristics:** Dark mode exclusivity. High-density tabular data presentation. Absolute dominance of monospaced typography. Integration of technical framing devices (ASCII brackets, crosshairs). Application of simulated hardware limitations (phosphor glow, scanlines, low bit-depth rendering).
+
+### 2. Typographic Architecture
+
+Typography is the primary structural and decorative infrastructure. Imagery is secondary. The system demands extreme variance in scale, weight, and spacing.
+
+#### 2.1 Macro-Typography (Structural Headers)
+- **Classification:** Neo-Grotesque / Heavy Sans-Serif.
+- **Optimal Web Fonts:** Neue Haas Grotesk (Black), Inter (Extra Bold/Black), Archivo Black, Roboto Flex (Heavy), Monument Extended.
+- **Scale:** Deployed at massive scales using fluid typography (e.g., `clamp(4rem, 10vw, 15rem)`).
+- **Tracking (Letter-spacing):** Extremely tight, often negative (`-0.03em` to `-0.06em`), forcing glyphs to form solid architectural blocks.
+- **Leading (Line-height):** Highly compressed (`0.85` to `0.95`).
+- **Casing:** Exclusively uppercase for structural impact.
+
+#### 2.2 Micro-Typography (Data & Telemetry)
+- **Classification:** Monospace / Technical Sans.
+- **Optimal Web Fonts:** JetBrains Mono, IBM Plex Mono, Space Mono, VT323, Courier Prime.
+- **Scale:** Fixed and small (`10px` to `14px` / `0.7rem` to `0.875rem`).
+- **Tracking:** Generous (`0.05em` to `0.1em`) to simulate mechanical typewriter spacing or terminal matrices.
+- **Leading:** Standard to tight (`1.2` to `1.4`).
+- **Casing:** Exclusively uppercase. Used for all metadata, navigation, unit IDs, and coordinates.
+
+#### 2.3 Textural Contrast (Artistic Disruption)
+- **Classification:** High-Contrast Serif.
+- **Optimal Web Fonts:** Playfair Display, EB Garamond, Times New Roman.
+- **Implementation Parameters:** Used exceedingly sparingly. Must be subjected to heavy post-processing (halftone filters, 1-bit dithering) to degrade vector perfection and create textural juxtaposition against the clean sans-serifs.
+
+### 3. Color System
+
+The color architecture is uncompromising. Gradients, soft drop shadows, and modern translucency are strictly prohibited. Colors simulate physical media or primitive emissive displays.
+
+**CRITICAL: Choose ONE substrate palette per project and use it consistently. Never mix light and dark substrates within the same interface.**
+
+#### Swiss Industrial Print (Light):
+- **Background:** `#F4F4F0` or `#EAE8E3` (Matte, unbleached documentation paper).
+- **Foreground:** `#050505` to `#111111` (Carbon Ink).
+- **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). This is the ONLY accent color. Used for strike-throughs, thick structural dividing lines, or vital data highlights.
+
+#### Tactical Telemetry (Dark):
+- **Background:** `#0A0A0A` or `#121212` (Deactivated CRT. Avoid pure `#000000`).
+- **Foreground:** `#EAEAEA` (White phosphor). This is the primary text color.
+- **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). Same red, same rules.
+- **Terminal Green (`#4AF626`):** Optional. Use ONLY for a single specific UI element (e.g., one status indicator or one data readout) — never as a general text color. If it doesn't serve a clear purpose, omit it entirely.
+
+### 4. Layout and Spatial Engineering
+
+- **The Blueprint Grid:** Strict adherence to CSS Grid architectures. Elements do not float; they are anchored precisely to grid tracks and intersections.
+- **Visible Compartmentalization:** Extensive utilization of solid borders (`1px` or `2px solid`) to delineate distinct zones of information. Horizontal rules (`<hr>`) frequently span the entire container width to segregate operational units.
+- **Bimodal Density:** Layouts oscillate between extreme data density (tightly packed monospace metadata clustered together) and vast expanses of calculated negative space framing macro-typography.
+- **Geometry:** Absolute rejection of `border-radius`. All corners must be exactly 90 degrees to enforce mechanical rigidity.
+
+### 5. UI Components and Symbology
+
+- **Syntax Decoration:** Utilization of ASCII characters to frame data points (`[ DELIVERY SYSTEMS ]`, `< RE-IND >`, `>>>`, `///`).
+- **Industrial Markers:** Prominent integration of registration (`®`), copyright (`©`), and trademark (`™`) symbols functioning as structural geometric elements rather than legal text.
+- **Technical Assets:** Integration of crosshairs (`+`) at grid intersections, repeating vertical lines (barcodes), thick horizontal warning stripes, and randomized string data (`REV 2.6`, `UNIT / D-01`) to simulate active mechanical processes.
+
+### 6. Textural and Post-Processing Effects
+
+- **Halftone and 1-Bit Dithering:** Dot-matrix effects via `mix-blend-mode: multiply` overlays combined with SVG radial dot patterns.
+- **CRT Scanlines:** `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px)` on terminal backgrounds.
+- **Mechanical Noise:** Low-opacity SVG static filter on the DOM root to introduce physical grain.
+
+### 7. Web Engineering Directives
+
+1. **Grid Determinism:** Utilize `display: grid; gap: 1px;` with contrasting parent/child background colors to generate mathematically perfect, razor-thin dividing lines without complex border declarations.
+2. **Semantic Rigidity:** Construct the DOM using precise semantic tags (`<data>`, `<samp>`, `<kbd>`, `<output>`, `<dl>`) to accurately reflect the technical nature of the telemetry.
+3. **Typography Clamping:** Implement CSS `clamp()` functions exclusively for macro-typography to ensure massive text scales aggressively while maintaining structural integrity across viewports.
+
+## Code Examples
+
+```tsx
+export function TelemetryModule({ unitId, status, metrics }: { unitId: string; status: string; metrics: { label: string; val: string }[] }) {
+  return (
+    <div className="border-2 border-black dark:border-white bg-[#F4F4F0] dark:bg-[#0A0A0A] font-mono p-4 rounded-none">
+      <div className="flex justify-between border-b border-black/30 dark:border-white/30 pb-2 mb-4 text-xs tracking-widest uppercase">
+        <span>[ UNIT // {unitId} ]</span>
+        <span className="text-[#E61919] font-bold">&lt; STATUS: {status} &gt;</span>
+      </div>
+      <div className="grid grid-cols-2 gap-px bg-black/20 dark:bg-white/20">
+        {metrics.map(m => (
+          <div key={m.label} className="bg-[#F4F4F0] dark:bg-[#0A0A0A] p-2">
+            <div className="text-[10px] text-black/60 dark:text-white/60 tracking-wider">{m.label}</div>
+            <div className="text-sm font-bold tracking-tight">{m.val}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## Validation Checklist
+
+- [ ] Strict rejection of `border-radius` (all corners 0px / 90 degrees).
+- [ ] Substrate consistency: 100% committed to either Swiss Light or Tactical CRT Dark.
+- [ ] Pure black (`#000000`) avoided for backgrounds.
+- [ ] Monospace typography used for all telemetry, coordinates, and metadata labels.
+- [ ] Dividing lines engineered using solid borders or 1px grid track gaps.
+- [ ] No soft gradients, standard drop shadows, or floating cards.
+
+## Common Mistakes
+
+- Mixing Swiss Industrial Print and Tactical Telemetry substrates within the same view.
+- Introducing rounded corners (`rounded-md`, `rounded-full`) or pill buttons.
+- Using generic body typefaces without tracking adjustments.
+- Applying subtle pastel colors instead of raw carbon ink, off-white, and hazard red.
+
+## Integration Notes
+
+- Complements `impeccable-design` for QA checks on contrast and typography.
+- Pairs with `web-accessibility` to guarantee high-contrast readability (AAA ratio).
 
 
 ## Skill: context-manager
@@ -1629,6 +1816,11 @@ Only ship when all gates are green.
 - [ ] Vercel Preview Deployment is successful and manually verified
 - [ ] Core Web Vitals pass in the preview environment (LCP < 2.5s, CLS < 0.1, INP < 200ms)
 
+### Operational Self-Improvement (Required)
+
+Before completing a workflow, you must review the session for durable learnings (project quirks, command fixes, pitfalls, or patterns that save time).
+Write these learnings to `.agents/learnings.md`. Do not log obvious facts or one-time transient errors. If no durable learning occurred, state "No durable learnings this session" in your final output.
+
 ---
 
 ## Anti-Patterns to Never Do
@@ -1660,6 +1852,14 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+## Completion Status Protocol
+
+When completing a task or workflow, you must explicitly report your final status as the last part of your output:
+- **DONE** — completed with evidence.
+- **DONE_WITH_CONCERNS** — completed, but list concerns.
+- **BLOCKED** — cannot proceed; state blocker and what was tried.
+- **NEEDS_CONTEXT** — missing info; state exactly what is needed.
 
 
 ## Skill: FastAPI
@@ -2146,6 +2346,8 @@ Based on [pbakaus/impeccable](https://github.com/pbakaus/impeccable) — determi
 | L9 | Full-width everything | Max content width: `max-w-7xl` centered |
 | L10 | Missing grid alignment | Use CSS Grid or Tailwind `grid` — not absolute positioning |
 | L11 | Arbitrary high z-indexes | **NEVER** use `z-[999]` or `z-50` manually. Rely on DOM order + Radix/shadcn Portals which already handle modal elevation correctly |
+| L12 | Default Rhythm | Break the 'Hero → 3 Features → CTA' structure. Build structurally diverse pages tailored to the content. |
+| L13 | Symmetric card grids everywhere | Use asymmetric layouts (e.g., bento boxes, masonry, alternating left/right) to reduce the AI-generated feel. |
 
 ### Components (Rules K1–K11)
 
@@ -2411,6 +2613,115 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+
+## Skill: minimalist-design
+
+# Protocol: Premium Utilitarian Minimalism UI Architect
+
+## Overview
+
+An advanced frontend engineering directive for generating highly refined, ultra-minimalist, "document-style" web interfaces analogous to top-tier workspace platforms. This protocol strictly enforces a high-contrast warm monochrome palette, bespoke typographic hierarchies, meticulous structural macro-whitespace, bento-grid layouts, and an ultra-flat component architecture with deliberate muted pastel accents. It actively rejects standard generic SaaS design trends.
+
+## When to Use
+
+- When designing clean, editorial, or Notion-like document interfaces, workspaces, or notes apps.
+- When creating minimalist SaaS dashboards, personal essays, portfolios, or agency landing pages.
+- When asked for a "clean", "minimalist", "warm monochrome", or "flat bento-box" layout.
+
+## Rules & Patterns
+
+### 1. Absolute Negative Constraints (Banned Elements)
+
+The AI must strictly avoid the following generic web development defaults:
+- DO NOT use the "Inter", "Roboto", or "Open Sans" typefaces.
+- DO NOT use generic, thin-line icon libraries like "Lucide", "Feather", or standard "Heroicons".
+- DO NOT use Tailwind's default heavy drop shadows (e.g., `shadow-md`, `shadow-lg`, `shadow-xl`). Shadows must be practically non-existent or heavily customized to be ultra-diffuse and low opacity (< 0.05).
+- DO NOT use primary colored backgrounds for large elements or sections (e.g., no bright blue, green, or red hero sections).
+- DO NOT use gradients, neon colors, or 3D glassmorphism (beyond subtle navbar blurs).
+- DO NOT use `rounded-full` (pill shapes) for large containers, cards, or primary buttons.
+- DO NOT use emojis anywhere in code, markup, text content, headings, or alt text. Replace with proper icons or clean SVG primitives.
+- DO NOT use generic placeholder names like "John Doe", "Acme Corp", or "Lorem Ipsum". Use realistic, contextual content.
+- DO NOT use AI copywriting clichés: "Elevate", "Seamless", "Unleash", "Next-Gen", "Game-changer", "Delve". Write plain, specific language.
+
+### 2. Typographic Architecture
+
+The interface must rely on extreme typographic contrast and premium font selection to establish an editorial feel.
+- **Primary Sans-Serif (Body, UI, Buttons):** Use clean, geometric, or system-native fonts with character (`'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'Switzer', sans-serif`).
+- **Editorial Serif (Hero Headings & Quotes):** (`'Lyon Text', 'Newsreader', 'Playfair Display', 'Instrument Serif', serif`). Apply tight tracking (`-0.02em` to `-0.04em`) and tight line-height (`1.1`).
+- **Monospace (Code, Keystrokes, Meta-data):** (`'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace`).
+- **Text Colors:** Body text must never be absolute black (`#000000`). Use off-black/charcoal (`#111111` or `#2F3437`) with a generous line-height of `1.6` for legibility. Secondary text should be muted gray (`#787774`).
+
+### 3. Color Palette (Warm Monochrome + Spot Pastels)
+
+Color is a scarce resource, utilized only for semantic meaning or subtle accents.
+- **Canvas / Background:** Pure White `#FFFFFF` or Warm Bone/Off-White `#F7F6F3` / `#FBFBFA`.
+- **Primary Surface (Cards):** `#FFFFFF` or `#F9F9F8`.
+- **Structural Borders / Dividers:** Ultra-light gray `#EAEAEA` or `rgba(0,0,0,0.06)`.
+- **Accent Colors:** Exclusively use highly desaturated, washed-out pastels for tags, inline code backgrounds, or subtle icon backgrounds:
+  - Pale Red: `#FDEBEC` (Text: `#9F2F2D`)
+  - Pale Blue: `#E1F3FE` (Text: `#1F6C9F`)
+  - Pale Green: `#EDF3EC` (Text: `#346538`)
+  - Pale Yellow: `#FBF3DB` (Text: `#956400`)
+
+### 4. Component Specifications
+
+- **Bento Box Feature Grids:** Asymmetrical CSS Grid layouts. Cards have `border: 1px solid #EAEAEA`, crisp border-radius (`8px` to `12px` max), and generous internal padding (`24px` to `40px`).
+- **Primary Call-To-Action (Buttons):** Solid `#111111`, text `#FFFFFF`, radius `4px` to `6px`, no box-shadow. Micro-scale `transform: scale(0.98)` on active.
+- **Tags & Status Badges:** Pill-shaped (`rounded-full`), small typography (`text-xs`), uppercase with wide tracking (`0.05em`), pastel background.
+- **Accordions (FAQ):** Separated by `border-bottom: 1px solid #EAEAEA` without card boxes. Crisp `+` / `-` toggle icons.
+- **Keystroke Micro-UIs:** `<kbd className="border border-[#EAEAEA] rounded bg-[#F7F6F3] font-mono px-1.5 py-0.5 text-xs">`.
+
+### 5. Iconography & Imagery
+
+- **System Icons:** Phosphor Icons (Bold/Fill) or Radix UI Icons for crisp, technical strokes.
+- **Photography:** Desaturated images with warm tint and subtle grain overlay (`opacity: 0.04`).
+- **Depth:** Subtle ambient gradients (`radial-gradient` with warm tones at `opacity: 0.03`) or minimal geometric line patterns.
+
+### 6. Subtle Motion & Micro-Animations
+
+- **Scroll Entry:** Fade-in + `translateY(12px)` over 600ms via `IntersectionObserver`.
+- **Hover States:** Subtle card lift with ultra-diffuse shadow (`0 2px 8px rgba(0,0,0,0.04)`).
+- **Staggered Reveals:** Cascading delay (`calc(var(--index) * 80ms)`).
+
+## Code Examples
+
+```tsx
+export function BentoFeatureCard({ title, description, badge, tagColor = "blue" }: { title: string; description: string; badge: string; tagColor?: string }) {
+  return (
+    <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-xl p-8 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs uppercase tracking-wider font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#E1F3FE] text-[#1F6C9F]">
+          {badge}
+        </span>
+      </div>
+      <h3 className="font-serif text-2xl tracking-tight text-[#111111] mb-2">{title}</h3>
+      <p className="text-sm text-[#787774] leading-relaxed">{description}</p>
+    </div>
+  );
+}
+```
+
+## Validation Checklist
+
+- [ ] Macro-whitespace established with generous vertical section padding (`py-24` to `py-32`).
+- [ ] No pure black (`#000000`) for text or backgrounds.
+- [ ] Borders use crisp `1px solid #EAEAEA` or `rgba(0,0,0,0.06)`.
+- [ ] No generic AI buzzwords or emojis used in copy.
+- [ ] Typography uses editorial serif headers paired with clean sans-serif body.
+- [ ] Card corners constrained to crisp 8px-12px radius; no pill containers.
+
+## Common Mistakes
+
+- Using heavy saturated primary colors for hero backgrounds.
+- Adding default Tailwind drop-shadows (`shadow-lg`).
+- Cluttering interfaces with emojis instead of clean SVG icons.
+- Using default Inter or Roboto fonts without editorial contrast.
+
+## Integration Notes
+
+- Complements `ui-ux-pro` for color tokens and accessibility.
+- Integrates with `impeccable-design` for QA and anti-pattern enforcement.
 
 
 ## Skill: NestJS
@@ -3433,6 +3744,267 @@ export function useScrollThreshold(threshold = 50): boolean {
 }
 ```
 
+## Skill: react-best-practices
+
+# Vercel React Best Practices
+
+## Overview
+
+Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 70 rules across 8 categories, prioritized by impact to guide automated refactoring, code generation, and production review.
+
+## When to Use
+
+- When authoring new React functional components or Next.js App Router pages.
+- When implementing data fetching (client or server-side Server Actions, RSC).
+- When reviewing pull requests for rendering bottlenecks or memory leaks.
+- When optimizing bundle size, eliminating network waterfalls, or improving Core Web Vitals (LCP, INP, CLS).
+
+## Rules & Patterns
+
+### Rule Categories by Priority
+
+| Priority | Category | Impact | Prefix |
+|----------|----------|--------|--------|
+| 1 | Eliminating Waterfalls | CRITICAL | `async-` |
+| 2 | Bundle Size Optimization | CRITICAL | `bundle-` |
+| 3 | Server-Side Performance | HIGH | `server-` |
+| 4 | Client-Side Data Fetching | MEDIUM-HIGH | `client-` |
+| 5 | Re-render Optimization | MEDIUM | `rerender-` |
+| 6 | Rendering Performance | MEDIUM | `rendering-` |
+| 7 | JavaScript Performance | LOW-MEDIUM | `js-` |
+| 8 | Advanced Patterns | LOW | `advanced-` |
+
+### 1. Eliminating Waterfalls (CRITICAL)
+
+- `async-cheap-condition-before-await` - Check cheap sync conditions before awaiting flags or remote values.
+- `async-defer-await` - Move await into branches where actually used.
+- `async-parallel` - Use `Promise.all()` for independent asynchronous operations.
+- `async-dependencies` - Use better-all for partial dependencies.
+- `async-api-routes` - Start promises early, await late in API routes.
+- `async-suspense-boundaries` - Use Suspense to stream content progressively.
+
+### 2. Bundle Size Optimization (CRITICAL)
+
+- `bundle-barrel-imports` - Import directly from specific modules, avoid broad barrel files (`index.ts`).
+- `bundle-analyzable-paths` - Prefer statically analyzable import paths to avoid bloated traces.
+- `bundle-dynamic-imports` - Use `next/dynamic` or `React.lazy()` for heavy interactive components.
+- `bundle-defer-third-party` - Load analytics and logging scripts after hydration.
+- `bundle-conditional` - Load modules only when feature flags or user actions require them.
+- `bundle-preload` - Preload assets on hover or focus for perceived instant navigation.
+
+### 3. Server-Side Performance (HIGH)
+
+- `server-auth-actions` - Always authenticate server actions like API routes.
+- `server-cache-react` - Use `React.cache()` for per-request deduplication.
+- `server-cache-lru` - Use LRU cache for cross-request caching.
+- `server-dedup-props` - Avoid duplicate serialization in RSC props.
+- `server-hoist-static-io` - Hoist static I/O to module level.
+- `server-no-shared-module-state` - Avoid module-level mutable request state in RSC/SSR.
+- `server-serialization` - Minimize data passed across the server-client boundary.
+- `server-parallel-fetching` - Restructure components to parallelize fetches.
+- `server-after-nonblocking` - Use `after()` for non-blocking operations like analytics logging.
+
+### 4. Client-Side Data Fetching (MEDIUM-HIGH)
+
+- `client-swr-dedup` - Use SWR or TanStack Query for automatic request deduplication.
+- `client-event-listeners` - Deduplicate global event listeners.
+- `client-passive-event-listeners` - Use passive listeners for scroll and touch.
+- `client-localstorage-schema` - Version and minimize data stored in localStorage.
+
+### 5. Re-render Optimization (MEDIUM)
+
+- `rerender-defer-reads` - Don't subscribe to state only used in callbacks.
+- `rerender-memo` - Extract expensive work into memoized components.
+- `rerender-memo-with-default-value` - Hoist default non-primitive props.
+- `rerender-dependencies` - Use primitive dependencies in effects and callbacks.
+- `rerender-derived-state` - Subscribe to derived booleans, not raw high-frequency values.
+- `rerender-derived-state-no-effect` - Derive state during render, never in `useEffect`.
+- `rerender-functional-setstate` - Use functional `setState` for stable callback references.
+- `rerender-lazy-state-init` - Pass initializer functions to `useState` for expensive computations.
+- `rerender-transitions` - Use `startTransition` for non-urgent state updates.
+- `rerender-use-deferred-value` - Defer expensive renders to keep input responsive.
+- `rerender-no-inline-components` - Never define subcomponents inside component render bodies.
+
+### 6. Rendering Performance (MEDIUM)
+
+- `rendering-content-visibility` - Use `content-visibility: auto` for long offscreen lists.
+- `rendering-hoist-jsx` - Extract static JSX elements outside components.
+- `rendering-conditional-render` - Use ternary (`condition ? <Comp /> : null`), not `&&` to avoid 0 rendering.
+- `rendering-usetransition-loading` - Prefer `useTransition` for loading state indicators.
+
+### 7. JavaScript Performance (LOW-MEDIUM)
+
+- `js-index-maps` - Build `Map` for repeated lookups instead of repeated array searches.
+- `js-cache-property-access` - Cache object properties in tight loops.
+- `js-early-exit` - Return early from functions to avoid nested complexity.
+- `js-hoist-regexp` - Hoist RegExp creation outside loops and functions.
+- `js-set-map-lookups` - Use `Set` / `Map` for O(1) lookups.
+
+### 8. Advanced Patterns (LOW)
+
+- `advanced-effect-event-deps` - Don't put `useEffectEvent` results in effect deps.
+- `advanced-event-handler-refs` - Store event handlers in refs for stable listener attachments.
+- `advanced-init-once` - Initialize app singletons once per lifecycle.
+
+## Code Examples
+
+```tsx
+// [GOOD] Parallel server fetching without waterfall
+import { cache } from 'react';
+
+export const getUser = cache(async (id: string) => {
+  return db.user.findUnique({ where: { id } });
+});
+
+export default async function UserPage({ params }: { params: { id: string } }) {
+  // Parallel dispatch
+  const userPromise = getUser(params.id);
+  const postsPromise = getPosts(params.id);
+
+  const [user, posts] = await Promise.all([userPromise, postsPromise]);
+
+  return (
+    <main>
+      <h1>{user.name}</h1>
+      <PostList posts={posts} />
+    </main>
+  );
+}
+```
+
+## Validation Checklist
+
+- [ ] All independent async fetches use `Promise.all()` instead of sequential `await`.
+- [ ] Direct imports used instead of barrel file imports for large libraries.
+- [ ] No `useEffect` used for deriving computed state from props or state.
+- [ ] Heavy interactive modals/drawers loaded dynamically via `next/dynamic`.
+- [ ] Server actions perform authentication checks before data mutations.
+- [ ] Zero subcomponents defined inside the body of parent components.
+
+## Common Mistakes
+
+- Writing sequential `await fetchA(); await fetchB();` creating avoidable network waterfalls.
+- Importing from package root barrel files triggering full bundle inclusion.
+- Setting state inside `useEffect` in response to prop changes.
+- Serializing full database models with sensitive or unused fields to Client Components.
+
+## Integration Notes
+
+- Pairs with `react` and `nextjs` skills for idiomatic App Router patterns.
+- Complements `performance` for Lighthouse and Core Web Vitals verification.
+
+
+## Skill: redesign-audit
+
+# Redesign Skill & UI Audit
+
+## Overview
+
+A systematic redesign and auditing protocol designed to elevate existing websites, dashboards, and web applications to world-class agency quality. It diagnoses and eradicates generic AI design fingerprints, sloppy typography, inconsistent palettes, and absent interaction states without breaking business logic or underlying component contracts.
+
+## When to Use
+
+- When auditing an existing UI codebase for design quality, responsiveness, or accessibility.
+- When modernizing a legacy application or uplifting generic templates.
+- When tasked to "redesign", "clean up the layout", "audit UI", or "make it look expensive and modern".
+
+## Rules & Patterns
+
+### 1. Workflow: Scan → Diagnose → Fix
+
+1. **Scan:** Read the codebase. Identify the framework, styling method (Tailwind v3/v4, vanilla CSS, CSS Modules), and established design tokens.
+2. **Diagnose:** Run through the design audit categories. Catalog generic patterns, missing states, and optical alignment flaws.
+3. **Fix:** Apply surgical, targeted upgrades working within the existing stack. Do not rewrite from scratch.
+
+### 2. Design Audit Categories
+
+#### Typography
+- **Replace Browser Defaults:** Swap generic `Inter`, `Roboto`, or system fonts with expressive typefaces (`Geist`, `Outfit`, `Cabinet Grotesk`, `Satoshi`).
+- **Presence & Scale:** Increase display text size, tighten letter-spacing (`-0.02em` to `-0.04em`), reduce line-height on headlines.
+- **Reading Comfort:** Limit body text to 65 characters per line (`max-w-prose`), increase line-height to 1.6.
+- **Figures:** Enable tabular figures (`font-variant-numeric: tabular-nums`) for numbers in tables and data readouts.
+- **Orphan Prevention:** Apply `text-wrap: balance` on headlines and `text-wrap: pretty` on paragraphs.
+
+#### Color and Surfaces
+- **No Pure Black Backgrounds:** Replace `#000000` with tinted dark charcoal (`#0A0A0A`, `#121212`).
+- **Desaturate Accents:** Keep accent saturation below 80% so it blends harmoniously with neutrals.
+- **Single Accent Color:** Commit to one dominant accent hue; remove conflicting secondary tints.
+- **Tinted Shadows:** Tint shadows to match the background hue rather than harsh black opacity.
+- **Background Depth:** Prevent sterile flat sections by layering subtle noise overlays, ambient gradients, or masked imagery.
+
+#### Layout and Space
+- **Asymmetry & Bento Grids:** Break repetitive 3-column Bootstrap grids with asymmetrical spans or offset cards.
+- **Mobile Viewport Bug Fix:** Never use `height: 100vh`; always use `min-height: 100dvh`.
+- **Vertical Alignment:** Pin action buttons to the bottom of card groups (`mt-auto` or grid alignment) to maintain horizontal baseline harmony across differing text heights.
+- **Optical Centering:** Adjust icons, badges, and play buttons optically by 1-2px rather than relying solely on pure mathematical centering.
+
+#### Interactivity and States
+- **Interactive Feedback:** Add 200-300ms transitions, distinct hover shifts, and physical active presses (`scale(0.98)`).
+- **Visible Focus Rings:** Mandatory `:focus-visible` styling for keyboard navigation.
+- **States Completeness:** Always provide designed skeleton loaders, empty states, and inline error messages.
+
+#### Content & Code Quality
+- **Eradicate AI Clichés:** Remove buzzwords ("Elevate", "Seamless", "Unleash", "Next-Gen") and placeholder latin text.
+- **Semantic HTML:** Replace nested div containers with `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`.
+- **Relative Units:** Use `rem`, `%`, and CSS Grid rather than hardcoded pixel widths.
+
+### 3. Fix Priority
+
+1. **Font Swap:** Biggest instant aesthetic elevation with lowest regression risk.
+2. **Palette Cleanup:** Eliminate clashing or oversaturated colors.
+3. **States & Feedback:** Add hover, active, focus, loading, and empty states.
+4. **Layout & Alignment:** Fix container widths, baseline alignment, and mobile viewport heights.
+5. **Component Polish:** Replace generic cards and accordion boxes with modern minimal equivalents.
+
+## Code Examples
+
+```tsx
+// [BEFORE] Generic, misaligned card with generic shadow
+<div className="bg-white border rounded shadow p-4">
+  <h2>{title}</h2>
+  <p>{desc}</p>
+  <button className="bg-blue-500 text-white p-2">Click</button>
+</div>
+
+// [AFTER] Polished card with optical baseline alignment, tinted surface, and micro-interaction
+<div className="flex flex-col bg-[#FFFFFF] dark:bg-[#121212] border border-black/5 dark:border-white/10 rounded-2xl p-6 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-200">
+  <h3 className="font-semibold text-lg tracking-tight text-neutral-900 dark:text-neutral-100 text-balance mb-2">
+    {title}
+  </h3>
+  <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed text-pretty mb-6">
+    {desc}
+  </p>
+  <button 
+    type="button" 
+    className="mt-auto inline-flex items-center justify-center font-medium text-sm px-4 py-2.5 rounded-xl bg-neutral-900 dark:bg-neutral-100 text-white dark:text-black hover:bg-neutral-800 active:scale-[0.98] transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-neutral-400"
+  >
+    Continue
+  </button>
+</div>
+```
+
+## Validation Checklist
+
+- [ ] All headings have `text-wrap: balance` and appropriate negative letter tracking.
+- [ ] No pure black `#000000` backgrounds or oversaturated accent colors (>80% saturation).
+- [ ] All interactive elements include `:hover`, `:active`, and `:focus-visible` styles.
+- [ ] Cards in side-by-side grids align primary CTA buttons along the same bottom baseline.
+- [ ] Viewport containers use `100dvh` instead of `100vh`.
+- [ ] All lists, tables, and feeds have a designed empty state.
+
+## Common Mistakes
+
+- Rewriting components from scratch and breaking existing prop contracts or unit tests.
+- Forcing full-width sections without `max-w` constraints on ultra-wide screens.
+- Leaving action buttons at random heights inside differing text content cards.
+- Introducing external UI libraries without checking existing `package.json` dependencies.
+
+## Integration Notes
+
+- Complements `impeccable-design` for hard 50-rule QA verification.
+- Works alongside `ui-ux-pro` for token generation and color theory.
+
+
 ## Skill: Application Security
 
 # Application Security
@@ -3642,6 +4214,111 @@ app.delete('/api/documents/:id', requireAuth, async (req, res) => {
   return res.status(204).end();
 });
 ```
+
+## Skill: soft-design
+
+# Agent Skill: Principal UI/UX Architect & Motion Choreographer (Awwwards-Tier)
+
+## Overview
+
+Engineers high-end, agency-level digital experiences characterized by tactile haptic depth, cinematic spatial rhythm, obsessive micro-interactions, and fluid spring physics. Rejects generic commodity SaaS templates in favor of bespoke layout archetypes, nested double-bezel enclosures, and purposeful motion dynamics.
+
+## When to Use
+
+- When tasked with creating luxury, premium, Awwwards-tier landing pages, portfolio showpieces, or editorial SaaS interfaces.
+- When explicitly prompted for "soft UI", "expensive design", "Apple-level polish", or "calm aesthetics".
+- When standard component libraries feel too clinical or generic.
+
+## Rules & Patterns
+
+### 1. Absolute Zero Directive (Strict Anti-Patterns)
+
+- **Banned Fonts:** Inter, Roboto, Arial, Open Sans, Helvetica. (Use `Geist`, `Clash Display`, `PP Editorial New`, or `Plus Jakarta Sans`).
+- **Banned Icons:** Thick-stroked Lucide, FontAwesome, or Material Icons. Use ultra-light, precise line icons (Phosphor Light, Remix Line).
+- **Banned Borders & Shadows:** Generic 1px solid gray borders. Harsh dark drop shadows (`rgba(0,0,0,0.3)`).
+- **Banned Layouts:** Edge-to-edge sticky navbars glued to the top. Symmetrical 3-column Bootstrap-style grids without massive whitespace.
+- **Banned Motion:** Standard `linear` or `ease-in-out` transitions. Instant state changes without interpolation.
+
+### 2. The Creative Variance Engine
+
+Before writing code, consciously pick ONE combination:
+
+#### Vibe & Texture Archetypes
+1. **Ethereal Glass (SaaS / AI / Tech):** Deep OLED black (`#050505`), subtle radial mesh gradients, vantablack cards with `backdrop-blur-2xl` and white/10 hairlines.
+2. **Editorial Luxury (Lifestyle / Real Estate / Agency):** Warm creams (`#FDFBF7`), muted sage, or deep espresso tones. Variable serif headings with subtle CSS noise overlay (`opacity-[0.03]`).
+3. **Soft Structuralism (Consumer / Health / Portfolio):** Silver-grey or pure white backgrounds, bold grotesk typography, airy floating components with ultra-diffuse ambient shadows.
+
+#### Layout Archetypes
+1. **The Asymmetrical Bento:** Masonry CSS Grid of varying card spans. (Collapses to single-column `grid-cols-1 gap-6` on mobile).
+2. **The Z-Axis Cascade:** Stacked cards with varying depth of field and subtle `-2deg` or `3deg` rotations. (Rotations removed on mobile).
+3. **The Editorial Split:** Massive typography on the left half (`w-1/2`), with horizontal interactive card ribbons on the right.
+
+### 3. Haptic Micro-Aesthetics
+
+- **The Double-Bezel (Doppelrand):**
+  - **Outer Shell:** Wrapper `div` with subtle background (`bg-black/5` or `bg-white/5`), hairline border (`border border-white/10`), padding (`p-2`), and large outer radius (`rounded-[2rem]`).
+  - **Inner Core:** Nested card inside shell with distinct background, inner highlight (`shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]`), and mathematically concentric smaller radius (`rounded-[calc(2rem-0.5rem)]`).
+- **Button-in-Button Trailing Icon:** Pill-shaped primary buttons (`rounded-full px-6 py-3`) with trailing arrows nested inside their own dedicated circular badge (`w-8 h-8 rounded-full bg-black/5 flex items-center justify-center`).
+- **Macro-Whitespace:** Minimum `py-24` to `py-40` for section padding.
+
+### 4. Motion Choreography & Performance Guardrails
+
+- **Custom Physics:** All transitions use custom cubic-beziers: `transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]`.
+- **GPU-Safe Animation:** Animate exclusively via `transform` and `opacity`. Never animate `top`, `left`, `width`, or `height`.
+- **Blur Discipline:** Restrict `backdrop-blur` to fixed or sticky elements (navbars, modals). Never apply to scrolling containers.
+
+## Code Examples
+
+```tsx
+export function DoubleBezelCard({ title, subtitle, tag }: { title: string; subtitle: string; tag: string }) {
+  return (
+    // Outer Shell
+    <div className="p-2 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-2xl">
+      // Inner Core
+      <div className="p-8 rounded-[calc(2rem-0.5rem)] bg-[#FFFFFF] dark:bg-[#0E0E0E] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] flex flex-col justify-between min-h-[320px]">
+        <div>
+          <span className="inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] font-medium bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 mb-4">
+            {tag}
+          </span>
+          <h3 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white mb-2">{title}</h3>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">{subtitle}</p>
+        </div>
+        <button 
+          type="button" 
+          className="group mt-6 inline-flex items-center justify-between pl-6 pr-2 py-2 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-950 font-medium text-sm active:scale-[0.98] transition-all duration-300"
+        >
+          <span>Explore Experience</span>
+          <span className="w-8 h-8 rounded-full bg-white/10 dark:bg-black/10 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+            ↗
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+## Validation Checklist
+
+- [ ] All major cards and interactive modules use the Double-Bezel concentric architecture.
+- [ ] Primary buttons feature the nested button-in-button trailing icon pattern.
+- [ ] Section vertical padding is at minimum `py-24`.
+- [ ] Transitions use spring or custom cubic-bezier curves (no default linear transitions).
+- [ ] Layout collapses gracefully to single-column on mobile viewports (<768px).
+- [ ] Animations use only `transform` and `opacity`.
+
+## Common Mistakes
+
+- Using standard `shadow-md` or harsh dark drop shadows instead of soft ambient shadows.
+- Failing to recalculate concentric inner border-radii (`calc(outer - padding)`).
+- Applying `backdrop-blur` on large scrolling sections, triggering GPU repaints.
+- Sticking to generic 3-column Bootstrap grids.
+
+## Integration Notes
+
+- Complements `impeccable-design` for QA and anti-pattern enforcement.
+- Pairs with `ui-ux-pro` for color palette harmony and accessibility compliance.
+
 
 ## Skill: state-management
 
@@ -4619,6 +5296,12 @@ Inspired by [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelb
 
 > Great design is invisible. Bad design is obvious. You will never produce obvious AI design.
 
+## Pre-flight Check & Brief Inference
+
+Before starting a design implementation:
+1. Infer the unwritten constraints of the domain (e.g., if it's a dev tool, assume dark mode, monospaced numbers, dense layout).
+2. Propose a "Design Brief Inference" summarizing the intended aesthetic.
+
 ---
 
 ## [FAIL] Absolute Prohibitions (Never Do These)
@@ -4757,6 +5440,37 @@ Typography utilities:
 
 ---
 
+## Design Parameters (Taste Equalizers)
+
+Always set and document the following three parameters (1-10 scale) before starting any design task, to escape generic AI defaults:
+
+- **DESIGN_VARIANCE (1-10)**: Grid and Layout structures. 
+  - 1-3 = Clean, centered layouts, standard grids (Enterprise, Docs).
+  - 4-7 = Asymmetric containers, off-grid elements, sticky sidebars (SaaS, Creative tools).
+  - 8-10 = Broken grids, overlapping items, editorial style (Portfolios, Agencies).
+- **MOTION_INTENSITY (1-10)**: Animation depth.
+  - 1-3 = Basic hover states and micro-interactions only.
+  - 4-7 = Page transitions, enter/exit animations, list staggers.
+  - 8-10 = Magnetic elements, complex scroll-triggered animations (GSAP territory).
+- **VISUAL_DENSITY (1-10)**: Information architecture.
+  - 1-3 = Luxury, airy, massive whitespace (Landing pages).
+  - 4-7 = Standard product density (Consumer apps).
+  - 8-10 = Dense, compact, dashboard-style (Pro tools, IDEs, Trading platforms).
+
+## Adaptive Aesthetics (Project Mapping)
+
+Select the base aesthetic based on the project domain:
+- **Fintech / Enterprise**: Swiss Minimalism, Neumorphism (High trust, clean, DESIGN_VARIANCE: 2-4).
+- **AI Tools / DevTools**: Dark OLED Luxury, Glassmorphism (Modern, tech-forward, DESIGN_VARIANCE: 5-7).
+- **Creative / Portfolios**: Brutalism, Maximalist, Aurora (Bold, expressive, DESIGN_VARIANCE: 8-10).
+
+## Design Memory & Consistency
+
+**CRITICAL**: You must preserve design decisions between sessions to avoid stylistic drift.
+Whenever you establish core UI tokens (fonts, color scales, border radii, equalizers), write them to `.interface-design/system.md`. In subsequent sessions, ALWAYS read this file before generating new components.
+
+---
+
 ## Design Domains
 
 ### Product UI (SaaS / Dashboard / App)
@@ -4784,6 +5498,16 @@ Typography utilities:
 - Inline validation (show errors on blur, not on submit)
 - Group related fields visually
 - Progress indicator for multi-step flows
+
+---
+
+## Image-First Pipeline (Design Sprints)
+
+If you have access to image generation tools (e.g., DALL-E, Midjourney integrations) and the task involves creating a net-new UI page or component, follow the **Image-First Pipeline**:
+1. **Generate**: Create 1-3 reference images ("mockups", "brand boards") of the desired UI using image generation.
+2. **Analyze**: Review the generated images for layout, spacing, and typography choices.
+3. **Implement**: Write the code to match the aesthetic of the generated reference images.
+*Do not skip straight to code for major UI overhauls without a visual reference if generation is available.*
 
 ---
 
@@ -5059,6 +5783,86 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+
+## Skill: vercel-optimize
+
+# Vercel Optimize
+
+## Overview
+
+Observability-first Vercel performance and cost reduction optimization skill. Evaluates deployed Next.js, SvelteKit, Nuxt, and Astro projects using production telemetry signals (`signals.json`), deterministic candidate gating, and code scanning to deliver ranked, verified architectural recommendations.
+
+## When to Use
+
+- When tasked with reducing Vercel bills, Function Invocations, Fast Data Transfer, or Build Minutes.
+- When diagnosing slow serverless routes, cold starts, or Edge vs Node runtime mismatches.
+- When evaluating caching opportunities (`stale-while-revalidate`, ISR, CDN edge caching) or Core Web Vitals degradation.
+
+## Rules & Patterns
+
+### 1. Prerequisites & Framework Support
+
+- Vercel CLI v53+ with `vercel metrics`, `vercel usage`, `vercel contract`, and `vercel api`.
+- Authenticated CLI session (`vercel login`) and linked app directory (`vercel link`).
+- Framework support: Next.js App Router (Full), Pages Router (Supported), SvelteKit (Supported), Nuxt (Supported), Astro (Limited).
+- Security rule: Never put auth tokens in shell commands (`VERCEL_TOKEN=...` is banned in chat/logs).
+
+### 2. Core Doctrine & Gating Pipeline
+
+- **Metrics First:** Recommendations start from Vercel production signals (14-day window), not repo-wide grep.
+- **Deterministic Gates:** `scripts/gate-investigations.mjs` selects code-scope and platform-scope candidates.
+- **Candidate-Bound Scope:** Inspect only files named by a candidate or a route-local import chain.
+- **Version-Aware Citations:** Use only verified citations matching the target framework version.
+- **Specific Cache Policies:** When recommending caching, state the exact cache policy and headers; keep auth-sensitive and error responses dynamic.
+
+### 3. Recommendation Rules
+
+- Every recommendation must trace to a launched candidate and include observed metric evidence.
+- Cite verified files with line numbers when code changes are proposed.
+- Use precise observed performance numbers; avoid customer-facing speculative `$N` savings formulas.
+- Do not recommend duration reductions for Vercel Workflow runtime endpoints (`/.well-known/workflow/v1/*`).
+
+## Code Examples
+
+```typescript
+// [GOOD] Next.js Route Segment Config for Caching & Edge Runtime
+export const dynamic = 'force-static';
+export const revalidate = 3600; // Cache at Edge for 1 hour
+
+export default async function CachedCatalogPage() {
+  const products = await getCatalogData();
+  return <CatalogGrid items={products} />;
+}
+```
+
+```bash
+# Running the signals collection and gate
+node scripts/collect-signals.mjs [projectId] > "$RUN_DIR/vercel-signals.json"
+node scripts/scan-codebase.mjs <repo-root> > "$RUN_DIR/codebase.json"
+node scripts/merge-signals.mjs "$RUN_DIR/vercel-signals.json" "$RUN_DIR/codebase.json" --out "$RUN_DIR/signals.json"
+node scripts/gate-investigations.mjs "$RUN_DIR/signals.json" > "$RUN_DIR/gate.json"
+```
+
+## Validation Checklist
+
+- [ ] Project is properly linked with valid team/personal scope (`vercel link`).
+- [ ] Production metrics signals collected across 14-day window before inspecting code.
+- [ ] No secrets or tokens passed in command line arguments.
+- [ ] Recommendations grounded in specific verified file paths and line numbers.
+- [ ] Unsafe or auth-sensitive paths kept strictly dynamic.
+
+## Common Mistakes
+
+- Inspecting repository source code before metric signals exist.
+- Hardcoding `VERCEL_TOKEN` into terminal commands or prompt logs.
+- Recommending duration reductions on long-lived streaming routes or workflow runners.
+- Applying static caching to user-specific or authenticated routes.
+
+## Integration Notes
+
+- Complements `nextjs` and `react-best-practices` for server-side optimization.
+- Pairs with `performance` and `security` skills.
 
 
 ## Skill: Web Accessibility

@@ -1,3 +1,17 @@
+/**
+ * .agents/ctx.js
+ * ContextOS — Main CLI Dispatcher and Context Engine
+ *
+ * Provides subcommands for:
+ *   - export: compiling skills for diverse agent formats (Gemini, Claude, Cursor, Copilot, Aider, Zed)
+ *   - profile: managing project profiles (list, show, apply, remove)
+ *   - resolve: dynamic on-demand skill resolution for prompts and file lists
+ *   - index: progressive skills index generation
+ *   - detect: tech stack detection
+ *   - validate / audit: skill source, frontmatter, and sync validation
+ *   - skill: plugin management (add, remove, list, search)
+ */
+
 const process = require('process');
 const path = require('path');
 
@@ -8,6 +22,9 @@ if (args.length === 0) {
   process.exit(1);
 }
 
+/**
+ * Prints usage instructions and supported CLI commands.
+ */
 function printHelp() {
   console.log('Usage: node ctx.js <command> [args...]');
   console.log('');

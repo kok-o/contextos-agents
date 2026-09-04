@@ -1,0 +1,10 @@
+name: react-best-practices
+description: React and Next.js performance optimization guidelines from Vercel Engineering.
+tags:
+  - react
+  - nextjs
+  - performance
+  - vercel
+version: 1.0.0
+requires:
+  - react
