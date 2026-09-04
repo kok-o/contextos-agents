@@ -92,6 +92,49 @@ const AnalyticsChart = dynamic(
 );
 ```
 
+### 5. Next.js 15+ Async Request APIs (`async-params`)
+
+In Next.js 15+, `params`, `searchParams`, `cookies()`, and `headers()` are asynchronous and must be awaited:
+
+```tsx
+// [GOOD] Next.js 15+ Page Component
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function UserPage({ params, searchParams }: PageProps) {
+  const { id } = await params;
+  const { tab } = await searchParams;
+  const user = await getUser(id);
+
+  return <UserProfile user={user} activeTab={tab as string} />;
+}
+```
+
+### 6. Non-Blocking Background Tasks with `after()`
+
+To execute logging, analytics, or cache priming without delaying the user's HTTP response:
+
+```typescript
+import { after } from 'next/server';
+
+export async function POST(request: Request) {
+  const data = await request.json();
+  const result = await processOrder(data);
+
+  // Executes asynchronously AFTER the response stream has completed
+  after(async () => {
+    await sendSlackNotification(result);
+    await indexOrderInSearch(result.id);
+  });
+
+  return Response.json({ success: true, orderId: result.id });
+}
+```
+
+---
+
 ## Code Examples
 
 See `EXAMPLES.md` for detailed code examples and component templates.

@@ -22,6 +22,10 @@ const REQUIRED_SKILLS = [
   'typescript',
   'nextjs',
   'security',
+  'interview-me',
+  'architecture-diagrams',
+  'subagent-orchestrator',
+  'gemini-precision',
 ];
 
 describe('core/skills/ — skill source validation', () => {

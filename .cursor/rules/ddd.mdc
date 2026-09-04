@@ -191,12 +191,45 @@ src/
 │               └── orders.controller.ts
 ```
 
+### The Clean Architecture Dependency Rule
+
+In DDD, dependencies **MUST strictly point inward**:
+
+```
+[ Frameworks & Drivers (Web, DB, UI) ]
+      └──▶ [ Interface Adapters (Controllers, Gateways) ]
+            └──▶ [ Application (Use Cases, CQRS Handlers) ]
+                  └──▶ [ Domain (Entities, Value Objects) ]
+```
+
+- The **Domain layer** has ZERO dependencies on ORMs (Prisma, TypeORM), HTTP frameworks (Express, NestJS), or external SDKs.
+- Repositories are defined as interfaces in the domain/application layer and implemented in the infrastructure layer.
+
+### Domain Events vs Integration Events
+
+1. **Domain Events**: Represent state changes inside a single Bounded Context.
+   - Raised directly inside the Aggregate Root (`order.addItem(...)` raises `OrderItemAdded`).
+   - Dispatched in-process before transaction commit.
+2. **Integration Events**: Published across Bounded Context boundaries to communicate with other services.
+   - Dispatched via Transactional Outbox pattern to message brokers.
+   - Must use backward-compatible schemas with versioning.
+
+### Anti-Corruption Layer (ACL)
+
+When consuming data from an external bounded context or 3rd-party vendor API (e.g. Stripe, Salesforce):
+
+- NEVER import external domain models directly into your domain.
+- Create an **ACL Translator / Adapter** in the infrastructure layer to convert external DTOs into your own Value Objects and Entities.
+
+---
+
 ## Anti-Patterns
 
 - [FAIL] Anemic domain model — entities with only getters/setters, all logic in services
 - [FAIL] Big aggregate — aggregates should be small, focused on invariants
 - [FAIL] Cross-aggregate transactions — use eventual consistency
 - [FAIL] DDD everywhere — use DDD only where complexity justifies it
+- [FAIL] ORM entities leaking into Domain — domain entities must not depend on `@Entity()` or ORM decorators
 
 
 ## Code Examples

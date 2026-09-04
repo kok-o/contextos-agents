@@ -1,0 +1,96 @@
+---
+name: interview-me
+description: >
+  Interactive requirements elicitation skill. Interrogates ambiguous, complex, or high-blast-radius tasks one focused question at a time before any plan or code is written.
+---
+# interview-me
+
+## Overview
+
+Structured requirements interrogation framework inspired by [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). Prevents wasted cycles by transforming vague user intents into crisp, unambiguous architectural constraints through single-question progressive interview loops.
+
+## When to Use
+
+Activate whenever:
+
+- User task has underspecified requirements, open UX decisions, or multiple viable architectural trade-offs.
+- A high-blast-radius change (database migrations, auth refactor, API contract change) is requested.
+- Explicitly triggered via `/spec`, `/interview`, or "ask me questions first".
+
+## Rules & Patterns
+
+### 1. The One-Question-At-A-Time Rule
+
+**Never overwhelm the user with a 10-point interrogation form.**
+
+- Ask **exactly ONE focused question** per turn (or at most two tightly-coupled binary options).
+- Provide the recommended option first with clear rationale: `"(Recommended) Option A because..."`.
+- Always allow write-in or clarification.
+
+### 2. The 4 Interrogation Dimensions
+
+Interrogate in this strict priority order:
+
+1. **Business Outcome & Invariants**:
+   - What core problem does this solve?
+   - What behavior is strictly forbidden?
+2. **Scope Boundaries (In vs Out)**:
+   - What must be delivered in this atomic slice?
+   - What is explicitly deferred to later?
+3. **Technical Constraints**:
+   - Versions, libraries, database engines, backwards compatibility requirements.
+4. **Edge Cases & Failure Modes**:
+   - What happens on network disconnect, empty response, or unauthorized token?
+
+### 3. Progressive Synthesis
+
+After each user answer:
+
+- Acknowledge the decision and update the mental model.
+- If more critical decisions remain, ask the next question.
+- Once 2–4 key questions are resolved, synthesize the formal Feature Spec and transition to `engineering-workflow` (`[PHASE: Plan]`).
+
+---
+
+## Code Examples
+
+### Interactive Interview Turn Example
+
+```markdown
+**Question 1 of 3 (Authentication Strategy)**
+
+Before implementing the API authentication layer, we need to align on session storage:
+
+1. **(Recommended) HTTP-only Secure Cookies with Refresh Tokens**:
+   - *Why*: Immune to XSS token theft, standard for web dashboards.
+2. **Bearer Token in Authorization Header**:
+   - *Why*: Ideal if this API will also be consumed by mobile apps or third-party CLI tools.
+
+Which model fits your architecture best?
+```
+
+---
+
+## Validation Checklist
+
+- [ ] Question addresses an actual ambiguity (never ask about obvious defaults).
+- [ ] Exactly one question (or two tightly coupled choices) asked.
+- [ ] Recommendation provided with clear engineering justification.
+- [ ] User response incorporated into the final spec before coding.
+
+---
+
+## Common Mistakes
+
+- **Asking obvious questions**: Asking "Do you want error handling?" instead of making a sensible senior default.
+- **Interrogation bombardment**: Dumping a list of 8 open-ended questions in a single wall of text.
+- **Ignoring user answers**: Asking a question, receiving an answer, and then implementing something else.
+
+---
+
+## Integration Notes
+
+- Runs at the start of `engineering-workflow` Phase 1 (`/spec`).
+- Interacts with `gstack-roles` (`[ROLE: Product Manager]` or `[ROLE: Architect]`).
+- Hands off to `ponytail-mindset` once scope is defined.
+

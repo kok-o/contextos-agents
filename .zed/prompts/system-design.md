@@ -325,6 +325,44 @@ CLOSED (normal) → [failures > threshold] → OPEN (fail fast)
 
 ---
 
+## Designing Data-Intensive Applications (DDIA) Patterns
+
+Based on _Designing Data-Intensive Applications_ (Martin Kleppmann) and [ciembor/agent-rules-books](https://github.com/ciembor/agent-rules-books).
+
+### 1. The Dual-Write Problem & Transactional Outbox
+
+**The Anti-Pattern**: Updating the database and sending a message to a broker (Kafka, RabbitMQ, SQS) in two separate operations. If one fails, the system enters an inconsistent state.
+
+**The Solution**: Write the business entity AND an event record to an `outbox` table in the SAME database transaction:
+
+```sql
+BEGIN TRANSACTION;
+  UPDATE orders SET status = 'PAID' WHERE id = 'ord_123';
+  INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, created_at)
+  VALUES ('evt_456', 'Order', 'ord_123', 'OrderPaid', '{"amount": 99.00}', NOW());
+COMMIT;
+```
+
+A background process (polling worker or Debezium CDC) reads `outbox_events`, delivers them to the message broker, and marks them as published.
+
+### 2. Idempotency Invariant for Mutations
+
+All write operations exposed over HTTP or queues MUST support deduplication:
+
+- Accept an `Idempotency-Key` header (UUID or client-generated hash).
+- Store key with status in Redis or DB with a TTL (e.g., 24 hours).
+- If the key is already `COMPLETED`, return the cached response immediately without re-executing.
+- If `IN_PROGRESS`, return HTTP `409 Conflict` or queue retry.
+
+### 3. Read-Your-Own-Writes Consistency
+
+When using read replicas, replication lag (even 50ms) causes users to not see their own changes immediately after saving:
+
+- **Rule**: Route user reads to the primary database for `N` seconds (e.g., 5s) following any mutation by that user.
+- Route all other queries and background jobs to read replicas.
+
+---
+
 ## Architecture Decision Template
 
 When proposing any backend architecture, include:

@@ -69,6 +69,15 @@ Order Service → Payment Service → Inventory Service → Shipping Service
 Compensating transactions reverse each step
 ```
 
+1. **Choreography (Event-Driven)**: Each service emits events, downstream services listen and react. Best for simple flows (≤ 3 steps) where a central coordinator adds unnecessary coupling.
+2. **Orchestration (State Machine)**: A dedicated Saga Orchestrator controls the flow and explicitly triggers compensating transactions on failure (e.g., `RefundPayment`, `ReleaseInventoryReservation`). Mandatory for complex multi-step workflows.
+
+### Dead Letter Queues (DLQ) & Poison Pill Handling
+
+- **Never retry infinitely**: Set max retries (e.g. 3) with exponential backoff and jitter.
+- After max retries, route failed messages to a **Dead Letter Queue (DLQ)** with error metadata.
+- Provide alerting on DLQ depth and an admin CLI/script to replay DLQ messages.
+
 ## CQRS (Command Query Responsibility Segregation)
 
 Separate read and write models:

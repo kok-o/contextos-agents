@@ -26,32 +26,31 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 ---
 
-## Core Principle
+### Core Principle
 
 > **The best code is code you don't write.**  
 > Write only what the task strictly needs. Lazy about the solution, never about reading and understanding.
 
 ---
 
-## The 7-Rung Decision Ladder
+### The 7-Rung Decision Ladder
 
 **Before writing ANY code**, stop and check each rung in order. Stop at the first rung that holds:
 
-```
+```text
 1. Does this need to exist?
    → No: YAGNI — skip it entirely. Don't build for "future use."
 
 2. Already in this codebase or component library?
    → Yes: Reuse it. Don't rewrite. Call the existing function/component/module.
-   → **For UI**: Check shadcn/ui FIRST. Before building a complex UI element from scratch, check if it exists in the component library. If yes, generate the install command: `npx shadcn@latest add dialog` — never manually rewrite what shadcn already provides.
+   → For UI: Check shadcn/ui FIRST. Before building a complex UI element from scratch, check if it exists in the component library. If yes, generate the install command: npx shadcn@latest add dialog — never manually rewrite what shadcn already provides.
 
 3. Standard library does it?
-   → Yes: Use it. Don't write `formatDate()` — use Intl.DateTimeFormat or dayjs.
+   → Yes: Use it. Don't write formatDate() — use Intl.DateTimeFormat or dayjs.
 
 4. Native platform feature?
    → Yes: Use it. Don't install flatpickr when <input type="date"> exists.
-   → **Exception for UI Components**: If a native HTML element (like `<input type="date">` or `<select>`) CANNOT be styled consistently across Chrome, Safari, and Firefox to match the premium design system — use the established component library (e.g., shadcn/ui `<DatePicker>`, `<Select>`) instead. Cross-browser inconsistency is a legitimate reason to NOT use native.
-             Don't install lodash.debounce when setTimeout exists.
+   → Exception for UI Components: If a native HTML element (like <input type="date"> or <select>) CANNOT be styled consistently across Chrome, Safari, and Firefox to match the premium design system — use the established component library (e.g., shadcn/ui <DatePicker>, <Select>) instead. Cross-browser inconsistency is a legitimate reason to NOT use native.
 
 5. Already-installed dependency?
    → Yes: Use it. Don't install a new library to do what an existing one can.
@@ -65,11 +64,34 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 ---
 
-## The Sacred Exceptions (NEVER Cut These)
+### The Rule of Three (Do Not Abstract Early)
+
+- **First occurrence**: Write it inline directly where it is needed.
+- **Second occurrence**: Duplicate it cleanly. Duplication is cheaper than the wrong abstraction.
+- **Third occurrence**: Only now extract a shared helper or utility.
+
+---
+
+### 10 Concrete Over-Engineering Red Flags
+
+1. Creating a `GenericRepository<T>` when you only have 2 database tables.
+2. Creating a custom state machine or complex reducer for 2 boolean flags.
+3. Adding a configuration file or environment variables for values that never change.
+4. Writing custom retry/circuit-breaker logic when native `fetch` or SDK already handles it.
+5. Building a generic `BaseService` with 15 hook methods implemented by only one class.
+6. Wrapping every standard library call in a custom helper class (`StringUtils`, `DateUtils`, `ObjectUtils`).
+7. Creating a multi-level folder structure (`domains/auth/adapters/driving/rest/controllers/dto/`) for a 30-line microservice.
+8. Writing custom mock frameworks when Vitest/Jest/Node test runner provide standard mocks.
+9. Installing a 50KB npm package for a 3-line utility (e.g. `left-pad`, `is-number`, `deep-clone`).
+10. Pre-optimizing caching and indexing for endpoints serving 10 requests a day.
+
+---
+
+### The Sacred Exceptions (NEVER Cut These)
 
 The ladder applies to features and abstractions. These 4 areas are **non-negotiable** and **never simplified away**:
 
-### 1. Input Validation
+#### 1. Input Validation
 
 ```javascript
 // [GOOD] Always validate — even if "internal" API
@@ -77,7 +99,7 @@ function createUser(data) {
   if (!data.email || !isValidEmail(data.email)) {
     throw new ValidationError('Invalid email');
   }
-  // ...
+  return db.insert('users', data);
 }
 
 // [BAD] Never skip validation for "speed"
@@ -86,7 +108,7 @@ function createUser(data) {
 }
 ```
 
-### 2. Error Handling
+#### 2. Error Handling
 
 ```javascript
 // [GOOD] Always handle errors explicitly
@@ -97,183 +119,75 @@ async function fetchUser(id) {
     return user;
   } catch (err) {
     logger.error('fetchUser failed', { id, err });
-    throw err; // re-throw for caller to handle
+    throw err;
   }
 }
-
-// [BAD] Never silently swallow errors
-async function fetchUser(id) {
-  try {
-    return await db.findById(id);
-  } catch (e) {} // NEVER
-}
 ```
 
-### 3. Security Guards
+#### 3. Security Checks
 
-```javascript
-// [GOOD] Always check authorization before data access
-app.get('/users/:id/data', authMiddleware, async (req, res) => {
-  if (req.user.id !== req.params.id && !req.user.isAdmin) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  // ...
-});
+- Authorization check BEFORE every query or mutation.
+- Parameterized queries everywhere — zero string concatenation in SQL.
+- Strict sanitization of all rendered HTML and markdown.
 
-// [BAD] Never skip auth for "internal" routes
-app.get('/users/:id/data', async (req, res) => {
-  // No auth check — NEVER
-});
-```
+#### 4. Type Safety & Behavioral Tests
 
-### 4. Data Loss Prevention
-
-```javascript
-// [GOOD] Always confirm before destructive operations
-async function deleteAccount(userId) {
-  const user = await db.findById(userId);
-  if (!user) throw new NotFoundError('User not found');
-  
-  await db.transaction(async (trx) => {
-    await trx('user_data').where({ userId }).delete();
-    await trx('users').where({ id: userId }).delete();
-  });
-}
-```
+- Strict TypeScript types — no `any` evasion.
+- Tests covering happy path, 4xx, and 5xx edge cases.
 
 ---
-
-## Practical Examples
-
-### The Date Picker Problem
-
-[FAIL] **What AI usually does** (over-build):
-
-```bash
-npm install flatpickr
-## Creates: DatePickerWrapper.jsx (45 lines)
-## Creates: useDatePicker.js (30 lines)  
-## Creates: DatePickerStyles.css (60 lines)
-## Total: 135 lines + 1 dependency
-```
-
-[PASS] **Ponytail approach** (use rung 4 — native platform):
-
-```html
-<!-- ponytail: browser has one -->
-<input type="date" name="date" />
-```
-
-Total: 1 line. 0 dependencies.
-
----
-
-### The Utility Function Problem
-
-[FAIL] **Over-build**:
-
-```javascript
-// Creates entire utilities.js module
-export const StringUtils = {
-  capitalize: (s) => s.charAt(0).toUpperCase() + s.slice(1),
-  truncate: (s, n) => s.length > n ? s.slice(0, n) + '...' : s,
-  // 10 more methods "for future use"
-};
-```
-
-[PASS] **Ponytail** (rung 6 — one line, or rung 2 — already installed):
-
-```javascript
-// If lodash is already installed (rung 5):
-import { capitalize, truncate } from 'lodash';
-
-// If not (rung 6 — one line where needed):
-const label = name.charAt(0).toUpperCase() + name.slice(1);
-```
-
----
-
-### The API Client Problem
-
-[FAIL] **Over-build**:
-
-```javascript
-// Creates: ApiClient.js (200 lines of abstraction)
-// Creates: HttpService.js (retry logic, interceptors, "enterprise patterns")
-// Creates: ApiConfig.js (configuration layer)
-```
-
-[PASS] **Ponytail** (rung 3 — stdlib for client APIs):
-
-```javascript
-// fetch is built-in. Use it directly.
-const user = await fetch(`/api/users/${id}`).then(r => r.json());
-```
-
-[PASS] **Ponytail for Next.js App Router** — skip the API route entirely (rung 2 — use what the framework provides):
-
-```typescript
-// Instead of: /api/users/[id]/route.ts + fetch wrapper
-// Use a Server Action directly — no API endpoint needed:
-"use server"
-export async function updateUser(id: string, data: UpdateUserInput) {
-  const session = await getSession() // auth check — never skip
-  if (session.userId !== id) throw new Error("Forbidden")
-  return db.users.update(id, data) // one line
-}
-// Caller: just import and call updateUser() directly from the component
-```
-
-
-## Decision Log Format
-
-When the ponytail ladder prevents over-building, document it:
-
-```javascript
-// ponytail: browser's <input type="date"> chosen over flatpickr (rung 4)
-// ponytail: existing `formatCurrency` in utils.js reused (rung 2)
-// ponytail: inline validation instead of separate validator class (rung 6)
-```
-
----
-
-## What This Skill Does NOT Minimize
-
-Do NOT apply the ladder to:
-
-- **Tests** — write comprehensive tests, even if verbose
-- **Docs** — write clear documentation, even if long
-- **Error messages** — write descriptive, actionable error messages
-- **Security checks** — write thorough authorization and validation
-- **Accessibility** — write proper ARIA, labels, and semantic HTML
-
----
-
-## Anti-Patterns This Eliminates
-
-| Over-Build Pattern | Ponytail Response |
-| --- | --- |
-| "We might need this later" | YAGNI. Ship what's needed now. |
-| Factory class for one object | Use a plain function |
-| Interface for one implementation | Skip the interface |
-| 5-file abstraction for 3 lines | Inline it |
-| New library for native feature | Use rung 4 (platform native) |
-| Copy-pasting existing logic | Find and reuse (rung 2) |
-| Wrapper around wrapper around util | Read what's installed (rung 5) |
-
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+### Native Platform vs Over-Built Package
+
+**Over-build**:
+
+```bash
+npm install flatpickr
+# Creates DatePickerWrapper.jsx (45 lines) + useDatePicker.js (30 lines) + styles (60 lines)
+```
+
+**Ponytail approach (rung 4)**:
+
+```html
+<input type="date" name="date" aria-label="Appointment date" />
+```
+
+### Next.js App Router Server Action vs REST Endpoint
+
+```typescript
+// Instead of /api/users/[id]/route.ts + custom fetch wrapper:
+"use server";
+
+export async function updateUser(id: string, data: UpdateUserInput) {
+  const session = await getSession(); // auth check — never skip
+  if (session?.userId !== id) throw new Error("Forbidden");
+  return db.users.update(id, data);
+}
+```
+
+---
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Every new dependency has been verified: cannot be solved with native platform or existing dependencies.
+- [ ] No single-use abstractions, wrappers, or interfaces created.
+- [ ] Sacred exceptions preserved: 100% input validation, explicit error handling, security checks intact.
+- [ ] All code written passes all existing unit and integration tests.
+
+---
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+- **Cutting validation to write less code**: The goal is less architecture/boilerplate, never less safety.
+- **Creating utilities "for future use"**: Only write utilities when used 3+ times.
+- **Rewriting component libraries**: Building custom modals, tabs, or tooltips from scratch when shadcn/ui or Radix is already in the project.
+
+---
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+- Runs at the start of every `[PHASE: Build]` and `[PHASE: Review]`.
+- Enforces minimalism alongside `system-design` (think at scale, implement minimally).
+- Pairs with `impeccable-design` for UI tasks.

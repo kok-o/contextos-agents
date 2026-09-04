@@ -44,6 +44,9 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | **engineering-workflow** | `engineering-workflow/SKILL.md` | **Every task** — defines the DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline |
 | **gstack-roles** | `gstack-roles/SKILL.md` | **Every task** — declare your specialist role before each phase |
 | **ponytail-mindset** | `ponytail-mindset/SKILL.md` | **Every BUILD phase** — run the 7-rung ladder before writing any code |
+| **interview-me** | `interview-me/SKILL.md` | **Before /spec** — when requirements are ambiguous or need interactive clarification |
+| **subagent-orchestrator** | `subagent-orchestrator/SKILL.md` | **Parallel tasks** — decompose and delegate work across isolated subagents |
+| **gemini-precision** | `gemini-precision/SKILL.md` | **All Gemini tasks** — zero assumptions, zero placeholders, surgical blast radius, test proof |
 
 ### Frontend Skills
 
@@ -86,6 +89,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | **testing** | `testing/SKILL.md` | Vitest, RTL, Playwright, TDD/BDD testing |
 | **docker** | `docker/SKILL.md` | Dockerfiles, multi-stage, container security, compose |
 | **decisions** | `decisions/SKILL.md` | Making architectural choices |
+| **architecture-diagrams** | `architecture-diagrams/SKILL.md` | Interactive animated SVG/HTML architecture and sequence diagrams |
 | **adapters** | `adapters/SKILL.md` | Building system integrations |
 | **generators** | `generators/SKILL.md` | Code generation patterns |
 
@@ -170,6 +174,18 @@ role: Staff Engineer + Senior Designer (if UI)
 trigger: "ship" OR "deploy" OR "release" OR "production"
 load: [engineering-workflow (ship phase)]
 role: Release Engineer
+
+trigger: "interview" OR "clarify" OR "ask me questions" OR "уточни требования"
+load: [interview-me, engineering-workflow]
+role: Product Manager
+
+trigger: "architecture diagram" OR "flow diagram" OR "sequence diagram" OR "нарисуй схему"
+load: [architecture-diagrams, system-design]
+role: Architect
+
+trigger: "subagent" OR "parallel tasks" OR "delegate" OR "делегируй"
+load: [subagent-orchestrator, engineering-workflow, ponytail-mindset]
+role: Staff Engineer (Orchestrator)
 ```
 
 ### By Technology Detected in Codebase
@@ -283,6 +299,9 @@ Use this table to instantly determine which skills to load:
 | Code review | `engineering-workflow` + `impeccable-design` (if UI) | Staff Engineer |
 | Architecture decision | `system-design` + `ddd` + `microservices` + `decisions` | Architect |
 | Full-stack feature | All domain-relevant skills | CEO → Architect → Senior Dev |
+| Requirements ambiguity | `interview-me` + `engineering-workflow` | Product Manager |
+| Architecture visualization | `architecture-diagrams` + `system-design` | Architect |
+| Multi-agent parallel tasks | `subagent-orchestrator` + `engineering-workflow` | Staff Engineer (Orchestrator) |
 
 ---
 

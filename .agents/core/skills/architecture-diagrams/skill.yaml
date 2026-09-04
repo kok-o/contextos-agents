@@ -1,0 +1,8 @@
+name: architecture-diagrams
+description: Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows.
+tags:
+  - architecture
+  - diagrams
+  - system-design
+  - visualization
+version: 1.0.0

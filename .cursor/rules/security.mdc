@@ -6,95 +6,63 @@ alwaysApply: false
 
 # Skill: Application Security
 
-# Application Security
+# security
 
 ## Overview
 
-Enforces zero-trust defense-in-depth, OWASP Top 10 mitigation, cryptographic hardening, and sensitive data leakage protection across all services and routes.
+Enforces zero-trust defense-in-depth, OWASP API Top 10 mitigation, cryptographic hardening, sensitive data leakage protection, and AI/LLM safety across all services, endpoints, and agent integrations.
 
 ## When to Use
 
-Activate whenever writing authentication, authorization, session management, database queries, cryptography, external API integration, or user input handling.
+Activate whenever writing authentication, authorization, session management, database queries, cryptography, external API integrations, user input handling, or agent tool calling.
 
-## Negative Constraints (What NOT to Do)
+## Rules & Patterns
+
+### Negative Constraints (What NOT to Do)
 
 1. **NEVER use standard string comparison (`===`) for secrets/hashes**: Always use `crypto.timingSafeEqual` to prevent timing attacks.
 2. **NEVER store sensitive JWT access/refresh tokens in `localStorage`**: Store tokens in `httpOnly`, `Secure`, `SameSite=Strict` cookies.
 3. **NEVER return raw database/internal error messages or stack traces to the client**: Return standardized generic error codes (`INTERNAL_SERVER_ERROR`) and log details internally.
-4. **NEVER trust client-provided IDs for authorization without tenant/ownership checks**: Always verify `where: { id, userId: session.userId }` to prevent Insecure Direct Object References (IDOR).
+4. **NEVER trust client-provided IDs for authorization without tenant/ownership checks**: Always verify `where: { id, userId: session.userId }` to prevent Broken Object Level Authorization (BOLA/IDOR).
 5. **NEVER disable CSRF protection, CORS allow-all (`*`), or TLS verification (`NODE_TLS_REJECT_UNAUTHORIZED=0`) in production**: Always enforce strict origin whitelists and HTTPS.
+6. **NEVER pass un-sanitized third-party content directly into system prompts or shell execution**: Treat all external data as potentially adversarial.
 
-## Rules & Patterns
+---
 
-## OWASP Top 10
+### OWASP Top 10 for Modern APIs & Full-Stack
 
-### 1. Injection (SQL, NoSQL, Command)
+#### 1. Injection (SQL, NoSQL, Command)
 
-- **Always use parameterized queries** — never concatenate user input into SQL
-- Use ORM (Prisma, SQLAlchemy, TypeORM) — they parameterize by default
-- Validate and sanitize all user input
+- Always use parameterized queries — never concatenate user input into SQL or shell commands.
+- Use ORMs (Prisma, Drizzle, SQLAlchemy) with strict schema validation.
+- Validate and sanitize all user input before processing.
 
-### 2. Broken Authentication
+#### 2. Broken Object Level Authorization (BOLA / IDOR)
 
-- Use bcrypt/argon2 for password hashing (cost factor ≥ 12)
-- JWT: short-lived access tokens (15min), refresh tokens (7 days)
-- Rate limit login attempts
-- Implement account lockout after N failed attempts
-- MFA for sensitive operations
+- Validate user ownership on EVERY database read, update, or delete:
 
-### 3. Sensitive Data Exposure
+  ```typescript
+  // [GOOD] Scoped to authenticated user
+  const doc = await db.document.findFirst({
+    where: { id: documentId, tenantId: session.tenantId }
+  });
+  ```
 
-- HTTPS everywhere — redirect HTTP to HTTPS
-- Encrypt sensitive data at rest (AES-256)
-- Never log passwords, tokens, or PII
-- Use environment variables for secrets
+#### 3. Broken Authentication & Session Management
 
-### 4. XML/XXE
+- Use Argon2id or bcrypt (cost factor ≥ 12) for password hashing.
+- Short-lived access tokens (15 min) + secure HTTP-only refresh tokens.
+- Enforce rate limiting and brute-force lockouts on auth endpoints.
 
-- Disable external entity processing
-- Use JSON instead of XML where possible
+#### 4. SSRF (Server-Side Request Forgery)
 
-### 5. Broken Access Control
+- Restrict server-side URL fetching: validate URL scheme (`https:` only), resolve IP, and block private CIDR blocks (`10.0.0.0/8`, `127.0.0.0/8`, `169.254.0.0/16`, `192.168.0.0/16`).
 
-- Default deny — explicitly grant access
-- RBAC (Role-Based Access Control) or ABAC (Attribute-Based)
-- Check authorization on every request, not just UI
-- Don't rely on client-side validation for security
+#### 5. Security Misconfiguration & Headers
 
-### 6. Security Misconfiguration
+Enforce modern production security headers:
 
-- Remove default credentials
-- Disable debug mode in production
-- Security headers (see below)
-- Keep dependencies updated
-
-### 7. XSS (Cross-Site Scripting)
-
-- Escape all output by default
-- Content-Security-Policy header
-- HttpOnly + Secure + SameSite cookies
-- Use framework's built-in XSS protection
-
-### 8. Insecure Deserialization
-
-- Validate and schema-check all input (Zod, Pydantic, class-validator)
-- Don't deserialize untrusted data
-
-### 9. Insufficient Logging
-
-- Log all authentication events
-- Log authorization failures
-- Log input validation failures
-- Include request ID for tracing
-
-### 10. SSRF (Server-Side Request Forgery)
-
-- Validate and allowlist URLs
-- Don't let users control server-side HTTP requests
-
-## Security Headers
-
-```
+```http
 Content-Security-Policy: default-src 'self'
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
@@ -103,50 +71,92 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
 
-## Authentication Patterns
+---
 
-### JWT Flow
+### AI Agent & LLM Security Invariants
 
-```
-Login → Access Token (15min) + Refresh Token (7d, HttpOnly cookie)
-Request → Authorization: Bearer <access_token>
-Expired → POST /auth/refresh (sends refresh cookie) → new access token
-```
+When building AI workflows, tools, or MCP servers:
 
-### OAuth2 Flow
+1. **Prompt Injection Defense**:
+   - Clearly delineate untrusted user/web content using boundary markers (e.g. `<untrusted_content>` tags).
+   - Never allow untrusted content to override system instructions or tool execution permissions.
+2. **Tool Execution Boundaries**:
+   - Destructive operations (database drops, file deletions, payment triggers) MUST require explicit user confirmation.
+   - Restrict file system tools to the workspace root — block directory traversal (`../`).
+3. **Secret Masking & Output Sanitization**:
+   - Scrub API keys (`sk-...`, `Bearer ...`), tokens, and credentials before writing to agent logs or step summaries.
 
-```
-Redirect → Provider (Google, GitHub) → Callback → Create/link user → JWT
-```
-
-## Checklist Before Deploy
-
-- [ ] All secrets in environment variables
-- [ ] HTTPS enabled
-- [ ] Security headers configured
-- [ ] Input validation on all endpoints
-- [ ] Rate limiting enabled
-- [ ] CORS configured (not `*`)
-- [ ] Error messages don't leak internals
-- [ ] Dependency audit (`npm audit`, `pip audit`)
-- [ ] Logging for security events
-
+---
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+### Timing-Safe Secret Verification
+
+```javascript
+import crypto from 'node:crypto';
+
+export function verifyWebhookSignature(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');
+  const sigBuffer = Buffer.from(signature, 'utf8');
+
+  if (digest.length !== sigBuffer.length) return false;
+  return crypto.timingSafeEqual(digest, sigBuffer);
+}
+```
+
+### Safe SSRF Prevention Wrapper
+
+```typescript
+import dns from 'node:dns/promises';
+
+export async function validateSafeUrl(urlString: string): Promise<URL> {
+  const parsed = new URL(urlString);
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Only HTTPS protocol is permitted');
+  }
+
+  const { address } = await dns.lookup(parsed.hostname);
+  if (
+    address.startsWith('127.') ||
+    address.startsWith('10.') ||
+    address.startsWith('192.168.') ||
+    address === '169.254.169.254'
+  ) {
+    throw new Error('Access to private/metadata IP addresses is blocked');
+  }
+
+  return parsed;
+}
+```
+
+---
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] All database queries parameterized or managed by type-safe ORM.
+- [ ] BOLA/IDOR prevented: all entity queries scoped by tenant/user id.
+- [ ] Cookies set with `HttpOnly`, `Secure`, and `SameSite=Strict` or `Lax`.
+- [ ] Passwords hashed with Argon2id / bcrypt.
+- [ ] Security headers active in middleware/reverse proxy.
+- [ ] No secrets or tokens checked into source control or exposed in logs.
+
+---
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+- **Trusting client-side claims**: Checking role or permissions only on the frontend without server-side validation.
+- **Timing attacks on tokens**: Comparing tokens with `token === expectedToken` instead of `timingSafeEqual`.
+- **Exposing internal stack traces**: Returning full error objects to client in production.
+- **Unvalidated redirects / URLs**: Allowing arbitrary URLs in redirect or fetch parameters.
+
+---
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+- Runs in the REVIEW phase for every backend route, auth flow, and database mutation.
+- Integrates with `engineering-workflow` during Phase 5 (5-axis quality gate).
+- Pairs with `system-design` to mandate secure network boundaries and authorization layers.
 
 
 # Application Security Examples — Anti-patterns vs ContextOS Standard

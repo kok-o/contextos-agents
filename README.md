@@ -69,37 +69,48 @@ node .agents/ctx.js export all
 
 - **AGENTS.md** — The core ruleset. Automatically routes skills by task type and technology detected in your codebase.
 
-### Skills (28 total)
+### Skills (38 total)
 
 | Category | Skill | What It Does |
 | ---------- | ------- | ------------- |
-| Core | `gstack-roles` | 23 specialist roles (PM, Architect, QA Lead, etc.) — AI declares its role before each task |
 | Core | `engineering-workflow` | Enforces DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline and slash commands |
+| Core | `gstack-roles` | 23 specialist roles (PM, Architect, QA Lead, etc.) — AI declares its role before each task |
 | Core | `ponytail-mindset` | 7-rung decision ladder before writing any code. Reduces code output ~54% |
-| Frontend | `ui-ux-pro` | Planning guide for UI: color systems, typography, Framer Motion, shadcn/ui patterns |
+| Core | `interview-me` | Progressive single-question requirements elicitation before drafting specs |
+| Core | `subagent-orchestrator` | Multi-agent task decomposition, context boundary isolation, and merge synthesis |
+| Core | `gemini-precision` | High-precision engineering guardrails, zero-assumption verification, and zero-placeholder output |
+| Frontend | `ui-ux-pro` | Planning guide for UI: color systems, typography, Tailwind v4 `@theme`, Framer Motion |
 | Frontend | `impeccable-design` | 50 deterministic QA rules for design review (typography, color, layout, animation) |
 | Frontend | `react` | Modern React 19, concurrency, state colocation, `useOptimistic`, and render optimization |
-| Frontend | `nextjs` | Next.js App Router, RSC, `React.cache()`, Server Actions, and bundle optimization |
+| Frontend | `react-best-practices` | Vercel engineering standards, eliminating async waterfalls, bundle trace optimization |
+| Frontend | `nextjs` | Next.js 15+ App Router, RSC, `after()`, `React.cache()`, Server Actions, and PPR |
 | Frontend | `typescript` | Type-safe code, generics, config, and invariant type assertions |
-| Frontend | `ui-design` | Component library design, design tokens |
-| Frontend | `ux-design` | User flow design, interaction patterns |
+| Frontend | `state-management` | Zustand, TanStack Query, client/server state separation |
+| Frontend | `ui-design` | Component library design, design tokens, and shadcn/ui patterns |
+| Frontend | `ux-design` | User flow design, interaction patterns, and user journey optimization |
 | Frontend | `web-accessibility` | ARIA dialogs, focus traps, WCAG 2.1 compliance, and `:focus-visible` standards |
-| Backend | `system-design` | Pre-design checklist, Serverless/Edge patterns, BFF/Server Actions, DDD isolation |
-| Backend | `database` | Schema design, PostgreSQL indexing, Prisma/Drizzle ORMs, transactions, and N+1 prevention |
-| Backend | `node` | Node.js server patterns |
-| Backend | `fastapi` | FastAPI / Python backend |
-| Backend | `nestjs` | NestJS framework |
-| Backend | `microservices` | Service decomposition, bounded contexts |
-| Backend | `ddd` | Domain-Driven Design, domain modeling, and aggregate invariants |
-| Cross | `security` | Auth patterns, timing attack prevention, input validation, SQL injection prevention |
-| Cross | `performance` | Core Web Vitals, waterfall elimination, and layout stability |
+| Frontend | `brutalist-design` | Raw mechanical interfaces, Swiss print typography, and high-contrast styling |
+| Frontend | `minimalist-design` | Clean, content-first editorial interfaces with generous negative space |
+| Frontend | `soft-design` | Warm, low-contrast premium surfaces with subtle atmospheric depth |
+| Frontend | `redesign-audit` | Systematic UI codebase auditing and refactoring without breaking existing features |
+| Backend | `system-design` | DDIA patterns (Outbox, CDC, Idempotency), serverless pooling, and CAP trade-offs |
+| Backend | `database` | Zero-downtime migrations (expand/contract), PostgreSQL indexing, and serverless pooling |
+| Backend | `node` | Node.js asynchronous event loop and server runtime best practices |
+| Backend | `fastapi` | FastAPI and Pydantic v2 high-performance Python backends |
+| Backend | `nestjs` | Enterprise modular backend architecture and dependency injection |
+| Backend | `microservices` | Service boundaries, Saga orchestration/choreography, and Dead Letter Queues |
+| Backend | `ddd` | Domain-Driven Design, Aggregate invariants, Domain Events, and Clean Architecture |
+| Cross | `security` | Zero-trust auth, OWASP API Top 10, SSRF IP blocking, and Prompt Injection defense |
+| Cross | `performance` | Core Web Vitals 2026 (INP < 200ms, LCP < 2.5s), waterfall elimination |
+| Cross | `vercel-optimize` | Edge caching, stale-while-revalidate, and Vercel platform optimizations |
 | Cross | `testing` | Vitest, React Testing Library behavior testing, and Playwright E2E suites |
 | Cross | `docker` | Multi-stage Dockerfiles, non-root security, and container standards |
-| Cross | `decisions` | Architectural decision records format |
-| Cross | `adapters` | System integration patterns |
-| Cross | `generators` | Code generation patterns |
-| Cross | `context-manager` | Context loading optimization |
-| Cross | `context-os` | ContextOS meta-skill |
+| Cross | `decisions` | Architectural Decision Records (ADR) format and evaluation |
+| Cross | `architecture-diagrams` | Animated, interactive SVG/HTML architecture, sequence, and data-flow diagrams |
+| Cross | `adapters` | Multi-agent system export and configuration generation |
+| Cross | `generators` | Automated PRD, Architecture, and Task generation |
+| Cross | `context-manager` | Smart context token selection and optimization |
+| Cross | `context-os` | ContextOS compiler meta-skill |
 
 ## Slash Command Workflows
 

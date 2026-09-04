@@ -309,11 +309,46 @@ When choosing styles, reference these domains:
 
 ## Role Integration
 
-This skill is used at two stages in the pipeline:
+---
 
-- **Planning stage** (`/plan`): Use as a design guideline when speccing UI components
-- **Review stage** (`/review`): Use as a strict QA checklist — audit every rule before shipping
+## Tailwind CSS v4 (CSS-First Modern Architecture)
 
+In Tailwind CSS v4, styling configuration is native CSS without `tailwind.config.js`:
+
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-surface: #0f172a;
+  --color-surface-muted: #1e293b;
+  --font-sans: "Inter", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+```
+
+- **Zero JavaScript Config**: Define theme variables directly in CSS `@theme`.
+- **Native CSS Variables**: Use `var(--color-...)` for dynamic runtime theming and dark mode.
+- **Dynamic Viewports**: Use `h-dvh` and `min-h-dvh` for full-height layouts that behave properly on mobile browsers.
+
+---
+
+## Core Web Vitals 2026: INP (Interaction to Next Paint)
+
+- **Target**: INP < 200ms (replaces legacy FID).
+- **Rule**: Never block the main thread for > 50ms during click, keypress, or tap event handlers.
+- Wrap heavy UI updates in `startTransition`:
+
+  ```tsx
+  startTransition(() => {
+    setFilter(newFilter);
+  });
+  ```
+
+- Use Web Workers or chunks for heavy client-side filtering and data processing.
+
+---
 
 ## Code Examples
 

@@ -1,0 +1,8 @@
+name: subagent-orchestrator
+description: Subagent delegation and parallel coordination skill. Implements task decomposition, context hand-offs, blast-radius boundary isolation, and conflict-free merge synthesis.
+tags:
+  - subagents
+  - orchestration
+  - multi-agent
+  - workflow
+version: 1.0.0

@@ -48,6 +48,9 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | **engineering-workflow** | `engineering-workflow/SKILL.md` | **Every task** — defines the DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline |
 | **gstack-roles** | `gstack-roles/SKILL.md` | **Every task** — declare your specialist role before each phase |
 | **ponytail-mindset** | `ponytail-mindset/SKILL.md` | **Every BUILD phase** — run the 7-rung ladder before writing any code |
+| **interview-me** | `interview-me/SKILL.md` | **Before /spec** — when requirements are ambiguous or need interactive clarification |
+| **subagent-orchestrator** | `subagent-orchestrator/SKILL.md` | **Parallel tasks** — decompose and delegate work across isolated subagents |
+| **gemini-precision** | `gemini-precision/SKILL.md` | **All Gemini tasks** — zero assumptions, zero placeholders, surgical blast radius, test proof |
 
 ### Frontend Skills
 
@@ -90,6 +93,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | **testing** | `testing/SKILL.md` | Vitest, RTL, Playwright, TDD/BDD testing |
 | **docker** | `docker/SKILL.md` | Dockerfiles, multi-stage, container security, compose |
 | **decisions** | `decisions/SKILL.md` | Making architectural choices |
+| **architecture-diagrams** | `architecture-diagrams/SKILL.md` | Interactive animated SVG/HTML architecture and sequence diagrams |
 | **adapters** | `adapters/SKILL.md` | Building system integrations |
 | **generators** | `generators/SKILL.md` | Code generation patterns |
 
@@ -174,6 +178,18 @@ role: Staff Engineer + Senior Designer (if UI)
 trigger: "ship" OR "deploy" OR "release" OR "production"
 load: [engineering-workflow (ship phase)]
 role: Release Engineer
+
+trigger: "interview" OR "clarify" OR "ask me questions" OR "уточни требования"
+load: [interview-me, engineering-workflow]
+role: Product Manager
+
+trigger: "architecture diagram" OR "flow diagram" OR "sequence diagram" OR "нарисуй схему"
+load: [architecture-diagrams, system-design]
+role: Architect
+
+trigger: "subagent" OR "parallel tasks" OR "delegate" OR "делегируй"
+load: [subagent-orchestrator, engineering-workflow, ponytail-mindset]
+role: Staff Engineer (Orchestrator)
 ```
 
 ### By Technology Detected in Codebase
@@ -287,6 +303,9 @@ Use this table to instantly determine which skills to load:
 | Code review | `engineering-workflow` + `impeccable-design` (if UI) | Staff Engineer |
 | Architecture decision | `system-design` + `ddd` + `microservices` + `decisions` | Architect |
 | Full-stack feature | All domain-relevant skills | CEO → Architect → Senior Dev |
+| Requirements ambiguity | `interview-me` + `engineering-workflow` | Product Manager |
+| Architecture visualization | `architecture-diagrams` + `system-design` | Architect |
+| Multi-agent parallel tasks | `subagent-orchestrator` + `engineering-workflow` | Staff Engineer (Orchestrator) |
 
 ---
 
@@ -506,6 +525,112 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+### Skill: architecture-diagrams
+
+> Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows.
+
+# architecture-diagrams
+
+## Overview
+
+Visual architecture engineering skill inspired by [tt-a1i/archify](https://github.com/tt-a1i/archify). Replaces static ASCII art and rigid default diagrams with crisp, self-contained SVG and responsive HTML diagrams featuring modern dark-mode palettes, pulse animations for event flows, and strict C4-model component boundaries.
+
+## When to Use
+
+Activate whenever:
+
+- Designing or explaining distributed systems, microservices, or full-stack architectures.
+- Visualizing complex auth flows (OAuth2, PKCE), multi-step payment sagas, or CDC outbox data pipelines.
+- User requests an architecture diagram, flow chart, sequence diagram, or visual system design.
+
+## Rules & Patterns
+
+### 1. Diagram Types Supported
+
+1. **System Landscape / C4 Container Diagram**:
+   - Clients (Web, Mobile, Third-party) → API Gateway / CDN → Microservices / Serverless → Storage / Event Brokers.
+2. **Sequence Flow Diagram**:
+   - Step-by-step lifecycles with synchronous requests, asynchronous pub/sub events, and compensating transactions.
+3. **Data Pipeline & Event-Driven Topology**:
+   - Primary DB → Transactional Outbox → CDC (Debezium) → Kafka Topic → Consumers → Materialized Views.
+
+### 2. Aesthetic & Visual Invariants
+
+- **Dark Theme by Default**: Surface `#0B0F19`, containers `#1E293B`, borders `#334155`, text `#F8FAFC`.
+- **Semantic Component Accents**:
+  - Client / Frontend: Sky Blue (`#38BDF8`)
+  - API Gateway / Router: Indigo (`#818CF8`)
+  - Business Services: Emerald Green (`#34D399`)
+  - Databases / Storage: Amber / Orange (`#F59E0B`)
+  - Message Brokers / Event Buses: Purple (`#A855F7`)
+- **Active Data-Flow Motion**: Use subtle CSS `@keyframes` on SVG stroke dashes (`stroke-dasharray`, `stroke-dashoffset`) to show active direction of messages and data streams.
+
+---
+
+## Code Examples
+
+### Standalone Animated SVG Data-Flow Pattern
+
+```html
+<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" class="bg-slate-950 rounded-xl p-4 w-full">
+  <defs>
+    <style>
+      .flow-line { stroke: #38BDF8; stroke-width: 2; stroke-dasharray: 6,6; animation: flow 1.5s linear infinite; }
+      @keyframes flow { to { stroke-dashoffset: -12; } }
+      .box { fill: #1E293B; stroke: #334155; stroke-width: 1.5; rx: 8; }
+      .text-title { fill: #F8FAFC; font-family: sans-serif; font-size: 14px; font-weight: 600; }
+      .text-sub { fill: #94A3B8; font-family: monospace; font-size: 11px; }
+    </style>
+  </defs>
+
+  <!-- Client Node -->
+  <rect x="30" y="70" width="160" height="60" class="box" />
+  <text x="110" y="96" text-anchor="middle" class="text-title">Next.js Client</text>
+  <text x="110" y="114" text-anchor="middle" class="text-sub">React 19 / RSC</text>
+
+  <!-- Data Flow -->
+  <line x1="190" y1="100" x2="330" y2="100" class="flow-line" />
+
+  <!-- API Gateway -->
+  <rect x="330" y="70" width="160" height="60" class="box" />
+  <text x="410" y="96" text-anchor="middle" class="text-title">API Gateway</text>
+  <text x="410" y="114" text-anchor="middle" class="text-sub">Auth & Rate Limiting</text>
+
+  <!-- Flow to Database -->
+  <line x1="490" y1="100" x2="630" y2="100" class="flow-line" />
+
+  <!-- Database -->
+  <rect x="630" y="70" width="140" height="60" class="box" />
+  <text x="700" y="96" text-anchor="middle" class="text-title">PostgreSQL</text>
+  <text x="700" y="114" text-anchor="middle" class="text-sub">Prisma / Outbox</text>
+</svg>
+```
+
+---
+
+## Validation Checklist
+
+- [ ] Diagram clearly identifies all component boundaries, ports, and protocols.
+- [ ] Visual hierarchy is unambiguous (clients on left/top, storage on right/bottom).
+- [ ] Motion/animation is purposeful and lightweight (no heavy canvas frameworks).
+- [ ] Accessible: nodes include semantic labels and readable color contrast.
+
+---
+
+## Common Mistakes
+
+- **Messy cross-overs**: Laying out 20 boxes with overlapping lines instead of grouping into clean C4 layers.
+- **Unlabeled connections**: Lines without protocol (HTTPS, gRPC, WSS) or event payload descriptions.
+- **Overwhelming detail**: Drawing internal class diagrams when the user asked for a system-level overview.
+
+---
+
+## Integration Notes
+
+- Triggers during `system-design` and `microservices` planning phases.
+- Used to generate visual architecture artifacts in Markdown walkthroughs and specs.
+- Pairs with `ui-ux-pro` for consistent aesthetic styling.
 
 ### Skill: brutalist-design
 
@@ -945,11 +1070,11 @@ How this skill interacts with other skills.
 
 > Database architecture, schema design, Prisma, Drizzle ORM, indexing strategies, migrations, and N+1 query resolution.
 
-# Database
+# database
 
 ## Overview
 
-Relational database design, query optimization, migration safety, and ORM usage across PostgreSQL, Prisma, and Drizzle.
+Relational database design, query optimization, migration safety, connection pooling in serverless environments, and ORM usage across PostgreSQL, Prisma, and Drizzle.
 
 ## When to Use
 
@@ -964,31 +1089,83 @@ Activate for tasks involving database schema design, migrations, indexing, relat
 3. **NEVER execute queries in loops (The N+1 Anti-Pattern)**: Always use batch loading (`inArray`, `DataLoader`, or relational `include` / `JOIN`).
 4. **NEVER leave foreign keys without indexes**: In PostgreSQL/MySQL, child foreign key columns must always have an index to prevent table-level locking on cascade deletes.
 5. **NEVER perform multi-entity writes without a database transaction**: Any operation touching multiple records must use `prisma.$transaction` or `db.transaction`.
+6. **NEVER open unpooled database connections in Serverless / Edge functions**: Serverless scale-outs will instantly exhaust PostgreSQL's `max_connections`.
+
+---
+
+### Zero-Downtime Migrations (Expand-and-Contract)
+
+When modifying schemas with zero downtime:
+
+1. **Phase 1 (Expand)**: Add the new column as `NULLABLE` (or with a default value). Deploy the application code that reads from old column and writes to both old and new.
+2. **Phase 2 (Backfill)**: Run an asynchronous batch migration job in chunks (e.g. 1000 rows at a time) to populate data from old column to new column.
+3. **Phase 3 (Contract)**: Update application code to read and write exclusively from the new column.
+4. **Phase 4 (Cleanup)**: Once traffic is fully shifted, remove the old column and mark the new column as `NOT NULL` in a separate migration.
+
+---
+
+### Serverless & Edge Connection Pooling
+
+In serverless environments (AWS Lambda, Vercel Functions):
+
+- Always connect via a connection pooler:
+  - **Prisma**: Use Prisma Accelerate or configure transaction mode connection URLs.
+  - **Drizzle / Node-Postgres**: Use `@neondatabase/serverless` or connect to PgBouncer pooler port (`6543`) with `max: 1` per serverless container.
+- Set strict statement timeouts (e.g. `statement_timeout = '5000'`) to prevent hanging queries from exhausting pool capacity.
+
+---
 
 ### Indexing & Performance Rules
 
 - **B-Tree Indexes**: For high-cardinality filters (`status`, `user_id`, `created_at`).
 - **Composite Indexes**: When querying multiple columns together (`WHERE organization_id = ? AND status = ?`), order columns in index by equality first, range second.
 - **Partial Indexes**: For sparse boolean flags (`WHERE is_processed = false`).
+- **Covering Indexes**: Include frequently selected columns (`INCLUDE (title, created_at)`) to enable index-only scans without table heap access.
+
+---
 
 ## Code Examples
 
-See `EXAMPLES.md` for complete anti-patterns and production code examples.
+### Zero-Downtime Column Rename (Drizzle ORM)
+
+```typescript
+// Step 1 (Expand): Keep old column, add new column
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  fullName: varchar('full_name', { length: 255 }), // new column
+  name: varchar('name', { length: 255 }),           // old column kept during transition
+});
+
+// App write logic during transition:
+await db.insert(users).values({
+  name: input.name,
+  fullName: input.name
+});
+```
+
+---
 
 ## Validation Checklist
 
-- [ ] All database queries select explicit required columns
-- [ ] Foreign keys have matching indexes
-- [ ] Multi-table writes wrapped in ACID transactions
-- [ ] No N+1 queries in loops
+- [ ] All database queries select explicit required columns (no `SELECT *`).
+- [ ] Foreign keys have matching indexes on child tables.
+- [ ] Multi-table writes wrapped in ACID transactions.
+- [ ] No N+1 queries in loops.
+- [ ] Schema migrations tested against expand-and-contract pattern.
+- [ ] Serverless database connection string uses pooling proxy.
+
+---
 
 ## Common Mistakes
 
-- Missing pagination limits (`take / limit`) on list endpoints. See `TROUBLESHOOTING.md`.
+- **Missing pagination limits**: Unbounded `findMany()` calls leading to Out-Of-Memory crashes under production volume.
+- **Locking entire tables**: Adding `NOT NULL` columns with heavy compute defaults in PostgreSQL without concurrent index creation.
+
+---
 
 ## Integration Notes
 
-Interacts with `system-design`, `ddd`, and `security` (multi-tenant scoping).
+- Interacts with `system-design`, `ddd`, and `security` (multi-tenant tenantId scoping).
 
 
 # Database Examples — Anti-patterns vs ContextOS Standard
@@ -1271,12 +1448,45 @@ src/
 │               └── orders.controller.ts
 ```
 
+### The Clean Architecture Dependency Rule
+
+In DDD, dependencies **MUST strictly point inward**:
+
+```
+[ Frameworks & Drivers (Web, DB, UI) ]
+      └──▶ [ Interface Adapters (Controllers, Gateways) ]
+            └──▶ [ Application (Use Cases, CQRS Handlers) ]
+                  └──▶ [ Domain (Entities, Value Objects) ]
+```
+
+- The **Domain layer** has ZERO dependencies on ORMs (Prisma, TypeORM), HTTP frameworks (Express, NestJS), or external SDKs.
+- Repositories are defined as interfaces in the domain/application layer and implemented in the infrastructure layer.
+
+### Domain Events vs Integration Events
+
+1. **Domain Events**: Represent state changes inside a single Bounded Context.
+   - Raised directly inside the Aggregate Root (`order.addItem(...)` raises `OrderItemAdded`).
+   - Dispatched in-process before transaction commit.
+2. **Integration Events**: Published across Bounded Context boundaries to communicate with other services.
+   - Dispatched via Transactional Outbox pattern to message brokers.
+   - Must use backward-compatible schemas with versioning.
+
+### Anti-Corruption Layer (ACL)
+
+When consuming data from an external bounded context or 3rd-party vendor API (e.g. Stripe, Salesforce):
+
+- NEVER import external domain models directly into your domain.
+- Create an **ACL Translator / Adapter** in the infrastructure layer to convert external DTOs into your own Value Objects and Entities.
+
+---
+
 ## Anti-Patterns
 
 - [FAIL] Anemic domain model — entities with only getters/setters, all logic in services
 - [FAIL] Big aggregate — aggregates should be small, focused on invariants
 - [FAIL] Cross-aggregate transactions — use eventual consistency
 - [FAIL] DDD everywhere — use DDD only where complexity justifies it
+- [FAIL] ORM entities leaking into Domain — domain entities must not depend on `@Entity()` or ORM decorators
 
 
 ## Code Examples
@@ -1528,7 +1738,7 @@ coverage
 
 ## Overview
 
-Systematic 6-phase engineering pipeline (DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP) enforcing role declarations, atomic task execution, quality gates, and regression prevention.
+Systematic 6-phase engineering pipeline (DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP) enforcing role declarations, atomic task execution, quality gates, regression prevention, and structured requirements elicitation.
 
 ## When to Use
 
@@ -1536,16 +1746,16 @@ Activate on all project tasks to orchestrate structured development, spec defini
 
 ## Rules & Patterns
 
-Inspired by [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) by Addy Osmani (Google Chrome).
+Inspired by [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) by Addy Osmani (Google Chrome) and [obra/superpowers](https://github.com/obra/superpowers).
 
-## Core Principle
+### Core Principle
 
 > **A junior writes code immediately. A senior writes a spec first.**  
 > You are a senior. You never write code until the spec and plan are approved.
 
 ---
 
-## The 6-Phase Development Pipeline
+### The 6-Phase Development Pipeline
 
 ```
   DEFINE          PLAN           BUILD          VERIFY         REVIEW          SHIP
@@ -1558,18 +1768,26 @@ Inspired by [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills
 [ROLE: Product Manager]  [ROLE: Architect]  [ROLE: Senior Dev]  [ROLE: QA Lead]  [ROLE: Staff Eng]  [ROLE: Release Eng]
 ```
 
-**IRON RULE**: In interactive development, no phase can be skipped and no code is written before `/plan` is approved.
+**IRON RULE**: In interactive development, no phase can be skipped and no code is written before `/plan` is approved.  
 **Direct Build Exception**: When the prompt/caller explicitly requests a standalone implementation, or declares `[PHASE: Build]`, execute the BUILD phase directly and deliver the complete, self-contained production code without conversational pauses.
 
 ---
 
-## Phase 1: DEFINE — /spec
+### Phase 1: DEFINE — /spec
 
-### Auto-activates → `[ROLE: Product Manager]`
+**Auto-activates → `[ROLE: Product Manager]`**
 
 Turn vague intent into a precise, executable specification.
 
-### Spec Template
+#### Step 1.1: The Interview Protocol (`interview-me`)
+
+Before writing the spec, if there is ambiguity, high blast radius, or multiple architectural paths, stop and ask the user **one question at a time** (or up to 2 tightly coupled questions):
+
+1. **Clarify Business Intent**: What user problem are we solving? What is explicitly out of scope?
+2. **Clarify Constraints**: Runtime versions, database engines, performance bounds.
+3. **Clarify Edge Cases**: What happens on offline state, empty lists, unauthorized requests?
+
+#### Step 1.2: Spec Template
 
 ```markdown
 ## Feature Spec: [Feature Name]
@@ -1578,11 +1796,12 @@ Turn vague intent into a precise, executable specification.
 [What pain does this solve? Who has it? How often?]
 
 ### Scope (What's In / Out)
-### 
-- [Specific thing 1]
-- [Specific thing 2]
 
-### 
+**In-Scope**:
+- [Specific item 1]
+- [Specific item 2]
+
+**Out-of-Scope**:
 - [Thing we're NOT doing and why]
 
 ### Technical Approach
@@ -1602,33 +1821,40 @@ Files affected:
 
 ---
 
-## Phase 2: PLAN — /plan
+### Phase 2: PLAN — /plan
 
-### Auto-activates → `[ROLE: Architect]`
+**Auto-activates → `[ROLE: Architect]`**
 
 Break the spec into atomic, independently testable tasks.
 
-### Plan Rules
+#### Thin Vertical Slices (`incremental-implementation`)
 
-- Each task must be **completable in < 2 hours** of focused work
-- Each task must be **independently testable**
-- Tasks must be **ordered by dependency** (blocking tasks first)
-- Each task gets a **test requirement** — no task without a test
+Organize tasks as **Thin Vertical Slices** rather than horizontal layers:
 
-### Plan Template
+- **Bad (Horizontal)**: Task 1: All DB migrations. Task 2: All API routes. Task 3: All UI components. (Nothing works until step 3).
+- **Good (Vertical Slices)**: Slice 1: Minimal DB table + minimal API + minimal UI button end-to-end. Verify and commit. Slice 2: Add validation + edge cases. Slice 3: Polish UI & telemetry.
+
+#### Plan Rules
+
+- Each task must be **completable in < 2 hours** of focused work.
+- Each task must be **independently testable**.
+- Tasks must be **ordered by dependency** (blocking tasks first).
+- Each task gets a **test requirement** — no task without a test.
+
+#### Plan Template
 
 ```markdown
 ## Implementation Plan: [Feature Name]
 
 ### Tasks
 
-**Task 1: [Name]** (est. 30min)
+**Task 1: [Slice 1 Name]** (est. 30min)
 - What: [Specific implementation detail]
 - Files: [file1.js, file2.js]  
 - Test: [How will you verify this works?]
 - Blocked by: [nothing / Task N]
 
-**Task 2: [Name]** (est. 45min)
+**Task 2: [Slice 2 Name]** (est. 45min)
 - What: [Specific implementation detail]
 - Files: [file3.js]
 - Test: [Test description]
@@ -1644,24 +1870,24 @@ Do not proceed to BUILD until this plan is approved.
 
 ---
 
-## Phase 3: BUILD — /build
+### Phase 3: BUILD — /build
 
-### Auto-activates → `[ROLE: Senior Developer]`
+**Auto-activates → `[ROLE: Senior Developer]`**
 
 Implement one task at a time. Commit after each task.
 
-### Build Rules
+#### Build Rules
 
-1. **One task per commit** — atomic, descriptive commit messages
-2. **Write the test FIRST** (TDD — red-green-refactor)
-3. **No dead code** — if it's not tested, it's not shipped
-4. **No TODOs in committed code** — resolve or create a tracked issue
-5. **Read before writing** — understand the surrounding code before changing it
-6. **Limit the blast radius** — modify ONLY the files explicitly listed in the current task's plan. Do NOT rewrite adjacent components, hooks, or utilities unless strictly required AND approved. If you spot a problem in nearby code, file it as a separate task, do not fix it inline.
+1. **One task per commit** — atomic, descriptive commit messages.
+2. **Write the test FIRST** (TDD — red-green-refactor).
+3. **No dead code** — if it's not tested, it's not shipped.
+4. **No TODOs in committed code** — resolve or create a tracked issue.
+5. **Read before writing** — understand the surrounding code before changing it.
+6. **Limit the blast radius** — modify ONLY the files explicitly listed in the current task's plan. Do NOT rewrite adjacent components, hooks, or utilities unless strictly required AND approved.
 
-### Commit Message Format
+#### Commit Message Format
 
-```
+```text
 type(scope): short description (max 72 chars)
 
 - Detail 1
@@ -1674,58 +1900,43 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
 ---
 
-## Phase 4: VERIFY — /test
+### Phase 4: VERIFY — /test
 
-### Auto-activates → `[ROLE: QA Lead]`
+**Auto-activates → `[ROLE: QA Lead]`**
 
 Tests are proof, not an afterthought.
 
-### Test Strategy by Code Type
+#### Test Strategy by Code Type
 
-###
+**Logic & Services (TDD)**:
 
-```
+```text
 1. RED:      Write a failing test for the next small behavior
 2. GREEN:    Write the minimum code to make it pass
 3. REFACTOR: Clean up without breaking tests
 4. REPEAT
 ```
 
-###
+**UI Components & User Flows (BDD)**:
 
 For complex React components, prioritize testing _user behavior_ over internal state:
 
-- Use **React Testing Library** (`userEvent`, `screen.getByRole`) — test what the user sees
-- Use **Playwright** for critical user flows (login, checkout, form submit)
-- Do NOT test implementation details (internal state, private methods, component structure)
+- Use **React Testing Library** (`userEvent`, `screen.getByRole`) — test what the user sees.
+- Use **Playwright** for critical user flows (login, checkout, form submit).
+- Do NOT test implementation details (internal state, private methods, component structure).
 - Focus on: "When user clicks X, does Y appear?" not "Does `useState` hold the right value?"
 
 ```tsx
 // [GOOD] BDD: Test behavior
 test("shows error when email is invalid", async () => {
-  render(<LoginForm />)
-  await userEvent.type(screen.getByLabelText("Email"), "not-an-email")
-  await userEvent.click(screen.getByRole("button", { name: /sign in/i }))
-  expect(screen.getByText(/invalid email/i)).toBeInTheDocument()
-})
-
-// [BAD] Brittle: Testing internal implementation
-test("sets error state to true", () => {
-  const { result } = renderHook(() => useLoginForm())
-  act(() => result.current.setError(true))
-  expect(result.current.error).toBe(true)
-})
+  render(<LoginForm />);
+  await userEvent.type(screen.getByLabelText("Email"), "not-an-email");
+  await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
+  expect(screen.getByText(/invalid email/i)).toBeInTheDocument();
+});
 ```
 
-### Test Hierarchy (Most to Least Valuable)
-
-```
-For logic/services:  Unit Tests → Integration Tests
-For UI/flows:        RTL (component) → Playwright (e2e critical paths)
-Skip:                Snapshot tests (brittle, low signal)
-```
-
-### Test Quality Gates
+#### Test Quality Gates
 
 Before moving to Review, verify:
 
@@ -1737,81 +1948,46 @@ Before moving to Review, verify:
 
 ---
 
-## Phase 5: REVIEW — /review
+### Phase 5: REVIEW — /review
 
-### Auto-activates → `[ROLE: Staff Engineer]` + `[ROLE: Senior Designer]` for UI tasks
+**Auto-activates → `[ROLE: Staff Engineer]` + `[ROLE: Senior Designer]` for UI tasks**
 
 Review before merging. Always.
 
-### Code Review Checklist
+#### Subagent / Peer Code Review Protocol
 
-###
+Inspired by [obra/superpowers](https://github.com/obra/superpowers):
 
-- [ ] Does it do what the spec says?
-- [ ] Are all acceptance criteria met?
-- [ ] Edge cases handled?
-
-###
-
-- [ ] Single Responsibility: each function does one thing
-- [ ] DRY: no logic duplicated across 3+ places
-- [ ] No magic numbers (use named constants)
-- [ ] Error handling: all async operations have try/catch or `.catch()`
-- [ ] Business logic is NOT in API route handlers — it lives in services/use-cases
-
-###
-
-- [ ] No secrets hardcoded
-- [ ] User input is validated and sanitized
-- [ ] SQL uses parameterized queries (no string concatenation)
-- [ ] Auth checks before data access
-
-###
-
-- [ ] No N+1 query patterns
-- [ ] Expensive operations are cached or async
-- [ ] Large data sets are paginated
-
-**UI/Design** (if applicable — activate `impeccable-design` skill checklist)
-
-- [ ] Passes impeccable-design Quick Audit (typography, colors, spacing, animations)
+1. **Self-Review First**: The implementer runs git diff and verifies against the original acceptance criteria.
+2. **Review Checklist**:
+   - **Correctness**: Does it do what the spec says? Are all criteria met?
+   - **Architecture**: Single Responsibility, DRY without premature abstraction, no business logic in API routes.
+   - **Security**: No secrets hardcoded, inputs validated via Zod/schemas, auth checked before data access.
+   - **Performance**: No N+1 queries, expensive operations cached, sets paginated.
+   - **Design**: If UI, passes `impeccable-design` quick audit (typography, colors, spacing, animations).
 
 ---
 
-## Command Workflows
+### Phase 5.5: SIMPLIFY — /simplify
 
-| Command | Auto-Role | Purpose & Action |
-|:---|:---|:---|
-| **`/spec`** | `[ROLE: Product Manager]` | Interrogate requirements, define In-Scope/Out-of-Scope, write testable acceptance criteria. |
-| **`/plan`** | `[ROLE: Architect]` | Decompose spec into atomic tasks (< 2 hrs each), define affected files and test requirements. |
-| **`/build`** | `[ROLE: Senior Developer]` | Implement task-by-task using TDD, minimal blast radius, atomic commits. |
-| **`/test`** | `[ROLE: QA Lead]` | Run unit, integration, and UI behavioral tests covering all edge cases. |
-| **`/simplify`** | `[ROLE: Staff Engineer]` | Run the 7-rung ladder to strip over-engineering, dead abstractions, and premature flexibility. |
-| **`/review`** | `[ROLE: Staff Engineer + Senior Designer]` | Execute the 5-axis quality gate (correctness, architecture, security, performance, design). |
-| **`/ship`** | `[ROLE: Release Engineer]` | Final validation: clean CI, zero lint errors, updated docs, and verified rollback plan. |
-
----
-
-## Phase 5.5: SIMPLIFY — /simplify
-
-### Auto-activates → `[ROLE: Staff Engineer]` (Ponytail Mindset)
+**Auto-activates → `[ROLE: Staff Engineer]` (Ponytail Mindset)**
 
 Before merging, ruthlessly simplify:
 
 1. Did we introduce abstractions that are only used once? (Inline them).
-2. Can 3 lines of vanilla JavaScript replace a 50-line custom utility?
+2. Can 3 lines of standard JavaScript replace a 50-line custom utility?
 3. Is any configuration or generic handler premature? (YAGNI).
 4. Is the code obvious to a mid-level engineer without reading a documentation manual?
 
 ---
 
-## Phase 6: SHIP — /ship
+### Phase 6: SHIP — /ship
 
-### Auto-activates → `[ROLE: Release Engineer]`
+**Auto-activates → `[ROLE: Release Engineer]`**
 
 Only ship when all gates are green.
 
-### Pre-Ship Checklist
+#### Pre-Ship Checklist
 
 - [ ] All tests pass in CI
 - [ ] No lint errors
@@ -1820,44 +1996,70 @@ Only ship when all gates are green.
 - [ ] Breaking changes documented
 - [ ] Rollback plan exists
 - [ ] Vercel Preview Deployment is successful and manually verified
-- [ ] Core Web Vitals pass in the preview environment (LCP < 2.5s, CLS < 0.1, INP < 200ms)
+- [ ] Core Web Vitals pass in preview (LCP < 2.5s, CLS < 0.1, INP < 200ms)
 
-### Operational Self-Improvement (Required)
+#### Operational Self-Improvement
 
-Before completing a workflow, you must review the session for durable learnings (project quirks, command fixes, pitfalls, or patterns that save time).
-Write these learnings to `.agents/learnings.md`. Do not log obvious facts or one-time transient errors. If no durable learning occurred, state "No durable learnings this session" in your final output.
+Before completing a workflow, review the session for durable learnings. Write them to `.agents/learnings.md`. If no durable learning occurred, state "No durable learnings this session" in your final output.
 
 ---
 
-## Anti-Patterns to Never Do
-
-| Anti-Pattern | Why It's Wrong | What To Do Instead |
-| --- | --- | --- |
-| "I'll just write the code and we'll see" | Creates unmaintainable scope creep | Write spec first |
-| Writing code in Phase 1 (DEFINE) | Premature implementation | Stay in spec mode |
-| Skipping tests because "it's obvious" | Bugs hide in "obvious" code | Write the test anyway |
-| Giant commits | Impossible to review or revert | Atomic commits per task |
-| Fixing bugs while implementing features | Context switching, hidden changes | Separate branches/commits |
-| "I'll add tests later" | Later never comes | TDD: tests first |
-| Refactoring adjacent code mid-task | Expands blast radius silently | Separate task/PR for refactors |
-| Snapshot tests as primary UI test | Brittle, tests implementation not behavior | Use RTL + Playwright instead |
-
-
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+### Vertical Slice Example
+
+```javascript
+// Slice 1: Minimal functional endpoint
+// POST /api/v1/projects -> creates project with basic validation
+import { z } from 'zod';
+import { projectService } from '@/services/project';
+
+const CreateProjectSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional()
+});
+
+export async function POST(req) {
+  const session = await auth();
+  if (!session?.userId) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = await req.json();
+  const parsed = CreateProjectSchema.parse(body);
+  const project = await projectService.create({ ...parsed, userId: session.userId });
+
+  return Response.json(project, { status: 201 });
+}
+```
+
+---
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Specification exists with clear In-Scope and Out-of-Scope boundaries.
+- [ ] Implementation plan broken down into vertical tasks < 2 hours each.
+- [ ] Tests written before implementation (TDD/BDD).
+- [ ] Code reviewed against correctness, security, performance, and design gates.
+- [ ] Simplification ladder executed before shipping.
+
+---
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+- **Writing code before approval**: Skipping `/spec` or `/plan` in interactive sessions.
+- **Horizontal task splitting**: Building all DB models first without verifying end-to-end integration.
+- **Premature refactoring**: Changing unrelated adjacent code during a feature task.
+- **Ignoring non-happy paths**: Testing only 200 OK responses while ignoring 400, 401, 404, 500 scenarios.
+
+---
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+- Integrates with `gstack-roles` for automated role switching across all 6 phases.
+- Triggers `ponytail-mindset` during the BUILD and SIMPLIFY phases.
+- Hands off to `impeccable-design` for UI quality review.
+- Coordinates with `security` during Phase 5 for pre-merge compliance.
+
+---
 
 ## Completion Status Protocol
 
@@ -2012,6 +2214,144 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+### Skill: gemini-precision
+
+> High-precision engineering and execution guardrails optimized for Google Gemini models. Enforces zero-assumption file inspection, complete non-lazy implementations, surgical blast-radius containment, and mandatory proof-of-work execution.
+
+# gemini-precision
+
+## Overview
+
+High-precision operational standard designed specifically to harness the high speed and expansive context window of Google Gemini models while eliminating common LLM failure modes: hasty assumptions, partial code placeholders (`// ...`), unverified assertions, and scope creep.
+
+## When to Use
+
+Activate whenever:
+- Executing non-trivial code modifications, refactoring, bug fixes, or architecture design.
+- The user requires maximum rigor, reliability, and precision from Gemini.
+- Handling complex multi-file changes where accidental side-effects must be zero.
+
+## Rules & Patterns
+
+### 1. The Read-Before-Write Invariant (Zero Assumptions)
+
+**Never write code based on assumptions about the codebase.**
+
+- Before modifying a function or creating an integration, **always inspect the actual files** using `view_file` or `grep_search`.
+- Check the exact runtime, framework version, and installed dependencies (e.g. React 19 vs 18, Next.js 15 vs 14, Tailwind v4 vs v3, Zod vs Joi) in `package.json` or config files before generating code.
+- Verify imported symbol names and parameter signatures directly from source files.
+
+### 2. The Zero-Placeholder Invariant (Complete Code Only)
+
+**Never produce lazy, incomplete, or stubbed output.**
+
+- ❌ **Forbidden**:
+  - `// TODO: implement logic here`
+  - `// ... rest of existing code ...`
+  - `// ... existing imports ...`
+  - Mock stub returns when real integration is required
+- ✅ **Mandatory**:
+  - Provide **100% complete, fully-implemented, compilable, and drop-in ready** code.
+  - When replacing a block of code, include all necessary imports, type definitions, and edge-case handling.
+
+### 3. The Proof-of-Work Invariant (Verification Before Completion)
+
+**Never claim a task is complete without tool-verified evidence.**
+
+- When modifying code or configuration:
+  1. Run the project validator or compiler (`node .agents/ctx.js validate`, `tsc --noEmit`, etc.).
+  2. Run unit and integration tests (`npm test`, `pytest`, etc.).
+  3. Run linter and formatting checks (`npm run lint:md`, `eslint`, etc.).
+- If a test or validation fails, do not guess: read the exact error trace, fix the root cause, and re-run until green.
+
+### 4. Surgical Blast Radius Containment
+
+**Modify ONLY what is strictly necessary.**
+
+- Keep edits isolated to the exact lines, functions, and files specified in the plan.
+- Do not reformat, reorder, or alter indentation of unrelated code blocks.
+- Preserve existing comments, docstrings, and project conventions unless explicitly asked to change them.
+
+### 5. Ponytail Minimalism (YAGNI)
+
+- Prioritize native platform APIs (standard library, browser built-ins) over new npm/pip packages.
+- Follow the "Rule of Three": inline on first use, duplicate cleanly on second, abstract only on third.
+- Keep solutions obvious to a mid-level developer without requiring multi-layered wrapper classes.
+
+---
+
+## Code Examples
+
+### Bad (Lazy Model Output) vs Good (Precision Model Output)
+
+**❌ Bad (Lazy AI Output)**:
+
+```javascript
+// user.service.js
+export async function updateUser(id, data) {
+  // ... existing auth check ...
+  // TODO: validate data with zod
+  return await db.user.update({ where: { id }, data });
+}
+```
+
+**✅ Good (Gemini Precision Output)**:
+
+```javascript
+// user.service.js
+import { z } from 'zod';
+import { db } from '../lib/db.js';
+import { ValidationError, UnauthorizedError } from '../errors/index.js';
+
+const UpdateUserSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  email: z.string().email().optional(),
+}).strict();
+
+export async function updateUser(id, data, session) {
+  if (!session?.userId || session.userId !== id) {
+    throw new UnauthorizedError('Access denied: cannot update another user');
+  }
+
+  const parsed = UpdateUserSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new ValidationError('Invalid update payload', parsed.error.format());
+  }
+
+  return await db.user.update({
+    where: { id },
+    data: parsed.data,
+    select: { id: true, name: true, email: true, updatedAt: true }
+  });
+}
+```
+
+---
+
+## Validation Checklist
+
+- [ ] Inspected active codebase files before writing code.
+- [ ] Delivered 100% complete code with zero `// TODO` or `// ...` placeholders.
+- [ ] Ran automated tests and validation with green status.
+- [ ] Confined changes to the minimal required blast radius.
+- [ ] Reported final status with verifiable evidence.
+
+---
+
+## Common Mistakes
+
+- **Assuming API contracts**: Guessing function parameters without opening the file.
+- **Premature completion**: Declaring "fixed" without running the test suite.
+- **Uncontrolled refactoring**: Rewriting adjacent components while fixing a 1-line bug.
+
+---
+
+## Integration Notes
+
+- Pairs with `engineering-workflow` to enforce the 6-phase pipeline.
+- Enforces the 7-rung ladder of `ponytail-mindset`.
+- Acts as the baseline behavioral guardrail across all Gemini and Antigravity operations.
 
 ### Skill: generators
 
@@ -2468,6 +2808,101 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+### Skill: interview-me
+
+> Interactive requirements elicitation skill. Interrogates ambiguous, complex, or high-blast-radius tasks one focused question at a time before any plan or code is written.
+
+# interview-me
+
+## Overview
+
+Structured requirements interrogation framework inspired by [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). Prevents wasted cycles by transforming vague user intents into crisp, unambiguous architectural constraints through single-question progressive interview loops.
+
+## When to Use
+
+Activate whenever:
+
+- User task has underspecified requirements, open UX decisions, or multiple viable architectural trade-offs.
+- A high-blast-radius change (database migrations, auth refactor, API contract change) is requested.
+- Explicitly triggered via `/spec`, `/interview`, or "ask me questions first".
+
+## Rules & Patterns
+
+### 1. The One-Question-At-A-Time Rule
+
+**Never overwhelm the user with a 10-point interrogation form.**
+
+- Ask **exactly ONE focused question** per turn (or at most two tightly-coupled binary options).
+- Provide the recommended option first with clear rationale: `"(Recommended) Option A because..."`.
+- Always allow write-in or clarification.
+
+### 2. The 4 Interrogation Dimensions
+
+Interrogate in this strict priority order:
+
+1. **Business Outcome & Invariants**:
+   - What core problem does this solve?
+   - What behavior is strictly forbidden?
+2. **Scope Boundaries (In vs Out)**:
+   - What must be delivered in this atomic slice?
+   - What is explicitly deferred to later?
+3. **Technical Constraints**:
+   - Versions, libraries, database engines, backwards compatibility requirements.
+4. **Edge Cases & Failure Modes**:
+   - What happens on network disconnect, empty response, or unauthorized token?
+
+### 3. Progressive Synthesis
+
+After each user answer:
+
+- Acknowledge the decision and update the mental model.
+- If more critical decisions remain, ask the next question.
+- Once 2–4 key questions are resolved, synthesize the formal Feature Spec and transition to `engineering-workflow` (`[PHASE: Plan]`).
+
+---
+
+## Code Examples
+
+### Interactive Interview Turn Example
+
+```markdown
+**Question 1 of 3 (Authentication Strategy)**
+
+Before implementing the API authentication layer, we need to align on session storage:
+
+1. **(Recommended) HTTP-only Secure Cookies with Refresh Tokens**:
+   - *Why*: Immune to XSS token theft, standard for web dashboards.
+2. **Bearer Token in Authorization Header**:
+   - *Why*: Ideal if this API will also be consumed by mobile apps or third-party CLI tools.
+
+Which model fits your architecture best?
+```
+
+---
+
+## Validation Checklist
+
+- [ ] Question addresses an actual ambiguity (never ask about obvious defaults).
+- [ ] Exactly one question (or two tightly coupled choices) asked.
+- [ ] Recommendation provided with clear engineering justification.
+- [ ] User response incorporated into the final spec before coding.
+
+---
+
+## Common Mistakes
+
+- **Asking obvious questions**: Asking "Do you want error handling?" instead of making a sensible senior default.
+- **Interrogation bombardment**: Dumping a list of 8 open-ended questions in a single wall of text.
+- **Ignoring user answers**: Asking a question, receiving an answer, and then implementing something else.
+
+---
+
+## Integration Notes
+
+- Runs at the start of `engineering-workflow` Phase 1 (`/spec`).
+- Interacts with `gstack-roles` (`[ROLE: Product Manager]` or `[ROLE: Architect]`).
+- Hands off to `ponytail-mindset` once scope is defined.
+
 ### Skill: Microservices
 
 # Microservices
@@ -2540,6 +2975,15 @@ Order Service → Payment Service → Inventory Service → Shipping Service
       ↓ (failure)
 Compensating transactions reverse each step
 ```
+
+1. **Choreography (Event-Driven)**: Each service emits events, downstream services listen and react. Best for simple flows (≤ 3 steps) where a central coordinator adds unnecessary coupling.
+2. **Orchestration (State Machine)**: A dedicated Saga Orchestrator controls the flow and explicitly triggers compensating transactions on failure (e.g., `RefundPayment`, `ReleaseInventoryReservation`). Mandatory for complex multi-step workflows.
+
+### Dead Letter Queues (DLQ) & Poison Pill Handling
+
+- **Never retry infinitely**: Set max retries (e.g. 3) with exponential backoff and jitter.
+- After max retries, route failed messages to a **Dead Letter Queue (DLQ)** with error metadata.
+- Provide alerting on DLQ depth and an admin CLI/script to replay DLQ messages.
 
 ## CQRS (Command Query Responsibility Segregation)
 
@@ -2963,6 +3407,49 @@ const AnalyticsChart = dynamic(
 );
 ```
 
+### 5. Next.js 15+ Async Request APIs (`async-params`)
+
+In Next.js 15+, `params`, `searchParams`, `cookies()`, and `headers()` are asynchronous and must be awaited:
+
+```tsx
+// [GOOD] Next.js 15+ Page Component
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function UserPage({ params, searchParams }: PageProps) {
+  const { id } = await params;
+  const { tab } = await searchParams;
+  const user = await getUser(id);
+
+  return <UserProfile user={user} activeTab={tab as string} />;
+}
+```
+
+### 6. Non-Blocking Background Tasks with `after()`
+
+To execute logging, analytics, or cache priming without delaying the user's HTTP response:
+
+```typescript
+import { after } from 'next/server';
+
+export async function POST(request: Request) {
+  const data = await request.json();
+  const result = await processOrder(data);
+
+  // Executes asynchronously AFTER the response stream has completed
+  after(async () => {
+    await sendSlackNotification(result);
+    await indexOrderInSearch(result.id);
+  });
+
+  return Response.json({ success: true, orderId: result.id });
+}
+```
+
+---
+
 ## Code Examples
 
 See `EXAMPLES.md` for detailed code examples and component templates.
@@ -3288,32 +3775,31 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 ---
 
-## Core Principle
+### Core Principle
 
 > **The best code is code you don't write.**  
 > Write only what the task strictly needs. Lazy about the solution, never about reading and understanding.
 
 ---
 
-## The 7-Rung Decision Ladder
+### The 7-Rung Decision Ladder
 
 **Before writing ANY code**, stop and check each rung in order. Stop at the first rung that holds:
 
-```
+```text
 1. Does this need to exist?
    → No: YAGNI — skip it entirely. Don't build for "future use."
 
 2. Already in this codebase or component library?
    → Yes: Reuse it. Don't rewrite. Call the existing function/component/module.
-   → **For UI**: Check shadcn/ui FIRST. Before building a complex UI element from scratch, check if it exists in the component library. If yes, generate the install command: `npx shadcn@latest add dialog` — never manually rewrite what shadcn already provides.
+   → For UI: Check shadcn/ui FIRST. Before building a complex UI element from scratch, check if it exists in the component library. If yes, generate the install command: npx shadcn@latest add dialog — never manually rewrite what shadcn already provides.
 
 3. Standard library does it?
-   → Yes: Use it. Don't write `formatDate()` — use Intl.DateTimeFormat or dayjs.
+   → Yes: Use it. Don't write formatDate() — use Intl.DateTimeFormat or dayjs.
 
 4. Native platform feature?
    → Yes: Use it. Don't install flatpickr when <input type="date"> exists.
-   → **Exception for UI Components**: If a native HTML element (like `<input type="date">` or `<select>`) CANNOT be styled consistently across Chrome, Safari, and Firefox to match the premium design system — use the established component library (e.g., shadcn/ui `<DatePicker>`, `<Select>`) instead. Cross-browser inconsistency is a legitimate reason to NOT use native.
-             Don't install lodash.debounce when setTimeout exists.
+   → Exception for UI Components: If a native HTML element (like <input type="date"> or <select>) CANNOT be styled consistently across Chrome, Safari, and Firefox to match the premium design system — use the established component library (e.g., shadcn/ui <DatePicker>, <Select>) instead. Cross-browser inconsistency is a legitimate reason to NOT use native.
 
 5. Already-installed dependency?
    → Yes: Use it. Don't install a new library to do what an existing one can.
@@ -3327,11 +3813,34 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 ---
 
-## The Sacred Exceptions (NEVER Cut These)
+### The Rule of Three (Do Not Abstract Early)
+
+- **First occurrence**: Write it inline directly where it is needed.
+- **Second occurrence**: Duplicate it cleanly. Duplication is cheaper than the wrong abstraction.
+- **Third occurrence**: Only now extract a shared helper or utility.
+
+---
+
+### 10 Concrete Over-Engineering Red Flags
+
+1. Creating a `GenericRepository<T>` when you only have 2 database tables.
+2. Creating a custom state machine or complex reducer for 2 boolean flags.
+3. Adding a configuration file or environment variables for values that never change.
+4. Writing custom retry/circuit-breaker logic when native `fetch` or SDK already handles it.
+5. Building a generic `BaseService` with 15 hook methods implemented by only one class.
+6. Wrapping every standard library call in a custom helper class (`StringUtils`, `DateUtils`, `ObjectUtils`).
+7. Creating a multi-level folder structure (`domains/auth/adapters/driving/rest/controllers/dto/`) for a 30-line microservice.
+8. Writing custom mock frameworks when Vitest/Jest/Node test runner provide standard mocks.
+9. Installing a 50KB npm package for a 3-line utility (e.g. `left-pad`, `is-number`, `deep-clone`).
+10. Pre-optimizing caching and indexing for endpoints serving 10 requests a day.
+
+---
+
+### The Sacred Exceptions (NEVER Cut These)
 
 The ladder applies to features and abstractions. These 4 areas are **non-negotiable** and **never simplified away**:
 
-### 1. Input Validation
+#### 1. Input Validation
 
 ```javascript
 // [GOOD] Always validate — even if "internal" API
@@ -3339,7 +3848,7 @@ function createUser(data) {
   if (!data.email || !isValidEmail(data.email)) {
     throw new ValidationError('Invalid email');
   }
-  // ...
+  return db.insert('users', data);
 }
 
 // [BAD] Never skip validation for "speed"
@@ -3348,7 +3857,7 @@ function createUser(data) {
 }
 ```
 
-### 2. Error Handling
+#### 2. Error Handling
 
 ```javascript
 // [GOOD] Always handle errors explicitly
@@ -3359,186 +3868,78 @@ async function fetchUser(id) {
     return user;
   } catch (err) {
     logger.error('fetchUser failed', { id, err });
-    throw err; // re-throw for caller to handle
+    throw err;
   }
 }
-
-// [BAD] Never silently swallow errors
-async function fetchUser(id) {
-  try {
-    return await db.findById(id);
-  } catch (e) {} // NEVER
-}
 ```
 
-### 3. Security Guards
+#### 3. Security Checks
 
-```javascript
-// [GOOD] Always check authorization before data access
-app.get('/users/:id/data', authMiddleware, async (req, res) => {
-  if (req.user.id !== req.params.id && !req.user.isAdmin) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  // ...
-});
+- Authorization check BEFORE every query or mutation.
+- Parameterized queries everywhere — zero string concatenation in SQL.
+- Strict sanitization of all rendered HTML and markdown.
 
-// [BAD] Never skip auth for "internal" routes
-app.get('/users/:id/data', async (req, res) => {
-  // No auth check — NEVER
-});
-```
+#### 4. Type Safety & Behavioral Tests
 
-### 4. Data Loss Prevention
-
-```javascript
-// [GOOD] Always confirm before destructive operations
-async function deleteAccount(userId) {
-  const user = await db.findById(userId);
-  if (!user) throw new NotFoundError('User not found');
-  
-  await db.transaction(async (trx) => {
-    await trx('user_data').where({ userId }).delete();
-    await trx('users').where({ id: userId }).delete();
-  });
-}
-```
+- Strict TypeScript types — no `any` evasion.
+- Tests covering happy path, 4xx, and 5xx edge cases.
 
 ---
-
-## Practical Examples
-
-### The Date Picker Problem
-
-[FAIL] **What AI usually does** (over-build):
-
-```bash
-npm install flatpickr
-## Creates: DatePickerWrapper.jsx (45 lines)
-## Creates: useDatePicker.js (30 lines)  
-## Creates: DatePickerStyles.css (60 lines)
-## Total: 135 lines + 1 dependency
-```
-
-[PASS] **Ponytail approach** (use rung 4 — native platform):
-
-```html
-<!-- ponytail: browser has one -->
-<input type="date" name="date" />
-```
-
-Total: 1 line. 0 dependencies.
-
----
-
-### The Utility Function Problem
-
-[FAIL] **Over-build**:
-
-```javascript
-// Creates entire utilities.js module
-export const StringUtils = {
-  capitalize: (s) => s.charAt(0).toUpperCase() + s.slice(1),
-  truncate: (s, n) => s.length > n ? s.slice(0, n) + '...' : s,
-  // 10 more methods "for future use"
-};
-```
-
-[PASS] **Ponytail** (rung 6 — one line, or rung 2 — already installed):
-
-```javascript
-// If lodash is already installed (rung 5):
-import { capitalize, truncate } from 'lodash';
-
-// If not (rung 6 — one line where needed):
-const label = name.charAt(0).toUpperCase() + name.slice(1);
-```
-
----
-
-### The API Client Problem
-
-[FAIL] **Over-build**:
-
-```javascript
-// Creates: ApiClient.js (200 lines of abstraction)
-// Creates: HttpService.js (retry logic, interceptors, "enterprise patterns")
-// Creates: ApiConfig.js (configuration layer)
-```
-
-[PASS] **Ponytail** (rung 3 — stdlib for client APIs):
-
-```javascript
-// fetch is built-in. Use it directly.
-const user = await fetch(`/api/users/${id}`).then(r => r.json());
-```
-
-[PASS] **Ponytail for Next.js App Router** — skip the API route entirely (rung 2 — use what the framework provides):
-
-```typescript
-// Instead of: /api/users/[id]/route.ts + fetch wrapper
-// Use a Server Action directly — no API endpoint needed:
-"use server"
-export async function updateUser(id: string, data: UpdateUserInput) {
-  const session = await getSession() // auth check — never skip
-  if (session.userId !== id) throw new Error("Forbidden")
-  return db.users.update(id, data) // one line
-}
-// Caller: just import and call updateUser() directly from the component
-```
-
-
-## Decision Log Format
-
-When the ponytail ladder prevents over-building, document it:
-
-```javascript
-// ponytail: browser's <input type="date"> chosen over flatpickr (rung 4)
-// ponytail: existing `formatCurrency` in utils.js reused (rung 2)
-// ponytail: inline validation instead of separate validator class (rung 6)
-```
-
----
-
-## What This Skill Does NOT Minimize
-
-Do NOT apply the ladder to:
-
-- **Tests** — write comprehensive tests, even if verbose
-- **Docs** — write clear documentation, even if long
-- **Error messages** — write descriptive, actionable error messages
-- **Security checks** — write thorough authorization and validation
-- **Accessibility** — write proper ARIA, labels, and semantic HTML
-
----
-
-## Anti-Patterns This Eliminates
-
-| Over-Build Pattern | Ponytail Response |
-| --- | --- |
-| "We might need this later" | YAGNI. Ship what's needed now. |
-| Factory class for one object | Use a plain function |
-| Interface for one implementation | Skip the interface |
-| 5-file abstraction for 3 lines | Inline it |
-| New library for native feature | Use rung 4 (platform native) |
-| Copy-pasting existing logic | Find and reuse (rung 2) |
-| Wrapper around wrapper around util | Read what's installed (rung 5) |
-
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+### Native Platform vs Over-Built Package
+
+**Over-build**:
+
+```bash
+npm install flatpickr
+# Creates DatePickerWrapper.jsx (45 lines) + useDatePicker.js (30 lines) + styles (60 lines)
+```
+
+**Ponytail approach (rung 4)**:
+
+```html
+<input type="date" name="date" aria-label="Appointment date" />
+```
+
+### Next.js App Router Server Action vs REST Endpoint
+
+```typescript
+// Instead of /api/users/[id]/route.ts + custom fetch wrapper:
+"use server";
+
+export async function updateUser(id: string, data: UpdateUserInput) {
+  const session = await getSession(); // auth check — never skip
+  if (session?.userId !== id) throw new Error("Forbidden");
+  return db.users.update(id, data);
+}
+```
+
+---
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Every new dependency has been verified: cannot be solved with native platform or existing dependencies.
+- [ ] No single-use abstractions, wrappers, or interfaces created.
+- [ ] Sacred exceptions preserved: 100% input validation, explicit error handling, security checks intact.
+- [ ] All code written passes all existing unit and integration tests.
+
+---
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+- **Cutting validation to write less code**: The goal is less architecture/boilerplate, never less safety.
+- **Creating utilities "for future use"**: Only write utilities when used 3+ times.
+- **Rewriting component libraries**: Building custom modals, tabs, or tooltips from scratch when shadcn/ui or Radix is already in the project.
+
+---
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+- Runs at the start of every `[PHASE: Build]` and `[PHASE: Review]`.
+- Enforces minimalism alongside `system-design` (think at scale, implement minimally).
+- Pairs with `impeccable-design` for UI tasks.
 
 ### Skill: React
 
@@ -4019,95 +4420,63 @@ A systematic redesign and auditing protocol designed to elevate existing website
 
 ### Skill: Application Security
 
-# Application Security
+# security
 
 ## Overview
 
-Enforces zero-trust defense-in-depth, OWASP Top 10 mitigation, cryptographic hardening, and sensitive data leakage protection across all services and routes.
+Enforces zero-trust defense-in-depth, OWASP API Top 10 mitigation, cryptographic hardening, sensitive data leakage protection, and AI/LLM safety across all services, endpoints, and agent integrations.
 
 ## When to Use
 
-Activate whenever writing authentication, authorization, session management, database queries, cryptography, external API integration, or user input handling.
+Activate whenever writing authentication, authorization, session management, database queries, cryptography, external API integrations, user input handling, or agent tool calling.
 
-## Negative Constraints (What NOT to Do)
+## Rules & Patterns
+
+### Negative Constraints (What NOT to Do)
 
 1. **NEVER use standard string comparison (`===`) for secrets/hashes**: Always use `crypto.timingSafeEqual` to prevent timing attacks.
 2. **NEVER store sensitive JWT access/refresh tokens in `localStorage`**: Store tokens in `httpOnly`, `Secure`, `SameSite=Strict` cookies.
 3. **NEVER return raw database/internal error messages or stack traces to the client**: Return standardized generic error codes (`INTERNAL_SERVER_ERROR`) and log details internally.
-4. **NEVER trust client-provided IDs for authorization without tenant/ownership checks**: Always verify `where: { id, userId: session.userId }` to prevent Insecure Direct Object References (IDOR).
+4. **NEVER trust client-provided IDs for authorization without tenant/ownership checks**: Always verify `where: { id, userId: session.userId }` to prevent Broken Object Level Authorization (BOLA/IDOR).
 5. **NEVER disable CSRF protection, CORS allow-all (`*`), or TLS verification (`NODE_TLS_REJECT_UNAUTHORIZED=0`) in production**: Always enforce strict origin whitelists and HTTPS.
+6. **NEVER pass un-sanitized third-party content directly into system prompts or shell execution**: Treat all external data as potentially adversarial.
 
-## Rules & Patterns
+---
 
-## OWASP Top 10
+### OWASP Top 10 for Modern APIs & Full-Stack
 
-### 1. Injection (SQL, NoSQL, Command)
+#### 1. Injection (SQL, NoSQL, Command)
 
-- **Always use parameterized queries** — never concatenate user input into SQL
-- Use ORM (Prisma, SQLAlchemy, TypeORM) — they parameterize by default
-- Validate and sanitize all user input
+- Always use parameterized queries — never concatenate user input into SQL or shell commands.
+- Use ORMs (Prisma, Drizzle, SQLAlchemy) with strict schema validation.
+- Validate and sanitize all user input before processing.
 
-### 2. Broken Authentication
+#### 2. Broken Object Level Authorization (BOLA / IDOR)
 
-- Use bcrypt/argon2 for password hashing (cost factor ≥ 12)
-- JWT: short-lived access tokens (15min), refresh tokens (7 days)
-- Rate limit login attempts
-- Implement account lockout after N failed attempts
-- MFA for sensitive operations
+- Validate user ownership on EVERY database read, update, or delete:
 
-### 3. Sensitive Data Exposure
+  ```typescript
+  // [GOOD] Scoped to authenticated user
+  const doc = await db.document.findFirst({
+    where: { id: documentId, tenantId: session.tenantId }
+  });
+  ```
 
-- HTTPS everywhere — redirect HTTP to HTTPS
-- Encrypt sensitive data at rest (AES-256)
-- Never log passwords, tokens, or PII
-- Use environment variables for secrets
+#### 3. Broken Authentication & Session Management
 
-### 4. XML/XXE
+- Use Argon2id or bcrypt (cost factor ≥ 12) for password hashing.
+- Short-lived access tokens (15 min) + secure HTTP-only refresh tokens.
+- Enforce rate limiting and brute-force lockouts on auth endpoints.
 
-- Disable external entity processing
-- Use JSON instead of XML where possible
+#### 4. SSRF (Server-Side Request Forgery)
 
-### 5. Broken Access Control
+- Restrict server-side URL fetching: validate URL scheme (`https:` only), resolve IP, and block private CIDR blocks (`10.0.0.0/8`, `127.0.0.0/8`, `169.254.0.0/16`, `192.168.0.0/16`).
 
-- Default deny — explicitly grant access
-- RBAC (Role-Based Access Control) or ABAC (Attribute-Based)
-- Check authorization on every request, not just UI
-- Don't rely on client-side validation for security
+#### 5. Security Misconfiguration & Headers
 
-### 6. Security Misconfiguration
+Enforce modern production security headers:
 
-- Remove default credentials
-- Disable debug mode in production
-- Security headers (see below)
-- Keep dependencies updated
-
-### 7. XSS (Cross-Site Scripting)
-
-- Escape all output by default
-- Content-Security-Policy header
-- HttpOnly + Secure + SameSite cookies
-- Use framework's built-in XSS protection
-
-### 8. Insecure Deserialization
-
-- Validate and schema-check all input (Zod, Pydantic, class-validator)
-- Don't deserialize untrusted data
-
-### 9. Insufficient Logging
-
-- Log all authentication events
-- Log authorization failures
-- Log input validation failures
-- Include request ID for tracing
-
-### 10. SSRF (Server-Side Request Forgery)
-
-- Validate and allowlist URLs
-- Don't let users control server-side HTTP requests
-
-## Security Headers
-
-```
+```http
 Content-Security-Policy: default-src 'self'
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
@@ -4116,50 +4485,92 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
 
-## Authentication Patterns
+---
 
-### JWT Flow
+### AI Agent & LLM Security Invariants
 
-```
-Login → Access Token (15min) + Refresh Token (7d, HttpOnly cookie)
-Request → Authorization: Bearer <access_token>
-Expired → POST /auth/refresh (sends refresh cookie) → new access token
-```
+When building AI workflows, tools, or MCP servers:
 
-### OAuth2 Flow
+1. **Prompt Injection Defense**:
+   - Clearly delineate untrusted user/web content using boundary markers (e.g. `<untrusted_content>` tags).
+   - Never allow untrusted content to override system instructions or tool execution permissions.
+2. **Tool Execution Boundaries**:
+   - Destructive operations (database drops, file deletions, payment triggers) MUST require explicit user confirmation.
+   - Restrict file system tools to the workspace root — block directory traversal (`../`).
+3. **Secret Masking & Output Sanitization**:
+   - Scrub API keys (`sk-...`, `Bearer ...`), tokens, and credentials before writing to agent logs or step summaries.
 
-```
-Redirect → Provider (Google, GitHub) → Callback → Create/link user → JWT
-```
-
-## Checklist Before Deploy
-
-- [ ] All secrets in environment variables
-- [ ] HTTPS enabled
-- [ ] Security headers configured
-- [ ] Input validation on all endpoints
-- [ ] Rate limiting enabled
-- [ ] CORS configured (not `*`)
-- [ ] Error messages don't leak internals
-- [ ] Dependency audit (`npm audit`, `pip audit`)
-- [ ] Logging for security events
-
+---
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+### Timing-Safe Secret Verification
+
+```javascript
+import crypto from 'node:crypto';
+
+export function verifyWebhookSignature(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');
+  const sigBuffer = Buffer.from(signature, 'utf8');
+
+  if (digest.length !== sigBuffer.length) return false;
+  return crypto.timingSafeEqual(digest, sigBuffer);
+}
+```
+
+### Safe SSRF Prevention Wrapper
+
+```typescript
+import dns from 'node:dns/promises';
+
+export async function validateSafeUrl(urlString: string): Promise<URL> {
+  const parsed = new URL(urlString);
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Only HTTPS protocol is permitted');
+  }
+
+  const { address } = await dns.lookup(parsed.hostname);
+  if (
+    address.startsWith('127.') ||
+    address.startsWith('10.') ||
+    address.startsWith('192.168.') ||
+    address === '169.254.169.254'
+  ) {
+    throw new Error('Access to private/metadata IP addresses is blocked');
+  }
+
+  return parsed;
+}
+```
+
+---
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] All database queries parameterized or managed by type-safe ORM.
+- [ ] BOLA/IDOR prevented: all entity queries scoped by tenant/user id.
+- [ ] Cookies set with `HttpOnly`, `Secure`, and `SameSite=Strict` or `Lax`.
+- [ ] Passwords hashed with Argon2id / bcrypt.
+- [ ] Security headers active in middleware/reverse proxy.
+- [ ] No secrets or tokens checked into source control or exposed in logs.
+
+---
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+- **Trusting client-side claims**: Checking role or permissions only on the frontend without server-side validation.
+- **Timing attacks on tokens**: Comparing tokens with `token === expectedToken` instead of `timingSafeEqual`.
+- **Exposing internal stack traces**: Returning full error objects to client in production.
+- **Unvalidated redirects / URLs**: Allowing arbitrary URLs in redirect or fetch parameters.
+
+---
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+- Runs in the REVIEW phase for every backend route, auth flow, and database mutation.
+- Integrates with `engineering-workflow` during Phase 5 (5-axis quality gate).
+- Pairs with `system-design` to mandate secure network boundaries and authorization layers.
 
 
 # Application Security Examples — Anti-patterns vs ContextOS Standard
@@ -4458,6 +4869,104 @@ function UserProfile({ userId }: { userId: string }) {
 
 - **Cause**: Reading localStorage-persisted Zustand store directly during initial SSR render.
 - **Fix**: Use a custom `useHydratedStore` hook or render persisted components only after client mount.
+### Skill: subagent-orchestrator
+
+> Subagent delegation and parallel coordination skill. Implements task decomposition, context hand-offs, blast-radius boundary isolation, and conflict-free merge synthesis.
+
+# subagent-orchestrator
+
+## Overview
+
+Multi-agent coordination protocol inspired by [obra/superpowers](https://github.com/obra/superpowers). Enables a primary orchestrating agent to decompose complex workflows into isolated, parallel sub-tasks, delegate them with precise context boundaries, monitor execution, and synthesize outputs with zero merge conflicts.
+
+## When to Use
+
+Activate whenever:
+
+- A task can be parallelized across distinct modules, services, or test suites.
+- Long-running exploratory research or multi-file refactoring exceeds single-context budget.
+- Running autonomous subagent workers for specialized roles (e.g. specialized QA tester, Security auditor, Docs generator).
+
+## Rules & Patterns
+
+### 1. The Blast Radius Boundary Rule
+
+Before delegating any subagent task:
+
+- **Zero File Overlap**: Each subagent MUST have a mutually exclusive list of target files. Two subagents must never be instructed to edit the same file concurrently.
+- **Explicit Inputs & Outputs**: Provide only the minimal schema, contract, or mock that the subagent needs. Do not dump the entire workspace into subagent prompts.
+
+### 2. The 4-Step Delegation Lifecycle
+
+```
+[ Orchestrator ]
+       │
+       ├─▶ 1. DECOMPOSE: Break into orthogonal tasks with non-overlapping file sets
+       │
+       ├─▶ 2. DISPATCH: Launch subagent with precise goal, constraints, and finish criteria
+       │
+       ├─▶ 3. AWAIT & VERIFY: Validate subagent output against its individual quality gate
+       │
+       └─▶ 4. SYNTHESIZE: Merge subagent results into the main branch and run global regression suite
+```
+
+### 3. Context Hand-off Specification
+
+Every subagent dispatch prompt must contain:
+
+1. **Target Objective**: Single, verifiable deliverable.
+2. **Read-Only Context**: Files to consult as reference without modifying.
+3. **Write Scope**: Exact file paths the subagent is permitted to create or modify.
+4. **Completion Signal**: Explicit instruction to report `DONE` with test evidence or `BLOCKED` with reason.
+
+---
+
+## Code Examples
+
+### Orchestrator Task Dispatch Template
+
+```markdown
+**Subagent Task: Order Validation Service**
+
+- **Role**: `[ROLE: Senior Developer]`
+- **Goal**: Implement Zod validation schema and unit tests for order payloads.
+- **Write Scope**:
+  - `src/services/order/validation.ts`
+  - `tests/services/order/validation.test.ts`
+- **Read-Only Reference**:
+  - `src/types/order.ts`
+- **Quality Gate**:
+  - Run `npx vitest run tests/services/order/validation.test.ts`
+  - All tests must pass with 100% coverage of validation rules.
+- **Finish Criteria**:
+  - Report exact test output and finish with `DONE`.
+```
+
+---
+
+## Validation Checklist
+
+- [ ] All delegated tasks have disjoint, non-overlapping file sets.
+- [ ] Every subagent prompt has explicit read vs write boundaries.
+- [ ] Subagent results verified individually before merging.
+- [ ] Global regression suite executed across the entire repository after all subagents finish.
+
+---
+
+## Common Mistakes
+
+- **Concurrent file collisions**: Assigning two subagents to modify the same route handler or lockfile.
+- **Unbounded delegation**: Asking a subagent to "improve the codebase" without specific file limits.
+- **Trusting without verification**: Assuming subagent code works without executing the test gate in the parent context.
+
+---
+
+## Integration Notes
+
+- Integrates with `engineering-workflow` during the PLAN and BUILD phases.
+- Works directly with `gstack-roles` to assign specific specialist personas to each subagent.
+- Employs `ponytail-mindset` to keep subagent implementations minimal.
+
 ### Skill: system-design
 
 > >
@@ -4782,6 +5291,44 @@ CLOSED (normal) → [failures > threshold] → OPEN (fail fast)
 | Cache | AP (tunable) | Redis with replication |
 
 **For most apps**: Choose AP. Accept eventual consistency. Use optimistic locking for critical writes.
+
+---
+
+## Designing Data-Intensive Applications (DDIA) Patterns
+
+Based on _Designing Data-Intensive Applications_ (Martin Kleppmann) and [ciembor/agent-rules-books](https://github.com/ciembor/agent-rules-books).
+
+### 1. The Dual-Write Problem & Transactional Outbox
+
+**The Anti-Pattern**: Updating the database and sending a message to a broker (Kafka, RabbitMQ, SQS) in two separate operations. If one fails, the system enters an inconsistent state.
+
+**The Solution**: Write the business entity AND an event record to an `outbox` table in the SAME database transaction:
+
+```sql
+BEGIN TRANSACTION;
+  UPDATE orders SET status = 'PAID' WHERE id = 'ord_123';
+  INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, created_at)
+  VALUES ('evt_456', 'Order', 'ord_123', 'OrderPaid', '{"amount": 99.00}', NOW());
+COMMIT;
+```
+
+A background process (polling worker or Debezium CDC) reads `outbox_events`, delivers them to the message broker, and marks them as published.
+
+### 2. Idempotency Invariant for Mutations
+
+All write operations exposed over HTTP or queues MUST support deduplication:
+
+- Accept an `Idempotency-Key` header (UUID or client-generated hash).
+- Store key with status in Redis or DB with a TTL (e.g., 24 hours).
+- If the key is already `COMPLETED`, return the cached response immediately without re-executing.
+- If `IN_PROGRESS`, return HTTP `409 Conflict` or queue retry.
+
+### 3. Read-Your-Own-Writes Consistency
+
+When using read replicas, replication lag (even 50ms) causes users to not see their own changes immediately after saving:
+
+- **Rule**: Route user reads to the primary database for `N` seconds (e.g., 5s) following any mutation by that user.
+- Route all other queries and background jobs to read replicas.
 
 ---
 
@@ -5606,11 +6153,46 @@ When choosing styles, reference these domains:
 
 ## Role Integration
 
-This skill is used at two stages in the pipeline:
+---
 
-- **Planning stage** (`/plan`): Use as a design guideline when speccing UI components
-- **Review stage** (`/review`): Use as a strict QA checklist — audit every rule before shipping
+## Tailwind CSS v4 (CSS-First Modern Architecture)
 
+In Tailwind CSS v4, styling configuration is native CSS without `tailwind.config.js`:
+
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-surface: #0f172a;
+  --color-surface-muted: #1e293b;
+  --font-sans: "Inter", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+```
+
+- **Zero JavaScript Config**: Define theme variables directly in CSS `@theme`.
+- **Native CSS Variables**: Use `var(--color-...)` for dynamic runtime theming and dark mode.
+- **Dynamic Viewports**: Use `h-dvh` and `min-h-dvh` for full-height layouts that behave properly on mobile browsers.
+
+---
+
+## Core Web Vitals 2026: INP (Interaction to Next Paint)
+
+- **Target**: INP < 200ms (replaces legacy FID).
+- **Rule**: Never block the main thread for > 50ms during click, keypress, or tap event handlers.
+- Wrap heavy UI updates in `startTransition`:
+
+  ```tsx
+  startTransition(() => {
+    setFilter(newFilter);
+  });
+  ```
+
+- Use Web Workers or chunks for heavy client-side filtering and data processing.
+
+---
 
 ## Code Examples
 

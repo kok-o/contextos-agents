@@ -7,6 +7,16 @@
       "path": ".agents/core/skills/adapters/SKILL.md"
     },
     {
+      "name": "architecture-diagrams",
+      "description": "Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained",
+      "path": ".agents/core/skills/architecture-diagrams/SKILL.md"
+    },
+    {
+      "name": "brutalist-design",
+      "description": "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics. Rigid grids, extreme type scale contrast, utilitarian color, analog degradation effects. For data-heavy dashboards, portfolios, or editorial sites that need to feel like declassified blueprints.",
+      "path": ".agents/core/skills/brutalist-design/SKILL.md"
+    },
+    {
       "name": "context-manager",
       "description": "Smart context selection engine. Analyzes the current task, consults the",
       "path": ".agents/core/skills/context-manager/SKILL.md"
@@ -47,6 +57,11 @@
       "path": ".agents/core/skills/fastapi/SKILL.md"
     },
     {
+      "name": "gemini-precision",
+      "description": "High-precision engineering and execution guardrails optimized for Google Gemini models.",
+      "path": ".agents/core/skills/gemini-precision/SKILL.md"
+    },
+    {
       "name": "generators",
       "description": "Generates project documentation from a single idea. Creates PRD, Architecture,",
       "path": ".agents/core/skills/generators/SKILL.md"
@@ -62,9 +77,19 @@
       "path": ".agents/core/skills/impeccable-design/SKILL.md"
     },
     {
+      "name": "interview-me",
+      "description": "Interactive requirements elicitation skill. Interrogates ambiguous, complex, or high-blast-radius",
+      "path": ".agents/core/skills/interview-me/SKILL.md"
+    },
+    {
       "name": "microservices",
       "description": "ContextOS skill for Microservices",
       "path": ".agents/core/skills/microservices/SKILL.md"
+    },
+    {
+      "name": "minimalist-design",
+      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
+      "path": ".agents/core/skills/minimalist-design/SKILL.md"
     },
     {
       "name": "nestjs",
@@ -97,14 +122,34 @@
       "path": ".agents/core/skills/react/SKILL.md"
     },
     {
+      "name": "react-best-practices",
+      "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.",
+      "path": ".agents/core/skills/react-best-practices/SKILL.md"
+    },
+    {
+      "name": "redesign-audit",
+      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.",
+      "path": ".agents/core/skills/redesign-audit/SKILL.md"
+    },
+    {
       "name": "security",
-      "description": "ContextOS skill for Application Security",
+      "description": "Application and AI agent security skill. Enforces zero-trust defense-in-depth,",
       "path": ".agents/core/skills/security/SKILL.md"
+    },
+    {
+      "name": "soft-design",
+      "description": "Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.",
+      "path": ".agents/core/skills/soft-design/SKILL.md"
     },
     {
       "name": "state-management",
       "description": "Client and server state management standards using Zustand and TanStack Query. Enforces minimal global state, optimistic updates, and clean query invalidation.",
       "path": ".agents/core/skills/state-management/SKILL.md"
+    },
+    {
+      "name": "subagent-orchestrator",
+      "description": "Subagent delegation and parallel coordination skill. Implements task decomposition,",
+      "path": ".agents/core/skills/subagent-orchestrator/SKILL.md"
     },
     {
       "name": "system-design",
@@ -135,6 +180,11 @@
       "name": "ux-design",
       "description": "ContextOS skill for UX Design",
       "path": ".agents/core/skills/ux-design/SKILL.md"
+    },
+    {
+      "name": "vercel-optimize",
+      "description": "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps. Collect Vercel metrics, usage, project config, and code scan results first; investigate only metric-backed candidates; produce ranked recommendations grounded in verified files and version-aware Vercel/framework docs. Trigger for Vercel bill reduction, slow or expensive routes, caching opportunities, Function Invocations, Build Minutes, Fast Data Transfer, Core Web Vitals, Bot Management, Fluid compute, or cost breakdown requests.",
+      "path": ".agents/core/skills/vercel-optimize/SKILL.md"
     },
     {
       "name": "web-accessibility",
