@@ -26,6 +26,7 @@ A systematic redesign and auditing protocol designed to elevate existing website
 ### 2. Design Audit Categories
 
 #### Typography
+
 - **Replace Browser Defaults:** Swap generic `Inter`, `Roboto`, or system fonts with expressive typefaces (`Geist`, `Outfit`, `Cabinet Grotesk`, `Satoshi`).
 - **Presence & Scale:** Increase display text size, tighten letter-spacing (`-0.02em` to `-0.04em`), reduce line-height on headlines.
 - **Reading Comfort:** Limit body text to 65 characters per line (`max-w-prose`), increase line-height to 1.6.
@@ -33,6 +34,7 @@ A systematic redesign and auditing protocol designed to elevate existing website
 - **Orphan Prevention:** Apply `text-wrap: balance` on headlines and `text-wrap: pretty` on paragraphs.
 
 #### Color and Surfaces
+
 - **No Pure Black Backgrounds:** Replace `#000000` with tinted dark charcoal (`#0A0A0A`, `#121212`).
 - **Desaturate Accents:** Keep accent saturation below 80% so it blends harmoniously with neutrals.
 - **Single Accent Color:** Commit to one dominant accent hue; remove conflicting secondary tints.
@@ -40,17 +42,20 @@ A systematic redesign and auditing protocol designed to elevate existing website
 - **Background Depth:** Prevent sterile flat sections by layering subtle noise overlays, ambient gradients, or masked imagery.
 
 #### Layout and Space
+
 - **Asymmetry & Bento Grids:** Break repetitive 3-column Bootstrap grids with asymmetrical spans or offset cards.
 - **Mobile Viewport Bug Fix:** Never use `height: 100vh`; always use `min-height: 100dvh`.
 - **Vertical Alignment:** Pin action buttons to the bottom of card groups (`mt-auto` or grid alignment) to maintain horizontal baseline harmony across differing text heights.
 - **Optical Centering:** Adjust icons, badges, and play buttons optically by 1-2px rather than relying solely on pure mathematical centering.
 
 #### Interactivity and States
+
 - **Interactive Feedback:** Add 200-300ms transitions, distinct hover shifts, and physical active presses (`scale(0.98)`).
 - **Visible Focus Rings:** Mandatory `:focus-visible` styling for keyboard navigation.
 - **States Completeness:** Always provide designed skeleton loaders, empty states, and inline error messages.
 
 #### Content & Code Quality
+
 - **Eradicate AI Clichés:** Remove buzzwords ("Elevate", "Seamless", "Unleash", "Next-Gen") and placeholder latin text.
 - **Semantic HTML:** Replace nested div containers with `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`.
 - **Relative Units:** Use `rem`, `%`, and CSS Grid rather than hardcoded pixel widths.

@@ -19,6 +19,7 @@ Inspired by [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelb
 ## Pre-flight Check & Brief Inference
 
 Before starting a design implementation:
+
 1. Infer the unwritten constraints of the domain (e.g., if it's a dev tool, assume dark mode, monospaced numbers, dense layout).
 2. Propose a "Design Brief Inference" summarizing the intended aesthetic.
 
@@ -164,7 +165,7 @@ Typography utilities:
 
 Always set and document the following three parameters (1-10 scale) before starting any design task, to escape generic AI defaults:
 
-- **DESIGN_VARIANCE (1-10)**: Grid and Layout structures. 
+- **DESIGN_VARIANCE (1-10)**: Grid and Layout structures.
   - 1-3 = Clean, centered layouts, standard grids (Enterprise, Docs).
   - 4-7 = Asymmetric containers, off-grid elements, sticky sidebars (SaaS, Creative tools).
   - 8-10 = Broken grids, overlapping items, editorial style (Portfolios, Agencies).
@@ -180,6 +181,7 @@ Always set and document the following three parameters (1-10 scale) before start
 ## Adaptive Aesthetics (Project Mapping)
 
 Select the base aesthetic based on the project domain:
+
 - **Fintech / Enterprise**: Swiss Minimalism, Neumorphism (High trust, clean, DESIGN_VARIANCE: 2-4).
 - **AI Tools / DevTools**: Dark OLED Luxury, Glassmorphism (Modern, tech-forward, DESIGN_VARIANCE: 5-7).
 - **Creative / Portfolios**: Brutalism, Maximalist, Aurora (Bold, expressive, DESIGN_VARIANCE: 8-10).
@@ -224,10 +226,12 @@ Whenever you establish core UI tokens (fonts, color scales, border radii, equali
 ## Image-First Pipeline (Design Sprints)
 
 If you have access to image generation tools (e.g., DALL-E, Midjourney integrations) and the task involves creating a net-new UI page or component, follow the **Image-First Pipeline**:
+
 1. **Generate**: Create 1-3 reference images ("mockups", "brand boards") of the desired UI using image generation.
 2. **Analyze**: Review the generated images for layout, spacing, and typography choices.
 3. **Implement**: Write the code to match the aesthetic of the generated reference images.
-*Do not skip straight to code for major UI overhauls without a visual reference if generation is available.*
+
+_Do not skip straight to code for major UI overhauls without a visual reference if generation is available._
 
 ---
 

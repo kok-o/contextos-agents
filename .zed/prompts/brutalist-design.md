@@ -21,11 +21,15 @@ Advanced proficiency in architecting web interfaces that synthesize mid-century 
 Pick ONE per project and commit to it. Do not alternate or mix both modes within the same interface.
 
 #### 1.1 Swiss Industrial Print
+
 Derived from 1960s corporate identity systems and heavy machinery blueprints.
+
 - **Characteristics:** High-contrast light modes (newsprint/off-white substrates). Reliance on monolithic, heavy sans-serif typography. Unforgiving structural grids outlined by visible dividing lines. Aggressive, asymmetric use of negative space punctuated by oversized, viewport-bleeding numerals or letterforms. Heavy use of primary red as an alert/accent color.
 
 #### 1.2 Tactical Telemetry & CRT Terminal
+
 Derived from classified military databases, legacy mainframes, and aerospace Heads-Up Displays (HUDs).
+
 - **Characteristics:** Dark mode exclusivity. High-density tabular data presentation. Absolute dominance of monospaced typography. Integration of technical framing devices (ASCII brackets, crosshairs). Application of simulated hardware limitations (phosphor glow, scanlines, low bit-depth rendering).
 
 ### 2. Typographic Architecture
@@ -33,6 +37,7 @@ Derived from classified military databases, legacy mainframes, and aerospace Hea
 Typography is the primary structural and decorative infrastructure. Imagery is secondary. The system demands extreme variance in scale, weight, and spacing.
 
 #### 2.1 Macro-Typography (Structural Headers)
+
 - **Classification:** Neo-Grotesque / Heavy Sans-Serif.
 - **Optimal Web Fonts:** Neue Haas Grotesk (Black), Inter (Extra Bold/Black), Archivo Black, Roboto Flex (Heavy), Monument Extended.
 - **Scale:** Deployed at massive scales using fluid typography (e.g., `clamp(4rem, 10vw, 15rem)`).
@@ -41,6 +46,7 @@ Typography is the primary structural and decorative infrastructure. Imagery is s
 - **Casing:** Exclusively uppercase for structural impact.
 
 #### 2.2 Micro-Typography (Data & Telemetry)
+
 - **Classification:** Monospace / Technical Sans.
 - **Optimal Web Fonts:** JetBrains Mono, IBM Plex Mono, Space Mono, VT323, Courier Prime.
 - **Scale:** Fixed and small (`10px` to `14px` / `0.7rem` to `0.875rem`).
@@ -49,6 +55,7 @@ Typography is the primary structural and decorative infrastructure. Imagery is s
 - **Casing:** Exclusively uppercase. Used for all metadata, navigation, unit IDs, and coordinates.
 
 #### 2.3 Textural Contrast (Artistic Disruption)
+
 - **Classification:** High-Contrast Serif.
 - **Optimal Web Fonts:** Playfair Display, EB Garamond, Times New Roman.
 - **Implementation Parameters:** Used exceedingly sparingly. Must be subjected to heavy post-processing (halftone filters, 1-bit dithering) to degrade vector perfection and create textural juxtaposition against the clean sans-serifs.
@@ -59,12 +66,14 @@ The color architecture is uncompromising. Gradients, soft drop shadows, and mode
 
 **CRITICAL: Choose ONE substrate palette per project and use it consistently. Never mix light and dark substrates within the same interface.**
 
-#### Swiss Industrial Print (Light):
+#### Swiss Industrial Print Light Substrate
+
 - **Background:** `#F4F4F0` or `#EAE8E3` (Matte, unbleached documentation paper).
 - **Foreground:** `#050505` to `#111111` (Carbon Ink).
 - **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). This is the ONLY accent color. Used for strike-throughs, thick structural dividing lines, or vital data highlights.
 
-#### Tactical Telemetry (Dark):
+#### Tactical Telemetry Dark Substrate
+
 - **Background:** `#0A0A0A` or `#121212` (Deactivated CRT. Avoid pure `#000000`).
 - **Foreground:** `#EAEAEA` (White phosphor). This is the primary text color.
 - **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). Same red, same rules.

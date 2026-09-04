@@ -29,16 +29,10 @@
     "validate": "node .agents/ctx.js validate",
     "benchmark": "node benchmarks/gemini-issues.js",
     "benchmark:live": "node benchmarks/run-live-benchmark.js",
-    "lint:md": "markdownlint README.md CONTRIBUTING.md '.agents/core/skills/**/*.md' --ignore '.agents/generated/**' --config .markdownlint.json",
-    "build:mcp": "npm --workspace=contextos-mcp run build:bundle",
-    "build:website": "npm --workspace=website run build",
+    "lint:md": "markdownlint README.md CONTRIBUTING.md .agents/core/skills/**/*.md --ignore .agents/generated/** --config .markdownlint.json",
     "test": "node --test --test-concurrency=1 tests/install.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js",
     "prepublishOnly": "npm run validate && cd contextos-mcp && npm install && npm run build:bundle && cd .. && npm run build"
   },
-  "workspaces": [
-    "contextos-mcp",
-    "website"
-  ],
   "keywords": [
     "ai",
     "agents",

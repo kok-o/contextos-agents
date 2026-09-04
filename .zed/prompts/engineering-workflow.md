@@ -340,6 +340,7 @@ How this skill interacts with other skills.
 ## Completion Status Protocol
 
 When completing a task or workflow, you must explicitly report your final status as the last part of your output:
+
 - **DONE** — completed with evidence.
 - **DONE_WITH_CONCERNS** — completed, but list concerns.
 - **BLOCKED** — cannot proceed; state blocker and what was tried.

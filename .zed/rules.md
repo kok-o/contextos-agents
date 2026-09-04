@@ -530,11 +530,15 @@ Advanced proficiency in architecting web interfaces that synthesize mid-century 
 Pick ONE per project and commit to it. Do not alternate or mix both modes within the same interface.
 
 #### 1.1 Swiss Industrial Print
+
 Derived from 1960s corporate identity systems and heavy machinery blueprints.
+
 - **Characteristics:** High-contrast light modes (newsprint/off-white substrates). Reliance on monolithic, heavy sans-serif typography. Unforgiving structural grids outlined by visible dividing lines. Aggressive, asymmetric use of negative space punctuated by oversized, viewport-bleeding numerals or letterforms. Heavy use of primary red as an alert/accent color.
 
 #### 1.2 Tactical Telemetry & CRT Terminal
+
 Derived from classified military databases, legacy mainframes, and aerospace Heads-Up Displays (HUDs).
+
 - **Characteristics:** Dark mode exclusivity. High-density tabular data presentation. Absolute dominance of monospaced typography. Integration of technical framing devices (ASCII brackets, crosshairs). Application of simulated hardware limitations (phosphor glow, scanlines, low bit-depth rendering).
 
 ### 2. Typographic Architecture
@@ -542,6 +546,7 @@ Derived from classified military databases, legacy mainframes, and aerospace Hea
 Typography is the primary structural and decorative infrastructure. Imagery is secondary. The system demands extreme variance in scale, weight, and spacing.
 
 #### 2.1 Macro-Typography (Structural Headers)
+
 - **Classification:** Neo-Grotesque / Heavy Sans-Serif.
 - **Optimal Web Fonts:** Neue Haas Grotesk (Black), Inter (Extra Bold/Black), Archivo Black, Roboto Flex (Heavy), Monument Extended.
 - **Scale:** Deployed at massive scales using fluid typography (e.g., `clamp(4rem, 10vw, 15rem)`).
@@ -550,6 +555,7 @@ Typography is the primary structural and decorative infrastructure. Imagery is s
 - **Casing:** Exclusively uppercase for structural impact.
 
 #### 2.2 Micro-Typography (Data & Telemetry)
+
 - **Classification:** Monospace / Technical Sans.
 - **Optimal Web Fonts:** JetBrains Mono, IBM Plex Mono, Space Mono, VT323, Courier Prime.
 - **Scale:** Fixed and small (`10px` to `14px` / `0.7rem` to `0.875rem`).
@@ -558,6 +564,7 @@ Typography is the primary structural and decorative infrastructure. Imagery is s
 - **Casing:** Exclusively uppercase. Used for all metadata, navigation, unit IDs, and coordinates.
 
 #### 2.3 Textural Contrast (Artistic Disruption)
+
 - **Classification:** High-Contrast Serif.
 - **Optimal Web Fonts:** Playfair Display, EB Garamond, Times New Roman.
 - **Implementation Parameters:** Used exceedingly sparingly. Must be subjected to heavy post-processing (halftone filters, 1-bit dithering) to degrade vector perfection and create textural juxtaposition against the clean sans-serifs.
@@ -568,12 +575,14 @@ The color architecture is uncompromising. Gradients, soft drop shadows, and mode
 
 **CRITICAL: Choose ONE substrate palette per project and use it consistently. Never mix light and dark substrates within the same interface.**
 
-#### Swiss Industrial Print (Light):
+#### Swiss Industrial Print Light Substrate
+
 - **Background:** `#F4F4F0` or `#EAE8E3` (Matte, unbleached documentation paper).
 - **Foreground:** `#050505` to `#111111` (Carbon Ink).
 - **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). This is the ONLY accent color. Used for strike-throughs, thick structural dividing lines, or vital data highlights.
 
-#### Tactical Telemetry (Dark):
+#### Tactical Telemetry Dark Substrate
+
 - **Background:** `#0A0A0A` or `#121212` (Deactivated CRT. Avoid pure `#000000`).
 - **Foreground:** `#EAEAEA` (White phosphor). This is the primary text color.
 - **Accent:** `#E61919` or `#FF2A2A` (Aviation/Hazard Red). Same red, same rules.
@@ -1853,6 +1862,7 @@ How this skill interacts with other skills.
 ## Completion Status Protocol
 
 When completing a task or workflow, you must explicitly report your final status as the last part of your output:
+
 - **DONE** — completed with evidence.
 - **DONE_WITH_CONCERNS** — completed, but list concerns.
 - **BLOCKED** — cannot proceed; state blocker and what was tried.
@@ -2631,6 +2641,7 @@ An advanced frontend engineering directive for generating highly refined, ultra-
 ### 1. Absolute Negative Constraints (Banned Elements)
 
 The AI must strictly avoid the following generic web development defaults:
+
 - DO NOT use the "Inter", "Roboto", or "Open Sans" typefaces.
 - DO NOT use generic, thin-line icon libraries like "Lucide", "Feather", or standard "Heroicons".
 - DO NOT use Tailwind's default heavy drop shadows (e.g., `shadow-md`, `shadow-lg`, `shadow-xl`). Shadows must be practically non-existent or heavily customized to be ultra-diffuse and low opacity (< 0.05).
@@ -2644,6 +2655,7 @@ The AI must strictly avoid the following generic web development defaults:
 ### 2. Typographic Architecture
 
 The interface must rely on extreme typographic contrast and premium font selection to establish an editorial feel.
+
 - **Primary Sans-Serif (Body, UI, Buttons):** Use clean, geometric, or system-native fonts with character (`'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'Switzer', sans-serif`).
 - **Editorial Serif (Hero Headings & Quotes):** (`'Lyon Text', 'Newsreader', 'Playfair Display', 'Instrument Serif', serif`). Apply tight tracking (`-0.02em` to `-0.04em`) and tight line-height (`1.1`).
 - **Monospace (Code, Keystrokes, Meta-data):** (`'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace`).
@@ -2652,6 +2664,7 @@ The interface must rely on extreme typographic contrast and premium font selecti
 ### 3. Color Palette (Warm Monochrome + Spot Pastels)
 
 Color is a scarce resource, utilized only for semantic meaning or subtle accents.
+
 - **Canvas / Background:** Pure White `#FFFFFF` or Warm Bone/Off-White `#F7F6F3` / `#FBFBFA`.
 - **Primary Surface (Cards):** `#FFFFFF` or `#F9F9F8`.
 - **Structural Borders / Dividers:** Ultra-light gray `#EAEAEA` or `rgba(0,0,0,0.06)`.
@@ -3914,6 +3927,7 @@ A systematic redesign and auditing protocol designed to elevate existing website
 ### 2. Design Audit Categories
 
 #### Typography
+
 - **Replace Browser Defaults:** Swap generic `Inter`, `Roboto`, or system fonts with expressive typefaces (`Geist`, `Outfit`, `Cabinet Grotesk`, `Satoshi`).
 - **Presence & Scale:** Increase display text size, tighten letter-spacing (`-0.02em` to `-0.04em`), reduce line-height on headlines.
 - **Reading Comfort:** Limit body text to 65 characters per line (`max-w-prose`), increase line-height to 1.6.
@@ -3921,6 +3935,7 @@ A systematic redesign and auditing protocol designed to elevate existing website
 - **Orphan Prevention:** Apply `text-wrap: balance` on headlines and `text-wrap: pretty` on paragraphs.
 
 #### Color and Surfaces
+
 - **No Pure Black Backgrounds:** Replace `#000000` with tinted dark charcoal (`#0A0A0A`, `#121212`).
 - **Desaturate Accents:** Keep accent saturation below 80% so it blends harmoniously with neutrals.
 - **Single Accent Color:** Commit to one dominant accent hue; remove conflicting secondary tints.
@@ -3928,17 +3943,20 @@ A systematic redesign and auditing protocol designed to elevate existing website
 - **Background Depth:** Prevent sterile flat sections by layering subtle noise overlays, ambient gradients, or masked imagery.
 
 #### Layout and Space
+
 - **Asymmetry & Bento Grids:** Break repetitive 3-column Bootstrap grids with asymmetrical spans or offset cards.
 - **Mobile Viewport Bug Fix:** Never use `height: 100vh`; always use `min-height: 100dvh`.
 - **Vertical Alignment:** Pin action buttons to the bottom of card groups (`mt-auto` or grid alignment) to maintain horizontal baseline harmony across differing text heights.
 - **Optical Centering:** Adjust icons, badges, and play buttons optically by 1-2px rather than relying solely on pure mathematical centering.
 
 #### Interactivity and States
+
 - **Interactive Feedback:** Add 200-300ms transitions, distinct hover shifts, and physical active presses (`scale(0.98)`).
 - **Visible Focus Rings:** Mandatory `:focus-visible` styling for keyboard navigation.
 - **States Completeness:** Always provide designed skeleton loaders, empty states, and inline error messages.
 
 #### Content & Code Quality
+
 - **Eradicate AI Clichés:** Remove buzzwords ("Elevate", "Seamless", "Unleash", "Next-Gen") and placeholder latin text.
 - **Semantic HTML:** Replace nested div containers with `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`.
 - **Relative Units:** Use `rem`, `%`, and CSS Grid rather than hardcoded pixel widths.
@@ -4239,11 +4257,13 @@ Engineers high-end, agency-level digital experiences characterized by tactile ha
 Before writing code, consciously pick ONE combination:
 
 #### Vibe & Texture Archetypes
+
 1. **Ethereal Glass (SaaS / AI / Tech):** Deep OLED black (`#050505`), subtle radial mesh gradients, vantablack cards with `backdrop-blur-2xl` and white/10 hairlines.
 2. **Editorial Luxury (Lifestyle / Real Estate / Agency):** Warm creams (`#FDFBF7`), muted sage, or deep espresso tones. Variable serif headings with subtle CSS noise overlay (`opacity-[0.03]`).
 3. **Soft Structuralism (Consumer / Health / Portfolio):** Silver-grey or pure white backgrounds, bold grotesk typography, airy floating components with ultra-diffuse ambient shadows.
 
 #### Layout Archetypes
+
 1. **The Asymmetrical Bento:** Masonry CSS Grid of varying card spans. (Collapses to single-column `grid-cols-1 gap-6` on mobile).
 2. **The Z-Axis Cascade:** Stacked cards with varying depth of field and subtle `-2deg` or `3deg` rotations. (Rotations removed on mobile).
 3. **The Editorial Split:** Massive typography on the left half (`w-1/2`), with horizontal interactive card ribbons on the right.
@@ -5296,6 +5316,7 @@ Inspired by [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelb
 ## Pre-flight Check & Brief Inference
 
 Before starting a design implementation:
+
 1. Infer the unwritten constraints of the domain (e.g., if it's a dev tool, assume dark mode, monospaced numbers, dense layout).
 2. Propose a "Design Brief Inference" summarizing the intended aesthetic.
 
@@ -5441,7 +5462,7 @@ Typography utilities:
 
 Always set and document the following three parameters (1-10 scale) before starting any design task, to escape generic AI defaults:
 
-- **DESIGN_VARIANCE (1-10)**: Grid and Layout structures. 
+- **DESIGN_VARIANCE (1-10)**: Grid and Layout structures.
   - 1-3 = Clean, centered layouts, standard grids (Enterprise, Docs).
   - 4-7 = Asymmetric containers, off-grid elements, sticky sidebars (SaaS, Creative tools).
   - 8-10 = Broken grids, overlapping items, editorial style (Portfolios, Agencies).
@@ -5457,6 +5478,7 @@ Always set and document the following three parameters (1-10 scale) before start
 ## Adaptive Aesthetics (Project Mapping)
 
 Select the base aesthetic based on the project domain:
+
 - **Fintech / Enterprise**: Swiss Minimalism, Neumorphism (High trust, clean, DESIGN_VARIANCE: 2-4).
 - **AI Tools / DevTools**: Dark OLED Luxury, Glassmorphism (Modern, tech-forward, DESIGN_VARIANCE: 5-7).
 - **Creative / Portfolios**: Brutalism, Maximalist, Aurora (Bold, expressive, DESIGN_VARIANCE: 8-10).
@@ -5501,10 +5523,12 @@ Whenever you establish core UI tokens (fonts, color scales, border radii, equali
 ## Image-First Pipeline (Design Sprints)
 
 If you have access to image generation tools (e.g., DALL-E, Midjourney integrations) and the task involves creating a net-new UI page or component, follow the **Image-First Pipeline**:
+
 1. **Generate**: Create 1-3 reference images ("mockups", "brand boards") of the desired UI using image generation.
 2. **Analyze**: Review the generated images for layout, spacing, and typography choices.
 3. **Implement**: Write the code to match the aesthetic of the generated reference images.
-*Do not skip straight to code for major UI overhauls without a visual reference if generation is available.*
+
+_Do not skip straight to code for major UI overhauls without a visual reference if generation is available._
 
 ---
 

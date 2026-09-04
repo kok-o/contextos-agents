@@ -23,6 +23,7 @@ An advanced frontend engineering directive for generating highly refined, ultra-
 ### 1. Absolute Negative Constraints (Banned Elements)
 
 The AI must strictly avoid the following generic web development defaults:
+
 - DO NOT use the "Inter", "Roboto", or "Open Sans" typefaces.
 - DO NOT use generic, thin-line icon libraries like "Lucide", "Feather", or standard "Heroicons".
 - DO NOT use Tailwind's default heavy drop shadows (e.g., `shadow-md`, `shadow-lg`, `shadow-xl`). Shadows must be practically non-existent or heavily customized to be ultra-diffuse and low opacity (< 0.05).
@@ -36,6 +37,7 @@ The AI must strictly avoid the following generic web development defaults:
 ### 2. Typographic Architecture
 
 The interface must rely on extreme typographic contrast and premium font selection to establish an editorial feel.
+
 - **Primary Sans-Serif (Body, UI, Buttons):** Use clean, geometric, or system-native fonts with character (`'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'Switzer', sans-serif`).
 - **Editorial Serif (Hero Headings & Quotes):** (`'Lyon Text', 'Newsreader', 'Playfair Display', 'Instrument Serif', serif`). Apply tight tracking (`-0.02em` to `-0.04em`) and tight line-height (`1.1`).
 - **Monospace (Code, Keystrokes, Meta-data):** (`'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace`).
@@ -44,6 +46,7 @@ The interface must rely on extreme typographic contrast and premium font selecti
 ### 3. Color Palette (Warm Monochrome + Spot Pastels)
 
 Color is a scarce resource, utilized only for semantic meaning or subtle accents.
+
 - **Canvas / Background:** Pure White `#FFFFFF` or Warm Bone/Off-White `#F7F6F3` / `#FBFBFA`.
 - **Primary Surface (Cards):** `#FFFFFF` or `#F9F9F8`.
 - **Structural Borders / Dividers:** Ultra-light gray `#EAEAEA` or `rgba(0,0,0,0.06)`.

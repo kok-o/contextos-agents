@@ -30,11 +30,13 @@ Engineers high-end, agency-level digital experiences characterized by tactile ha
 Before writing code, consciously pick ONE combination:
 
 #### Vibe & Texture Archetypes
+
 1. **Ethereal Glass (SaaS / AI / Tech):** Deep OLED black (`#050505`), subtle radial mesh gradients, vantablack cards with `backdrop-blur-2xl` and white/10 hairlines.
 2. **Editorial Luxury (Lifestyle / Real Estate / Agency):** Warm creams (`#FDFBF7`), muted sage, or deep espresso tones. Variable serif headings with subtle CSS noise overlay (`opacity-[0.03]`).
 3. **Soft Structuralism (Consumer / Health / Portfolio):** Silver-grey or pure white backgrounds, bold grotesk typography, airy floating components with ultra-diffuse ambient shadows.
 
 #### Layout Archetypes
+
 1. **The Asymmetrical Bento:** Masonry CSS Grid of varying card spans. (Collapses to single-column `grid-cols-1 gap-6` on mobile).
 2. **The Z-Axis Cascade:** Stacked cards with varying depth of field and subtle `-2deg` or `3deg` rotations. (Rotations removed on mobile).
 3. **The Editorial Split:** Massive typography on the left half (`w-1/2`), with horizontal interactive card ribbons on the right.
