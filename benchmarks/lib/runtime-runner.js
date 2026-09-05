@@ -31,9 +31,10 @@ try {
 
 /**
  * Robust TypeScript to CommonJS transformer.
- * Leverages Node.js native AST-based type stripping (Node 22+) with fallback regex,
- * auto-repairs unclosed braces from EOF truncation, cleans parameter properties,
- * and cleanly bridges ESM imports and exports.
+ * Works seamlessly across Node.js 18, 20, and 22.
+ * Auto-repairs unclosed braces from EOF truncation, compiles constructor parameter properties,
+ * safely strips interfaces (including nested types), functions, and method type annotations
+ * without mangling object literals or expressions, and cleanly bridges ESM imports and exports.
  */
 function stripTypeScript(code) {
   if (!code || typeof code !== 'string') return '';
@@ -41,7 +42,6 @@ function stripTypeScript(code) {
   let js = code;
 
   // 1. Pre-clean parameters and stubs that cause parser failures
-  js = js.replace(/\b(public|private|protected|readonly)\s+/g, '');
   js = js.replace(/throw\s+new\s+Error\s*\.\.\./g, "throw new Error('Validation error')");
   js = js.replace(/throw\s+\.\.\.;?/g, "throw new Error('Operation failed');");
   js = js.replace(/if\s*\(([^)]+)\)\s*\.\.\./g, "if ($1) { throw new Error('Validation error'); }");
@@ -53,37 +53,116 @@ function stripTypeScript(code) {
   js = js.replace(/,\s*[\w$]+\?\s*(?=,|\})/g, '');
   js = js.replace(/[\w$]+\?\s*,/g, '');
 
-  // Auto-close missing braces if model was cut off near EOF
+  // 2. Remove type-only imports and declare statements
+  js = js.replace(/import\s+type\s+[^;]+;/g, '');
+  js = js.replace(/declare\s+[\s\S]*?;/g, '');
+
+  // 3. Remove interfaces (handling nested braces)
+  let interfaceMatch;
+  while ((interfaceMatch = js.match(/\b(?:export\s+)?interface\s+[\w$]+[^{]*\{/))) {
+    const startIdx = interfaceMatch.index;
+    const openBraceIdx = startIdx + interfaceMatch[0].length - 1;
+    let depth = 1;
+    let i = openBraceIdx + 1;
+    while (i < js.length && depth > 0) {
+      if (js[i] === '{') depth++;
+      else if (js[i] === '}') depth--;
+      i++;
+    }
+    js = js.slice(0, startIdx) + js.slice(i);
+  }
+
+  // 4. Remove type aliases: type Foo<T> = ...; (handling nested braces)
+  let typeMatch;
+  while ((typeMatch = js.match(/\b(?:export\s+)?type\s+[\w$]+(?:<[^>]*>)?\s*=/))) {
+    const startIdx = typeMatch.index;
+    let i = startIdx + typeMatch[0].length;
+    let braceDepth = 0;
+    while (i < js.length) {
+      if (js[i] === '{') braceDepth++;
+      else if (js[i] === '}') braceDepth--;
+      else if (js[i] === ';' && braceDepth <= 0) {
+        i++;
+        break;
+      }
+      i++;
+    }
+    js = js.slice(0, startIdx) + js.slice(i);
+  }
+
+  // 5. Handle constructor parameter properties (public/private/protected/readonly in constructor)
+  // e.g. constructor(public amount: number, public currency: string = 'USD')
+  js = js.replace(/constructor\s*\(([^)]*)\)\s*\{/g, (match, params) => {
+    const assignments = [];
+    const cleanedParams = params.split(',').map(param => {
+      const matchProp = param.match(/\b(public|private|protected|readonly)\s+([\w$]+)/);
+      if (matchProp) {
+        const name = matchProp[2];
+        assignments.push(`this.${name} = ${name};`);
+      }
+      return param.replace(/\b(public|private|protected|readonly)\s+/g, '');
+    }).join(',');
+
+    if (assignments.length > 0) {
+      return `constructor(${cleanedParams}) {\n  ${assignments.join('\n  ')}\n`;
+    }
+    return match;
+  });
+
+  // 6. Remove access modifiers everywhere
+  js = js.replace(/\b(public|private|protected|readonly|override)\s+/g, '');
+
+  // 7. Remove 'implements Foo, Bar' on classes
+  js = js.replace(/\s+implements\s+[\w$,\s<>]+(?=\s*\{)/g, '');
+
+  // 8. Transform function/constructor/method declarations and arrow functions
+  // Matches: [modifiers] [name](params): [ReturnType] { OR =>
+  js = js.replace(
+    /((?:\b(?:async\s+)?function\*?\s+[\w$]*|\bconstructor|\b(?:get|set|async)\s+[\w$]+|\b[\w$]+)\s*(?:<[^>]*>)?\s*\()([^)]*)\)(\s*(?::\s*[^={;]+)?\s*(\{|=>))/g,
+    (fullMatch, prefix, params, suffix, bodyOpener) => {
+      let cleanedParams = params;
+      if (cleanedParams.trim()) {
+        cleanedParams = cleanedParams.replace(/:\s*\{[^{}]*\}\s*/g, '');
+        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+(=[^,]+)/g, '$1 $2');
+        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+/g, '$1');
+      }
+      return `${prefix}${cleanedParams}) ${bodyOpener}`;
+    }
+  );
+
+  // Arrow functions without leading keyword: (a: string, b: number): ReturnType =>
+  js = js.replace(
+    /(\(([^)]*)\)\s*(?::\s*[^={;]+)?\s*=>)/g,
+    (fullMatch, _, params) => {
+      let cleanedParams = params;
+      if (cleanedParams.trim()) {
+        cleanedParams = cleanedParams.replace(/:\s*\{[^{}]*\}\s*/g, '');
+        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+(=[^,]+)/g, '$1 $2');
+        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+/g, '$1');
+      }
+      return `(${cleanedParams}) =>`;
+    }
+  );
+
+  // 9. Clean class field declarations: `foo: type = val;` -> `foo = val;`, `foo: type;` -> `foo;`
+  js = js.replace(/^\s*([#\w$]+)\s*:\s*[^=;\n]+(=|;)/gm, '$1 $2');
+
+  // 10. Clean variable declarations: `const foo: type = val;`
+  js = js.replace(/\b(const|let|var)\s+([\w$]+)\s*:\s*[^=;\n]+(=|;)/g, '$1 $2 $3');
+
+  // 11. Remove generic invocations and casts: `<T>(`, `as Type`
+  js = js.replace(/<[\w$,\s<>\[\]|&]+>(?=\s*\()/g, '');
+  js = js.replace(/\s+as\s+const\b/g, '');
+  js = js.replace(/\s+as\s+(?:any|string|number|boolean|unknown|(?:\([^)]*\)\s*=>\s*[^;,)\n]+)|[\w$<>\[\]|&]+)\b/g, '');
+
+  // 12. Auto-close missing braces if model was cut off near EOF
   const openBraces = (js.match(/\{/g) || []).length;
   const closeBraces = (js.match(/\}/g) || []).length;
   if (openBraces > closeBraces) {
     js += '\n' + '}'.repeat(openBraces - closeBraces);
   }
 
-  // 2. Native AST type stripper from Node.js (Node 22+)
-  let nativelyStripped = false;
-  if (typeof stripTypeScriptTypesNative === 'function') {
-    try {
-      js = stripTypeScriptTypesNative(js);
-      nativelyStripped = true;
-    } catch (_) {}
-  }
-
-  // 3. Fallback regex type stripping if native AST parser failed
-  if (!nativelyStripped) {
-    js = js.replace(/export\s+interface\s+[\w$]+[^{]*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '');
-    js = js.replace(/interface\s+[\w$]+[^{]*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '');
-    js = js.replace(/export\s+type\s+[^;]+;/g, '');
-    js = js.replace(/type\s+[^;]+;/g, '');
-    js = js.replace(/:\s*(?:string|number|boolean|any|void|unknown|never|Date|Buffer|Promise<[^>]+>|Record<[^>]+>|Array<[^>]+>|[\w$]+(?:\[\])?)\b/g, '');
-    js = js.replace(/as\s+[\w$<>\[\]]+/g, '');
-  }
-
-  // 4. Remove type-only imports and declare statements
-  js = js.replace(/import\s+type\s+[^;]+;/g, '');
-  js = js.replace(/declare\s+[\s\S]*?;/g, '');
-
-  // 5. Track and transform exports and imports
+  // 13. Track and transform exports and imports
   const exportedNames = new Set();
 
   js = js.replace(/import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"];?/g, (match, imports, pkg) => {
@@ -116,12 +195,6 @@ function stripTypeScript(code) {
     });
     return '';
   });
-
-  // 6. Clean remaining generics, return types, and as-casts
-  js = js.replace(/<[\w$,\s<>\[\]|&]+>(?=\s*\()/g, '');
-  js = js.replace(/:\s*Promise<[\w$,\s<>\[\]|&]+>/g, '');
-  js = js.replace(/\s+as\s+const\b/g, '');
-  js = js.replace(/\s+as\s+(?:\([^)]*\)\s*=>\s*[^;,)\n]+|[\w$<>\[\]|&]+)/g, '');
 
   for (const name of exportedNames) {
     js += `\ntry { if (typeof ${name} !== 'undefined') module.exports.${name} = ${name}; } catch (_) {}\n`;
@@ -242,8 +315,8 @@ function executeInSandbox(code, options = {}) {
     clearTimeout,
     setInterval,
     clearInterval,
-    setImmediate,
-    clearImmediate,
+    setImmediate: typeof setImmediate !== 'undefined' ? setImmediate : ((fn, ...args) => setTimeout(fn, 0, ...args)),
+    clearImmediate: typeof clearImmediate !== 'undefined' ? clearImmediate : (id => clearTimeout(id)),
     Date,
     Error,
     TypeError,
@@ -251,8 +324,8 @@ function executeInSandbox(code, options = {}) {
     Math,
     JSON,
     Promise,
-    URL,
-    AbortController: global.AbortController || class { constructor() { this.signal = {}; } abort() {} },
+    URL: typeof URL !== 'undefined' ? URL : (globalThis.URL || require('node:url').URL),
+    AbortController: globalThis.AbortController || class { constructor() { this.signal = {}; } abort() {} },
     ...options.globals,
   };
 
