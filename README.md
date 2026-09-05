@@ -241,16 +241,16 @@ Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):
 
 Tests use the **Node.js built-in test runner** for the core framework and **Vitest** for the MCP engine — zero external test bloat.
 
-### 1. Root Test Suite (111 tests)
+### 1. Root Test Suite (116 tests)
 
 ```bash
 npm test
 ```
 
 ```text
-# tests 111
-# suites 25
-# pass  111
+# tests 116
+# suites 26
+# pass  116
 # fail  0
 ```
 
@@ -274,7 +274,7 @@ Test Files  21 passed (21)
 - `tests/validate.test.js` — validator rules, dependency graph, and sync checks
 - `tests/plugins.test.js` — plugin lockfile, registry fetching, and security checks
 - `tests/resolver.test.js` — dynamic skill resolution, progressive index, and bilingual prompt matching
-- `tests/benchmark.test.js` — benchmark scoring engine, static AST checks, and reporters
+- `tests/benchmark.test.js` — benchmark scoring engine, static AST checks, runtime sandbox, and reporters
 - `contextos-mcp/tests/unit/session-persistence.test.ts` — session disk persistence, thread state tracking, and orphan purge
 - `contextos-mcp/tests/unit/contextos-tools.test.ts` — all 6 MCP tool handlers and validation
 
@@ -303,30 +303,56 @@ npm run benchmark:live -- --provider anthropic --model claude-3-7-sonnet-2025021
 node benchmarks/run-live-benchmark.js --base-url "https://agentrouter.org/v1" --api-key "sk-..." --model "gpt-5.6-sol" --open
 ```
 
+### Execution-Backed Runtime Benchmark (Real Sandbox Test Assertions)
+
+In addition to static checks, ContextOS features an **execution-backed runtime benchmark suite**. It compiles model-generated code in an isolated Node.js V8 sandbox (`node:vm`) and runs rigorous behavioral unit assertions (`node:assert`):
+
+```bash
+# 1. Run runtime benchmark with OpenRouter (Google Gemini 3.8 Flash):
+node benchmarks/run-runtime-benchmark.js --base-url "https://openrouter.ai/api/v1" --api-key "sk-or-v1-..." --model "google/gemini-3.8-flash" --open
+
+# 2. Run runtime benchmark with AgentRouter (GPT-5.6-sol):
+node benchmarks/run-runtime-benchmark.js --base-url "https://agentrouter.org/v1" --api-key "sk-..." --model "gpt-5.6-sol" --open
+
+# 3. Run specific scenario (auth-security, ddd-order-invariants, or resilient-api-client):
+npm run benchmark:runtime -- --base-url "https://agentrouter.org/v1" --api-key "sk-..." --model "gpt-5.6-sol" --task auth-security
+```
+
 ### Evaluation Methodology
 
-Submissions are evaluated using a two-tier verification pipeline:
+Submissions are evaluated using a strict, multi-stage verification pipeline:
 
-1. **Deterministic Static Analysis (60% weight):** Automated AST and regex invariant validation checking for cryptographic safety (`timingSafeEqual`), brute-force rate-limiting, zero stack-trace leakage in HTTP 500 responses, ARIA dialog compliance, and absence of anti-patterns.
-2. **Architecture Review Judge (40% weight):** Impartial Principal Architect review evaluating domain boundaries, error taxonomy, state-machine integrity, and edge-case handling.
+1. **Sandboxed V8 Runtime Execution (Primary Ground Truth):** Compiles TypeScript into CommonJS via native AST type stripping (`node:module.stripTypeScriptTypes`) and executes in an isolated sandbox with timeout and assertion checks (`node:assert`).
+2. **Behavioral Invariant Testing:** Stress-tests timing attacks (`crypto.timingSafeEqual`), brute-force IP/Account rate-limiting, error stack redaction, immutable Value Objects, domain event dispatch, and circuit breaker state transitions.
+3. **Deterministic Static Analysis:** AST verification checking for zero ORM/HTTP transport leakage in domain layers and contract compliance.
 
-### Live Benchmark Results (`gpt-5.6-sol`)
+### Frontier Model Runtime Benchmark Results (Sandbox V8)
 
-| Category | Benchmark Scenario | Vanilla LLM | With ContextOS | Delta | Key Enforced Technical Invariants |
-|---|:---|:---:|:---:|:---:|---|
-| **Security & Backend** | Secure Auth & Rate Limiting | 67 / 100 | **77 / 100** | **+10 pts** | Timing-safe crypto comparisons (`timingSafeEqual`), bounded Redis brute-force rate-limiting, error stack redaction |
-| **UI/UX & Accessibility** | Accessible Modal & Focus Trap | 77 / 100 | **94 / 100** | **+17 pts** | Full ARIA dialog contracts, bidirectional Tab/Shift-Tab focus wrap, `createPortal` mounting, unmount focus restore |
-| **Architecture & DDD** | DDD Order Invariants & Value Objects | 69 / 100 | **73 / 100** | **+4 pts** | Immutable `Money`/`OrderId` Value Objects, domain events collection, zero ORM/HTTP transport leakage in domain |
-| **TypeScript & Reliability** | Type-Safe Resilient API Client | 67 / 100 | **69 / 100** | **+2 pts** | Generic `Promise<T>`, runtime schema assertion, secret-redacting error taxonomy, AbortController timeouts |
-| **Systems & Performance** | Async Queue & Circuit Breaker | Evaluated | **Verified** | **Invariant Pass** | Strict concurrency bounding, `CLOSED/OPEN/HALF-OPEN` states, exponential backoff with full jitter |
+Evaluated across frontier and open model families in live runtime sandboxes:
+
+| Model | Gateway / Provider | Baseline Pass Rate | With ContextOS | Delta | V8 Compilation | Real-World Runtime Behavior |
+|---|---|:---:|:---:|:---:|:---:|---|
+| **`gpt-5.6-sol`** | AgentRouter | 93% (12/13) | **100% (13/13)** | **+7%** _(Auth: +20%)_ | **100%** | Flawless V8 compilation. Baseline missed input validation rules; ContextOS achieved 100% across all 13 behavioral invariant tests. |
+| **`google/gemini-3.8-flash`** | OpenRouter (Flex) | 85% (11/13) | **92% (12/13)** | **+7%** _(Auth: +20%)_ | **100%** | Ultra-low latency (~5.4s). 100% V8 compilation. Enforced constant-time token auth, bounded 15m JWT TTLs, and resilient circuit breaker states. |
+| **`claude-opus-5`** | AgentRouter | 87% (11/13) | **100% (13/13)** | **+13%** _(Auth: +40%)_ | **100%** | Ponytail guidelines prevented runaway verbosity, producing concise single-module architecture without EOF cuts. 100% test pass with ContextOS. |
+| **`glm-5.3`** | AgentRouter | 78% (10/13) | **100% (13/13)** | **+22%** _(Auth: +40%, DDD: +25%)_ | **100%** | Zero crashes under sandbox globals. ContextOS enforced rate-limiting, timing attacks defenses, and strict DDD Money/Order state machine transitions. |
+| **`deepseek-v4-flash`** | AgentRouter | 59% (8/13) | **74% (10/13)** | **+15%** _(Auth: +20%)_ | **100%** | Robust AST pre-cleaning resolved conversational ellipsis. ContextOS successfully injected cryptographic rate-limiting and circuit breaker timeouts. |
+
+### Production Scenarios Breakdown
+
+| Scenario | Category | Skills Activated | Baseline Pass | ContextOS Pass | Delta | Key Technical Invariant Proved |
+|---|---|---|:---:|:---:|:---:|---|
+| **Secure Auth & Rate Limiting** | Security & Backend | `security`, `node`, `ponytail-mindset` | 80% (4/5) | **100% (5/5)** | **+20%** | Constant-time password verification (`timingSafeEqual`), dual-key rate-limiting, strict email/credential sanitization, zero stack-trace leak in 500s. |
+| **DDD Order Aggregate Root** | Architecture & DDD | `ddd`, `system-design`, `decisions` | 100% (4/4) | **100% (4/4)** | **+0%** | Immutable `Money` Value Object, state-machine invariants (PENDING → PAID → SHIPPED), explicit Domain Event classes with queue draining. |
+| **Resilient API Client** | Reliability & Async | `typescript`, `system-design`, `performance` | 100% (3/3) | **100% (3/3)** | **+0%** | 3-state Circuit Breaker (CLOSED → OPEN → HALF-OPEN), `AbortController` timeouts, typed error taxonomy without credential leakage. |
 
 ### Artifacts and Reports
 
 Every benchmark execution generates the following artifacts:
 
-- **Interactive HTML Dashboard** (`benchmarks/results/report-latest.html`): Side-by-side split code viewer with static checklist badges.
-- **Markdown Report** (`benchmarks/results/report-latest.md`): Exportable summary for pull requests and CI/CD pipelines.
-- **JSON Data Export** (`benchmarks/results/report-*.json`): Machine-readable results and timing metrics.
+- **Interactive HTML Dashboard** ([`benchmarks/results/runtime-report-latest.html`](./benchmarks/results/runtime-report-latest.html)): Visual scorecard with per-assertion pass/fail indicators.
+- **Markdown Summary** ([`benchmarks/results/runtime-report-latest.md`](./benchmarks/results/runtime-report-latest.md)): Exportable tables for CI/CD and pull request reviews.
+- **Machine-Readable JSON** ([`benchmarks/results/runtime-report-latest.json`](./benchmarks/results/runtime-report-latest.json)): Full benchmark logs, latencies, and execution telemetry.
 
 ## Contributing
 

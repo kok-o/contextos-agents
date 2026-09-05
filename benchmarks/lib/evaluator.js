@@ -6,18 +6,53 @@
 function extractCodeBlocks(text) {
   if (!text || typeof text !== 'string') return '';
   const blocks = [];
-  const fenceRegex = /```(?:[a-zA-Z0-9_#-]+)?\r?\n([\s\S]*?)(?:```|$)/g;
+  const fenceRegex = /```(?:([a-zA-Z0-9_#-]+))?\r?\n([\s\S]*?)(?:```|$)/g;
   let match;
   while ((match = fenceRegex.exec(text)) !== null) {
-    const code = match[1].trim();
-    if (code) {
-      blocks.push(code);
+    const lang = (match[1] || '').toLowerCase();
+    const code = match[2].trim();
+    if (!code) continue;
+
+    // Filter by language: skip bash, sh, text, txt, lua, json, yaml, sql, etc.
+    if (lang && !['typescript', 'ts', 'javascript', 'js', 'node'].includes(lang)) {
+      continue;
     }
+
+    // If untagged fence, only include if it starts with valid JS/TS syntax
+    if (!lang && !/^\s*(?:import|export|const|let|var|function|class|interface|type)\b/m.test(code)) {
+      continue;
+    }
+
+    blocks.push(code);
   }
-  if (blocks.length > 0) {
-    return blocks.join('\n\n// ────────────\n\n');
+  if (blocks.length === 1) {
+    return blocks[0];
   }
-  return text.trim();
+  if (blocks.length > 1) {
+    // If one block is the primary module containing the target class, prioritize it
+    const primaryBlock = blocks.find(b => b.length > 400 && /export\s+class\s+(?:AuthService|Order|ResilientHttpClient|CircuitBreaker)/.test(b)) ||
+                         blocks.find(b => b.length > 400 && /class\s+(?:AuthService|Order|ResilientHttpClient|CircuitBreaker)/.test(b));
+
+    if (primaryBlock) {
+      // Prepend any companion blocks that define interfaces, types, or imports
+      const companionBlocks = blocks.filter(b => b !== primaryBlock && /^\s*(?:import|export\s+(?:interface|type)|interface|type)\b/m.test(b));
+      if (companionBlocks.length > 0) {
+        return companionBlocks.join('\n\n') + '\n\n' + primaryBlock;
+      }
+      return primaryBlock;
+    }
+
+    // Filter out blocks that don't contain any JS declaration keywords
+    const codeBlocks = blocks.filter(b => /^\s*(?:import|export|const|let|var|function|class|interface|type)\b/m.test(b));
+    if (codeBlocks.length === 1) return codeBlocks[0];
+    if (codeBlocks.length > 1) return codeBlocks.join('\n\n');
+    return blocks.join('\n\n');
+  }
+  // Only fall back to raw text if it actually looks like code
+  if (/^\s*(?:import|export|const|let|var|function|class)\b/m.test(text)) {
+    return text.trim();
+  }
+  return '';
 }
 
 /**

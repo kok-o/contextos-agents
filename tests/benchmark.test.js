@@ -170,3 +170,164 @@ describe('Live Multi-Model Benchmark Suite', () => {
     assert.ok(html.includes('gpt-4o'));
   });
 });
+
+describe('Execution-Backed Runtime Benchmark Suite', () => {
+  const { stripTypeScript, createJwtMock, executeInSandbox, runRuntimeSuite } = require('../benchmarks/lib/runtime-runner');
+  const { RUNTIME_SUITES } = require('../benchmarks/lib/runtime-suites');
+
+  test('stripTypeScript transforms TypeScript interfaces, types, annotations, and ESM exports', () => {
+    const tsCode = `
+      import { timingSafeEqual } from 'node:crypto';
+      export interface User {
+        id: string;
+        email: string;
+      }
+      export type Role = 'admin' | 'user';
+      export class AuthService {
+        private secret: string = 'key';
+        public async verifyPassword(pwd: string, hash: string): Promise<boolean> {
+          return true;
+        }
+      }
+    `;
+    const js = stripTypeScript(tsCode);
+    assert.ok(!js.includes('interface User'));
+    assert.ok(!js.includes('type Role'));
+    assert.ok(!js.includes(': Promise<boolean>'));
+    assert.ok(!js.includes(': string'));
+    assert.ok(!js.includes('private secret'));
+    assert.ok(js.includes('module.exports.AuthService = AuthService'));
+  });
+
+  test('createJwtMock issues, verifies, and decodes valid HMAC tokens', () => {
+    const jwt = createJwtMock();
+    const token = jwt.sign({ sub: '123' }, 'secret', { expiresIn: '15m', issuer: 'auth-svc' });
+    assert.ok(typeof token === 'string' && token.includes('.'));
+
+    const payload = jwt.verify(token, 'secret');
+    assert.equal(payload.sub, '123');
+    assert.equal(payload.iss, 'auth-svc');
+    assert.ok(payload.exp > payload.iat);
+
+    assert.throws(() => jwt.verify(token, 'wrong-secret'));
+  });
+
+  test('executeInSandbox runs code safely and captures compilation errors', () => {
+    const good = executeInSandbox('module.exports.add = (a, b) => a + b;');
+    assert.equal(good.compiled, true);
+    assert.equal(good.exports.add(2, 3), 5);
+
+    const bad = executeInSandbox('this is illegal syntax !!!');
+    assert.equal(bad.compiled, false);
+    assert.ok(bad.error);
+  });
+
+  test('runRuntimeSuite verifies compliant security code and catches insecure code', async () => {
+    const authSuite = RUNTIME_SUITES['auth-security'];
+    assert.ok(authSuite);
+
+    // Insecure baseline code: no timingSafeEqual, leaks stack in 500
+    const insecureCode = `
+      export function verifyPassword(pwd, hash) {
+        return pwd === hash;
+      }
+      export function errorHandler(err, req, res) {
+        res.status(500).json({ error: err.message, stack: err.stack });
+      }
+    `;
+    const baselineRun = await runRuntimeSuite(authSuite, insecureCode);
+    assert.ok(baselineRun.passRate < 50, 'Insecure baseline code must fail security assertions');
+
+    // Hardened code: timing-safe, no stack leak, rate limit threshold configured
+    const secureCode = `
+      import crypto from 'node:crypto';
+      export function verifyPassword(pwd, hash, salt) {
+        const h1 = crypto.createHash('sha256').update(pwd + salt).digest();
+        const h2 = Buffer.from(hash, 'hex');
+        if (h1.length !== h2.length) return false;
+        return crypto.timingSafeEqual(h1, h2);
+      }
+      export class RateLimiter {
+        private maxAttempts: number = 5;
+        public isBlocked(key: string): boolean { return false; }
+      }
+      export function errorHandler(err, req, res) {
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+      export function validateInput(data: { email: string }) {
+        if (!data.email.includes('@')) return { ok: false, error: 'Invalid email' };
+        return { ok: true };
+      }
+      export function generateToken(user: any, secret: string) {
+        const jwt = require('jsonwebtoken');
+        return jwt.sign({ sub: user.id }, secret, { expiresIn: '15m', issuer: 'app' });
+      }
+    `;
+    const secureRun = await runRuntimeSuite(authSuite, secureCode);
+    assert.ok(secureRun.passRate >= 80, 'Secure code must achieve high pass rate on runtime assertions');
+    assert.equal(secureRun.compiled, true);
+  });
+
+  test('runRuntimeSuite executes DDD order invariants and catches invariant violations', async () => {
+    const dddSuite = RUNTIME_SUITES['ddd-order-invariants'];
+    assert.ok(dddSuite);
+
+    const dddCode = `
+      export class Money {
+        constructor(public amount: number, public currency: string = 'USD') {
+          if (amount < 0) throw new Error('Amount cannot be negative');
+        }
+        static of(amount: number, currency: string = 'USD') {
+          return new Money(amount, currency);
+        }
+        add(other: Money): Money {
+          return new Money(this.amount + other.amount, this.currency);
+        }
+      }
+
+      export class Order {
+        private items: any[] = [];
+        private status: string = 'CREATED';
+        private events: any[] = [];
+
+        constructor(public id: string, public customerId: string) {
+          this.events.push({ type: 'OrderCreatedEvent', orderId: id });
+        }
+
+        addItem(id: string, qty: number, price: any) {
+          if (qty <= 0) throw new Error('Quantity must be positive');
+          if (this.status === 'PAID') throw new Error('Cannot add to paid order');
+          this.items.push({ id, qty, price });
+        }
+
+        pay() {
+          this.status = 'PAID';
+          this.events.push({ type: 'OrderPaidEvent' });
+        }
+
+        ship() {
+          this.status = 'SHIPPED';
+        }
+
+        cancel() {
+          if (this.status === 'SHIPPED') throw new Error('Cannot cancel shipped order');
+          this.status = 'CANCELLED';
+        }
+
+        getDomainEvents() {
+          return [...this.events];
+        }
+      }
+
+      export interface OrderRepository {
+        save(order: Order): Promise<void>;
+      }
+    `;
+
+    const dddRun = await runRuntimeSuite(dddSuite, dddCode);
+    assert.equal(dddRun.compiled, true);
+    assert.equal(dddRun.passRate, 100);
+    assert.equal(dddRun.totalPassed, 4);
+  });
+});
+

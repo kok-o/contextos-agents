@@ -133,7 +133,7 @@ class LLMClient {
   /**
    * Complete a prompt with a given system instruction.
    */
-  async generate({ prompt, systemInstruction = 'You are an expert software engineer.', temperature = 0.1, maxTokens = 5000 }) {
+  async generate({ prompt, systemInstruction = 'You are an expert software engineer.', temperature = 0.1, maxTokens = 8192 }) {
     if (!this.apiKey && this.provider !== 'custom') {
       throw new Error(`API key is required for provider "${this.provider}". Set environment variable or pass --api-key`);
     }
@@ -161,11 +161,12 @@ class LLMClient {
         };
       } catch (err) {
         const isLast = attempt === this.maxRetries;
-        const isRateLimit = err.status === 429 || /rate\s*limit|quota/i.test(err.message);
+        const isRateLimit = err.status === 429 || /rate\s*limit|quota|in-flight/i.test(err.message);
+        const isInFlight = err.status === 402 && /in-flight/i.test(err.message);
         const isServerBusy = err.status === 504 || err.status === 503 || err.status === 502 || err.status === 500 || /504|Gateway\s*Time-?out/i.test(err.message);
 
-        if ((isRateLimit || isServerBusy || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') && !isLast) {
-          const waitMs = attempt * 4000;
+        if ((isRateLimit || isInFlight || isServerBusy || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') && !isLast) {
+          const waitMs = isInFlight ? 15000 : attempt * 4000;
           console.warn(`    [LLMClient] Attempt ${attempt}/${this.maxRetries} failed (${err.message.slice(0, 100)}). Retrying in ${waitMs / 1000}s...`);
           await sleep(waitMs);
           continue;
@@ -201,6 +202,13 @@ class LLMClient {
       payload.max_tokens = maxTokens;
     }
 
+    if (this.baseUrl && this.baseUrl.includes('openrouter.ai')) {
+      payload.reasoning = { effort: 'low' };
+    }
+    if (this.model.startsWith('glm-') || this.model.startsWith('o1') || this.model.startsWith('o3')) {
+      payload.reasoning_effort = 'low';
+    }
+
     return new Promise((resolve, reject) => {
       const parsedUrl = new URL(endpoint);
       const client = parsedUrl.protocol === 'https:' ? https : http;
@@ -212,6 +220,8 @@ class LLMClient {
         'Content-Length': Buffer.byteLength(postData),
         'Authorization': `Bearer ${this.apiKey}`,
         'User-Agent': 'Cline/3.0.0',
+        'HTTP-Referer': 'https://github.com/kok-o/contextos',
+        'X-Title': 'ContextOS',
       };
 
       const options = {
@@ -246,15 +256,19 @@ class LLMClient {
       const req = client.request(options, res => {
         let raw = '';
         let text = '';
+        let reasoningText = '';
         let promptTokens = 0;
         let completionTokens = 0;
+        let buffer = '';
 
         res.setEncoding('utf8');
 
         res.on('data', chunk => {
           resetIdleTimer();
           raw += chunk;
-          const lines = chunk.split('\n');
+          buffer += chunk;
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // preserve last incomplete line
           for (const line of lines) {
             const trimmed = line.trim();
             if (trimmed.startsWith('data:') && !trimmed.includes('[DONE]')) {
@@ -263,6 +277,9 @@ class LLMClient {
                 const parsed = JSON.parse(jsonStr);
                 const delta = parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.delta?.text || '';
                 text += delta;
+                if (parsed.choices?.[0]?.delta?.reasoning_content) {
+                  reasoningText += parsed.choices[0].delta.reasoning_content;
+                }
                 if (parsed.usage) {
                   promptTokens = parsed.usage.prompt_tokens || promptTokens;
                   completionTokens = parsed.usage.completion_tokens || completionTokens;
@@ -274,6 +291,18 @@ class LLMClient {
 
         res.on('end', () => {
           clearAllTimers();
+          if (buffer && buffer.trim().startsWith('data:') && !buffer.includes('[DONE]')) {
+            try {
+              const jsonStr = buffer.trim().replace(/^data:\s*/, '');
+              const parsed = JSON.parse(jsonStr);
+              const delta = parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.delta?.text || '';
+              text += delta;
+              if (parsed.choices?.[0]?.delta?.reasoning_content) {
+                reasoningText += parsed.choices[0].delta.reasoning_content;
+              }
+            } catch {}
+          }
+
           if (res.statusCode < 200 || res.statusCode >= 300) {
             let msg = raw;
             try {
@@ -291,6 +320,11 @@ class LLMClient {
               const parsed = JSON.parse(raw);
               text = parsed.choices?.[0]?.message?.content || parsed.choices?.[0]?.text || '';
             } catch {}
+          }
+
+          // Fallback to reasoning content if content is empty
+          if (!text && reasoningText) {
+            text = reasoningText;
           }
 
           if (!promptTokens) {
@@ -374,6 +408,7 @@ class LLMClient {
         'x-api-key': this.apiKey,
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
+        'User-Agent': 'Cline/3.0.0',
       },
       body: payload,
       timeoutMs: this.timeoutMs,

@@ -68,7 +68,7 @@ cat .agents/generated/claude/skills/<your-skill-name>/SKILL.md
 npm test
 ```
 
-All 19 tests must pass before submitting a PR.
+All 116 tests across 26 suites must pass before submitting a PR.
 
 ---
 
@@ -113,9 +113,11 @@ npm unlink koko-contextos-agents
 | `node .agents/ctx.js skill remove <name>` | Remove a plugin skill |
 | `node .agents/ctx.js skill list` | List built-in + plugin skills |
 | `node .agents/ctx.js skill search [q]` | Search community registry |
-| `npm test` | Run full test suite |
+| `npm test` | Run full test suite (116 tests, 26 suites) |
 | `npm run validate` | Alias for `ctx.js validate` |
 | `npm run build` | Alias for `export all` |
+| `npm run benchmark` | Run deterministic static benchmark suite |
+| `npm run benchmark:runtime` | Run execution-backed V8 runtime benchmark suite |
 
 ---
 
