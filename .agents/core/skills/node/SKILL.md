@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Production-grade Node.js runtime and server standard. Enforces async event loop non-blocking hygiene, graceful shutdown, structured JSON logging with correlation IDs, and unhandled rejection guards.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when developing Node.js HTTP servers, Express/Fastify APIs, background workers, CLI tools, or stream-based data pipelines.
 
 ## Negative Constraints (What NOT to Do)
 

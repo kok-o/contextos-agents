@@ -1,3 +1,7 @@
-# Troubleshooting & Common Mistakes
+# generators Troubleshooting & Common Mistakes
 
-Add common errors, anti-patterns, and debugging steps here.
+## 1. Generic Boilerplate Generation
+
+- **Symptom**: Generated documentation contains placeholders like [Insert DB Name here].
+- **Root Cause**: Generating docs before clarifying core project constraints.
+- **Fix**: Run the interview-me protocol before generating technical documentation.

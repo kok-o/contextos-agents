@@ -2,11 +2,11 @@
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Hard QA design review checklist consisting of 50 deterministic rules covering typography (T1-T10), color systems (C1-C12), layout constraints (L1-L11), component contracts (K1-K11), and micro-animations (A1-A8).
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during the REVIEW phase of all frontend tasks as a strict visual and functional QA gate before marking UI work complete.
 
 ## Rules & Patterns
 
@@ -191,3 +191,51 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+
+# impeccable-design Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Dark Mode Surfaces & Elevation
+
+### Anti-pattern: Pure Black with Flat Cards
+
+```css
+/* BAD: Pure #000000 background with harsh pure white borders and flat cards */
+body { background-color: #000000; color: #ffffff; }
+.card { background-color: #111111; border: 1px solid #ffffff; }
+```
+
+### Best practice: ContextOS Standard (Atmospheric Depth & Tinted Surfaces)
+
+```css
+/* GOOD: Tinted dark background with layered elevation surfaces and subtle border */
+body {
+  background-color: #0B0D13; /* Tinted with subtle deep blue */
+  color: #E2E8F0;
+}
+.surface-1 {
+  background-color: #111522;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+```
+
+# impeccable-design Troubleshooting & Common Mistakes
+
+## 1. Nested Border Radius Mismatch
+
+- **Symptom**: Corners of an inner element poke out or look visually awkward inside a container.
+- **Root Cause**: Using the same border-radius on both outer container and inner child.
+- **Fix**: Inner radius formula: r_inner = max(0, r_outer - padding).
+
+## 2. Animation Performance Stutter
+
+- **Symptom**: Janky animations and dropped frames during transitions.
+- **Root Cause**: Animating layout properties (width, height, top, margin).
+- **Fix**: Animate only composited GPU-accelerated properties: transform and opacity.
+
+## 3. Cluttered Visual Density
+
+- **Symptom**: Interface feels overwhelming, cramped, and cheap.
+- **Root Cause**: Cramming too many borders, dividers, badges, and icons into one view.
+- **Fix**: Replace borders with generous whitespace; let alignment and typography hierarchy define grouping.

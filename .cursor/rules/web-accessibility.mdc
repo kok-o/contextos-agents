@@ -171,3 +171,63 @@ See `EXAMPLES.md` for detailed dialog, menu, and form examples.
 - Pairs with `ui-ux-pro` and `impeccable-design` for visual contrast and component standards.
 - Pairs with `react` and `nextjs` for accessible dialogs and focus restoration across route transitions.
 
+
+# web-accessibility Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Semantic Buttons vs Clickable Divs
+
+### Anti-pattern: Clickable Div
+
+```tsx
+// BAD: Cannot be focused with Tab, does not respond to Enter or Space, silent to screen readers
+<div className="button" onClick={handleSubmit}>Submit</div>
+```
+
+### Best practice: ContextOS Standard (Semantic Button Element)
+
+```tsx
+// GOOD: Keyboard focusable, native Enter/Space handling, properly announced by assistive tech
+<button type="button" onClick={handleSubmit} className="btn btn-primary">
+  Submit
+</button>
+```
+
+---
+
+## Example 2: Icon-only Buttons
+
+### Anti-pattern: Unlabelled Icon Button
+
+```tsx
+// BAD: Screen reader announces "button", user has zero idea what it does
+<button onClick={onClose}><XIcon /></button>
+```
+
+### Best practice: ContextOS Standard (Accessible Label)
+
+```tsx
+// GOOD: Explicit aria-label and hidden decorative icon
+<button type="button" onClick={onClose} aria-label="Close modal window">
+  <XIcon aria-hidden="true" />
+</button>
+```
+
+# web-accessibility Troubleshooting & Common Mistakes
+
+## 1. Trapping Keyboard Users in Inactive Elements
+
+- **Symptom**: Tab key moves focus into invisible elements hidden offscreen.
+- **Root Cause**: Using display: none vs opacity: 0 or left: -9999px.
+- **Fix**: Always apply display: none / hidden or inert attribute to elements that are currently not visible.
+
+## 2. Color Contrast Violations
+
+- **Symptom**: Text is unreadable for users with low vision or in bright sunlight.
+- **Root Cause**: Contrast ratio between text and background color is below WCAG AA thresholds.
+- **Fix**: Ensure contrast ratio is at least 4.5:1 for body text and 3:1 for large text / graphical controls.
+
+## 3. Silent Dynamic Updates
+
+- **Symptom**: Asynchronous error messages or notifications appear on screen without screen reader announcement.
+- **Root Cause**: Missing ARIA live region.
+- **Fix**: Wrap notification banners in aria-live="polite" and role="status".

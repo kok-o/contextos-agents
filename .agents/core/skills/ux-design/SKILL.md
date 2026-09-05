@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+User experience and interaction design standard. Enforces progressive disclosure, predictable user flows, designed empty/loading/error states, form usability, and keyboard navigation ergonomics.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing complex multi-step workflows, onboarding funnels, form validation feedback, error recovery flows, and user journeys.
 
 ## Rules & Patterns
 <!-- Source: ux.md -->

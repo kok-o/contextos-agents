@@ -9,17 +9,16 @@
  * This preserves the RLM loop for all backends — the orchestrator always uses pi-ai's completeSimple().
  */
 
-import { type Model } from "@mariozechner/pi-ai";
-import { PROVIDER_KEYS, getModels, getProviders } from "@mariozechner/pi-ai";
+import { getEnvApiKey, getModels, getProviders, type Model } from "@mariozechner/pi-ai";
 
 // Patch global fetch to bypass WAFs that block Node.js by default
 const originalFetch = globalThis.fetch;
-globalThis.fetch = async function(url: any, options?: RequestInit) {
+globalThis.fetch = async function (url: any, options?: RequestInit) {
 	if (url.toString().includes("air-outer.com") || url.toString().includes("agentrouter.org")) {
 		options = options || {};
 		options.headers = {
 			...options.headers,
-			"User-Agent": "OpenCode"
+			"User-Agent": "OpenCode",
 		};
 	}
 	return originalFetch.apply(this, [url, options]);
@@ -132,7 +131,7 @@ function createAgentRouterModel(modelId: string): Model<"openai-completions"> {
 		contextWindow: 128000,
 		maxTokens: 4096,
 		headers: {
-			Authorization: `Bearer ${apiKey}`
+			Authorization: `Bearer ${apiKey}`,
 		},
 		compat: {
 			supportsStore: false,
@@ -194,12 +193,14 @@ export function resolveModel(modelId: string, warnFn?: (msg: string) => void): R
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
 			contextWindow: 128000,
 			maxTokens: 4096,
-			headers: apiKey ? { 
-				Authorization: `Bearer ${apiKey}`,
-				"User-Agent": "OpenCode"
-			} : {
-				"User-Agent": "OpenCode"
-			},
+			headers: apiKey
+				? {
+						Authorization: `Bearer ${apiKey}`,
+						"User-Agent": "OpenCode",
+					}
+				: {
+						"User-Agent": "OpenCode",
+					},
 			compat: {
 				supportsStore: false,
 				supportsDeveloperRole: false,
@@ -218,15 +219,14 @@ export function resolveModel(modelId: string, warnFn?: (msg: string) => void): R
 	}
 
 	// Standard pi-ai model lookup
-	const knownProviders = new Set(Object.keys(PROVIDER_KEYS));
+	const knownProviders = new Set(["anthropic", "openai", "google", "groq", "cerebras", "xai", "openrouter", "mistral"]);
 	let model: Model<Api> | undefined;
 	let resolvedProvider = "";
 
 	// Try known providers with API keys first
 	for (const provider of getProviders()) {
 		if (!knownProviders.has(provider)) continue;
-		const key = PROVIDER_KEYS[provider]!;
-		if (!process.env[key]) continue;
+		if (!getEnvApiKey(provider)) continue;
 		for (const m of getModels(provider)) {
 			if (m.id === modelId) {
 				model = m;
@@ -254,10 +254,8 @@ export function resolveModel(modelId: string, warnFn?: (msg: string) => void): R
 
 	// Fallback: try default model for any provider that has a key
 	if (!model) {
-		for (const [prov, envKey] of Object.entries(PROVIDER_KEYS)) {
-			if (!process.env[envKey]) continue;
-			const fallbackId = DEFAULT_MODELS[prov];
-			if (!fallbackId) continue;
+		for (const [prov, fallbackId] of Object.entries(DEFAULT_MODELS)) {
+			if (!getEnvApiKey(prov)) continue;
 			for (const p of getProviders()) {
 				if (p !== prov) continue;
 				for (const m of getModels(p)) {

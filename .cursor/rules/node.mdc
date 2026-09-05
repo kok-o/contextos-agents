@@ -10,11 +10,11 @@ alwaysApply: false
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Production-grade Node.js runtime and server standard. Enforces async event loop non-blocking hygiene, graceful shutdown, structured JSON logging with correlation IDs, and unhandled rejection guards.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when developing Node.js HTTP servers, Express/Fastify APIs, background workers, CLI tools, or stream-based data pipelines.
 
 ## Negative Constraints (What NOT to Do)
 
@@ -210,3 +210,23 @@ app.get('/download/:file', async (req, res, next) => {
   }
 });
 ```
+
+# node Troubleshooting & Common Mistakes
+
+## 1. Unhandled Promise Rejections Crashing the Process
+
+- **Symptom**: Node process crashes abruptly without clear stack trace in production.
+- **Root Cause**: Missing `process.on('unhandledRejection')` handler in Node.js >= 15.
+- **Fix**: Always register top-level unhandledRejection and uncaughtException logging before exiting cleanly.
+
+## 2. Event Loop Starvation
+
+- **Symptom**: API endpoints stop responding or latency spikes to 10+ seconds.
+- **Root Cause**: Heavy synchronous operations (`JSON.parse` on a 50MB file, sync bcrypt hashing, or regex catastrophic backtracking).
+- **Fix**: Offload CPU-heavy tasks to Worker Threads or use async worker queues.
+
+## 3. Memory Leaks in Event Emitters
+
+- **Symptom**: "MaxListenersExceededWarning: Possible EventEmitter memory leak detected".
+- **Root Cause**: Adding listeners inside request handlers without removing them on close.
+- **Fix**: Remove listeners in cleanup callbacks or use `AbortController` signals.

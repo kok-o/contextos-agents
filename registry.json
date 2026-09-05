@@ -35,6 +35,17 @@
       "github": "kok-o/koko-contextos-agents",
       "path": ".agents/core/skills/impeccable-design",
       "builtin": true
+    },
+    {
+      "id": "koko-o/graphify",
+      "name": "graphify",
+      "description": "Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing.",
+      "author": "koko-o",
+      "tags": ["knowledge-graph", "ast", "tree-sitter", "dependencies", "architecture"],
+      "npm": null,
+      "github": "kok-o/koko-contextos-agents",
+      "path": ".agents/core/skills/graphify",
+      "builtin": true
     }
   ],
   "contributing": "https://github.com/kok-o/koko-contextos-agents/blob/main/CONTRIBUTING.md#publishing-a-skill-as-a-plugin",

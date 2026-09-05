@@ -99,6 +99,22 @@ ${mergedContent.trimStart()}
   console.log(`Generated SKILL.md for ${skillName}`);
 }
 
+const ANTIGRAVITY_SKILLS_PATH = path.join(__dirname, '..', '..', 'skills');
+
+function copyFolderRecursiveSync(source, target) {
+  if (!fs.existsSync(target)) fs.mkdirSync(target, { recursive: true });
+  const files = fs.readdirSync(source);
+  for (const file of files) {
+    const curSource = path.join(source, file);
+    const curTarget = path.join(target, file);
+    if (fs.statSync(curSource).isDirectory()) {
+      copyFolderRecursiveSync(curSource, curTarget);
+    } else {
+      fs.copyFileSync(curSource, curTarget);
+    }
+  }
+}
+
 function run() {
   console.log('Starting Gemini adapter export...');
   resetDirectory(GENERATED_SKILLS_PATH);
@@ -107,7 +123,12 @@ function run() {
   for (const skill of skills) {
     generateGeminiSkill(skill);
   }
-  console.log('Export complete. Skills are in generated/gemini/skills');
+
+  // Also sync to .agents/skills for Antigravity IDE native discovery
+  resetDirectory(ANTIGRAVITY_SKILLS_PATH);
+  copyFolderRecursiveSync(GENERATED_SKILLS_PATH, ANTIGRAVITY_SKILLS_PATH);
+
+  console.log('Export complete. Skills are in generated/gemini/skills and .agents/skills');
 }
 
 module.exports = { run };

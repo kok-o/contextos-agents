@@ -22,6 +22,7 @@ import { loadConfig } from "../config.js";
 import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
 import { ThreadManager } from "../threads/manager.js";
 import { mergeAllThreads } from "../worktree/merge.js";
+import { clearPersistedState, getPersistedThreads, purgeOrphans, recordThreadState } from "./state.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export interface SwarmSession {
 }
 
 export interface ThreadSpawnParams {
+	id?: string;
 	task: string;
 	files?: string[];
 	agent?: string;
@@ -120,10 +122,15 @@ async function initSession(absDir: string): Promise<SwarmSession> {
 	const threadManager = new ThreadManager(
 		absDir,
 		config,
-		// Progress callback — log to stderr (stdout is MCP protocol)
+		// Progress callback — log to stderr (stdout is MCP protocol) and persist to disk
 		(threadId, phase, detail) => {
 			const msg = detail ? `[${threadId}] ${phase}: ${detail}` : `[${threadId}] ${phase}`;
 			process.stderr.write(`[swarm-mcp] ${msg}\n`);
+			const current = threadManager.getThreads();
+			const t = current.find((item) => item.id === threadId);
+			if (t) {
+				recordThreadState(absDir, t);
+			}
 		},
 		abortController.signal,
 	);
@@ -145,7 +152,7 @@ async function initSession(absDir: string): Promise<SwarmSession> {
  * Spawn a thread in a session.
  */
 export async function spawnThread(session: SwarmSession, params: ThreadSpawnParams): Promise<CompressedResult> {
-	const threadId = `mcp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+	const threadId = params.id || `mcp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 	const threadConfig: ThreadConfig = {
 		id: threadId,
@@ -158,14 +165,29 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 		files: params.files || [],
 	};
 
-	return session.threadManager.spawnThread(threadConfig);
+	const resultPromise = session.threadManager.spawnThread(threadConfig);
+	const initialThread = session.threadManager.getThreads().find((t) => t.id === threadId);
+	if (initialThread) {
+		recordThreadState(session.dir, initialThread);
+	}
+	const result = await resultPromise;
+	const finalThread = session.threadManager.getThreads().find((t) => t.id === threadId);
+	if (finalThread) {
+		recordThreadState(session.dir, finalThread);
+	}
+	return result;
 }
 
 /**
- * Get all threads in a session.
+ * Get all threads in a session (merging memory with persisted state).
  */
 export function getThreads(session: SwarmSession): ThreadState[] {
-	return session.threadManager.getThreads();
+	const memoryThreads = session.threadManager.getThreads();
+	const persisted = getPersistedThreads(session.dir);
+	const map = new Map<string, ThreadState>();
+	for (const t of persisted) map.set(t.id, t);
+	for (const t of memoryThreads) map.set(t.id, t);
+	return Array.from(map.values());
 }
 
 /**
@@ -208,14 +230,26 @@ export function cancelThreads(session: SwarmSession, threadId?: string): { cance
 /**
  * Cleanup a session — destroy worktrees, remove session.
  */
-export async function cleanupSession(dir: string): Promise<string> {
+export async function cleanupSession(dir: string, purgeAllOrphans = false): Promise<string> {
 	const absDir = path.resolve(dir);
 	const session = sessions.get(absDir);
-	if (!session) return "No active session for this directory";
+	if (!session && !purgeAllOrphans) {
+		clearPersistedState(absDir);
+		return "No active session for this directory";
+	}
 
-	session.abortController.abort();
-	await session.threadManager.cleanup();
-	sessions.delete(absDir);
+	if (session) {
+		session.abortController.abort();
+		await session.threadManager.cleanup();
+		sessions.delete(absDir);
+	}
+
+	clearPersistedState(absDir);
+
+	if (purgeAllOrphans) {
+		const { prunedWorktrees, deletedBranches } = await purgeOrphans(absDir);
+		return `Session cleaned up for ${absDir} (purged ${prunedWorktrees} orphan worktree dirs, ${deletedBranches} branches)`;
+	}
 
 	return `Session cleaned up for ${absDir}`;
 }

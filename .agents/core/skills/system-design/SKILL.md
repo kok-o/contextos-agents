@@ -11,11 +11,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Scalable system architecture blueprint based on the System Design Primer and DDIA. Enforces load balancing, multi-tier caching (Redis, CDN), database partitioning, CAP theorem tradeoffs, and rate limiting before code is written.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during the PLAN phase of any backend service, API design, database schema creation, or scalability optimization.
 
 ## Rules & Patterns
 

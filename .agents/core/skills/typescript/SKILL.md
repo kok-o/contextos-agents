@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Strict TypeScript engineering standard. Enforces noImplicitAny, discriminated unions, branded types, immutability, exhaustive switch checks, and zero unsafe any or as unknown as T casts.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate on all TypeScript and JavaScript codebases to ensure compile-time type safety, robust domain modeling, and foolproof function contracts.
 
 ## Negative Constraints (What NOT to Do)
 

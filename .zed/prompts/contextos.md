@@ -92,6 +92,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | **architecture-diagrams** | `architecture-diagrams/SKILL.md` | Interactive animated SVG/HTML architecture and sequence diagrams |
 | **adapters** | `adapters/SKILL.md` | Building system integrations |
 | **generators** | `generators/SKILL.md` | Code generation patterns |
+| **graphify** | `graphify/SKILL.md` | Codebase mapping, AST dependency knowledge graph, blast-radius analysis |
 
 ---
 
@@ -186,6 +187,10 @@ role: Architect
 trigger: "subagent" OR "parallel tasks" OR "delegate" OR "делегируй"
 load: [subagent-orchestrator, engineering-workflow, ponytail-mindset]
 role: Staff Engineer (Orchestrator)
+
+trigger: "graphify" OR "codebase graph" OR "project graph" OR "map codebase" OR "knowledge graph" OR "построй граф проекта"
+load: [graphify, system-design, context-manager]
+role: Architect
 ```
 
 ### By Technology Detected in Codebase
@@ -302,6 +307,7 @@ Use this table to instantly determine which skills to load:
 | Requirements ambiguity | `interview-me` + `engineering-workflow` | Product Manager |
 | Architecture visualization | `architecture-diagrams` + `system-design` | Architect |
 | Multi-agent parallel tasks | `subagent-orchestrator` + `engineering-workflow` | Staff Engineer (Orchestrator) |
+| Codebase graph / repo mapping | `graphify` + `context-manager` + `system-design` | Architect |
 
 ---
 

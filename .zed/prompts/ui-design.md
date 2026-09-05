@@ -4,11 +4,11 @@
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Modern component library and design system engineering. Enforces design token hierarchies (spacing, radii, elevation), accessible component primitives (shadcn/ui, Radix), and responsive layout constraints.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing design systems, reusable UI component libraries, navigation bars, modals, data tables, and interactive dashboards.
 
 ## Rules & Patterns
 <!-- Source: ui.md -->
@@ -119,3 +119,45 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# ui-design Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Component Token Consistency
+
+### Anti-pattern: Hardcoded Arbitrary Tailwind Utilities
+
+```tsx
+// BAD: Inconsistent spacing, arbitrary colors, unmaintainable styling
+<div className="p-[13px] bg-[#1a1b2e] rounded-[7px] text-[#99aab5] border border-[#2b2d42]">
+  <button className="px-[15px] py-[7px] bg-[#5865f2] hover:bg-[#4752c4]">Action</button>
+</div>
+```
+
+### Best practice: ContextOS Standard (Semantic Theme Tokens)
+
+```tsx
+// GOOD: Consistent scale utilities driven by Tailwind v4 @theme design tokens
+<div className="p-4 bg-card rounded-lg text-muted-foreground border border-border">
+  <Button variant="primary" size="md">Action</Button>
+</div>
+```
+
+# ui-design Troubleshooting & Common Mistakes
+
+## 1. Z-Index Chaos
+
+- **Symptom**: Tooltips rendered underneath dialog overlays, or dropdowns hidden behind sticky headers.
+- **Root Cause**: Ad-hoc hardcoded values (z-50, z-[999], z-[9999]).
+- **Fix**: Use Radix / shadcn Portals for floating elements so they render at root DOM level, or declare strict z-index tokens.
+
+## 2. Inconsistent Component States
+
+- **Symptom**: Buttons have hover states but lack focus-visible rings or disabled states.
+- **Root Cause**: Styling only the default and hover states.
+- **Fix**: Standardize state matrices for every interactive element: default, hover, focus-visible, active, disabled, loading.
+
+## 3. Ignoring Empty and Error Component States
+
+- **Symptom**: Tables or list views show a blank white box when there are 0 records.
+- **Root Cause**: Developers only design for the "ideal data" case.
+- **Fix**: Every data component must explicitly render designed EmptyState and ErrorState fallbacks.

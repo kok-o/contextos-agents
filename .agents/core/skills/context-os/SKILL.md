@@ -11,11 +11,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Operating system and context orchestration layer for AI coding assistants. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate as the root meta-orchestrator across all development phases to ensure role consistency, quality gates, and structured execution.
 
 ## Rules & Patterns
 

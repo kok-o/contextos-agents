@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Distributed systems architecture standard. Enforces bounded context isolation, asynchronous event-driven messaging (Kafka, RabbitMQ), Saga distributed transactions, API gateways, and outbox patterns.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when decomposing monoliths into independent services, designing inter-service communications, or building scalable distributed systems.
 
 ## Rules & Patterns
 <!-- Source: microservices.md -->

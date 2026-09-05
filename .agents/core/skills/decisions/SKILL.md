@@ -9,11 +9,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Architecture Decision Record (ADR) system following Michael Nygard format. Captures context, options considered, tradeoffs, and consequences to prevent architectural regression and knowledge loss across AI sessions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when choosing or switching database engines, authentication strategies, state libraries, or significant architectural patterns.
 
 ## Rules & Patterns
 

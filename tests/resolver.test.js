@@ -63,4 +63,25 @@ describe('resolver.js — Dynamic Skill Resolver & Progressive Index', () => {
     assert.ok(decl.includes('[ROLE: Senior Developer]'));
     assert.ok(decl.includes('Skills loaded:'));
   });
+
+  test('resolveSkills maps graphify prompt and files with system-design synergy', () => {
+    const res = resolver.resolveSkills({
+      prompt: 'Map the codebase with graphify and analyze blast radius',
+      files: ['graph.json'],
+    });
+    assert.ok(res.skills.includes('graphify'));
+    assert.ok(res.skills.includes('system-design'));
+    assert.ok(res.skills.includes('ponytail-mindset'));
+  });
+
+  test('resolveSkills resolves Russian prompts accurately', () => {
+    const res = resolver.resolveSkills({
+      prompt: 'создай модальное окно авторизации и напиши юнит-тесты',
+    });
+    assert.equal(res.domain, 'Frontend');
+    assert.ok(res.skills.includes('react'));
+    assert.ok(res.skills.includes('ui-ux-pro'));
+    assert.ok(res.skills.includes('security'));
+    assert.ok(res.skills.includes('testing'));
+  });
 });

@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Enterprise Node.js architecture standard using NestJS, TypeScript, and RxJS. Enforces strict modularity, dependency injection, repository pattern, DTO validation via class-validator, and clean layered architecture.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when building enterprise Node.js microservices, complex REST/GraphQL APIs, or scalable backends requiring strict architectural structure.
 
 ## Rules & Patterns
 <!-- Source: nestjs.md -->

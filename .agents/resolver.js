@@ -20,87 +20,107 @@ const CORE_SKILLS_DIR = path.join(AGENTS_DIR, 'core', 'skills');
 const SKILL_RULES = [
   {
     skill: 'nextjs',
-    triggers: [/\bnext(?:\.js)?\b/i, /\bapp\s*router\b/i, /\bserver\s*actions?\b/i, /\brsc\b/i, /\bpage\.tsx\b/i, /\blayout\.tsx\b/i],
+    triggers: [/\bnext(?:\.js)?\b/i, /\bapp\s*router\b/i, /\bserver\s*actions?\b/i, /\brsc\b/i, /\bpage\.tsx\b/i, /\blayout\.tsx\b/i, /некст/i],
     fileGlobs: [/app\/.*\.(tsx|jsx|ts|js)$/, /next\.config\./],
   },
   {
     skill: 'react',
-    triggers: [/\breact\b/i, /\bcomponent\b/i, /\bhooks?\b/i, /\buseState\b/i, /\buseEffect\b/i, /\buseOptimistic\b/i, /\buseMemo\b/i, /\bprops\b/i],
+    triggers: [/\breact\b/i, /\bcomponent\b/i, /\bhooks?\b/i, /\buseState\b/i, /\buseEffect\b/i, /\buseOptimistic\b/i, /\buseMemo\b/i, /\bprops\b/i, /компонент/i, /хук/i, /модал\w*/i],
     fileGlobs: [/\.(tsx|jsx)$/],
   },
   {
     skill: 'typescript',
-    triggers: [/\btypescript\b/i, /\btype-?safe\b/i, /\bgenerics?\b/i, /\binterface\b/i, /\btsconfig\b/i, /\btypes?\b/i],
+    triggers: [/\btypescript\b/i, /\btype-?safe\b/i, /\bgenerics?\b/i, /\binterface\b/i, /\btsconfig\b/i, /\btypes?\b/i, /тайпскрипт/i, /типизац/i],
     fileGlobs: [/\.tsx?$/, /tsconfig\.json$/],
   },
   {
     skill: 'ui-ux-pro',
-    triggers: [/\bui\b/i, /\bux\b/i, /\bdesign\b/i, /\bcss\b/i, /\btailwind\b/i, /\bstyling\b/i, /\btheme\b/i, /\bmodal\b/i, /\bbutton\b/i],
+    triggers: [/\bui\b/i, /\bux\b/i, /\bdesign\b/i, /\bcss\b/i, /\btailwind\b/i, /\bstyling\b/i, /\btheme\b/i, /\bmodal\b/i, /\bbutton\b/i, /модал\w*/i, /кнопк/i, /дизайн/i, /верстк/i, /макет/i, /интерфейс/i],
     fileGlobs: [/\.(css|scss|sass)$/, /tailwind\.config\./],
   },
   {
     skill: 'web-accessibility',
-    triggers: [/\baccessib\w*\b/i, /\ba11y\b/i, /\baria\b/i, /\bfocus\s*trap\b/i, /\bkeyboard\s*nav/i, /\bwcag\b/i, /\bscreen\s*reader\b/i],
+    triggers: [/\baccessib\w*\b/i, /\ba11y\b/i, /\baria\b/i, /\bfocus\s*trap\b/i, /\bkeyboard\s*nav/i, /\bwcag\b/i, /\bscreen\s*reader\b/i, /доступност/i, /скринридер/i],
     fileGlobs: [],
   },
   {
     skill: 'impeccable-design',
-    triggers: [/\bpolish\b/i, /\bvisual\s*qa\b/i, /\bmicro-?animation\b/i, /\bglassmorphism\b/i, /\btypography\b/i],
+    triggers: [/\bpolish\b/i, /\bvisual\s*qa\b/i, /\bmicro-?animation\b/i, /\bglassmorphism\b/i, /\btypography\b/i, /анимац/i, /полировк/i],
     fileGlobs: [],
   },
   {
     skill: 'database',
-    triggers: [/\bdatabase\b/i, /\bsql\b/i, /\bpostgres(?:ql)?\b/i, /\bprisma\b/i, /\bdrizzle\b/i, /\bmigration\b/i, /\bquery\b/i, /\borm\b/i, /\bindex(?:ing)?\b/i, /\bschema\b/i],
+    triggers: [/\bdatabase\b/i, /\bsql\b/i, /\bpostgres(?:ql)?\b/i, /\bprisma\b/i, /\bdrizzle\b/i, /\bmigration\b/i, /\bquery\b/i, /\borm\b/i, /\bindex(?:ing)?\b/i, /\bschema\b/i, /баз.*данн/i, /миграц/i, /таблиц/i],
     fileGlobs: [/\.prisma$/, /drizzle\.config\./, /\bmigrations?\/.*\.sql$/],
   },
   {
     skill: 'security',
-    triggers: [/\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /\bpermission\b/i, /\bsession\b/i, /\btoken\b/i],
+    triggers: [/\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /\bpermission\b/i, /\bsession\b/i, /\btoken\b/i, /авториз/i, /аутентифик/i, /парол/i, /токен/i, /безопасност/i],
     fileGlobs: [/\bauth\b/, /\bsecurity\b/],
   },
   {
     skill: 'performance',
-    triggers: [/\bperformance\b/i, /\boptimize\b/i, /\bslow\b/i, /\blatency\b/i, /\blcp\b/i, /\bcls\b/i, /\binp\b/i, /\bcore\s*web\s*vitals\b/i, /\bwaterfall\b/i, /\bbundle\s*size\b/i],
+    triggers: [/\bperformance\b/i, /\boptimize\b/i, /\bslow\b/i, /\blatency\b/i, /\blcp\b/i, /\bcls\b/i, /\binp\b/i, /\bcore\s*web\s*vitals\b/i, /\bwaterfall\b/i, /\bbundle\s*size\b/i, /производительн/i, /оптимиз/i, /медленн/i, /ускор/i],
     fileGlobs: [],
   },
   {
     skill: 'testing',
-    triggers: [/\btest(?:s|ing)?\b/i, /\bvitest\b/i, /\bjest\b/i, /\bplaywright\b/i, /\btdd\b/i, /\bbdd\b/i, /\be2e\b/i, /\bmock\b/i],
+    triggers: [/\btest(?:s|ing)?\b/i, /\bvitest\b/i, /\bjest\b/i, /\bplaywright\b/i, /\btdd\b/i, /\bbdd\b/i, /\be2e\b/i, /\bmock\b/i, /тест/i, /тестирован/i, /покрыти/i, /юнит/i],
     fileGlobs: [/\.(test|spec)\.(ts|js|tsx|jsx|py)$/, /vitest\.config\./, /playwright\.config\./],
   },
   {
     skill: 'docker',
-    triggers: [/\bdocker\b/i, /\bcontainer\b/i, /\bdockerfile\b/i, /\bcompose\b/i, /\bkubernetes\b/i, /\bk8s\b/i],
+    triggers: [/\bdocker\b/i, /\bcontainer\b/i, /\bdockerfile\b/i, /\bcompose\b/i, /\bkubernetes\b/i, /\bk8s\b/i, /докер/i, /контейнер/i],
     fileGlobs: [/Dockerfile/, /docker-compose\./],
   },
   {
     skill: 'fastapi',
-    triggers: [/\bfastapi\b/i, /\bpython\b/i, /\bpydantic\b/i, /\buvicorn\b/i, /\bpytest\b/i],
+    triggers: [/\bfastapi\b/i, /\bpython\b/i, /\bpydantic\b/i, /\buvicorn\b/i, /\bpytest\b/i, /питон/i],
     fileGlobs: [/\.py$/, /requirements\.txt$/, /pyproject\.toml$/],
   },
   {
     skill: 'nestjs',
-    triggers: [/\bnestjs\b/i, /\b@nestjs\b/i, /\bmodule\b/i, /\bcontroller\b/i, /\binjectable\b/i],
+    triggers: [/\bnestjs\b/i, /\b@nestjs\b/i, /\bmodule\b/i, /\bcontroller\b/i, /\binjectable\b/i, /нест/i],
     fileGlobs: [/nest-cli\.json$/],
   },
   {
     skill: 'node',
-    triggers: [/\bnode(?:\.js)?\b/i, /\bexpress\b/i, /\bfastify\b/i, /\bbackend\b/i, /\bapi\s*route\b/i],
+    triggers: [/\bnode(?:\.js)?\b/i, /\bexpress\b/i, /\bfastify\b/i, /\bbackend\b/i, /\bapi\s*route\b/i, /бэкенд/i, /эндпоинт/i],
     fileGlobs: [],
   },
   {
     skill: 'ddd',
-    triggers: [/\bddd\b/i, /\bdomain-?driven\b/i, /\baggregate\b/i, /\bentity\b/i, /\bvalue\s*object\b/i, /\bbounded\s*context\b/i],
+    triggers: [/\bddd\b/i, /\bdomain-?driven\b/i, /\baggregate\b/i, /\bentity\b/i, /\bvalue\s*object\b/i, /\bbounded\s*context\b/i, /домен/i, /агрегат/i],
     fileGlobs: [],
   },
   {
     skill: 'microservices',
-    triggers: [/\bmicroservices?\b/i, /\bevent-?driven\b/i, /\brabbitmq\b/i, /\bkafka\b/i, /\bpub\/?sub\b/i, /\bgrpc\b/i],
+    triggers: [/\bmicroservices?\b/i, /\bevent-?driven\b/i, /\brabbitmq\b/i, /\bkafka\b/i, /\bpub\/?sub\b/i, /\bgrpc\b/i, /микросервис/i, /очеред/i],
     fileGlobs: [],
   },
   {
     skill: 'system-design',
-    triggers: [/\barchitecture\b/i, /\bsystem\s*design\b/i, /\bscalab(?:le|ility)\b/i, /\bhigh\s*concurrency\b/i, /\bcircuit\s*breaker\b/i],
+    triggers: [/\barchitecture\b/i, /\bsystem\s*design\b/i, /\bscalab(?:le|ility)\b/i, /\bhigh\s*concurrency\b/i, /\bcircuit\s*breaker\b/i, /архитектур/i, /масштабируем/i],
+    fileGlobs: [],
+  },
+  {
+    skill: 'graphify',
+    triggers: [/\bgraphify\b/i, /\bknowledge\s*graph\b/i, /\bcodebase\s*graph\b/i, /\bproject\s*graph\b/i, /\bblast\s*radius\b/i, /\bmap\s*(?:the\s*)?codebase\b/i, /граф\s*проект/i, /граф\s*зависимост/i],
+    fileGlobs: [/graph\.json$/, /GRAPH_REPORT\.md$/],
+  },
+  {
+    skill: 'architecture-diagrams',
+    triggers: [/\bdiagrams?\b/i, /\bflowchart\b/i, /\bsequence\s*diagram\b/i, /диаграмм/i, /схем/i, /нарисуй/i],
+    fileGlobs: [],
+  },
+  {
+    skill: 'subagent-orchestrator',
+    triggers: [/\bsubagent\b/i, /\bdelegate\b/i, /\bparallel\s*tasks\b/i, /субагент/i, /делегируй/i, /распараллел/i],
+    fileGlobs: [],
+  },
+  {
+    skill: 'interview-me',
+    triggers: [/\binterview\b/i, /\bclarify\b/i, /\bquestions\b/i, /интервью/i, /уточни\b/i, /расспроси/i],
     fileGlobs: [],
   },
 ];
@@ -197,7 +217,7 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' }
   }
 
   // Synergy rules (from AGENTS.md matrix)
-  if (selectedSkills.has('database') || selectedSkills.has('microservices') || selectedSkills.has('ddd')) {
+  if (selectedSkills.has('database') || selectedSkills.has('microservices') || selectedSkills.has('ddd') || selectedSkills.has('graphify')) {
     selectedSkills.add('system-design');
   }
 

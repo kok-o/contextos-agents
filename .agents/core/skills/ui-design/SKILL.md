@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Modern component library and design system engineering. Enforces design token hierarchies (spacing, radii, elevation), accessible component primitives (shadcn/ui, Radix), and responsive layout constraints.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing design systems, reusable UI component libraries, navigation bars, modals, data tables, and interactive dashboards.
 
 ## Rules & Patterns
 <!-- Source: ui.md -->

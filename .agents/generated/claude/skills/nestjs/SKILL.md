@@ -2,11 +2,11 @@
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Enterprise Node.js architecture standard using NestJS, TypeScript, and RxJS. Enforces strict modularity, dependency injection, repository pattern, DTO validation via class-validator, and clean layered architecture.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when building enterprise Node.js microservices, complex REST/GraphQL APIs, or scalable backends requiring strict architectural structure.
 
 ## Rules & Patterns
 <!-- Source: nestjs.md -->
@@ -131,3 +131,65 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+
+# nestjs Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Input Validation and DTOs
+
+### Anti-pattern: Untyped Body or Manual Validation in Controller
+
+```typescript
+// BAD: No runtime validation, controller stuffed with business rules
+@Post('users')
+async create(@Body() body: any) {
+  if (!body.email || !body.email.includes('@')) {
+    throw new BadRequestException('Invalid email');
+  }
+  return this.usersService.create(body);
+}
+```
+
+### Best practice: ContextOS Standard (Class-Validator DTO + ValidationPipe)
+
+```typescript
+// GOOD: Declarative runtime validation with clean separation
+export class CreateUserDto {
+  @IsEmail({}, { message: 'A valid email is required' })
+  email: string;
+
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  password: string;
+}
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  async create(@Body() dto: CreateUserDto) {
+    return this.usersService.create(dto);
+  }
+}
+```
+
+# nestjs Troubleshooting & Common Mistakes
+
+## 1. Circular Dependency Between Modules
+
+- **Symptom**: "Nest cannot create the module instance. Often, this is caused by circular dependencies".
+- **Root Cause**: Module A imports Module B, and Module B imports Module A.
+- **Fix**: Use `forwardRef(() => ModuleB)` in imports and `@Inject(forwardRef(() => ServiceB))` in constructors, or refactor shared logic into a separate CommonModule.
+
+## 2. Memory Leaks from REQUEST Scope
+
+- **Symptom**: High memory usage and slow performance under load.
+- **Root Cause**: Providers declared with Scope.REQUEST recreate instances on every HTTP request.
+- **Fix**: Keep services as default Singletons whenever possible. Pass request-scoped parameters directly through method arguments.
+
+## 3. Uncaught Domain Exceptions
+
+- **Symptom**: Custom domain exceptions bypass formatting and return generic 500 errors.
+- **Root Cause**: Missing custom Global Exception Filter.
+- **Fix**: Implement an AllExceptionsFilter implementing ExceptionFilter and bind it globally in main.ts.

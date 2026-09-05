@@ -12,22 +12,17 @@
  * IMPORTANT: Never use console.log() — stdout is the MCP protocol stream.
  */
 
+import { exec } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { promisify } from "node:util";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
-import type { ThreadState } from "../../core/types.js";
-import {
-	cancelThreads,
-	cleanupSession,
-	getBudgetState,
-	getSession,
-	getThreads,
-	mergeThreads,
-	spawnThread,
-} from "../session.js";
 import { mergeThreadBranch } from "../../worktree/merge.js";
+import { cleanupSession, getBudgetState, getSession, getThreads, spawnThread } from "../session.js";
+
+const execAsync = promisify(exec);
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -47,10 +42,34 @@ function log(msg: string): void {
 	process.stderr.write(`[contextos-mcp] ${msg}\n`);
 }
 
+async function runWorktreeVerification(
+	worktreePath: string,
+	command: string,
+): Promise<{ verified: boolean; output: string }> {
+	try {
+		const { stdout, stderr } = await execAsync(command, {
+			cwd: worktreePath,
+			timeout: 60000,
+			maxBuffer: 1024 * 1024,
+			env: { ...process.env, CI: "true" },
+		});
+		return {
+			verified: true,
+			output: `${stdout}\n${stderr}`.trim().slice(0, 1500),
+		};
+	} catch (err: unknown) {
+		const anyErr = err as { stdout?: string; stderr?: string; message?: string };
+		const out = `${anyErr.stdout || ""}\n${anyErr.stderr || ""}\n${anyErr.message || ""}`;
+		return {
+			verified: false,
+			output: out.trim().slice(0, 1500),
+		};
+	}
+}
+
 // ── Tool Registration ──────────────────────────────────────────────────────
 
 export function registerContextosTools(server: McpServer, defaultDir?: string): void {
-
 	function resolveDir(dir?: string): string | null {
 		const resolved = dir || defaultDir;
 		if (!resolved) return null;
@@ -71,16 +90,42 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				"Delegate a coding task to multiple AI agents running in parallel. " +
 				"Each agent works in an isolated git worktree. ContextOS rules from " +
 				".agents/ are automatically injected into agent prompts. " +
-				"Returns task_id and thread IDs for tracking.",
+				"Supports async (non-blocking) and sync execution, in-worktree test verification, " +
+				"and selectable agent backends.",
 			inputSchema: z.object({
 				dir: z.string().optional().describe("Path to the git repository"),
 				task: z.string().describe("The coding task to accomplish"),
-				agents: z.array(z.object({
-					provider: z.string().describe("LLM provider: 'openai', 'anthropic', or 'gemini'"),
-					model: z.string().optional().describe("Model ID override (e.g., 'gpt-4o', 'claude-sonnet-4-6')"),
-				})).min(1).max(5).describe("List of agents to run in parallel"),
+				agents: z
+					.array(
+						z.object({
+							provider: z.string().describe("LLM provider: 'openai', 'anthropic', or 'gemini'"),
+							model: z.string().optional().describe("Model ID override (e.g., 'gpt-4o', 'claude-sonnet-4-6')"),
+							backend: z
+								.enum(["direct-llm", "opencode", "claude-code", "codex", "aider"])
+								.optional()
+								.describe("Agent backend (default: direct-llm)"),
+						}),
+					)
+					.min(1)
+					.max(5)
+					.describe("List of agents to run in parallel"),
 				files: z.array(z.string()).optional().describe("File paths to focus on"),
-				mode: z.enum(["parallel", "sequential"]).optional().describe("Execution mode (default: parallel)"),
+				mode: z
+					.enum(["parallel", "sequential"])
+					.optional()
+					.default("parallel")
+					.describe("Execution mode (default: parallel)"),
+				wait: z
+					.boolean()
+					.optional()
+					.default(true)
+					.describe(
+						"If true, wait for completion. If false, returns immediately with task_id for non-blocking monitoring.",
+					),
+				verify_command: z
+					.string()
+					.optional()
+					.describe("Command to run inside worktree to verify solution (e.g. 'npm test')"),
 			}),
 		},
 		async (args) => {
@@ -97,49 +142,87 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 
 				const session = await getSession(resolvedDir);
 				const taskId = `ctx_${Date.now().toString(36)}`;
-				const results: Array<{
-					thread_id: string;
-					provider: string;
-					model: string;
-					status: string;
-				}> = [];
 
 				// Spawn agents
 				const spawnPromises = args.agents.map(async (agentConfig) => {
 					const model = agentConfig.model || getDefaultModel(agentConfig.provider);
+					const backend = agentConfig.backend || "direct-llm";
 					const threadId = `${taskId}_${agentConfig.provider}`;
 
 					try {
 						const result = await spawnThread(session, {
+							id: threadId,
 							task: args.task,
 							files: args.files,
-							agent: "direct-llm",
+							agent: backend,
 							model: model,
 							context: contextPrompt,
 						});
+
+						let verificationResult: { verified: boolean; output: string } | undefined;
+						if (args.verify_command && result.success) {
+							const threads = getThreads(session);
+							const currentThread = threads.find((t) => t.id === threadId);
+							if (currentThread?.worktreePath) {
+								log(`Running verification inside worktree for thread ${threadId}: ${args.verify_command}`);
+								verificationResult = await runWorktreeVerification(currentThread.worktreePath, args.verify_command);
+							}
+						}
+
+						const status = result.success
+							? verificationResult && !verificationResult.verified
+								? "verification_failed"
+								: "completed"
+							: "failed";
 
 						return {
 							thread_id: threadId,
 							provider: agentConfig.provider,
 							model: model,
-							status: result.success ? "completed" : "failed",
+							backend: backend,
+							status: status,
 							summary: result.summary,
 							files_changed: result.filesChanged,
 							duration_ms: result.durationMs,
 							cost_usd: result.estimatedCostUsd,
+							verification: verificationResult,
 						};
 					} catch (err) {
 						return {
 							thread_id: threadId,
 							provider: agentConfig.provider,
 							model: model,
+							backend: backend,
 							status: "failed",
 							error: err instanceof Error ? err.message : String(err),
 						};
 					}
 				});
 
-				// Run parallel or sequential
+				// Non-blocking async mode
+				if (args.wait === false) {
+					// Run in background without blocking MCP response
+					Promise.allSettled(spawnPromises).catch((err) => {
+						log(`Background delegation error: ${err}`);
+					});
+
+					return jsonResult({
+						task_id: taskId,
+						status: "running",
+						contextos_rules_loaded: contextPrompt.length > 0,
+						mode: args.mode || "parallel",
+						agents: args.agents.map((a) => ({
+							thread_id: `${taskId}_${a.provider}`,
+							provider: a.provider,
+							model: a.model || getDefaultModel(a.provider),
+							backend: a.backend || "direct-llm",
+							status: "running",
+						})),
+						message: "Agents spawned in isolated worktrees. Poll status with contextos_status.",
+					});
+				}
+
+				// Synchronous waiting mode
 				let threadResults;
 				if (args.mode === "sequential") {
 					threadResults = [];
@@ -197,8 +280,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					branch: t.branchName || null,
 					files_changed: t.result?.filesChanged || [],
 					duration_ms:
-						t.completedAt && t.startedAt ? t.completedAt - t.startedAt :
-						t.startedAt ? Date.now() - t.startedAt : 0,
+						t.completedAt && t.startedAt ? t.completedAt - t.startedAt : t.startedAt ? Date.now() - t.startedAt : 0,
 					cost_usd: t.result?.estimatedCostUsd ?? t.estimatedCostUsd,
 					error: t.error,
 				}));
@@ -279,9 +361,10 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				return jsonResult({
 					agents: summaries,
 					potential_conflicts: conflicts,
-					recommendation: conflicts.length > 0
-						? "Some files were modified by multiple agents. Use contextos_diff to review each agent's changes before merging."
-						: "No conflicts detected. You can safely merge any agent's changes.",
+					recommendation:
+						conflicts.length > 0
+							? "Some files were modified by multiple agents. Use contextos_diff to review each agent's changes before merging."
+							: "No conflicts detected. You can safely merge any agent's changes.",
 				});
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -315,7 +398,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				const thread = threads.find((t) => t.id === args.thread_id);
 
 				if (!thread) {
-					return errorResult(`Thread ${args.thread_id} not found. Available: ${threads.map(t => t.id).join(", ")}`);
+					return errorResult(`Thread ${args.thread_id} not found. Available: ${threads.map((t) => t.id).join(", ")}`);
 				}
 
 				if (!thread.worktreePath) {
@@ -404,6 +487,12 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				"worktrees, and frees resources. Call this when done with a task.",
 			inputSchema: z.object({
 				dir: z.string().optional().describe("Path to the git repository"),
+				purge_orphans: z
+					.boolean()
+					.optional()
+					.describe(
+						"Whether to deeply scan and purge all stale worktree directories and swarm/* branches left by dead processes",
+					),
 			}),
 		},
 		async (args) => {
@@ -411,7 +500,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			if (!dir) return errorResult("'dir' is required");
 
 			try {
-				const message = await cleanupSession(dir);
+				const message = await cleanupSession(dir, args.purge_orphans);
 				return jsonResult({ cleaned_up: true, message });
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -426,9 +515,14 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 /** Get default model ID for a provider. */
 function getDefaultModel(provider: string): string {
 	switch (provider.toLowerCase()) {
-		case "openai": return "gpt-4o";
-		case "anthropic": return "claude-sonnet-4-6";
-		case "gemini": case "google": return "gemini-2.5-pro";
-		default: return "claude-sonnet-4-6";
+		case "openai":
+			return "gpt-4o";
+		case "anthropic":
+			return "claude-sonnet-4-6";
+		case "gemini":
+		case "google":
+			return "gemini-2.5-pro";
+		default:
+			return "claude-sonnet-4-6";
 	}
 }

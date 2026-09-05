@@ -96,6 +96,7 @@ All skills live in `.agents/core/skills/`. Here is what each does and when to us
 | **architecture-diagrams** | `architecture-diagrams/SKILL.md` | Interactive animated SVG/HTML architecture and sequence diagrams |
 | **adapters** | `adapters/SKILL.md` | Building system integrations |
 | **generators** | `generators/SKILL.md` | Code generation patterns |
+| **graphify** | `graphify/SKILL.md` | Codebase mapping, AST dependency knowledge graph, blast-radius analysis |
 
 ---
 
@@ -190,6 +191,10 @@ role: Architect
 trigger: "subagent" OR "parallel tasks" OR "delegate" OR "делегируй"
 load: [subagent-orchestrator, engineering-workflow, ponytail-mindset]
 role: Staff Engineer (Orchestrator)
+
+trigger: "graphify" OR "codebase graph" OR "project graph" OR "map codebase" OR "knowledge graph" OR "построй граф проекта"
+load: [graphify, system-design, context-manager]
+role: Architect
 ```
 
 ### By Technology Detected in Codebase
@@ -306,6 +311,7 @@ Use this table to instantly determine which skills to load:
 | Requirements ambiguity | `interview-me` + `engineering-workflow` | Product Manager |
 | Architecture visualization | `architecture-diagrams` + `system-design` | Architect |
 | Multi-agent parallel tasks | `subagent-orchestrator` + `engineering-workflow` | Staff Engineer (Orchestrator) |
+| Codebase graph / repo mapping | `graphify` + `context-manager` + `system-design` | Architect |
 
 ---
 
@@ -429,15 +435,17 @@ Reference the relevant skill when working on a task.
 
 ### adapters
 
+> >
+
 # agent-adapters
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Unified cross-agent configuration engine. Translates single ContextOS source rules into optimized native formats for Claude Code (CLAUDE.md), Gemini (.agents/skills), Cursor (.cursorrules, .cursor/rules/*.mdc), GitHub Copilot, Zed, Aider, and Continue.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when configuring, synchronizing, or exporting agent rules and skills across multiple IDEs and AI programming assistants.
 
 ## Rules & Patterns
 
@@ -527,6 +535,34 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# adapters Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Multi-Agent Configuration
+
+### Anti-pattern: Manually Syncing 6 Different Rule Files
+
+```text
+Editing .cursorrules, then forgetting to update CLAUDE.md, then editing copilot-instructions.md.
+Rules diverge across teammates using different IDEs.
+```
+
+### Best practice: ContextOS Standard (Single Source of Truth)
+
+```bash
+# Edit skills once in .agents/core/skills/
+# Compile to all agents with one command:
+node .agents/ctx.js export all
+# Automatically updates .cursorrules, CLAUDE.md, copilot-instructions.md, .aider, .zed
+```
+
+# adapters Troubleshooting & Common Mistakes
+
+## 1. Overwriting Custom Configs
+
+- **Symptom**: Custom non-ContextOS rules wiped out during export.
+- **Root Cause**: Running export with force flags over unmanaged files.
+- **Fix**: Keep custom project overrides in dedicated config files or use plugin skills.
 ### architecture-diagrams
 
 > Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows.
@@ -785,15 +821,17 @@ export function TelemetryModule({ unitId, status, metrics }: { unitId: string; s
 
 ### context-manager
 
+> >
+
 # context-manager
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Deterministic context window optimizer. Analyzes user task intent and queries project dependency graphs to inject minimal relevant files and skills, preventing LLM attention loss and context pollution.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during multi-file investigations, large refactorings, or complex tasks where dumping entire directory trees would blow past context budgets.
 
 ## Rules & Patterns
 
@@ -814,7 +852,7 @@ task:
 
 ### Step 2: Consult the Project Graph
 
-If `docs/PROJECT_GRAPH.md` exists:
+If `docs/PROJECT_GRAPH.md` or `.graphify/graph.json` exists (or activate `graphify` skill to extract AST dependencies):
 
 1. Find the module this task belongs to
 2. Get the module's dependencies
@@ -904,17 +942,47 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# context-manager Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Context Selection
+
+### Anti-pattern: Context Window Dumping
+
+```text
+Agent reads all 180 files in src/ into context to debug a single button click handler.
+Result: Exhausts 150k tokens, reaches rate limits, and forgets user instructions.
+```
+
+### Best practice: ContextOS Standard (Targeted AST Traversal)
+
+```text
+1. Inspect package.json and AGENTS.md.
+2. Grep for target symbol: grep_search for 'SubmitButton'.
+3. Read ONLY components/SubmitButton.tsx and its direct import types/button.ts.
+Total tokens used: <1,500 tokens. Fast, accurate, zero hallucinations.
+```
+
+# context-manager Troubleshooting & Common Mistakes
+
+## 1. Token Budget Blowout
+
+- **Symptom**: Model performance drops significantly, losing earlier conversational context.
+- **Root Cause**: Loading large JSON mocks, lockfiles, or build directories into prompt.
+- **Fix**: Never read package-lock.json, dist/, or build artifacts unless explicitly debugging bundle outputs.
 ### context-os
+
+> >
 
 # context-os
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Operating system and context orchestration layer for AI coding assistants. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate as the root meta-orchestrator across all development phases to ensure role consistency, quality gates, and structured execution.
 
 ## Rules & Patterns
 
@@ -1067,6 +1135,36 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# context-os Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Project Lifecycle Management
+
+### Anti-pattern: Ad-hoc Unstructured Development
+
+```text
+Coding -> Modifying DB -> Debugging -> Redesigning UI -> Changing Architecture
+All in one unstructured stream of consciousness.
+```
+
+### Best practice: ContextOS Standard (Phase-Gated Development)
+
+```text
+Phase 1: DEFINE (PRD & Requirements)
+Phase 2: PLAN (Atomic Tasks & ADRs)
+Phase 3: BUILD (TDD & Minimalist Implementation)
+Phase 4: VERIFY (Automated Test Proof)
+Phase 5: REVIEW (Design QA & Code Review)
+Phase 6: SHIP (Production Release)
+```
+
+# context-os Troubleshooting & Common Mistakes
+
+## 1. Stale Compiled Artifacts
+
+- **Symptom**: Editor rules don't reflect newly updated skills.
+- **Root Cause**: Modifying .agents/core/skills/ without recompiling exports.
+- **Fix**: Run node .agents/ctx.js export all whenever source skills are updated.
 ### database
 
 > Database architecture, schema design, Prisma, Drizzle ORM, indexing strategies, migrations, and N+1 query resolution.
@@ -1268,11 +1366,11 @@ export async function deductBalance(accountId: string, amount: number) {
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Domain-Driven Design standard for robust business software. Enforces separation between domain logic (Entities, Value Objects, Aggregates, Domain Events) and infrastructure frameworks, preventing leaky abstractions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing core business domain models, transactional consistency boundaries, enterprise APIs, or complex aggregate hierarchies.
 
 ## Rules & Patterns
 <!-- Source: ddd.md -->
@@ -1506,17 +1604,82 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# ddd Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Domain Entities vs Anemic Models
+
+### Anti-pattern: Anemic Domain Model with Leaky Setters
+
+```typescript
+// BAD: Zero business invariants; any caller can corrupt state
+class BankAccount {
+  public balance: number = 0;
+  public isFrozen: boolean = false;
+}
+
+// Logic leaked into controller or service
+account.balance -= 500; // Overdraft not checked!
+```
+
+### Best practice: ContextOS Standard (Rich Domain Model with Guarded Invariants)
+
+```typescript
+// GOOD: Invariants strictly enforced inside Aggregate Root
+class BankAccount {
+  private _balance: number;
+  private _isFrozen: boolean;
+
+  constructor(id: string, initialDeposit: Money) {
+    this._balance = initialDeposit.amount;
+    this._isFrozen = false;
+  }
+
+  public withdraw(amount: Money): void {
+    if (this._isFrozen) {
+      throw new AccountFrozenException('Cannot withdraw from a frozen account');
+    }
+    if (this._balance < amount.amount) {
+      throw new InsufficientFundsException('Insufficient funds for withdrawal');
+    }
+    this._balance -= amount.amount;
+    this.addDomainEvent(new MoneyWithdrawnEvent(this.id, amount));
+  }
+}
+```
+
+# ddd Troubleshooting & Common Mistakes
+
+## 1. God Aggregates
+
+- **Symptom**: Aggregate Root contains 20 child entities and loading it requires joining dozens of tables.
+- **Root Cause**: Treating ERD tables as aggregate boundaries rather than transactional consistency units.
+- **Fix**: Design small aggregates. Reference other aggregates by ID only, not by object reference.
+
+## 2. Leaking Infrastructure into Domain Layer
+
+- **Symptom**: Domain entities import Prisma, TypeORM decorators, or Express Request objects.
+- **Root Cause**: Inverting Clean Architecture boundaries.
+- **Fix**: The Domain layer must be pure TypeScript with zero external framework dependencies.
+
+## 3. Transaction Spanning Multiple Aggregates
+
+- **Symptom**: High database lock contention and deadlocks under concurrent transactions.
+- **Root Cause**: Modifying multiple aggregate roots within the same database transaction.
+- **Fix**: Rule of thumb: Exactly one Aggregate Root modified per transaction. Use Domain Events for eventual consistency across other aggregates.
 ### decisions
+
+> >
 
 # decision-engine
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Architecture Decision Record (ADR) system following Michael Nygard format. Captures context, options considered, tradeoffs, and consequences to prevent architectural regression and knowledge loss across AI sessions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when choosing or switching database engines, authentication strategies, state libraries, or significant architectural patterns.
 
 ## Rules & Patterns
 
@@ -1592,6 +1755,56 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# decisions Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Documenting Tech Choices
+
+### Anti-pattern: Tribal Knowledge & Undocumented Decisions
+
+```text
+"We switched to Redis for session storage last month because Dan said so on Slack."
+Three months later, Dan leaves and nobody knows why the config is set up this way.
+```
+
+### Best practice: ContextOS Standard (MADR Architecture Decision Record)
+
+```markdown
+# ADR 0003: Use Redis for Distributed Session Storage
+
+## Context and Problem Statement
+Our application is transitioning from a single server to horizontally auto-scaled instances.
+Sticky sessions on load balancer cause uneven distribution and drop sessions on node recycling.
+
+## Considered Options
+1. PostgreSQL session table
+2. Redis cluster
+3. JWT stateless tokens in cookies
+
+## Decision Outcome
+Chosen option: "Redis cluster", because:
+- Sub-millisecond read/write latency compared to relational DB queries.
+- Built-in TTL automatically handles session expiration without cron cleanup.
+- Avoids security risks of client-stored JWT revocation.
+
+## Consequences
+- Positive: Stateless web tier, zero session drops on deployment.
+- Negative: Adds operational dependency on Redis cluster infrastructure.
+```
+
+# decisions Troubleshooting & Common Mistakes
+
+## 1. Post-Hoc Justifications
+
+- **Symptom**: ADR written weeks after code is merged, omitting all rejected options.
+- **Root Cause**: Treating ADRs as paperwork rather than decision-making tools.
+- **Fix**: Write the ADR during the PLAN phase _before_ implementing the decision.
+
+## 2. Omitting Trade-offs
+
+- **Symptom**: ADR lists only benefits, claiming the chosen tech has zero downsides.
+- **Root Cause**: Confirmation bias.
+- **Fix**: Every architecture decision has costs. Explicitly document negative trade-offs and operational overhead.
 ### docker
 
 > Docker containerization, multi-stage builds, non-root security, layer caching optimization, and docker-compose standards.
@@ -2071,17 +2284,95 @@ When completing a task or workflow, you must explicitly report your final status
 - **BLOCKED** — cannot proceed; state blocker and what was tried.
 - **NEEDS_CONTEXT** — missing info; state exactly what is needed.
 
+
+# engineering-workflow Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Handling a New Feature Request
+
+### Anti-pattern: Jumping Straight to Code
+
+```text
+User: "Add a user referral system."
+Agent: Immediately creates src/referral.js, starts writing database queries, guesses schema,
+and misses requirements like rate limiting, expiry dates, and fraud prevention.
+```
+
+### Best practice: ContextOS Standard (DEFINE -> PLAN -> BUILD)
+
+```markdown
+[DOMAIN: Full-Stack] [PHASE: Define] [ROLE: Product Manager]
+Skills loaded: engineering-workflow, interview-me
+
+## Feature Spec: User Referral System
+### Why (Problem)
+Increase user acquisition through organic word-of-mouth incentives.
+
+### Scope
+In-Scope:
+- Unique referral code generation per registered user
+- Referral code attribution on signup
+- Credit reward trigger after first completed purchase
+Out-of-Scope:
+- Multi-tier MLM rewards
+- Cash payout integrations
+
+### Acceptance Criteria
+- [ ] Given a registered user, when visiting /referrals, then unique code is displayed.
+- [ ] Given a new user with code, when signing up, then referrer_id is stored with status 'pending'.
+```
+
+---
+
+## Example 2: Atomic Task Execution in PLAN Phase
+
+### Anti-pattern: Monolithic Mega-Task
+
+```text
+Task: "Implement entire referral system end-to-end in one shot."
+Result: 15 files modified simultaneously, uncompilable intermediate state, untestable diff.
+```
+
+### Best practice: ContextOS Standard (Atomic Tasks with Test Gate)
+
+```markdown
+[DOMAIN: Full-Stack] [PHASE: Plan] [ROLE: Architect]
+Atomic Tasks:
+1. Database migration: referrals and referral_rewards tables + indexes. (Test: Migration rollback & apply)
+2. Domain service: ReferralService.createCode() and ReferralService.claimCode(). (Test: Unit tests)
+3. API route: POST /api/referrals/claim with Zod validation. (Test: Supertest integration)
+4. UI component: <ReferralCard /> with copy button. (Test: RTL component test)
+```
+
+# engineering-workflow Troubleshooting & Common Mistakes
+
+## 1. Premature Code Generation
+
+- **Symptom**: Agent starts spitting out code blocks while the user is still clarifying requirements.
+- **Root Cause**: Failure to enforce the IRON RULE of Phase 1 (DEFINE) and Phase 2 (PLAN).
+- **Fix**: Halt code output immediately. Announce `[PHASE: Define]` or `[PHASE: Plan]` and provide the structured spec or task breakdown for user sign-off.
+
+## 2. Blast Radius Creep
+
+- **Symptom**: A simple bugfix in one module modifies 8 unrelated configuration and styling files.
+- **Root Cause**: Missing isolation boundaries and speculative cleanup.
+- **Fix**: Restrict edits strictly to files explicitly declared in the current atomic task's plan.
+
+## 3. Unverified Claims of Completion
+
+- **Symptom**: Agent reports "Task complete! Everything is working" without running tests or builds.
+- **Root Cause**: Skipping Phase 4 (VERIFY).
+- **Fix**: Always execute tests (`npm test`, validator, compiler) and quote actual terminal exit codes and outputs before declaring completion.
 ### FastAPI
 
 # FastAPI
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+High-performance Python backend engineering using FastAPI, Pydantic v2, and async SQLAlchemy/Tortoise ORM. Enforces type-driven request validation, OpenAPI contracts, and async non-blocking endpoints.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when building Python REST APIs, microservices, asynchronous background jobs, or integrating Python ML services into web backends.
 
 ## Rules & Patterns
 <!-- Source: fastapi.md -->
@@ -2216,6 +2507,63 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# fastapi Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Asynchronous Route Handlers
+
+### Anti-pattern: Blocking I/O inside `async def`
+
+```python
+# BAD: time.sleep or synchronous requests blocks the entire asyncio event loop!
+import time
+import requests
+
+@app.get("/slow")
+async def slow_route():
+    time.sleep(5)  # BLOCKS ALL CONCURRENT USERS!
+    return {"status": "done"}
+```
+
+### Best practice: ContextOS Standard (Non-blocking Async or Def Offload)
+
+```python
+# GOOD: Use async non-blocking client (httpx) or standard def for sync CPU work
+import asyncio
+import httpx
+
+@app.get("/fast")
+async def fast_route():
+    async with httpx.AsyncClient() as client:
+        response = await client.get("https://api.example.com/data")
+    return response.json()
+
+# Or standard def (FastAPI automatically runs it in a background threadpool):
+@app.get("/sync-worker")
+def sync_worker():
+    time.sleep(5)  # Runs in worker thread without blocking event loop
+    return {"status": "done"}
+```
+
+# fastapi Troubleshooting & Common Mistakes
+
+## 1. Pydantic v1 vs v2 Deprecations
+
+- **Symptom**: Warnings or crashes regarding @validator or .dict() methods.
+- **Root Cause**: FastAPI projects upgrading to Pydantic v2.
+- **Fix**: Use @field_validator instead of @validator, and .model_dump() instead of .dict().
+
+## 2. Database Session Leaks
+
+- **Symptom**: Database pool runs out of connections after a few requests.
+- **Root Cause**: Database sessions opened manually without proper try...finally or dependency injection.
+- **Fix**: Always provide database sessions via Depends(get_db) with a yield block.
+
+## 3. Unhandled Validation Errors Returning Inconsistent JSON
+
+- **Symptom**: Frontend receives raw 422 arrays without matching standard API error response envelope.
+- **Root Cause**: Missing custom RequestValidationError handler.
+- **Fix**: Register an app-level exception handler for RequestValidationError that normalizes error shapes.
 ### gemini-precision
 
 > High-precision engineering and execution guardrails optimized for Google Gemini models. Enforces zero-assumption file inspection, complete non-lazy implementations, surgical blast-radius containment, and mandatory proof-of-work execution.
@@ -2357,15 +2705,17 @@ export async function updateUser(id, data, session) {
 
 ### generators
 
+> >
+
 # document-generator
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Automated technical documentation generator. Transforms initial project ideas and specs into comprehensive PRDs, architecture schemas, API contracts, database ERDs, and roadmap task breakdowns.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during project kickoff (ctx init), new service scaffolding, or when generating baseline technical specs from high-level user requirements.
 
 ## Rules & Patterns
 
@@ -2462,6 +2812,236 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# generators Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Technical Documentation Generation
+
+### Anti-pattern: Scaffolding from Scratch Without Templates
+
+```text
+Agent drafts a 2-paragraph "architecture overview" missing databases, security, and hosting models.
+```
+
+### Best practice: ContextOS Standard (ctx init Template Generation)
+
+```text
+Generates complete engineering suite:
+- PRD.md (User personas, in-scope, out-of-scope, acceptance criteria)
+- ARCHITECTURE.md (C4 model, data flow, scaling boundaries)
+- DATABASE.md (ERD, indexing strategy, migration plans)
+- API.md (OpenAPI 3.1 endpoints, error codes, authentication)
+```
+
+# generators Troubleshooting & Common Mistakes
+
+## 1. Generic Boilerplate Generation
+
+- **Symptom**: Generated documentation contains placeholders like [Insert DB Name here].
+- **Root Cause**: Generating docs before clarifying core project constraints.
+- **Fix**: Run the interview-me protocol before generating technical documentation.
+### graphify
+
+> Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius.
+
+# graphify
+
+## Overview
+
+**Graphify** is a codebase mapping and context optimization engine. Instead of feeding raw directory trees or entire source files into an agent's context window, Graphify leverages local **Tree-sitter** AST parsing to construct a deterministic, queryable knowledge graph (`graph.json`, `GRAPH_REPORT.md`, `graph.html`).
+
+This skill instructs agents how to build, query, and maintain codebase graphs to navigate complex architectures with near-zero token overhead.
+
+## When to Use
+
+Activate whenever:
+
+- Working in large repositories (10k+ LOC) where full-file reads cause context overflow.
+- Performing cross-module refactorings and needing to determine exact dependency **blast radius**.
+- Onboarding onto an unfamiliar codebase or mapping legacy service boundaries.
+- The user asks to "map the codebase", "show dependency graph", "find central components", or "run graphify".
+- Working alongside `context-manager` to supply an automated `PROJECT_GRAPH.md` / `graph.json`.
+
+## Rules & Patterns
+
+### 1. The Graph-First Navigation Protocol
+
+Before opening and reading arbitrary source files in a large project:
+
+1. **Check for Existing Artifacts**:
+   - Inspect if `graph.json` or `GRAPH_REPORT.md` exists in the project root or `.graphify/`.
+   - If present, query `graph.json` or read `GRAPH_REPORT.md` first to locate target modules.
+2. **Deterministic CLI Execution**:
+   - If missing or stale, generate the graph using the Python package (`pip install graphifyy`):
+
+     ```bash
+     graphify run .
+     ```
+
+   - For live development sessions, run in watch mode:
+
+     ```bash
+     graphify watch .
+     ```
+
+3. **Inspect God Nodes**:
+   - Always check the "God Nodes" section of `GRAPH_REPORT.md`. These represent high-centrality modules (e.g., core configs, base models, central dispatchers). Changes to god nodes have the highest blast radius.
+
+### 2. Context Safety Rules
+
+- **Never load `graph.html` into agent context**: `graph.html` is an interactive visualization for humans in the browser; reading it burns tokens needlessly.
+- **Selective JSON Querying**: Do not dump the entire `graph.json` into prompt context if it exceeds 50KB. Use targeted grep/jq queries to extract specific node neighbors.
+- **Git Hygiene**: Add `graph.html` and `.graphify/cache` to `.gitignore`. Keep `GRAPH_REPORT.md` committed only if the team uses it as shared documentation.
+
+### 3. Blast Radius Verification
+
+When modifying a function, class, or interface:
+
+1. Locate the symbol's node in `graph.json`.
+2. Extract all inbound edges (`dependents` / `callers`).
+3. Formulate the verification plan specifically around those dependent call sites.
+
+---
+
+## Code Examples
+
+### Installing and Running Graphify
+
+```bash
+# Install graphify CLI (package name is graphifyy on PyPI)
+pip install graphifyy
+
+# Generate knowledge graph and markdown architectural report
+graphify run ./src --output .graphify/
+
+# View interactive visualization locally
+open .graphify/graph.html
+```
+
+### Querying Node Dependencies via Shell
+
+```bash
+# Find dependents of a critical module in graph.json without loading entire file
+node -e "
+const g = require('./.graphify/graph.json');
+const target = 'UserService';
+const inbound = g.edges.filter(e => e.target === target).map(e => e.source);
+console.log('Modules dependent on ' + target + ':', inbound);
+"
+```
+
+### Git Pre-Commit Hook Integration
+
+```bash
+#!/bin/sh
+# .git/hooks/pre-commit: ensure GRAPH_REPORT.md remains fresh
+if command -v graphify >/dev/null 2>&1; then
+  graphify run . --report-only
+  git add GRAPH_REPORT.md
+fi
+```
+
+---
+
+## Validation Checklist
+
+- [ ] `graph.json` and `GRAPH_REPORT.md` are generated without syntax errors.
+- [ ] Central "God Nodes" are identified and accounted for in the implementation plan.
+- [ ] No heavy visualization artifacts (`graph.html`, raw SVG dumps) are ingested into agent prompt context.
+- [ ] Inbound dependencies (callers) are checked before modifying exported signatures.
+- [ ] `.gitignore` properly excludes local graph caches and visualization outputs.
+
+---
+
+## Common Mistakes
+
+- **Context Window Flooding**: Ingesting the complete `graph.json` of a 500k LOC repository into agent context instead of slicing target subgraphs.
+- **Stale Graph Fallacy**: Assuming `graph.json` is up to date after heavy code refactorings without re-running `graphify run` or using `--watch`.
+- **Ignoring Semantic Non-Code Files**: Neglecting SQL migrations, OpenAPI specs, and docker configs during graph extraction.
+- **Mistaking Package Name**: Trying to install `pip install graphify` instead of the official PyPI package `graphifyy`.
+
+---
+
+## Integration Notes
+
+- **Synergy with `context-manager`**: Graphify serves as the automated backend engine for `context-manager`. Instead of manually maintaining `docs/PROJECT_GRAPH.md`, run Graphify to keep `graph.json` current.
+- **Synergy with `system-design`**: Use `GRAPH_REPORT.md` to ground architectural proposals in actual codebase topology.
+- **Synergy with `architecture-diagrams`**: The nodes and edges extracted in `graph.json` can be directly mapped into animated SVG C4 architecture diagrams.
+
+
+# Graphify Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Codebase Exploration & Architecture Mapping
+
+### Anti-pattern: Context Window Flooding (Dumping source directories into prompt)
+
+```bash
+# BAD: Reading 150 TypeScript files into context to understand system architecture.
+# Burns 200k+ tokens, causes model hallucinations, and loses attention span.
+cat src/**/*.ts | llm "explain the architecture and component connections"
+```
+
+### Best practice: ContextOS Standard (Deterministic Tree-sitter AST Graph)
+
+```bash
+# GOOD: Generate queryable AST knowledge graph and compact architecture summary
+graphify run ./src --output .graphify/
+
+# Inspect high-level architecture and god nodes with minimal tokens (<2k tokens)
+cat .graphify/GRAPH_REPORT.md
+```
+
+---
+
+## Example 2: Refactoring Blast-Radius Analysis
+
+### Anti-pattern: String Grep Guesswork
+
+```bash
+# BAD: Grepping for common symbol names returns hundreds of false positives (comments, logs, unrelated types)
+grep -rn "PaymentService" src/
+```
+
+### Best practice: ContextOS Standard (Inbound Dependency Traversal via graph.json)
+
+```javascript
+// GOOD: Precise AST-level callers extracted directly from knowledge graph edges
+const fs = require('fs');
+const graph = JSON.parse(fs.readFileSync('.graphify/graph.json', 'utf8'));
+
+const targetNode = 'PaymentService';
+const dependents = graph.edges
+  .filter(edge => edge.target === targetNode && edge.type === 'imports')
+  .map(edge => edge.source);
+
+console.log(`Modules directly broken by modifying ${targetNode}:`, dependents);
+```
+
+---
+
+## Example 3: Keeping Graph Fresh in CI / Pre-commit
+
+### Anti-pattern: Relying on Outdated Graphs
+
+```bash
+# BAD: Developing against a graph generated two months ago.
+# Dependencies drift, leading to false safety assumptions.
+```
+
+### Best practice: ContextOS Standard (Git Hook & Automated Watch)
+
+```bash
+# Option A: Active development in watch mode
+graphify watch ./src --output .graphify/
+
+# Option B: Pre-commit hook to verify fresh GRAPH_REPORT.md
+#!/bin/sh
+# .git/hooks/pre-commit
+if command -v graphify >/dev/null 2>&1; then
+  graphify run ./src --report-only
+  git add GRAPH_REPORT.md
+fi
+```
 ### gstack-roles
 
 > >
@@ -2470,11 +3050,11 @@ How this skill interacts with other skills.
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Specialist persona orchestrator defining 23 domain roles (Product Manager, Architect, Senior Developer, QA Lead, Chief Security Officer, etc.). Enforces mindset transitions across engineering pipeline phases.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate on every task to declare explicit specialist role and mindset before beginning DEFINE, PLAN, BUILD, VERIFY, REVIEW, or SHIP phases.
 
 ## Rules & Patterns
 
@@ -2612,6 +3192,44 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# gstack-roles Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Specialist Persona Activation
+
+### Anti-pattern: Undifferentiated Generalist Response
+
+```text
+User: "Should we migrate our monolithic PostgreSQL database to MongoDB?"
+Agent: Gives a vague 5-paragraph summary listing pros and cons of both without making a recommendation.
+```
+
+### Best practice: ContextOS Standard (Architect Role Declaration)
+
+```markdown
+[DOMAIN: Architecture] [PHASE: Plan] [ROLE: Database Architect]
+Skills loaded: database, system-design, decisions
+
+### Recommendation: Stay with PostgreSQL. Do NOT migrate to MongoDB.
+1. Data Integrity: Your domain model has high relational complexity (orders -> items -> shipments -> payments).
+2. Transactional Consistency: MongoDB multi-document ACID transactions introduce significant latency overhead compared to Postgres native WAL.
+3. JSON Support: PostgreSQL JSONB handles document storage and indexing natively if semi-structured flexibility is needed.
+Decision: Draft ADR 0004-retain-postgresql-with-jsonb.md.
+```
+
+# gstack-roles Troubleshooting & Common Mistakes
+
+## 1. Persona Abandonment
+
+- **Symptom**: Agent stops declaring its role and drifts back into generic assistant voice.
+- **Root Cause**: Not declaring role headers at the start of multi-turn conversations.
+- **Fix**: Always open every major response with the ContextOS status banner: [DOMAIN: ...] [PHASE: ...] [ROLE: ...].
+
+## 2. Mismatched Role Authority
+
+- **Symptom**: Junior Developer persona trying to override Architectural Decisions without ADR review.
+- **Root Cause**: Role boundary confusion.
+- **Fix**: Respect hierarchy: Product Manager owns scope, Architect owns topology, Senior Dev owns implementation.
 ### impeccable-design
 
 > >
@@ -2620,11 +3238,11 @@ How this skill interacts with other skills.
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Hard QA design review checklist consisting of 50 deterministic rules covering typography (T1-T10), color systems (C1-C12), layout constraints (L1-L11), component contracts (K1-K11), and micro-animations (A1-A8).
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during the REVIEW phase of all frontend tasks as a strict visual and functional QA gate before marking UI work complete.
 
 ## Rules & Patterns
 
@@ -2810,6 +3428,53 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# impeccable-design Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Dark Mode Surfaces & Elevation
+
+### Anti-pattern: Pure Black with Flat Cards
+
+```css
+/* BAD: Pure #000000 background with harsh pure white borders and flat cards */
+body { background-color: #000000; color: #ffffff; }
+.card { background-color: #111111; border: 1px solid #ffffff; }
+```
+
+### Best practice: ContextOS Standard (Atmospheric Depth & Tinted Surfaces)
+
+```css
+/* GOOD: Tinted dark background with layered elevation surfaces and subtle border */
+body {
+  background-color: #0B0D13; /* Tinted with subtle deep blue */
+  color: #E2E8F0;
+}
+.surface-1 {
+  background-color: #111522;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+```
+
+# impeccable-design Troubleshooting & Common Mistakes
+
+## 1. Nested Border Radius Mismatch
+
+- **Symptom**: Corners of an inner element poke out or look visually awkward inside a container.
+- **Root Cause**: Using the same border-radius on both outer container and inner child.
+- **Fix**: Inner radius formula: r_inner = max(0, r_outer - padding).
+
+## 2. Animation Performance Stutter
+
+- **Symptom**: Janky animations and dropped frames during transitions.
+- **Root Cause**: Animating layout properties (width, height, top, margin).
+- **Fix**: Animate only composited GPU-accelerated properties: transform and opacity.
+
+## 3. Cluttered Visual Density
+
+- **Symptom**: Interface feels overwhelming, cramped, and cheap.
+- **Root Cause**: Cramming too many borders, dividers, badges, and icons into one view.
+- **Fix**: Replace borders with generous whitespace; let alignment and typography hierarchy define grouping.
 ### interview-me
 
 > Interactive requirements elicitation skill. Interrogates ambiguous, complex, or high-blast-radius tasks one focused question at a time before any plan or code is written.
@@ -2911,11 +3576,11 @@ Which model fits your architecture best?
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Distributed systems architecture standard. Enforces bounded context isolation, asynchronous event-driven messaging (Kafka, RabbitMQ), Saga distributed transactions, API gateways, and outbox patterns.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when decomposing monoliths into independent services, designing inter-service communications, or building scalable distributed systems.
 
 ## Rules & Patterns
 <!-- Source: microservices.md -->
@@ -3066,6 +3731,65 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# microservices Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Inter-service Communication
+
+### Anti-pattern: Synchronous HTTP Call Chains (The Distributed Monolith)
+
+```text
+User -> OrderService (HTTP) -> InventoryService (HTTP) -> PaymentService (HTTP) -> EmailService (HTTP)
+Problem: High latency, 99.9% availability compounding to 96% overall availability, cascading failure.
+```
+
+### Best practice: ContextOS Standard (Asynchronous Event Choreography)
+
+```text
+User -> OrderService (creates order with status 'PENDING')
+OrderService publishes 'OrderPlaced' event to Event Broker (Kafka/RabbitMQ)
+  ├── InventoryService consumes 'OrderPlaced' -> Reserves stock
+  ├── PaymentService consumes 'OrderPlaced' -> Charges customer
+  └── NotificationService consumes 'PaymentProcessed' -> Sends confirmation email
+```
+
+---
+
+## Example 2: Database Architecture
+
+### Anti-pattern: Shared Database Across Multiple Microservices
+
+```text
+BAD: OrderService and UserService both directly read and write to the same 'users' table.
+Schema migrations in UserService immediately break OrderService.
+```
+
+### Best practice: ContextOS Standard (Database-per-Service)
+
+```text
+GOOD: UserService owns user data. OrderService maintains a local read-model (denormalized user info)
+synchronized via 'UserUpdated' events. Each service can migrate and scale independently.
+```
+
+# microservices Troubleshooting & Common Mistakes
+
+## 1. Missing Consumer Idempotency
+
+- **Symptom**: Users charged twice or duplicate records created when events are re-delivered.
+- **Root Cause**: Message brokers guarantee at-least-once delivery; network retries re-send events.
+- **Fix**: Store processed message/event IDs in a deduplication table with unique constraint.
+
+## 2. Circular Service Dependencies
+
+- **Symptom**: Service A cannot boot or operate without Service B, and Service B depends on Service A.
+- **Root Cause**: Improper domain boundaries and coupled synchronous dependencies.
+- **Fix**: Invert dependency using domain events or introduce a composite BFF/Orchestrator.
+
+## 3. Distributed Tracing Blindness
+
+- **Symptom**: Impossible to diagnose which downstream microservice caused a 500 error or latency spike.
+- **Root Cause**: HTTP headers and event messages do not propagate correlation IDs.
+- **Fix**: Propagate X-Correlation-ID / traceparent across all HTTP requests and event headers.
 ### minimalist-design
 
 > Clean editorial-style interfaces with warm monochrome palettes and flat bento grids.
@@ -3185,11 +3909,11 @@ export function BentoFeatureCard({ title, description, badge, tagColor = "blue" 
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Enterprise Node.js architecture standard using NestJS, TypeScript, and RxJS. Enforces strict modularity, dependency injection, repository pattern, DTO validation via class-validator, and clean layered architecture.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when building enterprise Node.js microservices, complex REST/GraphQL APIs, or scalable backends requiring strict architectural structure.
 
 ## Rules & Patterns
 <!-- Source: nestjs.md -->
@@ -3315,6 +4039,67 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# nestjs Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Input Validation and DTOs
+
+### Anti-pattern: Untyped Body or Manual Validation in Controller
+
+```typescript
+// BAD: No runtime validation, controller stuffed with business rules
+@Post('users')
+async create(@Body() body: any) {
+  if (!body.email || !body.email.includes('@')) {
+    throw new BadRequestException('Invalid email');
+  }
+  return this.usersService.create(body);
+}
+```
+
+### Best practice: ContextOS Standard (Class-Validator DTO + ValidationPipe)
+
+```typescript
+// GOOD: Declarative runtime validation with clean separation
+export class CreateUserDto {
+  @IsEmail({}, { message: 'A valid email is required' })
+  email: string;
+
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  password: string;
+}
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  async create(@Body() dto: CreateUserDto) {
+    return this.usersService.create(dto);
+  }
+}
+```
+
+# nestjs Troubleshooting & Common Mistakes
+
+## 1. Circular Dependency Between Modules
+
+- **Symptom**: "Nest cannot create the module instance. Often, this is caused by circular dependencies".
+- **Root Cause**: Module A imports Module B, and Module B imports Module A.
+- **Fix**: Use `forwardRef(() => ModuleB)` in imports and `@Inject(forwardRef(() => ServiceB))` in constructors, or refactor shared logic into a separate CommonModule.
+
+## 2. Memory Leaks from REQUEST Scope
+
+- **Symptom**: High memory usage and slow performance under load.
+- **Root Cause**: Providers declared with Scope.REQUEST recreate instances on every HTTP request.
+- **Fix**: Keep services as default Singletons whenever possible. Pass request-scoped parameters directly through method arguments.
+
+## 3. Uncaught Domain Exceptions
+
+- **Symptom**: Custom domain exceptions bypass formatting and return generic 500 errors.
+- **Root Cause**: Missing custom Global Exception Filter.
+- **Fix**: Implement an AllExceptionsFilter implementing ExceptionFilter and bind it globally in main.ts.
 ### Next.js
 
 # Next.js App Router Best Practices
@@ -3475,17 +4260,78 @@ See `EXAMPLES.md` for detailed code examples and component templates.
 - Pairs with `react` and `ui-ux-pro` for component design and state management.
 - Pairs with `security` for session authorization and input sanitization.
 
+
+# nextjs Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Server Components vs Client Components
+
+### Anti-pattern: Marking the Entire Page as Client Component
+
+```tsx
+// BAD: app/dashboard/page.tsx with 'use client' at top
+// Bloats client bundle, loses SEO benefits, eliminates direct DB access
+'use client';
+
+export default function DashboardPage() {
+  const [data, setData] = useState(null);
+  useEffect(() => { fetch('/api/dashboard').then(...) }, []);
+  return <div>...</div>;
+}
+```
+
+### Best practice: ContextOS Standard (RSC by Default, Client Leaf Nodes)
+
+```tsx
+// GOOD: Server Component fetches data directly with zero bundle cost
+// app/dashboard/page.tsx (Server Component)
+import { Suspense } from 'react';
+import { db } from '@/lib/db';
+import { InteractiveChart } from './InteractiveChart'; // 'use client' leaf component
+
+export default async function DashboardPage() {
+  const stats = await db.analytics.getStats();
+  return (
+    <main>
+      <h1>Dashboard</h1>
+      <p>Total Revenue: {stats.revenue}</p>
+      <Suspense fallback={<ChartSkeleton />}>
+        <InteractiveChart initialData={stats.chartData} />
+      </Suspense>
+    </main>
+  );
+}
+```
+
+# nextjs Troubleshooting & Common Mistakes
+
+## 1. Hydration Mismatch Errors
+
+- **Symptom**: "Text content does not match server-rendered HTML".
+- **Root Cause**: Rendering dates, window dimensions, or local storage data that differs between server render and client hydration.
+- **Fix**: Use suppressHydrationWarning on localized timestamps or load client-only state inside a useEffect after mount.
+
+## 2. Accidental Server Code Bundled to Client
+
+- **Symptom**: "Module not found: Can't resolve 'fs' or 'pg' in client bundle".
+- **Root Cause**: Client component importing a utility that transitively imports server-only database code.
+- **Fix**: Separate server utilities into *.server.ts and install import 'server-only'; at the top of server files.
+
+## 3. Waterfall Fetches in Server Components
+
+- **Symptom**: Page takes 3 seconds to load due to sequential await statements.
+- **Root Cause**: Awaiting independent data sources one after another.
+- **Fix**: Use Promise.all([fetchUsers(), fetchProducts()]) or separate into nested <Suspense> boundaries.
 ### Node.js
 
 # Node.js
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Production-grade Node.js runtime and server standard. Enforces async event loop non-blocking hygiene, graceful shutdown, structured JSON logging with correlation IDs, and unhandled rejection guards.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when developing Node.js HTTP servers, Express/Fastify APIs, background workers, CLI tools, or stream-based data pipelines.
 
 ## Negative Constraints (What NOT to Do)
 
@@ -3681,6 +4527,26 @@ app.get('/download/:file', async (req, res, next) => {
   }
 });
 ```
+
+# node Troubleshooting & Common Mistakes
+
+## 1. Unhandled Promise Rejections Crashing the Process
+
+- **Symptom**: Node process crashes abruptly without clear stack trace in production.
+- **Root Cause**: Missing `process.on('unhandledRejection')` handler in Node.js >= 15.
+- **Fix**: Always register top-level unhandledRejection and uncaughtException logging before exiting cleanly.
+
+## 2. Event Loop Starvation
+
+- **Symptom**: API endpoints stop responding or latency spikes to 10+ seconds.
+- **Root Cause**: Heavy synchronous operations (`JSON.parse` on a 50MB file, sync bcrypt hashing, or regex catastrophic backtracking).
+- **Fix**: Offload CPU-heavy tasks to Worker Threads or use async worker queues.
+
+## 3. Memory Leaks in Event Emitters
+
+- **Symptom**: "MaxListenersExceededWarning: Possible EventEmitter memory leak detected".
+- **Root Cause**: Adding listeners inside request handlers without removing them on close.
+- **Fix**: Remove listeners in cleanup callbacks or use `AbortController` signals.
 ### Web Performance
 
 # Web Performance & Core Web Vitals
@@ -3753,6 +4619,57 @@ See `EXAMPLES.md` for detailed performance patterns and benchmark snippets.
 - Pairs with `nextjs` and `react` for App Router caching and component lifecycle tuning.
 - Pairs with `ui-ux-pro` for smooth animations and responsive design tokens.
 
+
+# performance Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Dynamic Imports for Heavy Libraries
+
+### Anti-pattern: Static Import of Heavy Visualizers in Initial Bundle
+
+```typescript
+// BAD: Adds 800KB (Monaco editor or Three.js) to the critical first-paint bundle!
+import { CodeEditor } from '@/components/CodeEditor';
+
+export default function Page() {
+  return <div><CodeEditor /></div>;
+}
+```
+
+### Best practice: ContextOS Standard (Lazy Load on Demand)
+
+```typescript
+// GOOD: Dynamic import splits chunk, only downloads when component renders
+import dynamic from 'next/dynamic';
+
+const CodeEditor = dynamic(
+  () => import('@/components/CodeEditor'),
+  { loading: () => <EditorSkeleton />, ssr: false }
+);
+
+export default function Page() {
+  return <div><CodeEditor /></div>;
+}
+```
+
+# performance Troubleshooting & Common Mistakes
+
+## 1. Cumulative Layout Shift (CLS) from Images & Fonts
+
+- **Symptom**: Page content jumps around as images and custom fonts load.
+- **Root Cause**: Missing width and height attributes on image tags and FOUT (Flash of Unstyled Text).
+- **Fix**: Always specify aspect-ratio or width/height on images, and use next/font to preload web fonts with fallback sizing.
+
+## 2. High Interaction to Next Paint (INP)
+
+- **Symptom**: User clicks a button and the UI freezes for 200ms+ before responding.
+- **Root Cause**: Long task blocking the main thread during event dispatch.
+- **Fix**: Defer non-critical state updates using startTransition() or split heavy computation with Web Workers.
+
+## 3. Unoptimized SVG / Icon Overload
+
+- **Symptom**: Huge DOM node count and slow initial render times.
+- **Root Cause**: Rendering 500 inline SVG icons with complex paths.
+- **Fix**: Use SVG sprite sheets, dynamic icon loaders, or lightweight canvas rendering for dense data visualizations.
 ### ponytail-mindset
 
 > >
@@ -3943,6 +4860,72 @@ export async function updateUser(id: string, data: UpdateUserInput) {
 - Enforces minimalism alongside `system-design` (think at scale, implement minimally).
 - Pairs with `impeccable-design` for UI tasks.
 
+
+# ponytail-mindset Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Data Formatting and Manipulation
+
+### Anti-pattern: Over-engineered Custom Utility Class
+
+```typescript
+// BAD: 40 lines of boilerplate for relative date formatting
+export class DateFormatterService {
+  private static instance: DateFormatterService;
+  public static getInstance() { /* singleton boilerplate */ }
+  public formatRelative(date: Date): string {
+    const diff = Date.now() - date.getTime();
+    // 30 lines of manual math, plurals, and string building
+  }
+}
+```
+
+### Best practice: ContextOS Standard (Standard Library Native API)
+
+```typescript
+// GOOD: Native Intl API, zero bundle cost, handles all locales
+export const formatRelativeTime = (date: Date, locale = 'en'): string => {
+  const diffDays = Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(diffDays, 'day');
+};
+```
+
+---
+
+## Example 2: Component Library Reuse
+
+### Anti-pattern: Hand-rolled Modal from Scratch
+
+```text
+BAD: Writing custom overlay DOM, manual scroll locking, manual focus trapping,
+and custom keydown listeners. Burns 300+ lines of fragile code.
+```
+
+### Best practice: ContextOS Standard (Leverage Established Primitives)
+
+```bash
+# GOOD: Install battle-tested primitive that handles ARIA, portals, and keyboard navigation
+npx shadcn@latest add dialog
+```
+
+# ponytail-mindset Troubleshooting & Common Mistakes
+
+## 1. Conflating Minimalism with Cutting Safety Guards
+
+- **Symptom**: Agent removes input validation, error handling, or security checks in the name of "less code".
+- **Root Cause**: Misunderstanding the Ponytail principle. Ponytail cuts unnecessary abstractions, never safety invariants.
+- **Fix**: Invariant: Always retain 100% of input sanitization, error boundaries, and type safety checks.
+
+## 2. "Just In Case" Speculative Coding (YAGNI Violation)
+
+- **Symptom**: Adding config options, generics, and plugin interfaces for features not requested.
+- **Root Cause**: Premature future-proofing.
+- **Fix**: Apply Rung 1 of the ladder: If it doesn't solve the immediate requirement, do not write it.
+
+## 3. Reinventing Installed Dependencies
+
+- **Symptom**: Writing a deep-clone helper when Lodash or native structuredClone is available.
+- **Root Cause**: Skipping inspection of package.json and runtime environment.
+- **Fix**: Inspect installed dependencies before writing utility functions.
 ### React
 
 # React Engineering & Performance Best Practices
@@ -4152,6 +5135,26 @@ export function useScrollThreshold(threshold = 50): boolean {
   return isPassed;
 }
 ```
+
+# react Troubleshooting & Common Mistakes
+
+## 1. Infinite Render Loops in useEffect
+
+- **Symptom**: Browser freezes, "Maximum update depth exceeded" error.
+- **Root Cause**: Creating new object or array literals inside component body and passing them to useEffect dependency array.
+- **Fix**: Colocate state, compute derived state during render without useEffect, or use primitive dependency values.
+
+## 2. Stale Closures in Callbacks
+
+- **Symptom**: Event handler or setTimeout accesses outdated state values.
+- **Root Cause**: Callback closing over initial state without updated dependency.
+- **Fix**: Use functional state updates (`setCount(c => c + 1)`) or `useRef` for mutable references.
+
+## 3. Prop Drilling vs Context Performance
+
+- **Symptom**: Changing a small state variable causes the entire component tree to re-render.
+- **Root Cause**: Storing rapidly changing state in a single monolithic React Context.
+- **Fix**: Split contexts by domain or migrate client UI state to Zustand with granular selectors.
 ### react-best-practices
 
 > React and Next.js performance optimization guidelines from Vercel Engineering.
@@ -4639,6 +5642,26 @@ app.delete('/api/documents/:id', requireAuth, async (req, res) => {
   return res.status(204).end();
 });
 ```
+
+# security Troubleshooting & Common Mistakes
+
+## 1. Insecure Direct Object References (IDOR)
+
+- **Symptom**: User A can access User B's invoices by simply modifying the ID in the URL.
+- **Root Cause**: Querying by record ID without scoping to the authenticated `user.id` or tenant ID.
+- **Fix**: Always query with ownership predicate: `db.invoice.findFirst({ where: { id, userId: auth.user.id } })`.
+
+## 2. SQL Injection via Raw String Concatenation
+
+- **Symptom**: Database compromised through input fields.
+- **Root Cause**: String templating in raw queries (`db.query("SELECT * FROM users WHERE id = " + id)`).
+- **Fix**: Always use parameterized queries (`$1, $2`) or ORM/query-builder methods.
+
+## 3. Storing Sensitive Secrets in Git or Client Bundles
+
+- **Symptom**: API keys or JWT signing secrets exposed publicly.
+- **Root Cause**: Hardcoding secrets in source files or prefixing server secrets with NEXT_PUBLIC_.
+- **Fix**: Store all secrets in server-only environment variables; add git-secrets to pre-commit hooks.
 ### soft-design
 
 > High-end agency-grade UI architecture, haptic micro-aesthetics, and fluid spring motion choreography.
@@ -4977,11 +6000,11 @@ Every subagent dispatch prompt must contain:
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Scalable system architecture blueprint based on the System Design Primer and DDIA. Enforces load balancing, multi-tier caching (Redis, CDN), database partitioning, CAP theorem tradeoffs, and rate limiting before code is written.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during the PLAN phase of any backend service, API design, database schema creation, or scalability optimization.
 
 ## Rules & Patterns
 
@@ -5384,6 +6407,102 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# system-design Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Database Caching Strategy
+
+### Anti-pattern: Cache-Aside with Unbounded Thundering Herd
+
+```typescript
+// BAD: When cache expires, 10,000 concurrent requests hit PostgreSQL simultaneously
+async function getUserProfile(id: string) {
+  const cached = await redis.get(`user:${id}`);
+  if (cached) return JSON.parse(cached);
+  const user = await db.user.findUnique({ where: { id } });
+  await redis.set(`user:${id}`, JSON.stringify(user), 'EX', 300);
+  return user;
+}
+```
+
+### Best practice: ContextOS Standard (Mutex Lock / Single-Flight Pattern)
+
+```typescript
+// GOOD: Only one worker fetches from DB on cache miss; others wait
+import { singleflight } from './singleflight';
+
+async function getUserProfile(id: string) {
+  const cached = await redis.get(`user:${id}`);
+  if (cached) return JSON.parse(cached);
+
+  return singleflight.do(`user:${id}`, async () => {
+    const fresh = await redis.get(`user:${id}`);
+    if (fresh) return JSON.parse(fresh);
+
+    const user = await db.user.findUnique({ where: { id } });
+    if (user) {
+      await redis.set(`user:${id}`, JSON.stringify(user), 'EX', 300);
+    }
+    return user;
+  });
+}
+```
+
+---
+
+## Example 2: Outbox Pattern for Distributed Consistency
+
+### Anti-pattern: Dual-Write Anti-pattern (Direct DB write + Kafka publish)
+
+```typescript
+// BAD: If Kafka publish fails, DB change is committed but event is lost forever
+async function createOrder(data: OrderInput) {
+  const order = await db.order.create({ data });
+  await kafkaProducer.send({ topic: 'orders', messages: [{ value: JSON.stringify(order) }] });
+  return order;
+}
+```
+
+### Best practice: ContextOS Standard (Transactional Outbox)
+
+```typescript
+// GOOD: Order and Outbox record committed in a single atomic DB transaction
+async function createOrder(data: OrderInput) {
+  return await db.$transaction(async (tx) => {
+    const order = await tx.order.create({ data });
+    await tx.outbox.create({
+      data: {
+        aggregateType: 'Order',
+        aggregateId: order.id,
+        eventType: 'OrderCreated',
+        payload: JSON.stringify(order),
+        status: 'PENDING',
+      },
+    });
+    return order;
+  });
+}
+```
+
+# system-design Troubleshooting & Common Mistakes
+
+## 1. Serverless Connection Exhaustion
+
+- **Symptom**: "FATAL: remaining connection slots are reserved for non-replication superuser connections" under modest traffic.
+- **Root Cause**: Serverless/Edge functions opening new DB connection pools per invoked instance.
+- **Fix**: Use a connection pooler like PgBouncer or managed pooling (Supabase connection pool, AWS RDS Proxy, Prisma Accelerate).
+
+## 2. Cache Invalidation Drift
+
+- **Symptom**: Users see stale, outdated data after making updates.
+- **Root Cause**: Updates to database do not invalidate related cache keys, or TTLs are set to infinite.
+- **Fix**: Invalidate cache keys explicitly on write in the same transactional flow, and always set defensive TTLs.
+
+## 3. Lack of Rate Limiting and Backpressure
+
+- **Symptom**: Backend crashes or slows to a crawl during traffic spikes or bot scraping.
+- **Root Cause**: Unthrottled public endpoints without token-bucket or sliding-window rate limiting.
+- **Fix**: Add rate-limiting middleware (Redis-backed sliding window) at the API gateway / Edge layer.
 ### testing
 
 > Vitest, React Testing Library, and Playwright testing standards. Enforces TDD/BDD, test pyramid, zero brittle mocks, and complete assertion coverage.
@@ -5551,11 +6670,11 @@ export const server = setupServer(
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Strict TypeScript engineering standard. Enforces noImplicitAny, discriminated unions, branded types, immutability, exhaustive switch checks, and zero unsafe any or as unknown as T casts.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate on all TypeScript and JavaScript codebases to ensure compile-time type safety, robust domain modeling, and foolproof function contracts.
 
 ## Negative Constraints (What NOT to Do)
 
@@ -5719,17 +6838,37 @@ export type AsyncState<T> =
   | { readonly status: 'success'; readonly data: T }
   | { readonly status: 'error'; readonly error: Error };
 ```
+
+# typescript Troubleshooting & Common Mistakes
+
+## 1. Excessive Use of `any` or `as unknown as T`
+
+- **Symptom**: Runtime `TypeError: Cannot read properties of undefined` in supposedly typed TypeScript code.
+- **Root Cause**: Bypassing type checking with `any` or forceful type assertions.
+- **Fix**: Use `unknown` with type guards, Zod schemas, or discriminated unions.
+
+## 2. Non-Exhaustive Switch on Unions
+
+- **Symptom**: New union member added but some switch statements fail to handle it, producing bugs.
+- **Root Cause**: Missing exhaustive type checking in `default:` case.
+- **Fix**: Add `default: const _exhaustive: never = action; throw new Error(_exhaustive);` to let the compiler catch missing branches.
+
+## 3. Inaccurate Generics Constraints
+
+- **Symptom**: Generic functions that lose type inference and resolve to `unknown`.
+- **Root Cause**: Over-specifying generics or missing `extends` constraints.
+- **Fix**: Constrain generics narrowly: `function get<T, K extends keyof T>(obj: T, key: K): T[K]`.
 ### UI Design
 
 # UI Design
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Modern component library and design system engineering. Enforces design token hierarchies (spacing, radii, elevation), accessible component primitives (shadcn/ui, Radix), and responsive layout constraints.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing design systems, reusable UI component libraries, navigation bars, modals, data tables, and interactive dashboards.
 
 ## Rules & Patterns
 <!-- Source: ui.md -->
@@ -5840,6 +6979,48 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# ui-design Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Component Token Consistency
+
+### Anti-pattern: Hardcoded Arbitrary Tailwind Utilities
+
+```tsx
+// BAD: Inconsistent spacing, arbitrary colors, unmaintainable styling
+<div className="p-[13px] bg-[#1a1b2e] rounded-[7px] text-[#99aab5] border border-[#2b2d42]">
+  <button className="px-[15px] py-[7px] bg-[#5865f2] hover:bg-[#4752c4]">Action</button>
+</div>
+```
+
+### Best practice: ContextOS Standard (Semantic Theme Tokens)
+
+```tsx
+// GOOD: Consistent scale utilities driven by Tailwind v4 @theme design tokens
+<div className="p-4 bg-card rounded-lg text-muted-foreground border border-border">
+  <Button variant="primary" size="md">Action</Button>
+</div>
+```
+
+# ui-design Troubleshooting & Common Mistakes
+
+## 1. Z-Index Chaos
+
+- **Symptom**: Tooltips rendered underneath dialog overlays, or dropdowns hidden behind sticky headers.
+- **Root Cause**: Ad-hoc hardcoded values (z-50, z-[999], z-[9999]).
+- **Fix**: Use Radix / shadcn Portals for floating elements so they render at root DOM level, or declare strict z-index tokens.
+
+## 2. Inconsistent Component States
+
+- **Symptom**: Buttons have hover states but lack focus-visible rings or disabled states.
+- **Root Cause**: Styling only the default and hover states.
+- **Fix**: Standardize state matrices for every interactive element: default, hover, focus-visible, active, disabled, loading.
+
+## 3. Ignoring Empty and Error Component States
+
+- **Symptom**: Tables or list views show a blank white box when there are 0 records.
+- **Root Cause**: Developers only design for the "ideal data" case.
+- **Fix**: Every data component must explicitly render designed EmptyState and ErrorState fallbacks.
 ### ui-ux-pro
 
 > >
@@ -5848,11 +7029,11 @@ How this skill interacts with other skills.
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Professional UI/UX design standard banning AI clichés (pure black #000000, purple-blue gradients, card-in-card nesting). Enforces Tailwind CSS v4 @theme, semantic HSL palettes, and refined micro-interactions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during planning and implementation of modern web user interfaces, landing pages, SaaS dashboards, and consumer-facing web apps.
 
 ## Rules & Patterns
 
@@ -6275,17 +7456,37 @@ How this skill interacts with other skills.
   </div>
 </div>
 ```
+
+# ui-ux-pro Troubleshooting & Common Mistakes
+
+## 1. Obvious AI Design Tells
+
+- **Symptom**: The interface immediately looks like a generic AI prototype.
+- **Root Cause**: Using Inter alone, pure black (#000000), purple-blue gradients, and rounded icon squares above every title.
+- **Fix**: Use tinted backgrounds (#090A0F), pair primary font with JetBrains Mono for code/numbers, use subtle border highlights.
+
+## 2. Contrast Failures in Secondary Elements
+
+- **Symptom**: Captions, timestamps, and borders are invisible or impossible to read.
+- **Root Cause**: Using flat #666 or #444 grays without testing against actual background luminance.
+- **Fix**: Always test contrast ratios (minimum 4.5:1 for body, 3:1 for graphical boundaries) using semantic theme tokens.
+
+## 3. Nesting Cards Inside Cards
+
+- **Symptom**: Visual claustrophobia and slop aesthetic.
+- **Root Cause**: Putting bordered cards inside other bordered cards.
+- **Fix**: Flatten the hierarchy. Use background surface contrast and negative space instead of border-in-border nesting.
 ### UX Design
 
 # UX Design
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+User experience and interaction design standard. Enforces progressive disclosure, predictable user flows, designed empty/loading/error states, form usability, and keyboard navigation ergonomics.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing complex multi-step workflows, onboarding funnels, form validation feedback, error recovery flows, and user journeys.
 
 ## Rules & Patterns
 <!-- Source: ux.md -->
@@ -6388,6 +7589,63 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# ux-design Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Destructive Actions
+
+### Anti-pattern: Instant Deletion Without Confirmation or Recovery
+
+```tsx
+// BAD: Immediate delete on click, no confirmation, irreversible data loss
+<button onClick={() => deleteProject(project.id)}>Delete</button>
+```
+
+### Best practice: ContextOS Standard (Two-Step Confirmation or Undo Toast)
+
+```tsx
+// GOOD: Clear confirmation dialog stating exact item name and non-reversible impact
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="destructive">Delete Project</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete <strong>{project.name}</strong>
+        and all associated API keys.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction onClick={handleDelete} className="bg-destructive">
+        Delete permanently
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+# ux-design Troubleshooting & Common Mistakes
+
+## 1. Mystery Meat Navigation
+
+- **Symptom**: Users don't know what icons do and have to hover to guess.
+- **Root Cause**: Relying on ambiguous icons without text labels or tooltips.
+- **Fix**: Pair icons with text labels wherever space permits; always provide accessible tooltips on icon-only actions.
+
+## 2. Loss of User Input on Interruption
+
+- **Symptom**: User accidentally clicks outside a long modal form and all typed content vanishes.
+- **Root Cause**: Modals closing on backdrop click without checking form dirty state.
+- **Fix**: Prevent dismiss on outside click when form has unsaved modifications, or autosave drafts to local storage.
+
+## 3. Double-Click Submission Bugs
+
+- **Symptom**: Users double-click a submit button on slow network, resulting in duplicate charges or items.
+- **Root Cause**: Form buttons remaining active during in-flight network requests.
+- **Fix**: Disable button and show spinner state as soon as form submission begins.
 ### vercel-optimize
 
 > Observability-first Vercel performance and cost reduction optimization skill.
@@ -6635,3 +7893,64 @@ See `EXAMPLES.md` for detailed dialog, menu, and form examples.
 
 - Pairs with `ui-ux-pro` and `impeccable-design` for visual contrast and component standards.
 - Pairs with `react` and `nextjs` for accessible dialogs and focus restoration across route transitions.
+
+
+# web-accessibility Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Semantic Buttons vs Clickable Divs
+
+### Anti-pattern: Clickable Div
+
+```tsx
+// BAD: Cannot be focused with Tab, does not respond to Enter or Space, silent to screen readers
+<div className="button" onClick={handleSubmit}>Submit</div>
+```
+
+### Best practice: ContextOS Standard (Semantic Button Element)
+
+```tsx
+// GOOD: Keyboard focusable, native Enter/Space handling, properly announced by assistive tech
+<button type="button" onClick={handleSubmit} className="btn btn-primary">
+  Submit
+</button>
+```
+
+---
+
+## Example 2: Icon-only Buttons
+
+### Anti-pattern: Unlabelled Icon Button
+
+```tsx
+// BAD: Screen reader announces "button", user has zero idea what it does
+<button onClick={onClose}><XIcon /></button>
+```
+
+### Best practice: ContextOS Standard (Accessible Label)
+
+```tsx
+// GOOD: Explicit aria-label and hidden decorative icon
+<button type="button" onClick={onClose} aria-label="Close modal window">
+  <XIcon aria-hidden="true" />
+</button>
+```
+
+# web-accessibility Troubleshooting & Common Mistakes
+
+## 1. Trapping Keyboard Users in Inactive Elements
+
+- **Symptom**: Tab key moves focus into invisible elements hidden offscreen.
+- **Root Cause**: Using display: none vs opacity: 0 or left: -9999px.
+- **Fix**: Always apply display: none / hidden or inert attribute to elements that are currently not visible.
+
+## 2. Color Contrast Violations
+
+- **Symptom**: Text is unreadable for users with low vision or in bright sunlight.
+- **Root Cause**: Contrast ratio between text and background color is below WCAG AA thresholds.
+- **Fix**: Ensure contrast ratio is at least 4.5:1 for body text and 3:1 for large text / graphical controls.
+
+## 3. Silent Dynamic Updates
+
+- **Symptom**: Asynchronous error messages or notifications appear on screen without screen reader announcement.
+- **Root Cause**: Missing ARIA live region.
+- **Fix**: Wrap notification banners in aria-live="polite" and role="status".

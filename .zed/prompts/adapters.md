@@ -1,14 +1,16 @@
 # ContextOS — adapters
 
+> >
+
 # agent-adapters
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Unified cross-agent configuration engine. Translates single ContextOS source rules into optimized native formats for Claude Code (CLAUDE.md), Gemini (.agents/skills), Cursor (.cursorrules, .cursor/rules/*.mdc), GitHub Copilot, Zed, Aider, and Continue.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when configuring, synchronizing, or exporting agent rules and skills across multiple IDEs and AI programming assistants.
 
 ## Rules & Patterns
 
@@ -98,3 +100,31 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# adapters Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Multi-Agent Configuration
+
+### Anti-pattern: Manually Syncing 6 Different Rule Files
+
+```text
+Editing .cursorrules, then forgetting to update CLAUDE.md, then editing copilot-instructions.md.
+Rules diverge across teammates using different IDEs.
+```
+
+### Best practice: ContextOS Standard (Single Source of Truth)
+
+```bash
+# Edit skills once in .agents/core/skills/
+# Compile to all agents with one command:
+node .agents/ctx.js export all
+# Automatically updates .cursorrules, CLAUDE.md, copilot-instructions.md, .aider, .zed
+```
+
+# adapters Troubleshooting & Common Mistakes
+
+## 1. Overwriting Custom Configs
+
+- **Symptom**: Custom non-ContextOS rules wiped out during export.
+- **Root Cause**: Running export with force flags over unmanaged files.
+- **Fix**: Keep custom project overrides in dedicated config files or use plugin skills.

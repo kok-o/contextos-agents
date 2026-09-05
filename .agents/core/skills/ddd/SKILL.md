@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Domain-Driven Design standard for robust business software. Enforces separation between domain logic (Entities, Value Objects, Aggregates, Domain Events) and infrastructure frameworks, preventing leaky abstractions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing core business domain models, transactional consistency boundaries, enterprise APIs, or complex aggregate hierarchies.
 
 ## Rules & Patterns
 <!-- Source: ddd.md -->

@@ -76,3 +76,54 @@ See `EXAMPLES.md` for detailed performance patterns and benchmark snippets.
 - Pairs with `nextjs` and `react` for App Router caching and component lifecycle tuning.
 - Pairs with `ui-ux-pro` for smooth animations and responsive design tokens.
 
+
+# performance Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Dynamic Imports for Heavy Libraries
+
+### Anti-pattern: Static Import of Heavy Visualizers in Initial Bundle
+
+```typescript
+// BAD: Adds 800KB (Monaco editor or Three.js) to the critical first-paint bundle!
+import { CodeEditor } from '@/components/CodeEditor';
+
+export default function Page() {
+  return <div><CodeEditor /></div>;
+}
+```
+
+### Best practice: ContextOS Standard (Lazy Load on Demand)
+
+```typescript
+// GOOD: Dynamic import splits chunk, only downloads when component renders
+import dynamic from 'next/dynamic';
+
+const CodeEditor = dynamic(
+  () => import('@/components/CodeEditor'),
+  { loading: () => <EditorSkeleton />, ssr: false }
+);
+
+export default function Page() {
+  return <div><CodeEditor /></div>;
+}
+```
+
+# performance Troubleshooting & Common Mistakes
+
+## 1. Cumulative Layout Shift (CLS) from Images & Fonts
+
+- **Symptom**: Page content jumps around as images and custom fonts load.
+- **Root Cause**: Missing width and height attributes on image tags and FOUT (Flash of Unstyled Text).
+- **Fix**: Always specify aspect-ratio or width/height on images, and use next/font to preload web fonts with fallback sizing.
+
+## 2. High Interaction to Next Paint (INP)
+
+- **Symptom**: User clicks a button and the UI freezes for 200ms+ before responding.
+- **Root Cause**: Long task blocking the main thread during event dispatch.
+- **Fix**: Defer non-critical state updates using startTransition() or split heavy computation with Web Workers.
+
+## 3. Unoptimized SVG / Icon Overload
+
+- **Symptom**: Huge DOM node count and slow initial render times.
+- **Root Cause**: Rendering 500 inline SVG icons with complex paths.
+- **Fix**: Use SVG sprite sheets, dynamic icon loaders, or lightweight canvas rendering for dense data visualizations.

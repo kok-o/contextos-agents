@@ -8,11 +8,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+High-performance Python backend engineering using FastAPI, Pydantic v2, and async SQLAlchemy/Tortoise ORM. Enforces type-driven request validation, OpenAPI contracts, and async non-blocking endpoints.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when building Python REST APIs, microservices, asynchronous background jobs, or integrating Python ML services into web backends.
 
 ## Rules & Patterns
 <!-- Source: fastapi.md -->

@@ -9,11 +9,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Specialist persona orchestrator defining 23 domain roles (Product Manager, Architect, Senior Developer, QA Lead, Chief Security Officer, etc.). Enforces mindset transitions across engineering pipeline phases.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate on every task to declare explicit specialist role and mindset before beginning DEFINE, PLAN, BUILD, VERIFY, REVIEW, or SHIP phases.
 
 ## Rules & Patterns
 

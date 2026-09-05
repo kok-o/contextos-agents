@@ -1,3 +1,7 @@
-# Troubleshooting & Common Mistakes
+# context-manager Troubleshooting & Common Mistakes
 
-Add common errors, anti-patterns, and debugging steps here.
+## 1. Token Budget Blowout
+
+- **Symptom**: Model performance drops significantly, losing earlier conversational context.
+- **Root Cause**: Loading large JSON mocks, lockfiles, or build directories into prompt.
+- **Fix**: Never read package-lock.json, dist/, or build artifacts unless explicitly debugging bundle outputs.

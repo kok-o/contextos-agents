@@ -1,5 +1,5 @@
 ---
-name: agent-adapters
+name: adapters
 description: >
   Generates agent-specific configuration files from the unified ContextOS format.
   One internal system, multiple output formats for Claude, Gemini, Copilot, 
@@ -10,11 +10,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Unified cross-agent configuration engine. Translates single ContextOS source rules into optimized native formats for Claude Code (CLAUDE.md), Gemini (.agents/skills), Cursor (.cursorrules, .cursor/rules/*.mdc), GitHub Copilot, Zed, Aider, and Continue.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when configuring, synchronizing, or exporting agent rules and skills across multiple IDEs and AI programming assistants.
 
 ## Rules & Patterns
 

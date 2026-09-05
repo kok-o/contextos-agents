@@ -1,14 +1,16 @@
 # ContextOS — context-manager
 
+> >
+
 # context-manager
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Deterministic context window optimizer. Analyzes user task intent and queries project dependency graphs to inject minimal relevant files and skills, preventing LLM attention loss and context pollution.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during multi-file investigations, large refactorings, or complex tasks where dumping entire directory trees would blow past context budgets.
 
 ## Rules & Patterns
 
@@ -29,7 +31,7 @@ task:
 
 ### Step 2: Consult the Project Graph
 
-If `docs/PROJECT_GRAPH.md` exists:
+If `docs/PROJECT_GRAPH.md` or `.graphify/graph.json` exists (or activate `graphify` skill to extract AST dependencies):
 
 1. Find the module this task belongs to
 2. Get the module's dependencies
@@ -119,3 +121,31 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
+
+# context-manager Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Context Selection
+
+### Anti-pattern: Context Window Dumping
+
+```text
+Agent reads all 180 files in src/ into context to debug a single button click handler.
+Result: Exhausts 150k tokens, reaches rate limits, and forgets user instructions.
+```
+
+### Best practice: ContextOS Standard (Targeted AST Traversal)
+
+```text
+1. Inspect package.json and AGENTS.md.
+2. Grep for target symbol: grep_search for 'SubmitButton'.
+3. Read ONLY components/SubmitButton.tsx and its direct import types/button.ts.
+Total tokens used: <1,500 tokens. Fast, accurate, zero hallucinations.
+```
+
+# context-manager Troubleshooting & Common Mistakes
+
+## 1. Token Budget Blowout
+
+- **Symptom**: Model performance drops significantly, losing earlier conversational context.
+- **Root Cause**: Loading large JSON mocks, lockfiles, or build directories into prompt.
+- **Fix**: Never read package-lock.json, dist/, or build artifacts unless explicitly debugging bundle outputs.

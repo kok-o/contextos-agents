@@ -45,6 +45,7 @@ function printHelp() {
   console.log('  detect                          Auto-detect project tech stack');
   console.log('  audit                           Alias for validate (check skills)');
   console.log('  validate                        Validate skill sources, frontmatter, deps & sync');
+  console.log('  clean-worktrees                 Clean up lingering .swarm-worktrees and swarm/* branches');
   console.log('  install-skill <ref>             Alias for skill add (install a plugin)');
   console.log('  skill add   <ref>               Install a plugin skill (GitHub or npm)');
   console.log('  skill remove <name>             Uninstall a plugin skill');
@@ -304,6 +305,47 @@ if (command === 'export') {
     console.error('Valid subcommands: add, remove, list, search');
     process.exit(1);
   }
+
+// ── clean-worktrees ──────────────────────────────────────────────────────────
+} else if (command === 'clean-worktrees' || command === 'clean') {
+  const { execSync } = require('child_process');
+  const fs = require('fs');
+  const path = require('path');
+  const rootDir = path.resolve(__dirname, '..');
+  const wtDir = path.join(rootDir, '.swarm-worktrees');
+  
+  console.log('Cleaning up ContextOS swarm worktrees and branches...');
+  try {
+    execSync('git worktree prune', { cwd: rootDir, stdio: 'pipe' });
+  } catch {}
+
+  let branchCount = 0;
+  try {
+    const branches = execSync('git branch --list "swarm/*"', { cwd: rootDir, encoding: 'utf-8' });
+    const list = branches.split('\n').map(b => b.replace(/^[*+\s]+/, '').trim()).filter(Boolean);
+    for (const b of list) {
+      try {
+        execSync(`git branch -D "${b}"`, { cwd: rootDir, stdio: 'pipe' });
+        branchCount++;
+      } catch {}
+    }
+  } catch {}
+
+  let dirCount = 0;
+  if (fs.existsSync(wtDir)) {
+    try {
+      const entries = fs.readdirSync(wtDir);
+      for (const e of entries) {
+        const full = path.join(wtDir, e);
+        try {
+          fs.rmSync(full, { recursive: true, force: true });
+          dirCount++;
+        } catch {}
+      }
+    } catch {}
+  }
+
+  console.log(`✓ Cleaned up ${dirCount} worktree directory(ies) and ${branchCount} swarm branch(es).`);
 
 // ── unknown ───────────────────────────────────────────────────────────────────
 } else {

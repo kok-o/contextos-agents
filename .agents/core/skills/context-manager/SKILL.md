@@ -10,11 +10,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Deterministic context window optimizer. Analyzes user task intent and queries project dependency graphs to inject minimal relevant files and skills, preventing LLM attention loss and context pollution.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during multi-file investigations, large refactorings, or complex tasks where dumping entire directory trees would blow past context budgets.
 
 ## Rules & Patterns
 
@@ -35,7 +35,7 @@ task:
 
 ### Step 2: Consult the Project Graph
 
-If `docs/PROJECT_GRAPH.md` exists:
+If `docs/PROJECT_GRAPH.md` or `.graphify/graph.json` exists (or activate `graphify` skill to extract AST dependencies):
 
 1. Find the module this task belongs to
 2. Get the module's dependencies

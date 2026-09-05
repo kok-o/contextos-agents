@@ -69,7 +69,7 @@ node .agents/ctx.js export all
 
 - **AGENTS.md** — The core ruleset. Automatically routes skills by task type and technology detected in your codebase.
 
-### Skills (38 total)
+### Skills (39 total)
 
 | Category | Skill | What It Does |
 | ---------- | ------- | ------------- |
@@ -111,6 +111,7 @@ node .agents/ctx.js export all
 | Cross | `generators` | Automated PRD, Architecture, and Task generation |
 | Cross | `context-manager` | Smart context token selection and optimization |
 | Cross | `context-os` | ContextOS compiler meta-skill |
+| Cross | `graphify` | Codebase knowledge graph, Tree-sitter AST dependency mapping, and blast-radius analysis |
 
 ## Slash Command Workflows
 
@@ -135,18 +136,28 @@ The `.agents/ctx.js` file is the **Context Engine** — it resolves minimal skil
 To prevent context bloat, ContextOS dynamically resolves the exact 2–4 skills needed for any prompt or file:
 
 ```bash
-# Resolve skills for a task description:
+# Resolve skills for a task description (English):
 node .agents/ctx.js resolve "Build an accessible modal component with React and Tailwind"
 
 # Output:
 # [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer]
 # Skills loaded: ponytail-mindset, engineering-workflow, react, ui-ux-pro, web-accessibility
 
+# Multilingual support (Russian):
+node .agents/ctx.js resolve "создай модальное окно авторизации и напиши юнит-тесты"
+
+# Output:
+# [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer]
+# Skills loaded: ponytail-mindset, engineering-workflow, react, ui-ux-pro, security, testing
+
 # Resolve skills based on active files:
 node .agents/ctx.js resolve --files "app/api/auth/route.ts"
 
 # Generate/update progressive lightweight skills index:
 node .agents/ctx.js index
+
+# Clean up lingering .swarm-worktrees directories and orphaned swarm/* git branches:
+node .agents/ctx.js clean-worktrees
 ```
 
 ### Supported Agents & Compilation
@@ -185,19 +196,73 @@ npx koko-contextos-agents install-skill --from-repo kok-o/awesome-skill
 npx koko-contextos-agents audit
 ```
 
+## ContextOS MCP Server & Autonomous Multi-Agent Swarm
+
+ContextOS includes a standalone **Model Context Protocol (MCP)** execution server located in `contextos-mcp/` and bundled as `.agents/mcp/server.mjs`. It allows orchestrator agents (like Antigravity, Claude Code, or Cursor) to safely delegate coding tasks to parallel subagents running in isolated Git worktrees.
+
+### MCP Server Configuration
+
+Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "contextos": {
+      "command": "node",
+      "args": [
+        "./.agents/mcp/server.mjs",
+        "--dir",
+        "."
+      ]
+    }
+  }
+}
+```
+
+### Exposed MCP Tools
+
+| Tool | Purpose | Key Parameters |
+|---|---|---|
+| `contextos_delegate` | Spawns multiple AI agents in parallel in isolated git worktrees with automatic ContextOS skill injection | `task`, `agents` (model, provider, backend), `wait` (sync/async), `verify_command` (in-worktree test) |
+| `contextos_status` | Inspects thread progress, statuses, and diff summaries from memory and persistent disk journal | `dir`, `task_id`, `thread_id` |
+| `contextos_diff` | Captures unified git diff and changes for a specific thread | `thread_id`, `dir` |
+| `contextos_compare` | Compares multi-agent solutions side-by-side with token cost and execution duration metrics | `thread_ids`, `dir` |
+| `contextos_merge` | Merges completed thread branches back into the main working tree with conflict detection | `thread_id`, `dir`, `delete_branch` |
+| `contextos_cleanup` | Destroys worktrees, frees sessions, and purges orphaned branches and leftover directories | `dir`, `purge_orphans` |
+
+### Enterprise Architecture Guarantees
+
+- **Git Worktree Sandboxing:** Each subagent operates in a private git worktree (`.swarm-worktrees/`). The developer's active workspace cannot be corrupted by experimental changes or failing tests.
+- **Disk-Backed Session Persistence:** Active and completed threads are recorded in `.swarm-worktrees/session-state.json`. If the MCP process is restarted, tasks and diffs can be recovered without losing work.
+- **Automated In-Worktree Verification (`verify_command`):** Runs test commands (`npm test`, `cargo test`, `pytest`) inside the isolated worktree before marking tasks as successful.
+- **Context Token Compression:** The server extracts essential rules and sections (`extractEssentialSkillContent`), saving up to 65% in active prompt tokens.
+
 ## Testing
 
-Tests use the **Node.js built-in test runner** — zero extra dependencies.
+Tests use the **Node.js built-in test runner** for the core framework and **Vitest** for the MCP engine — zero external test bloat.
+
+### 1. Root Test Suite (111 tests)
 
 ```bash
 npm test
 ```
 
 ```text
-# tests 109
+# tests 111
 # suites 25
-# pass  109
+# pass  111
 # fail  0
+```
+
+### 2. MCP Server Test Suite (405 tests)
+
+```bash
+cd contextos-mcp && npm test
+```
+
+```text
+Test Files  21 passed (21)
+     Tests  405 passed (405)
 ```
 
 **Test coverage:**
@@ -208,8 +273,10 @@ npm test
 - `tests/profile.test.js` — profile resolution, stack auto-detection, and skill filtering
 - `tests/validate.test.js` — validator rules, dependency graph, and sync checks
 - `tests/plugins.test.js` — plugin lockfile, registry fetching, and security checks
-- `tests/resolver.test.js` — dynamic skill resolution, progressive index, and prompt matching
+- `tests/resolver.test.js` — dynamic skill resolution, progressive index, and bilingual prompt matching
 - `tests/benchmark.test.js` — benchmark scoring engine, static AST checks, and reporters
+- `contextos-mcp/tests/unit/session-persistence.test.ts` — session disk persistence, thread state tracking, and orphan purge
+- `contextos-mcp/tests/unit/contextos-tools.test.ts` — all 6 MCP tool handlers and validation
 
 ## Benchmark: With Skills vs. Without Skills
 

@@ -158,3 +158,64 @@ See `EXAMPLES.md` for detailed code examples and component templates.
 - Pairs with `react` and `ui-ux-pro` for component design and state management.
 - Pairs with `security` for session authorization and input sanitization.
 
+
+# nextjs Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Server Components vs Client Components
+
+### Anti-pattern: Marking the Entire Page as Client Component
+
+```tsx
+// BAD: app/dashboard/page.tsx with 'use client' at top
+// Bloats client bundle, loses SEO benefits, eliminates direct DB access
+'use client';
+
+export default function DashboardPage() {
+  const [data, setData] = useState(null);
+  useEffect(() => { fetch('/api/dashboard').then(...) }, []);
+  return <div>...</div>;
+}
+```
+
+### Best practice: ContextOS Standard (RSC by Default, Client Leaf Nodes)
+
+```tsx
+// GOOD: Server Component fetches data directly with zero bundle cost
+// app/dashboard/page.tsx (Server Component)
+import { Suspense } from 'react';
+import { db } from '@/lib/db';
+import { InteractiveChart } from './InteractiveChart'; // 'use client' leaf component
+
+export default async function DashboardPage() {
+  const stats = await db.analytics.getStats();
+  return (
+    <main>
+      <h1>Dashboard</h1>
+      <p>Total Revenue: {stats.revenue}</p>
+      <Suspense fallback={<ChartSkeleton />}>
+        <InteractiveChart initialData={stats.chartData} />
+      </Suspense>
+    </main>
+  );
+}
+```
+
+# nextjs Troubleshooting & Common Mistakes
+
+## 1. Hydration Mismatch Errors
+
+- **Symptom**: "Text content does not match server-rendered HTML".
+- **Root Cause**: Rendering dates, window dimensions, or local storage data that differs between server render and client hydration.
+- **Fix**: Use suppressHydrationWarning on localized timestamps or load client-only state inside a useEffect after mount.
+
+## 2. Accidental Server Code Bundled to Client
+
+- **Symptom**: "Module not found: Can't resolve 'fs' or 'pg' in client bundle".
+- **Root Cause**: Client component importing a utility that transitively imports server-only database code.
+- **Fix**: Separate server utilities into *.server.ts and install import 'server-only'; at the top of server files.
+
+## 3. Waterfall Fetches in Server Components
+
+- **Symptom**: Page takes 3 seconds to load due to sequential await statements.
+- **Root Cause**: Awaiting independent data sources one after another.
+- **Fix**: Use Promise.all([fetchUsers(), fetchProducts()]) or separate into nested <Suspense> boundaries.

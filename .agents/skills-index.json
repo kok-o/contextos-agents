@@ -67,6 +67,11 @@
       "path": ".agents/core/skills/generators/SKILL.md"
     },
     {
+      "name": "graphify",
+      "description": "Transforms entire codebases into structured knowledge graphs via Tree-sitter AST parsing.",
+      "path": ".agents/core/skills/graphify/SKILL.md"
+    },
+    {
       "name": "gstack-roles",
       "description": "Role-based AI specialist system. Defines 23 specialist roles and teaches the AI",
       "path": ".agents/core/skills/gstack-roles/SKILL.md"

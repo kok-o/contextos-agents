@@ -10,11 +10,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Hard QA design review checklist consisting of 50 deterministic rules covering typography (T1-T10), color systems (C1-C12), layout constraints (L1-L11), component contracts (K1-K11), and micro-animations (A1-A8).
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during the REVIEW phase of all frontend tasks as a strict visual and functional QA gate before marking UI work complete.
 
 ## Rules & Patterns
 

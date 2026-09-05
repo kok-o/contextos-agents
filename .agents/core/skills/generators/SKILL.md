@@ -10,11 +10,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Automated technical documentation generator. Transforms initial project ideas and specs into comprehensive PRDs, architecture schemas, API contracts, database ERDs, and roadmap task breakdowns.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during project kickoff (ctx init), new service scaffolding, or when generating baseline technical specs from high-level user requirements.
 
 ## Rules & Patterns
 

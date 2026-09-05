@@ -10,11 +10,11 @@ description: >
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Professional UI/UX design standard banning AI clichés (pure black #000000, purple-blue gradients, card-in-card nesting). Enforces Tailwind CSS v4 @theme, semantic HSL palettes, and refined micro-interactions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate during planning and implementation of modern web user interfaces, landing pages, SaaS dashboards, and consumer-facing web apps.
 
 ## Rules & Patterns
 

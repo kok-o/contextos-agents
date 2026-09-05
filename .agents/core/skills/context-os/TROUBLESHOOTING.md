@@ -1,3 +1,7 @@
-# Troubleshooting & Common Mistakes
+# context-os Troubleshooting & Common Mistakes
 
-Add common errors, anti-patterns, and debugging steps here.
+## 1. Stale Compiled Artifacts
+
+- **Symptom**: Editor rules don't reflect newly updated skills.
+- **Root Cause**: Modifying .agents/core/skills/ without recompiling exports.
+- **Fix**: Run node .agents/ctx.js export all whenever source skills are updated.

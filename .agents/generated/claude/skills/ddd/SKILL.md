@@ -2,11 +2,11 @@
 
 ## Overview
 
-A brief summary of what the skill does and its core philosophy.
+Domain-Driven Design standard for robust business software. Enforces separation between domain logic (Entities, Value Objects, Aggregates, Domain Events) and infrastructure frameworks, preventing leaky abstractions.
 
 ## When to Use
 
-Context for when this skill is applicable.
+Activate when designing core business domain models, transactional consistency boundaries, enterprise APIs, or complex aggregate hierarchies.
 
 ## Rules & Patterns
 <!-- Source: ddd.md -->
@@ -239,3 +239,67 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 ## Integration Notes
 
 How this skill interacts with other skills.
+
+
+# ddd Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Domain Entities vs Anemic Models
+
+### Anti-pattern: Anemic Domain Model with Leaky Setters
+
+```typescript
+// BAD: Zero business invariants; any caller can corrupt state
+class BankAccount {
+  public balance: number = 0;
+  public isFrozen: boolean = false;
+}
+
+// Logic leaked into controller or service
+account.balance -= 500; // Overdraft not checked!
+```
+
+### Best practice: ContextOS Standard (Rich Domain Model with Guarded Invariants)
+
+```typescript
+// GOOD: Invariants strictly enforced inside Aggregate Root
+class BankAccount {
+  private _balance: number;
+  private _isFrozen: boolean;
+
+  constructor(id: string, initialDeposit: Money) {
+    this._balance = initialDeposit.amount;
+    this._isFrozen = false;
+  }
+
+  public withdraw(amount: Money): void {
+    if (this._isFrozen) {
+      throw new AccountFrozenException('Cannot withdraw from a frozen account');
+    }
+    if (this._balance < amount.amount) {
+      throw new InsufficientFundsException('Insufficient funds for withdrawal');
+    }
+    this._balance -= amount.amount;
+    this.addDomainEvent(new MoneyWithdrawnEvent(this.id, amount));
+  }
+}
+```
+
+# ddd Troubleshooting & Common Mistakes
+
+## 1. God Aggregates
+
+- **Symptom**: Aggregate Root contains 20 child entities and loading it requires joining dozens of tables.
+- **Root Cause**: Treating ERD tables as aggregate boundaries rather than transactional consistency units.
+- **Fix**: Design small aggregates. Reference other aggregates by ID only, not by object reference.
+
+## 2. Leaking Infrastructure into Domain Layer
+
+- **Symptom**: Domain entities import Prisma, TypeORM decorators, or Express Request objects.
+- **Root Cause**: Inverting Clean Architecture boundaries.
+- **Fix**: The Domain layer must be pure TypeScript with zero external framework dependencies.
+
+## 3. Transaction Spanning Multiple Aggregates
+
+- **Symptom**: High database lock contention and deadlocks under concurrent transactions.
+- **Root Cause**: Modifying multiple aggregate roots within the same database transaction.
+- **Fix**: Rule of thumb: Exactly one Aggregate Root modified per transaction. Use Domain Events for eventual consistency across other aggregates.

@@ -3,11 +3,16 @@
 An execution layer for the [ContextOS](https://github.com/kok-o/koko-contextos-agents) framework. Exposes an MCP (Model Context Protocol) interface that allows orchestrating agents (like Antigravity) to spawn parallel coding agents in isolated Git worktrees.
 
 ## Features
-- **Selective Context Loading:** Dynamically reads rules and skills from your `.agents/` directory based on the task, compiling a tailored system prompt without blowing up the context window.
-- **Git Worktree Isolation:** Spawns agents in isolated `git worktree` environments. Agents cannot corrupt your main working tree.
+- **Selective & Multilingual Context Loading:** Dynamically reads rules and skills from your `.agents/` directory using bilingual (English & Russian) keyword triggers. Extracts essential sections (`extractEssentialSkillContent`), saving up to 65% in prompt tokens while auto-injecting project invariants from `AGENTS.md` and `GEMINI.md`.
+- **Git Worktree Isolation & Concurrency Safety:** Spawns agents in isolated `git worktree` environments (`.swarm-worktrees/`). Agents cannot corrupt your main working tree, and transient git lock contention (`.git/index.lock`) is mitigated with mutexes and retries.
+- **Disk-Backed Session Persistence & Recovery:** All thread lifecycles, states, and diffs are persisted to `.swarm-worktrees/session-state.json`. If the MCP server or IDE process restarts, background tasks and branches remain trackable and recoverable.
+- **Automated In-Worktree Proof-of-Work Verification:** Support for `verify_command` (e.g. `npm test`, `pytest`) executes test suites directly in the agent's worktree before marking tasks as successful.
+- **Non-Blocking Asynchronous Delegation:** Optional `wait: false` returns immediate task and thread IDs, preventing MCP client timeouts on long-running jobs and enabling polling via `contextos_status`.
+- **Deep Orphan Purging:** `contextos_cleanup` with `purge_orphans: true` automatically detects and deletes abandoned `swarm/*` branches and stale worktree directories.
+- **Multi-Engine Agent Backends:** Flexible choice of execution engines (`direct-llm`, `opencode`, `claude-code`, `codex`, `aider`).
 - **Security Boundary:** Built-in secret filtering blocks LLM agents from reading `.env` files, SSH keys, or escaping the worktree boundary.
-- **Dumb Merge:** The MCP server doesn't decide what code is best. It provides summaries, allows you to request full diffs, and executes `git merge` when instructed by the orchestrator.
-- **Direct API Agents:** Agents call OpenAI, Anthropic, or Gemini directly using `pi-ai`, without relying on unstable third-party CLI tools.
+- **Deterministic 3-Way Merge:** The MCP server computes structured diffs, identifies conflicts, and safely executes `git merge` only when instructed by the orchestrator.
+- **Direct API & Router Support:** Direct multi-provider integration with Anthropic, OpenAI, Google Gemini, OpenRouter, Groq, and Ollama via `pi-ai`.
 
 ---
 
