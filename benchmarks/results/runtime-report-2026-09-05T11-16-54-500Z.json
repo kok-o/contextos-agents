@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-09-05T11:16:54.499Z",
+  "provider": "openai",
+  "model": "deepseek-v4-flash",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 0,
+    "skillCompilationRate": 0,
+    "baselineAvgPassed": 0,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 5
+  },
+  "results": [
+    {
+      "taskId": "auth-security",
+      "title": "Secure Authentication & Rate Limiting Handler",
+      "category": "Security & Backend",
+      "skills": [
+        "security",
+        "node",
+        "ponytail-mindset"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected token 'async'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'async'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'async'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'async'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'async'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'async'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 4,
+        "code": "export interface AuthRequest {\n  id?: string;\n  username?: string;\n  tokenType?: 'access'|'refresh';\n  ip?: string;\n}\n\n// ────────────\n\nexport interface TokenPayload {\n  sub: string; // subject (user id)\n  username?: string;\n  type: 'access' | 'refresh';\n  iat: number;\n  exp: number;\n  jti?: string;\n  [k:string]: unknown;\n}\n\n// ────────────\n\nscrypt$N$r$p$salt_b64$hash_b64\n\n// ────────────\n\nexport interface AuthUser {\n  id: string;\n  username: string;\n  passwordHash: string;\n  email?: string;\n  createdAt: number;\n}\nexport interface UserRepository {\n  create(user: AuthUser): Promise<AuthUser>;\n  findByUsername(username: string): Promise<AuthUser | null>;\n  findById(id: string): Promise<AuthUser | null>;\n  delete(id: string): Promise<void>;\n}\n\n// ────────────\n\nexport interface StoredRefreshToken {\n  tokenId: string;\n  userId: string;\n  expiresAt: number;\n}\nexport interface RefreshTokenRepository {\n  save(tokenId: string, userId: string, expiresAt: number): Promise<void>;\n  find(tokenId: string): Promise<string | null>; // userId\n  delete(tokenId: string): Promise<void>;\n  deleteAllForUser(userId: string): Promise<void>;\n}\n\n// ────────────\n\nexport interface AuthEnvOptions {\n  accessTokenSecret: string;\n  refreshTokenSecret: string;\n  accessTokenTTL?: number; // seconds default 900\n  refreshTokenTTL?: number; // seconds default 604800\n  users: UserRepository;\n  refreshTokens: RefreshTokenRepository;\n  issuer?: string;\n  audience?: string;\n  passwordHashOptions?: { ... }\n}\n\n// ────────────\n\nexport interface RateLimitOptions {\n  windowMs: number;\n  max: number;\n  message?: string;\n  statusCode?: number;\n  store?: RateLimitStore;\n  keyGenerator?: (request: any) => string; // default IP\n  handler?: (req,res,next) => ??? // not needed.\n}\n\n// ────────────\n\nexport interface RateLimitResult {\n  success: boolean;\n  limit: number;\n  used: number;\n  remaining: number;\n  retryAfterMs: number;\n  resetAt: number;\n}\n\nclass RateLimiter {\n  constructor(options)\n  async consume(key: string): Promise<RateLimitResult>;\n  async get(key): Promise<RateLimitResult>;\n  async reset(key); \n}\n\n// ────────────\n\ninterface IRateLimitStore {\n  consume(key, limit, windowMs, now): Promise<RateLimitRecord>;\n}\n\n// ────────────\n\nexport interface RateLimitRecord {\n  limited: boolean;\n  limit: number;\n  used: number; // current successful requests in window (before/after)\n  remaining: number;\n  resetAt: number;\n}\n\n// ────────────\n\nexport interface HttpRequest {\n  ip?: string;\n  headers?: Record<string, string | string[] | undefined>;\n  url?: string;\n  method?: string;\n  body?: any;\n}\nexport interface HttpResponse {\n  statusCode?: number;\n  setHeader(name: string, value: string): void;\n  end(data?: any): void;\n  getHeader?: ...; \n}\n\n// ────────────\n\nexport interface AuthRequestData {\n  ip?: string | undefined;\n  headers: Map<string, string | string[] | undefined>;\n}\n\n// ────────────\n\nimport {\n  createHmac,\n  randomBytes,\n  randomUUID,\n  scrypt as scryptCallback,\n  timingSafeEqual,\n} from 'crypto';\nimport { promisify } from 'util';\n\n// ────────────\n\ninterface ScryptParams {\n  N?: number; r?: number; p?: number; keylen?: number;\n}\nconst DEFAULT_SCRYPT = {N: 16384, r: 8, p: 1, keylen: 64};\n\n// ────────────\n\nexport async function hashPassword(password: string, options?: Partial<ScryptParams>): Promise<string> {\n  const params = {...DEFAULT_SCRYPT, ...options};\n  const salt = randomBytes(16);\n  const derived = await scrypt(password, salt, params.keylen!, { N: params.N!, r: params.r!, p: params.p! });\n  const saltB64 = salt.toString('base64');\n  const hashB64 = derived.toString('base64');\n  return `scrypt:${params.N}:${params.r}:${params.p}:${saltB64}:${hashB64}`;\n}\n\n// ────────────\n\nexport async function verifyPassword(password: string, stored: string): Promise<boolean> {\n  const parts = stored.split(':');\n  if (parts.length !== 6 || parts[0] !== 'scrypt') return false;\n  const [, Nstr, rstr, pstr, saltB64, hashB64] = parts;\n  const params = {N: Number(Nstr), r: Number(rstr), p: Number(pstr)};\n  const salt = Buffer.from(saltB64, 'base64');\n  const expectedHash = Buffer.from(hashB64, 'base64');\n  if (!valid params) return false;\n  const derived = await scrypt(password, salt, expectedHash.length, {...});\n  const a = Buffer.alloc(derived.length);\n  const b = Buffer.alloc(expectedHash.length);\n  derived.copy(a); expectedHash.copy(b); // if length different, one bigger; need timingSafeEqual requires same length, but we can pad all to max length.\n\n// ────────────\n\nconst maxLen = Math.max(derived.length, expectedHash.length);\nconst a = Buffer.alloc(maxLen);\nconst b = Buffer.alloc(maxLen);\nderived.copy(a);\nexpectedHash.copy(b);\nreturn timingSafeEqual(a,b);\n\n// ────────────\n\ntype ScryptCallback = (password: string | Buffer, salt: Buffer, keylen: number, options: { N: number; r: number; p: number }, callback: (err: Error | null, derivedKey: Buffer) => void) => void;\nconst scryptAsync = promisify(scryptCallback);\n\n// ────────────\n\nexport interface TokenHeader { alg: 'HS256'; typ: 'JWT'; }\nexport interface TokenPayload {\n  iss?: string;\n  aud?: string;\n  sub: string;\n  type: 'access' | 'refresh';\n  iat: number;\n  exp: number;\n  jti?: string;\n  [key: string]: unknown; // but indexing with extra may conflict? Fine.\n}\n\n// ────────────\n\nexport interface AccessTokenPayload extends TokenPayload { type: 'access'; username?: string; scope?: string[]; }\nexport interface RefreshTokenPayload extends TokenPayload { type: 'refresh'; }\n\n// ────────────\n\nexport interface TokenOptions {\n  secret: string;\n  issuer?: string;\n  audience?: string;\n  clockToleranceSeconds?: number;\n}\nexport class TokenError extends Error { code: string }\nexport class TokenService {\n  constructor(private options: TokenOptions)\n  sign(payload: Omit<TokenPayload,'iat'|'exp'> & {expiresIn?: number}, expiresInSeconds: number): string\n  verify<T extends TokenPayload = TokenPayload>("
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Unexpected identifier 'as'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 1,
+        "code": "import {\n  randomBytes,\n  scrypt as _scrypt,\n  timingSafeEqual,\n  createHmac,\n  randomInt,\n} from 'node:crypto';\nimport { promisify } from 'node:util';\n\nconst scrypt = promisify(_scrypt) as (password: string, salt: Buffer, keylen: number) => Promise<Buffer>;\n\n// ────────────\n\nconst SCRYPT_KEYLEN = 64;\nexport async function hashPassword(password: string): Promise<string> {\n  if (!isValidPassword? maybe)\n  const salt = randomBytes(16);\n  const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN) as Buffer;\n  return `scrypt$${salt.toString('base64')}$${derivedKey.toString('base64')}`;\n}\nexport async function verifyPassword(password, stored): Promise<boolean> {\n  const parts = stored.split('$');\n  if (parts.length !==3 || parts[0] !== 'scrypt') return false;\n  const salt = Buffer.from(parts[1], 'base64');\n  const expected = Buffer.from(parts[2], 'base64');\n  const derived = await scrypt(password, salt, expected.length);\n  if (expected.length !== derived.length) return false;\n  return timingSafeEqual(expected, derived);\n}\n\n// ────────────\n\ninterface JwtHeader { alg: 'HS256'; typ: 'JWT' }\ninterface JwtPayload { sub: string; type: 'access'|'refresh'; iat: number; exp: number; jti?: string; sessionId?: string; [k:string]: unknown }\nfunction base64UrlEncode(data: Buffer|string): string\nfunction base64UrlDecode<T>(payload: string): T\nfunction signJwt(payload: Record<string, unknown>, secret: string, options: { expiresInSeconds: number; issuer?: string; audience?: string; jti?: string }): string\n\n// ────────────\n\nconst signature = signInput(header.payload, secret)\nconst expected = Buffer.from(signature)\nconst received = Buffer.from(signer part)\nif expected.length !== received.length return false\nconst ok = timingSafeEqual(expected, received)\n\n// ────────────\n\ninterface AuthConfig {\n  accessTokenSecret: string;\n  refreshTokenSecret: string;\n  accessTokenTtlSeconds?: number; // default 900\n  refreshTokenTtlSeconds?: number; // default 604800\n  issuer?: string;\n  audience?: string;\n  cookieSecure?: boolean;\n  cookieNameAccess?: string; etc.\n}\n\n// ────────────\n\nexport function getBearerToken(authorization?: string | null): string | null {\n if (!authorization) return null;\n const match = /^Bearer\\s+(.+)$/i.exec(authorization.trim());\n return match?.[1] ?? null;\n}\n\n// ────────────\n\nexport interface IncomingHeaders {\n authorization?: string;\n cookie?: string;\n [key: string]: string | string[] | undefined;\n}\nexport interface AuthenticatedRequest {\n  headers: IncomingHeaders;\n  user?: AuthenticatedUser;\n  tokenPayload?: JwtPayload;\n  ip?: string;\n}\n\n// ────────────\n\nexport interface NextFunction { (err?: unknown): void }\nexport interface ResponseLike {\n  status(code: number): this;\n  json(body: unknown): this;\n  setHeader(name: string, value: string): this;\n  end?(): ...\n}\ninterface RequestLike {\n  headers: { authorization?: string; cookie?: string; 'x-forwarded-for'?: string | string[]; ... };\n  ip?: string;\n  socket?: { remoteAddress?: string };\n}\n\n// ────────────\n\nexport interface RateLimitRecord {\n  count: number;\n  resetAt: number;\n}\nexport interface RateLimitStore {\n  increment(key: string, windowMs: number, limit: number): Promise<{ current: number; ok: boolean; retryAfterSeconds: number }>\n}\n\n// ────────────\n\ntype RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds: number; resetAt: number; limit:number };\ninterface RateLimitBackend {\n  incr(key: string, windowMs: number, limit: number): Promise<RateLimitResult>;\n}\n\n// ────────────\n\nclass MemoryRateLimitStore implements RateLimitStore {\n  private buckets = new Map<string, { count: number; resetAt: number }>();\n  constructor(private cleanupIntervalMs = 60000) { start interval; unref? }\n  async consume(key, limit, windowMs) {\n    const now = Date.now();\n    const bucket = this.buckets.get(key);\n    if (!bucket || now >= bucket.resetAt) {\n      if (bucket) this.buckets.delete(key);\n      this.buckets.set(key, { count:1, resetAt: now+windowMs});\n      return { allowed: true, remaining: limit-1, retryAfterMs:0, resetAt: now+windowMs, limit };\n    }\n    if (bucket.count >= limit) {\n      return { allowed:false, remaining:0, retryAfterMs: bucket.resetAt - now, resetAt: bucket.resetAt, limit };\n    }\n    bucket.count++;\n    return { allowed:true, remaining: limit-bucket.count, retryAfterMs:0, resetAt: bucket.resetAt, limit };\n  }\n}\n\n// ────────────\n\ntype RateLimitRule = { bucket: 'ip'|'user'|'global'; keyExpr?: ...; limit: number; windowMs: number };\nclass RateLimiter {\n  constructor(private store: RateLimitStore, private options: { keyPrefix?: string; onExceeded?: (key) => void }) {}\n  async check(identifier: string, limit, windowMs): Promise<RateLimitResult> { return store.consume(prefix, limit, windowMs) }\n}\n\n// ────────────\n\nconst rateLimiter = new RateLimiter(new MemoryRateLimitStore());\nexport async function enforceRateLimit(identifier, limit, windowMs) { ...}\n\n// ────────────\n\nexport interface SecureEndpointContext {\n  request: HttpRequest;\n  user: AuthenticatedUser | null;\n  rateLimit: RateLimitResult | null;\n}\nexport async function handleSecureRequest<T>({ request, authService, rateLimiter, handler, options }) { ... }\n\n// ────────────\n\nexport function securityHeaders(req,res,next) { \n res.setHeader('Content-Security-Policy', \"default-src 'self'\");\n ...\n next();\n}\n\n// ────────────\n\nexport class HttpError extends Error"
+      },
+      "delta": 0
+    }
+  ]
+}

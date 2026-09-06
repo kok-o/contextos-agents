@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-09-05T12:36:32.979Z",
+  "provider": "openai",
+  "model": "claude-opus-5",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 0,
+    "skillCompilationRate": 0,
+    "baselineAvgPassed": 0,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 5
+  },
+  "results": [
+    {
+      "taskId": "auth-security",
+      "title": "Secure Authentication & Rate Limiting Handler",
+      "category": "Security & Backend",
+      "skills": [
+        "security",
+        "node",
+        "ponytail-mindset"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected token 'export'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 64,
+        "code": "/**\n * Secure Authentication & Rate Limiting Handler\n * ---------------------------------------------\n * Self-contained, dependency-free (Node.js `crypto` only) production implementation of:\n *   - Password hashing / verification (scrypt with per-password random salt, constant-time compare)\n *   - JWT (HS256/HS384/HS512) creation & verification with base64url encoding\n *   - Login handler with:\n *       * strict input validation & normalization\n *       * per-IP and per-account sliding-window rate limiting\n *       * exponential-backoff account lockout on repeated failures\n *       * timing-attack resistance (dummy hash verification for unknown users)\n *       * uniform error responses that never leak account existence\n *       * refresh tokens, audit logging and security headers\n *\n * Zero external runtime dependencies. Works on Node.js >= 14.\n */\n\nimport {\n  randomBytes,\n  randomUUID,\n  scrypt as _scrypt,\n  timingSafeEqual,\n  createHmac,\n  createHash,\n} from 'crypto';\n\n/* ============================================================================\n * Public types\n * ==========================================================================*/\n\nexport interface TokenPayload {\n  id: string;\n  email: string;\n  role?: string;\n}\n\nexport interface JwtClaims extends TokenPayload {\n  sub: string;\n  iat: number;\n  exp: number;\n  nbf: number;\n  jti: string;\n  iss?: string;\n  aud?: string;\n  typ?: 'access' | 'refresh';\n  [key: string]: unknown;\n}\n\nexport interface LoginRequest {\n  email?: string;\n  password?: string;\n  ip?: string;\n  userAgent?: string;\n  totp?: string;\n}\n\nexport interface HttpResponse<T = any> {\n  status: number;\n  body: T;\n  headers?: Record<string, string>;\n}\n\nexport interface UserRecord {\n  id: string;\n  email: string;\n  passwordHash: string;\n  role?: string;\n  disabled?: boolean;\n  emailVerified?: boolean;\n  mfaSecret?: string | null;\n  createdAt?: number;\n  updatedAt?: number;\n  failedLoginCount?: number;\n  lastLoginAt?: number | null;\n  [key: string]: unknown;\n}\n\nexport interface UserStore {\n  findByEmail(email: string): Promise<UserRecord | null> | UserRecord | null;\n  updateUser?(\n    id: string,\n    patch: Partial<UserRecord>\n  ): Promise<void> | void;\n}\n\nexport interface RateLimitDecision {\n  allowed: boolean;\n  remaining: number;\n  limit: number;\n  retryAfterMs: number;\n  resetAtMs: number;\n}\n\nexport interface RateLimitRule {\n  /** Maximum number of hits permitted within the window. */\n  limit: number;\n  /** Sliding window length in milliseconds. */\n  windowMs: number;\n}\n\nexport interface LockoutPolicy {\n  /** Consecutive failures before the first lockout kicks in. */\n  threshold: number;\n  /** Base lock duration (ms) applied at the threshold. */\n  baseDurationMs: number;\n  /** Multiplier applied per extra failure beyond the threshold. */\n  factor: number;\n  /** Hard ceiling for a single lock duration (ms). */\n  maxDurationMs: number;\n  /** Failure counters older than this (ms) are forgotten. */\n  failureTtlMs: number;\n}\n\nexport interface PasswordPolicy {\n  minLength: number;\n  maxLength: number;\n  requireUppercase: boolean;\n  requireLowercase: boolean;\n  requireDigit: boolean;\n  requireSymbol: boolean;\n  /** Lower-cased list of forbidden / breached passwords. */\n  blocklist: string[];\n}\n\nexport type JwtAlgorithm = 'HS256' | 'HS384' | 'HS512';\n\nexport interface AuthServiceOptions {\n  users?: UserRecord[] | UserStore;\n  jwtSecret?: string;\n  refreshSecret?: string;\n  issuer?: string;\n  audience?: string;\n  algorithm?: JwtAlgorithm;\n  accessTokenTtlSec?: number;\n  refreshTokenTtlSec?: number;\n  clockToleranceSec?: number;\n  ipRateLimit?: Partial<RateLimitRule>;\n  accountRateLimit?: Partial<RateLimitRule>;\n  globalRateLimit?: Partial<RateLimitRule>;\n  lockout?: Partial<LockoutPolicy>;\n  passwordPolicy?: Partial<PasswordPolicy>;\n  scrypt?: Partial<ScryptParams>;\n  /** Injectable clock for deterministic testing. */\n  now?: () => number;\n  /** Injectable audit sink. */\n  logger?: (entry: AuditEntry) => void;\n  /** Minimum wall-clock duration (ms) of a login attempt (anti-enumeration). */\n  minResponseMs?: number;\n  /** Trust `X-Forwarded-For`-derived IPs verbatim. */\n  trustProxy?: boolean;\n  /** Require `emailVerified === true` to log in. */\n  requireVerifiedEmail?: boolean;\n}\n\nexport interface ScryptParams {\n  /** CPU/memory cost (must be a power of two). */\n  N: number;\n  /** Block size. */\n  r: number;\n  /** Parallelization. */\n  p: number;\n  /** Derived key length in bytes. */\n  keyLength: number;\n  /** Salt length in bytes. */\n  saltLength: number;\n  /** scrypt maxmem, must exceed 128 * N * r. */\n  maxmem: number;\n}\n\nexport interface AuditEntry {\n  event:\n    | 'login_success'\n    | 'login_failure'\n    | 'login_invalid_input'\n    | 'rate_limited'\n    | 'account_locked'\n    | 'account_disabled'\n    | 'email_unverified'\n    | 'mfa_required'\n    | 'mfa_failed'\n    | 'token_issued'\n    | 'token_rejected'\n    | 'password_hashed'\n    | 'error';\n  at: number;\n  ip?: string;\n  emailHash?: string;\n  userId?: string;\n  reason?: string;\n  meta?: Record<string, unknown>;\n}\n\nexport interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(\n    payload: { id: string; email: string; role?: string },\n    secret: string\n  ): Promise<string>;\n  handleLogin(request: {\n    email?: string;\n    password?: string;\n    ip?: string;\n  }): Promise<{ status: number; body: any }>;\n}\n\n/* ============================================================================\n * Errors\n * ==========================================================================*/\n\nexport class AuthError extends Error {\n  readonly status: number;\n  readonly code: string;\n  readonly details?: unknown;\n\n  constructor(code: string, message: string, status = 400, details?: unknown) {\n    super(message);\n    this.name = 'AuthError';\n    this.code = code;\n    this.status = status;\n    this.details = details;\n    Object.setPrototypeOf(this, AuthError.prototype);\n  }\n}\n\nexport class ValidationError extends AuthError {\n  constructor(message: string, details?: unknown) {\n    super('VALIDATION_ERROR', message, 400, details);\n    this.name = 'ValidationError';\n  }\n}\n\nexport class RateLimitError extends AuthError {\n  readonly retryAfterMs: number;\n  constructor(message: string, retryAfterMs: number) {\n    super('RATE_LIMITED', message, 429, { retryAfterMs });\n    this.name = 'RateLimitError';\n    this.retryAfterMs = retryAfterMs;\n  }\n}\n\nexport class TokenError extends AuthError {\n  constructor(message: string, code = 'INVALID_TOKEN') {\n    super(code, message, 401);\n    this.name = 'TokenError';\n  }\n}\n\n/* ============================================================================\n * Small utilities\n * ==========================================================================*/\n\nconst scryptAsync = (\n  password: string | Buffer,\n  salt: Buffer,\n  keylen: number,\n  options: { N: number; r: number; p: number; maxmem: number }\n): Promise<Buffer> =>\n  new Promise((resolve, reject) => {\n    _scrypt(password, salt, keylen, options, (err, derived) => {\n      if (err) reject(err);\n      else resolve(derived as Buffer);\n    });\n  });\n\nexport function base64UrlEncode(input: Buffer | string): string {\n  const buf = typeof input === 'string' ? Buffer.from(input, 'utf8') : input;\n  return buf\n    .toString('base64')\n    .replace(/\\+/g, '-')\n    .replace(/\\//g, '_')\n    .replace(/=+$/g, '');\n}\n\nexport function base64UrlDecode(input: string): Buffer {\n  if (typeof input !== 'string' || !/^[A-Za-z0-9_-]*$/.test(input)) {\n    throw new TokenError('Malformed base64url segment', 'MALFORMED_TOKEN');\n  }\n  const pad = input.length % 4 === 0 ? '' : '='.repeat(4 - (input.length % 4));\n  return Buffer.from(input.replace(/-/g, '+').replace(/_/g, '/') + pad, 'base64');\n}\n\n/** Constant-time string/Buffer comparison that never throws on length mismatch. */\nexport function safeEqual(a: string | Buffer, b: string | Buffer): boolean {\n  const ba = Buffer.isBuffer(a) ? a : Buffer.from(String(a), 'utf8');\n  const bb = Buffer.isBuffer(b) ? b : Buffer.from(String(b), 'utf8');\n  // Hash both to a fixed length so length differences do not leak via timing.\n  const ha = createHash('sha256').update(ba).digest();\n  const hb = createHash('sha256').update(bb).digest();\n  return timingSafeEqual(ha, hb) && ba.length === bb.length;\n}\n\nconst EMAIL_RE =\n  /^(?=.{3,254}$)[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$/;\n\nexport function isValidEmail(email: unknown): email is string {\n  return typeof email === 'string' && EMAIL_RE.test(email.trim());\n}\n\n/** Normalizes an email for lookup: trims, lowercases domain + local part. */\nexport function normalizeEmail(email: string): string {\n  const trimmed = email.trim();\n  const at = trimmed.lastIndexOf('@');\n  if (at < 0) return trimmed.toLowerCase();\n  const local = trimmed.slice(0, at);\n  const domain = trimmed.slice(at + 1).toLowerCase();\n  return `${local.toLowerCase()}@${domain}`;\n}\n\n/** Removes ASCII control characters & zero-width chars that can be used to smuggle payloads. */\nexport function sanitizeString(value: string): string {\n  // eslint-disable-next-line no-control-regex\n  return value.replace(/[\\u0000-\\u001F\\u007F\\u200B-\\u200D\\uFEFF]/g, '');\n}\n\nconst IPV4_RE =\n  /^(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)){3}$/;\n\nexport function isValidIp(ip: unknown): ip is string {\n  if (typeof ip !== 'string') return false;\n  const v = ip.trim();"
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Unexpected token 'export'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 6,
+        "code": "/**\n * Secure Authentication & Rate Limiting Handler\n *\n * Self-contained production module implementing:\n *  - scrypt password hashing (Node built-in crypto, no external deps) with\n *    timing-safe verification\n *  - HS256 JWT minting with short-lived access tokens (15 min)\n *  - Brute-force protection: per-IP and per-account sliding-window rate limits\n *    plus progressive lockout\n *  - Zero user enumeration: uniform generic errors + dummy hash verification\n *    so response timing does not leak account existence\n *  - Structured JSON logging with correlation IDs and secret masking\n *  - httpOnly / Secure / SameSite=Strict cookie directives for tokens\n *\n * Dependency injection is used for the user repository, rate-limit store, clock\n * and logger so the service scales across multiple process instances (inject a\n * Redis-backed store in production).\n */\n\nimport crypto from 'node:crypto';\n\n/* -------------------------------------------------------------------------- */\n/* Public contract                                                            */\n/* -------------------------------------------------------------------------- */\n\nexport interface TokenPayload {\n  id: string;\n  email: string;\n  role?: string;\n}\n\nexport interface LoginRequest {\n  email?: string;\n  password?: string;\n  ip?: string;\n}\n\nexport interface LoginResponse {\n  status: number;\n  body: any;\n  headers?: Record<string, string>;\n  cookies?: string[];\n}\n\nexport interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: TokenPayload, secret: string): Promise<string>;\n  handleLogin(request: LoginRequest): Promise<{ status: number; body: any }>;\n}\n\n/* -------------------------------------------------------------------------- */\n/* Errors                                                                     */\n/* -------------------------------------------------------------------------- */\n\nexport class AppError extends Error {\n  constructor(\n    message: string,\n    public readonly statusCode: number = 500,\n    public readonly code: string = 'INTERNAL_SERVER_ERROR',\n  ) {\n    super(message);\n    this.name = 'AppError';\n    Error.captureStackTrace?.(this, AppError);\n  }\n}\n\nexport class ValidationError extends AppError {\n  constructor(message: string) {\n    super(message, 400, 'VALIDATION_ERROR');\n    this.name = 'ValidationError';\n  }\n}\n\n/* -------------------------------------------------------------------------- */\n/* Ports (dependency injection)                                               */\n/* -------------------------------------------------------------------------- */\n\nexport interface AuthUserRecord {\n  id: string;\n  email: string;\n  passwordHash: string;\n  role?: string;\n  isActive?: boolean;\n}\n\nexport interface UserRepository {\n  /** MUST perform a case-insensitive lookup on the normalized email. */\n  findByEmail(email: string): Promise<AuthUserRecord | null>;\n}\n\n/**\n * Sliding-window counter store. Implement with Redis in production:\n *   INCR key + EXPIRE key windowMs (atomic via MULTI or Lua).\n */\nexport interface RateLimitStore {\n  /** Increments the counter for `key` and returns the new count + reset epoch ms. */\n  increment(key: string, windowMs: number): Promise<{ count: number; resetAt: number }>;\n  /** Current counter state without mutating it. */\n  peek(key: string): Promise<{ count: number; resetAt: number } | null>;\n  /** Drops the counter (called after a successful login). */\n  reset(key: string): Promise<void>;\n}\n\nexport interface Logger {\n  info(message: string, meta?: Record<string, unknown>): void;\n  warn(message: string, meta?: Record<string, unknown>): void;\n  error(message: string, meta?: Record<string, unknown>): void;\n}\n\nexport interface AuthServiceOptions {\n  users: UserRepository;\n  store?: RateLimitStore;\n  logger?: Logger;\n  now?: () => number;\n  /** JWT signing secret. Falls back to process.env.JWT_SECRET. */\n  jwtSecret?: string;\n  jwtIssuer?: string;\n  jwtAudience?: string;\n  /** Access token TTL in seconds (default 900 = 15 min). */\n  accessTokenTtlSeconds?: number;\n  /** Max attempts per IP within the window (default 20). */\n  ipMaxAttempts?: number;\n  /** Max attempts per account within the window (default 5). */\n  accountMaxAttempts?: number;\n  /** Sliding window length in ms (default 15 min). */\n  windowMs?: number;\n  /** Lockout duration in ms once the account limit is exceeded (default 15 min). */\n  lockoutMs?: number;\n  /** scrypt cost parameter N (default 2^15 = 32768). */\n  scryptCost?: number;\n}\n\n/* -------------------------------------------------------------------------- */\n/* Constants                                                                  */\n/* -------------------------------------------------------------------------- */\n\nconst SCRYPT_KEYLEN = 64;\nconst SCRYPT_SALT_BYTES = 16;\nconst SCRYPT_BLOCK_SIZE = 8;\nconst SCRYPT_PARALLELIZATION = 1;\nconst DEFAULT_SCRYPT_COST = 32768; // 2^15 — OWASP-recommended minimum for scrypt\nconst HASH_PREFIX = 'scrypt';\n\nconst MIN_PASSWORD_LENGTH = 12;\nconst MAX_PASSWORD_LENGTH = 200; // bound work factor -> DoS protection\nconst MAX_EMAIL_LENGTH = 254; // RFC 5321\nconst EMAIL_PATTERN = /^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$/;\n\nconst DEFAULT_WINDOW_MS = 15 * 60 * 1000;\nconst DEFAULT_LOCKOUT_MS = 15 * 60 * 1000;\nconst DEFAULT_IP_MAX = 20;\nconst DEFAULT_ACCOUNT_MAX = 5;\nconst DEFAULT_ACCESS_TTL_SECONDS = 900;\n\n/** OWASP-aligned production response headers. */\nexport const SECURITY_HEADERS: Readonly<Record<string, string>> = Object.freeze({\n  'Content-Security-Policy': \"default-src 'self'\",\n  'X-Content-Type-Options': 'nosniff',\n  'X-Frame-Options': 'DENY',\n  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',\n  'Referrer-Policy': 'strict-origin-when-cross-origin',\n  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',\n  'Cache-Control': 'no-store',\n  Pragma: 'no-cache',\n});\n\n/**\n * Pre-computed scrypt hash of an unguessable random value. Verified whenever the\n * account does not exist so that the CPU cost — and therefore the response\n * latency — is identical for existing and non-existing accounts.\n */\nconst DUMMY_HASH = buildDummyHash();\n\n/* -------------------------------------------------------------------------- */\n/* Internal helpers                                                           */\n/* -------------------------------------------------------------------------- */\n\nfunction buildDummyHash(): string {\n  // Low cost on purpose: this constant is generated at module load (startup),\n  // never used for authentication, and only exists to keep the code path warm.\n  const salt = crypto.randomBytes(SCRYPT_SALT_BYTES);\n  const derived = crypto.scryptSync(crypto.randomBytes(32), salt, SCRYPT_KEYLEN, {\n    N: 16384,\n    r: SCRYPT_BLOCK_SIZE,\n    p: SCRYPT_PARALLELIZATION,\n    maxmem: 256 * 1024 * 1024,\n  });\n  return [\n    HASH_PREFIX,\n    String(DEFAULT_SCRYPT_COST),\n    String(SCRYPT_BLOCK_SIZE),\n    String(SCRYPT_PARALLELIZATION),\n    salt.toString('base64url'),\n    derived.toString('base64url'),\n  ].join('$');\n}\n\nfunction scryptAsync(\n  password: Buffer,\n  salt: Buffer,\n  keylen: number,\n  params: crypto.ScryptOptions,\n): Promise<Buffer> {\n  return new Promise((resolve, reject) => {\n    crypto.scrypt(password, salt, keylen, params, (err, derived) => {\n      if (err) reject(new AppError('Key derivation failed', 500, 'INTERNAL_SERVER_ERROR'));\n      else resolve(derived);\n    });\n  });\n}\n\nfunction base64UrlJson(value: unknown): string {\n  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');\n}\n\nfunction timingSafeCompare(a: Buffer, b: Buffer): boolean {\n  // Length is compared first because timingSafeEqual throws on mismatch. Hash\n  // lengths are not secret, so this leaks nothing exploitable.\n  if (a.length !== b.length) return false;\n  return crypto.timingSafeEqual(a, b);\n}\n\nfunction normalizeEmail(email: string): string {\n  return email.trim().toLowerCase();\n}\n\n/** Redacts credentials/secrets before anything reaches the log transport. */\nexport function maskSecrets(value: string): string {\n  return value\n    .replace(/(sk-[A-Za-z0-9_-]{4})[A-Za-z0-9_-]+/g, '$1***')\n    .replace(/(Bearer\\s+)[A-Za-z0-9._~+/-]+=*/gi, '$1***')\n    .replace(/\\beyJ[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+/g, 'eyJ***.***.***')\n    .replace(/(\"?(?:password|passwd|secret|token|authorization)\"?\\s*[:=]\\s*)\"?[^\",\\s}]+\"?/gi, '$1\"***\"');\n}\n\nclass JsonLogger implements Logger {\n  private write(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {\n    const line = maskSecrets(\n      JSON.stringify({\n        level,\n        time: new Date().toISOString(),\n        service: 'auth',\n        message,\n        ...(meta ?? {}),\n      }),\n    );\n    if (level === 'error') process.stderr.write(`${line}\\n`);\n    else process.stdout.write(`${line}\\n`);\n  }\n\n  info(message: string, meta?: Record<string, unknown>): void {\n    this.write('info', message, meta);\n  }\n  warn(message: string, meta?: Record<string, unknown>): void {\n    this.write('warn', message, meta);\n  }\n  error(message: string, meta?: Record<string, unknown>): void {\n    this.write('error', message, meta);\n  }\n}\n\n/**\n * Process-local sliding-window store. Suitable for single-instance deployments,\n * tests and local development only — inject a Redis-backed store for\n * horizontally scaled production traffic.\n */\nexport class MemoryRateLimitStore implements RateLimitStore {\n  private readonly buckets = new Map<string, { count: number; resetAt: number }>();\n\n  constructor(private readonly now: () => number = Date.now) {}\n\n  async increment(key: string, windowMs: number): Promise<{ count: number; resetAt: number }> {\n    const ts = this.now();\n    this.sweep(ts);\n    const existing = this.buckets.get(key);\n    if (!existing || existing.resetAt <= ts) {\n      const fresh = { count: 1, resetAt: ts + windowM"
+      },
+      "delta": 0
+    }
+  ]
+}

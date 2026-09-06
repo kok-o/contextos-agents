@@ -14,6 +14,7 @@ const flags = {
   force:       args.includes('--force'),
   skipCompile: args.includes('--skip-compile'),
   auto:        args.includes('--auto'),
+  withMcp:     args.includes('--with-mcp') || args.includes('--mcp'),
   profile:     (() => {
     const i = args.indexOf('--profile');
     return i !== -1 ? args[i + 1] : null;
@@ -26,17 +27,17 @@ const flags = {
 
 // ── Help / Version ────────────────────────────────────────────────────────────
 if (flags.ver) {
-  console.log(`koko-contextos-agents v${version}`);
+  console.log(`contextos-agents v${version}`);
   process.exit(0);
 }
 
 if (flags.help) {
   console.log(`
-koko-contextos-agents v${version}
+contextos-agents v${version}
 Install AI assistant skills and rules into your project.
 
 Usage:
-  npx koko-contextos-agents [options]
+  npx contextos-agents [options]
 
 Options:
   --help, -h          Show this help message
@@ -45,6 +46,7 @@ Options:
   --force             Overwrite an existing .agents/ folder
   --profile <name>    Install a specific profile (mvp, startup, enterprise, frontend, backend)
   --auto              Auto-detect tech stack and apply recommended profile
+  --with-mcp, --mcp   Install with MCP execution server enabled (.agents/mcp/ & mcp_config.json)
   --skip-compile      Skip running ctx.js export after installation
   --add-skill <ref>   Install a community plugin skill after setup
 
@@ -52,6 +54,7 @@ Commands:
   audit               Validate local skills (alias for validate)
   detect              Analyze project and display detected tech stack
   install-skill       Interactive skill installer (or pass <ref> / --from-repo)
+  setup-mcp           Add MCP execution server to an existing .agents/ project
 
 Profiles:
   mvp                 Fastest shipping, minimalist monolith, excludes microservices & DDD
@@ -69,11 +72,11 @@ Plugin ref formats:
   @scope/npm-package               A scoped npm skill package
 
 Examples:
-  npx koko-contextos-agents                          Install .agents/ into current project
-  npx koko-contextos-agents --profile mvp            Install with MVP profile
-  npx koko-contextos-agents --auto                   Auto-detect tech stack and configure
-  npx koko-contextos-agents --dry-run                Preview files that would be copied
-  npx koko-contextos-agents --add-skill alice/my-skill
+  npx contextos-agents                          Install .agents/ into current project
+  npx contextos-agents --profile mvp            Install with MVP profile
+  npx contextos-agents --auto                   Auto-detect tech stack and configure
+  npx contextos-agents --dry-run                Preview files that would be copied
+  npx contextos-agents --add-skill alice/my-skill
 
 Export skills to your AI tool:
   node .agents/ctx.js export gemini    → .agents/generated/gemini/   (Gemini / Antigravity)
@@ -151,7 +154,7 @@ if (mainCommand === 'install-skill') {
         console.log('Fetching community skills from registry...');
         
         const fetchRegistry = () => new Promise((resolve, reject) => {
-          https.get('https://raw.githubusercontent.com/kok-o/koko-contextos-agents/main/registry.json', (res) => {
+          https.get('https://raw.githubusercontent.com/kok-o/contextos-agents/main/registry.json', (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => resolve(JSON.parse(data)));
@@ -195,6 +198,47 @@ if (mainCommand === 'install-skill') {
       }
     })();
   }
+} else if (mainCommand === 'setup-mcp') {
+  const targetPath = path.join(process.cwd(), '.agents');
+  if (!fs.existsSync(targetPath)) {
+    console.error('[ERROR] .agents/ folder not found in current directory.');
+    console.error('        Run `npx contextos-agents` first or `npx contextos-agents --with-mcp`.');
+    process.exit(1);
+  }
+
+  const sourceMcp = path.join(__dirname, '..', '.agents', 'mcp');
+  const targetMcp = path.join(targetPath, 'mcp');
+  if (!fs.existsSync(sourceMcp)) {
+    console.error('[ERROR] Source MCP server bundle not found in package.');
+    process.exit(1);
+  }
+
+  try {
+    fs.cpSync(sourceMcp, targetMcp, { recursive: true, force: true });
+    console.log('[OK] Installed ContextOS MCP execution server into .agents/mcp/');
+
+    const mcpConfigPath = path.join(targetPath, 'mcp_config.json');
+    if (!fs.existsSync(mcpConfigPath) || flags.force) {
+      const defaultMcpConfig = {
+        mcpServers: {
+          "contextos": {
+            command: "node",
+            args: ["./.agents/mcp/server.mjs", "--dir", "."]
+          }
+        }
+      };
+      fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
+      console.log('[OK] Created MCP configuration (.agents/mcp_config.json)');
+    } else {
+      console.log('[INFO] Existing .agents/mcp_config.json retained.');
+    }
+    console.log('\n[SUCCESS] ContextOS MCP execution layer is configured.');
+    console.log('You can now use parallel subagents and git worktrees in your MCP-compatible IDE.\n');
+  } catch (err) {
+    console.error('[ERROR] Failed to configure MCP:', err.message);
+    process.exit(1);
+  }
+  process.exit(0);
 } else {
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
@@ -213,13 +257,25 @@ function uniqueSiblingPath(basePath, suffix) {
 /**
  * Copy into a staging directory then replace the target with rollback.
  */
-function installAtomically(source, target) {
+function installAtomically(source, target, options = {}) {
   const stagingPath = uniqueSiblingPath(target, 'staging');
   const backupPath = uniqueSiblingPath(target, 'backup');
   let movedExisting = false;
 
   try {
-    fs.cpSync(source, stagingPath, { recursive: true, force: true });
+    fs.cpSync(source, stagingPath, {
+      recursive: true,
+      force: true,
+      filter: (src) => {
+        if (!options.withMcp) {
+          const rel = path.relative(source, src);
+          if (rel === 'mcp' || rel.startsWith('mcp' + path.sep) || rel === 'mcp_config.json') {
+            return false;
+          }
+        }
+        return true;
+      },
+    });
     if (fs.existsSync(target)) {
       fs.renameSync(target, backupPath);
       movedExisting = true;
@@ -254,7 +310,14 @@ if (flags.dryRun) {
   const countFiles = (dir) => {
     let count = 0;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      count += entry.isDirectory() ? countFiles(path.join(dir, entry.name)) : 1;
+      const full = path.join(dir, entry.name);
+      if (!flags.withMcp) {
+        const rel = path.relative(sourcePath, full);
+        if (rel === 'mcp' || rel.startsWith('mcp' + path.sep) || rel === 'mcp_config.json') {
+          continue;
+        }
+      }
+      count += entry.isDirectory() ? countFiles(full) : 1;
     }
     return count;
   };
@@ -292,26 +355,28 @@ try {
     process.exit(1);
   }
 
-  installAtomically(sourcePath, targetPath);
+  installAtomically(sourcePath, targetPath, { withMcp: flags.withMcp });
 
   console.log('[OK] .agents/ successfully installed in your project!');
   if (stackDetection.detected.length > 0) {
     console.log(`[OK] Detected project stack: ${stackDetection.detected.join(', ')}`);
   }
 
-  // ── Create mcp_config.json ───────────────────────────────────────────────────
-  const mcpConfigPath = path.join(targetPath, 'mcp_config.json');
-  if (!fs.existsSync(mcpConfigPath)) {
-    const defaultMcpConfig = {
-      mcpServers: {
-        "contextos": {
-          command: "node",
-          args: ["./.agents/mcp/server.mjs", "--dir", "."]
+  // ── Create mcp_config.json only if --with-mcp ────────────────────────────────
+  if (flags.withMcp) {
+    const mcpConfigPath = path.join(targetPath, 'mcp_config.json');
+    if (!fs.existsSync(mcpConfigPath)) {
+      const defaultMcpConfig = {
+        mcpServers: {
+          "contextos": {
+            command: "node",
+            args: ["./.agents/mcp/server.mjs", "--dir", "."]
+          }
         }
-      }
-    };
-    fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
-    console.log('[OK] Created default MCP configuration (.agents/mcp_config.json)');
+      };
+      fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
+      console.log('[OK] Created default MCP configuration (.agents/mcp_config.json)');
+    }
   }
 
   // ── Apply profile if requested or auto ──────────────────────────────────────
@@ -360,7 +425,12 @@ try {
   console.log('       node .agents/ctx.js export aider    → .aider.conf.yml + CONVENTIONS.md');
   console.log('  6. Add community skills (plugins):');
   console.log('       node .agents/ctx.js skill add   username/my-skill');
-  console.log('       node .agents/ctx.js skill list\n');
+  console.log('       node .agents/ctx.js skill list');
+  if (!flags.withMcp) {
+    console.log('  7. Enable MCP parallel subagents & worktrees (optional):');
+    console.log('       npx contextos-agents setup-mcp');
+  }
+  console.log('');
 
   // ── --add-skill flag ────────────────────────────────────────────────────────
   if (flags.addSkill) {

@@ -1,0 +1,107 @@
+{
+  "timestamp": "2026-09-05T11:10:27.922Z",
+  "provider": "openai",
+  "model": "deepseek-v4-flash",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 0,
+    "skillCompilationRate": 0,
+    "baselineAvgPassed": 0,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 4
+  },
+  "results": [
+    {
+      "taskId": "ddd-order-invariants",
+      "title": "DDD Order Aggregate Root & Business Invariants",
+      "category": "Architecture & DDD",
+      "skills": [
+        "ddd",
+        "system-design",
+        "decisions"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected token ')'",
+        "tests": [
+          {
+            "id": "value-object-immutability",
+            "name": "Enforces immutable Value Objects with invariant validation",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ')'"
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ')'"
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ')'"
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ')'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 4,
+        "totalDurationMs": 2,
+        "code": "export class OrderLine {\n  private constructor(\n    public readonly productId: string,\n    public readonly productName: string,\n    private _quantity: number,\n    private _unitPrice: Money,\n    ...\n  ) {}\n  static create(...)?\n\n// ────────────\n\naddLine(input: AddOrderLineInput): Result<OrderLine> {\n  if (this.status !== OrderStatus.Draft) return fail(...);\n  ...\n}\n\n// ────────────\n\nexport const ORDER_MIN_LINE_QUANTITY = 1;\nexport const ORDER_MAX_LINES = maybe 500? \nexport enum OrderStatus {\n  Draft = 'Draft',\n  Submitted = 'Submitted',\n  Confirmed = 'Confirmed',\n  Shipped = 'Shipped',\n  Delivered = 'Delivered',\n  Cancelled = 'Cancelled'\n}\n\n// ────────────\n\nexport class Money {\n  private readonly _amount: number; // integer cents\n  public readonly currency: string;\n  private constructor(amountCents: number, currency: string) { ... }\n  static fromCents(amountCents, currency='USD') ...\n  static fromAmount(amount, currency) { Math.round(amount*100) }\n  get amountCents()\n  add(other): Money\n  times(multiplier): Money\n  equals...\n}\n\n// ────────────\n\nexport class Quantity {\n  private readonly _value: number;\n  private constructor(value: number) { check integer >=0?}\n  static create(value:number): Result<Quantity> // but many static methods return Result.\n}\n\n// ────────────\n\nconst result = order.addLine(...)\nif (result.isErr()) ...\n\n// ────────────\n\naddLine(...): Result<void> {\n if (this.status !== OrderStatus.Draft) return failure(new OrderStateError(...));\n ...\n return success();\n}\n\n// ────────────\n\nexport type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]; // but enum\n\n// ────────────\n\nexport interface AddOrderLineCommand {\n productId: string;\n productName: string;\n quantity: number;\n unitPrice: Money | { amount: number; currency: string }? \n}\n\n// ────────────\n\nexport interface OrderLineInput {\n  readonly productId: string;\n  readonly productName: string;\n  readonly quantity: number;\n  readonly unitPrice: Money; // value object\n}\n\n// ────────────\n\nconst orderResult = Order.create(...)\nif (!orderResult.ok) return ...\nconst order = orderResult.value\norder.addLine(...)\n\n// ────────────\n\nexport type Result<T, E = DomainError> =\n  | { readonly ok: true; readonly value: T }\n  | { readonly ok: false; readonly error: E };\nexport function success<T>(value:T): Result<T, never>\nexport function failure<E>(error:E): Result<never,E>\n\n// ────────────\n\nexport type DomainEvent =\n...\nexport abstract class DomainEvent {\n constructor(public readonly occurredAt: Date) { this.occurredAt = occurredAt ?? new Date(); }\n}\n\n// ────────────\n\nexport interface DomainEvent {\n  type: string;\n  orderId: string;\n  occurredAt: Date;\n}\n\n// ────────────\n\nexport interface OrderSnapshot { id, customerId, currency, status, lines: {id, productId, productName, quantity, unitPriceAmountCents, unitPriceCurrency}[], createdAt, updatedAt, submittedAt?, confirmedAt?, shippedAt?, deliveredAt?, cancelledAt?, cancellationReason? }\ntoSnapshot(): OrderSnapshot\nstatic fromSnapshot(snapshot: OrderSnapshot): Order\n\n// ────────────\n\nexport class OrderLine {\n  public readonly id: OrderLineId;\n  public readonly productId: string;\n  public readonly productName: string;\n  private _quantity: number;\n  private _unitPrice: Money;\n\n  constructor(id: OrderLineId, productId: string, productName: string, quantity: number, unitPrice: Money) { ... } // don't allow direct new? Public or private? We can use new in Order class. Need validate. If public, invariants could be breached? It becomes entity separate but okay. Better `public constructor` because snapshot? But static Order create creates line through `private static createLine`. In TS protected private. Could public constructor perform validation and throw. Hmm.\n\n// ────────────\n\nclass OrderLine {\n public readonly id...\n public readonly quantity...\n public readonly unitPrice...\n constructor(...)\n}\n\n// ────────────\n\nexport interface CreateOrderInput {\n readonly orderId?: OrderId;\n readonly customerId: string;\n readonly currency?: string;\n readonly lines: readonly OrderLineInput[];\n}\n\n// ────────────\n\nconst result=Order.create({customerId:'C', lines:[{...quantity:10, unitPrice: Money.fromCents(1000,'USD')}]})\n\n// ────────────\n\nexport function generateId(prefix: string): string {\n  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,10)}`;\n}\n\n// ────────────\n\nfunction uuid(): string {\n if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();\n return 'xxxxxxxxxxxx...'....\n}\n\n// ────────────\n\nexport class Order {\n public readonly id: OrderId;\n public readonly customerId: CustomerId;\n public readonly currency: string;\n public readonly createdAt: Date;\n private _status: OrderStatus;\n private _lines: OrderLine[];\n private _domainEvents: DomainEvent[];\n private _submittedAt?: Date;\n private _confirmedAt?: Date;\n private _shippedAt?: Date;\n private _deliveredAt?: Date;\n private _cancelledAt?: Date;\n private _cancellationReason?: string;\n private _updatedAt: Date;\n\n private constructor(...)\n\n// ────────────\n\nexport type OrderDomainEvent =\n  | { type:'OrderCreated'; orderId; occurredAt; ...}\n...\n\n// ────────────\n\nexport type OrderDomainEvent = Record events\n\n// ────────────\n\nexport type OrderStatus =\n  | 'Draft'\n...\n\n// ────────────\n\nexport const ORDER_STATUS = { Draft:'Draft', ... } as const;\nexport type OrderStatus = typeof"
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Illegal return statement",
+        "tests": [
+          {
+            "id": "value-object-immutability",
+            "name": "Enforces immutable Value Objects with invariant validation",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Illegal return statement"
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Illegal return statement"
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Illegal return statement"
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Illegal return statement"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 4,
+        "totalDurationMs": 1,
+        "code": "export type UUID = string; // maybe brand\n\n// ────────────\n\nexport type OrderId = string & { readonly __brand: unique symbol ... }\n\n// ────────────\n\nexport class OrderId {\n private constructor(readonly value: string) {}\n static generate(): OrderId { return new OrderId(randomUUID()) }\n static from(value: string): OrderId { if (!value.trim()) throw new InvalidOrderIdError(value); return new OrderId(value) }\n equals(other: OrderId): boolean { return this.value === other.value; }\n toString()...\n}\n\n// ────────────\n\nexport type Currency = 'USD'|'EUR'|'GBP';\nexport class Money {\n private constructor(readonly amountMinor: number, readonly currency: Currency) {}\n static zero(currency: Currency): Money { return new Money(0,currency)}\n static fromMinor(amountMinor: number, currency: Currency) { if !Number.isSafeInteger(amountMinor) throw ...; return new Money(...)}\n static fromDecimal(amount: number, currency: Currency) { if !finite etc; const cents = Math.round(amount * 100); return new Money(cents, currency)}\n add(other): Money { this.assertSameCurrency; return Money.fromMinor(this.amountMinor + other.amountMinor, currency) }\n multiply(quantity: number): Money { if(!Number.isInteger ...) ...; return fromMinor(this.amountMinor * quantity, ...)}\n isZero(), isPositive(), isNegative(), equals()\n}\n\n// ────────────\n\nclass Quantity {\n private constructor readonly value:number\n static from(value: number): Quantity { if (!Number.isInteger(value) || value <=0) throw InvalidQuantityError; return new Quantity(value);}\n}\n\n// ────────────\n\nclass OrderItem {\n readonly id: OrderItemId; // or string\n readonly productId: ProductId; // ProductId VO? reference to product aggregate by ID\n private _quantity: Quantity;\n private _unitPrice: Money;\n constructor(props) { validate }\n get quantity(): number\n get unitPrice(): Money\n get lineTotal(): Money ...\n changeQuantity...\n}\n\n// ────────────\n\nclass Order {\n readonly id: OrderId;\n readonly customerId: CustomerId;\n readonly placedAt? etc\n private _status: OrderStatus;\n private _items: OrderItem[] = [];\n private _total: Money;\n private _version: number;\n private _domainEvents: DomainEvent[] = [];\n private constructor...\n static create(props): Order\n static restoreSnapshot(props): Order? Important repository materialization.\n addItem(input)\n removeItem(productId)\n changeQuantity(productId, quantity)\n submit() / place()\n cancel()\n confirm()\n ship()\n deliver()\n markAsPaid? maybe\n get itemCount()\n get total()\n get status()\n get domainEvents()\n clearDomainEvents()\n private assertCanModify()\n private appendEvent(event)\n}\n\n// ────────────\n\ninterface DomainEvent { occurredAt: Date; type: string; aggregateId: string; }\nabstract class DomainEvent...\n\n// ────────────\n\nconst TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {\n draft: ['placed','cancelled'],\n placed: ['confirmed','cancelled'],\n confirmed: ['fulfilled','cancelled'],\n fulfilled: ['shipped','cancelled']? shipped after fulfilled? \n shipped: ['delivered','cancelled']? usually no cancel after shipped unless return.\n delivered: []\n cancelled: []\n}\n\n// ────────────\n\ntype OrderStatus = 'created' | 'approved' | 'shipped' | 'delivered'\nclass Order {\n  private _lines: Array<OrderLine>\n  private _customer: CustomerId\n  private _id: OrderId\n\n  private constructor(id,customer)\n  static createOrder(...)...\n  addOrderLine(product, quantity, price) ...\n  approve() throws...\n  totalPrice()...\n}\n\n// ────────────\n\nimport { randomUUID } from 'node:crypto'?\n\n// ────────────\n\nexport class OrderId {\n private constructor(public readonly value: string) {}\n static create(value?: string): OrderId { ... }\n static fromString(value: string): OrderId { ... }\n}\n\n// ────────────\n\nexport class OrderId {\n private constructor(readonly value: string) { ...}\n static create(value: string = newUUID()): OrderId { return new OrderId(value); }\n static from(value: string): OrderId { ...}\n equals...\n toString...\n}\n\n// ────────────\n\nstatic uuid(): string {\n if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();\n const hex = ...\n}\n\n// ────────────\n\nexport abstract class DomainId {\n protected constructor(readonly value: string) {\n  if (value.trim().length === 0) throw...\n }\n equals...\n toString()\n}\n\n// ────────────\n\nprivate static assertSafeInteger(value: number, context: string)...\n\n// ────────────\n\nOrder.create({orderId, customerId, currency})\n\n// ────────────\n\nconst order = Order.create({customerId, currency: 'USD'});\norder.addItem({productId, quantity: 2, unitPrice: Money.fromDecimal(19.99,'USD')});\n\n// ────────────\n\nexport class CustomerId {\n  constructor(readonly value: string) {\n    if (!...) throw\n  }\n}\nexport class ProductId...\n\n// ────────────\n\nexport abstract class IdentifierValue {\n protected constructor(readonly value: string) { ... }\n}\nexport class CustomerId extends IdentifierValue { ...}\n\n// ────────────\n\nexport abstract class DomainId {\n protected constructor(readonly value: string) {\n  if (value.trim().length===0) throw new InvalidDomainIdError('...');\n }\n equals...\n}\n\n// ────────────\n\nexport class OrderId extends DomainId {\n private constructor(value: string){ super(value);}\n static from(value: string): OrderId { return new OrderId(value);}\n static create(): OrderId { return new OrderId(randomUUID());}\n}\n\n// ────────────\n\nclass Quantity {\n private constructor(readonly value: number) {}\n static from(value: number): Quantity {\n  if (!Number.isInteger(value) || value <= 0) ...\n }\n equals\n}\n\n// ────────────\n\nexport type DomainEvent = {\n  readonly eventType: string;\n  readonly aggregateId: string;\n  readonly occurredAt: Date;\n}\n\n// ────────────\n\nexport interface IDomainEvent {\n readonly eventName: string;\n readonly aggregateId: string;\n readonly occurredAt: Date;\n}\nabstract class DomainEvent {\n constructor(readonly aggregateId: string, readonly occurredAt = new Date()) {}\n abstract readonly type: string;\n}\n\n// ────────────\n\nexport abstract class DomainEvent {\n protected constructor(\n  readonly eventType: string,\n  readonly occurredAt: Date,\n ) {}\n}\n\n// ────────────\n\nexport class OrderPlacedEvent extends DomainEvent {\n constructor(readonly orderId: string, readonly customerId: string, readonly total: Money, occurredAt = new Date()) {\n  super('order.placed', occurredAt);\n }\n}\n\n// ────────────\n\nconstructor(\n readonly orderId: string, \n readonly customerId: string,\n readonly total: Money,\n occurredAt: Date\n) { super('order.placed', occurredAt); }\n\n// ────────────\n\nexport class OrderItem {\n private constructor(\n  public readonly id: OrderItemId,\n  public readonly productId: ProductId,\n  private _quantity: number,\n  private _unitPrice: Money\n ) {}\n\n static create(input): OrderItem {\n   return new OrderItem(...)\n }\n get quantity(): number ...\n setQuantity(value) {\n   this._quantity = Quantity.from(value).value\n }\n get unitPrice...\n get subtotal(): Money { return this._unitPrice.multiply(this._quantity) }\n}"
+      },
+      "delta": 0
+    }
+  ]
+}

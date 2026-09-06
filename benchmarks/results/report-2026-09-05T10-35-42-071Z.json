@@ -1,0 +1,146 @@
+{
+  "timestamp": "2026-09-05T10:35:42.069Z",
+  "provider": "openai",
+  "model": "glm-5.3",
+  "summary": {
+    "tasksCount": 1,
+    "baselineAvgScore": 12,
+    "skillAvgScore": 12,
+    "scoreDelta": 0,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineStaticAvg": 20,
+    "skillStaticAvg": 20
+  },
+  "results": [
+    {
+      "taskId": "auth-security-hardened",
+      "title": "Secure Authentication & Rate Limiting Handler",
+      "category": "Security & Backend",
+      "skills": [
+        "security",
+        "node",
+        "ponytail-mindset"
+      ],
+      "baseline": {
+        "mode": "without_skills",
+        "code": "",
+        "metrics": {
+          "lines": 1,
+          "chars": 0,
+          "approxTokens": 0
+        },
+        "staticScore": 20,
+        "staticChecks": [
+          {
+            "id": "timing-safe-equal",
+            "name": "Uses crypto.timingSafeEqual for timing-attack prevention",
+            "weight": 25,
+            "passed": false
+          },
+          {
+            "id": "rate-limiting",
+            "name": "Implements rate limiting or brute-force tracking",
+            "weight": 20,
+            "passed": false
+          },
+          {
+            "id": "no-leak-stack",
+            "name": "Does not leak stack trace in 500 error responses",
+            "weight": 20,
+            "passed": true
+          },
+          {
+            "id": "input-validation",
+            "name": "Performs explicit input validation on email/password",
+            "weight": 20,
+            "passed": false
+          },
+          {
+            "id": "jwt-claims",
+            "name": "Configures JWT with expiresIn / audience / issuer",
+            "weight": 15,
+            "passed": false
+          }
+        ],
+        "judgeScore": 0,
+        "passedCriteriaCount": 0,
+        "totalCriteriaCount": 5,
+        "summary": "The submission is empty; no code was provided, so none of the five criteria can be satisfied or evaluated. A blank submission fails all requirements for timing-safe comparison, rate limiting, input validation, secure error handling, and architectural layering.",
+        "strengths": [
+          "Code evaluated"
+        ],
+        "weaknesses": [
+          "No code submitted, so no timing-safe password comparison (crypto.timingSafeEqual) or any authentication logic exists",
+          "No brute-force rate limiting per IP or account is implemented",
+          "No input validation or sanitization prior to any database lookup",
+          "No error handling exists, so credentials, stack traces, or user enumeration leaks cannot even be assessed, let alone prevented",
+          "No auth service layer or architectural boundaries are present because the submission is entirely empty"
+        ],
+        "compositeScore": 12,
+        "isPassing": false
+      },
+      "withSkills": {
+        "mode": "with_skills",
+        "code": "",
+        "metrics": {
+          "lines": 1,
+          "chars": 0,
+          "approxTokens": 0
+        },
+        "staticScore": 20,
+        "staticChecks": [
+          {
+            "id": "timing-safe-equal",
+            "name": "Uses crypto.timingSafeEqual for timing-attack prevention",
+            "weight": 25,
+            "passed": false
+          },
+          {
+            "id": "rate-limiting",
+            "name": "Implements rate limiting or brute-force tracking",
+            "weight": 20,
+            "passed": false
+          },
+          {
+            "id": "no-leak-stack",
+            "name": "Does not leak stack trace in 500 error responses",
+            "weight": 20,
+            "passed": true
+          },
+          {
+            "id": "input-validation",
+            "name": "Performs explicit input validation on email/password",
+            "weight": 20,
+            "passed": false
+          },
+          {
+            "id": "jwt-claims",
+            "name": "Configures JWT with expiresIn / audience / issuer",
+            "weight": 15,
+            "passed": false
+          }
+        ],
+        "judgeScore": 0,
+        "passedCriteriaCount": 0,
+        "totalCriteriaCount": 5,
+        "summary": "The submission is empty and contains no code whatsoever, so none of the five evaluation criteria can be assessed or satisfied. No authentication, rate limiting, validation, error handling, or architectural structure was provided.",
+        "strengths": [
+          "Code evaluated"
+        ],
+        "weaknesses": [
+          "Submission is entirely empty with no implementation of any kind",
+          "No timing-safe password comparison (crypto.timingSafeEqual) is present",
+          "No brute-force rate limiting per IP or account exists",
+          "No input validation or sanitization prior to DB lookup",
+          "No error responses defined, so leak prevention cannot be verified",
+          "No auth service layer or architectural boundaries are established"
+        ],
+        "compositeScore": 12,
+        "isPassing": false
+      },
+      "delta": 0
+    }
+  ]
+}

@@ -1,0 +1,285 @@
+{
+  "timestamp": "2026-09-05T12:35:03.037Z",
+  "provider": "openai",
+  "model": "glm-5.3",
+  "summary": {
+    "suitesCount": 3,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 33,
+    "skillCompilationRate": 0,
+    "baselineAvgPassed": 0,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 4
+  },
+  "results": [
+    {
+      "taskId": "auth-security",
+      "title": "Secure Authentication & Rate Limiting Handler",
+      "category": "Security & Backend",
+      "skills": [
+        "security",
+        "node",
+        "ponytail-mindset"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected identifier 'RateLimitEntry'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'RateLimitEntry'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'RateLimitEntry'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'RateLimitEntry'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'RateLimitEntry'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'RateLimitEntry'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 55,
+        "code": "import * as crypto from 'crypto';\n\n// ────────────\n\ninterface RateLimitEntry {\n  hits: number[];        // timestamps of requests within window\n  failures: number[];    // timestamps of failed logins within failureWindow\n  lockedUntil: number;   // ms epoch\n}\n\n// ────────────\n\nasync generateToken(payload, secret): Promise<string> {\n  // validate payload\n  const header = { alg: 'HS256', typ: 'JWT' };\n  const now = Math.floor(Date.now() / 1000);\n  const body = { ...payload, sub: payload.id, iat: now, exp: now + this.tokenTtlSeconds, jti: randomBytes(16).toString('hex') };\n  const enc = (obj) => base64url(JSON.stringify(obj));\n  const signingInput = `${enc(header)}.${enc(body)}`;\n  const sig = createHmac('sha256', secret).update(signingInput).digest('base64url');\n  return `${signingInput}.${sig}`;\n}\n\n// ────────────\n\ninterface UserRecord {\n  id: string;\n  email: string;\n  passwordHash: string;\n  role: string;\n  createdAt: string; // ISO\n  updatedAt: string;\n  failedLoginAttempts: number;\n  lockedUntil: number; // epoch ms\n  enabled: boolean;\n}\n\n// ────────────\n\nasync handleLogin(request) {\n  try {\n    // 1. Extract & normalize\n    const emailRaw = typeof request?.email === 'string' ? request.email.trim().toLowerCase() : '';\n    const password = typeof request?.password === 'string' ? request.password : '';\n    const ip = sanitizeIp(request?.ip) ?? 'unknown';\n\n    // 2. Validate presence\n    if (!emailRaw || !password) {\n      // consume rate limit? Typically validation errors don't consume the request quota... but they should count to prevent abuse. I'll count them against the IP rate limit but not as auth failures. Hmm—simpler: still consume IP rate limit token. Let's consume after validation? Order: check limit first (consuming), then validate. Actually to strictly limit abuse, consume on every call. I'll consume first, then validate. But then a 429 for missing fields... fine.\n      const limit = this.rateLimiter.consume(ip);\n      if (!limit.allowed) return 429...\n      return 400 { success:false, error: 'Email and password are required.' }\n    }\n\n    // 3. Rate limit by IP\n    ...\n    // 4. Lockout check for ip and email\n    ...\n    // 5. fetch user\n    const user = this.users.get(email);\n    if (!user) {\n      await this.verifyPassword(password, this.dummyHash); // timing equalization\n      this.rateLimiter.recordFailure(`${ip}`) and recordFailure(`email:${email}`);\n      return 401 generic\n    }\n    if (!user.enabled || user.lockedUntil > now) → 423/429? For locked account: return 429/423 with retry. I'll use 429 with 'Account temporarily locked...' Actually 423 Locked is more semantically right but 429 is safer for HTTP semantics with retryAfter. Use 423? Many APIs use 429. I'll use 429.\n    \n    // password length sanity: if > max, fail\n    // 6. verify\n    const ok = await this.verifyPassword(password, user.passwordHash);\n    if (!ok) {\n      user.failedLoginAttempts++;\n      if (user.failedLoginAttempts >= maxAccountFailures) { user.lockedUntil = now + accountLockoutMs; user.failedLoginAttempts = 0; }\n      limiter.recordFailure(`email:${email}`), recordFailure(ip)\n      return 401 generic\n    }\n    // 7. success\n    user.failedLoginAttempts = 0; user.lockedUntil = 0;\n    limiter.recordSuccess...\n    const token = await this.generateToken({ id, email, role }, secret)\n    return 200 { success: true, message: 'Authentication successful.', token, tokenType: 'Bearer', expiresIn, user: {...} }\n  } catch (err) {\n    return 500 { success: false, error: 'Internal server error.' }\n  }\n}\n\n// ────────────\n\nexport interface AuthServiceOptions {\n  secret?: string;\n  tokenTtlSeconds?: number;\n  pbkdf2Iterations?: number;\n  hashAlgorithm?: 'sha256' | 'sha512';\n  rateLimit?: {\n    windowMs?: number;\n    maxRequestsPerWindow?: number;\n    failureWindowMs?: number;\n    maxFailuresBeforeLockout?: number;\n    lockoutMs?: number;\n  };\n  accountLockout?: { maxFailures?: number; lockoutMs?: number };\n  maxPasswordLength?: number;\n  minPasswordLength?: number;\n  maxUsers?: number;\n}\n\n// ────────────\n\nconst pbkdf2Async = promisify(crypto.pbkdf2) as (p: string|Buffer, s: string|Buffer, it: number, klen: number, d: string) => Promise<Buffer>;\n\n// ────────────\n\nfunction safeEqual(a: Buffer, b: Buffer): boolean {\n  if (a.length !== b.length) {\n    // compare against self to keep time, then return false\n    crypto.timingSafeEqual(a, a);\n    return false;\n  }\n  return crypto.timingSafeEqual(a, b);\n}\n\n// ────────────\n\nprivate sweep(now: number): void {\n  for (const [key, entry] of this.entries) {\n    if"
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Unexpected token 'export'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 3,
+        "code": "export interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string>;\n  handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }>;\n}\n\n// ────────────\n\ninterface AttemptRecord { fails: number; windowStart: number; lockedUntil: number; }\n\n// ────────────\n\nexport interface UserRepository {\n  findByEmail(email: string): Promise<{ id: string; email: string; passwordHash: string; role?: string; locked?: boolean; active?: boolean } | null>;\n}\n\n// ────────────\n\nexport interface RateLimitEntry {\n  count: number;       // failed attempts in current window\n  windowStart: number; // epoch ms\n  lockedUntil: number; // epoch ms, 0 if not locked\n}\n\nexport interface RateLimitStore {\n  get(key: string): Promise<RateLimitEntry | null>;\n  set(key: string, entry: RateLimitEntry): Promise<void>;"
+      },
+      "delta": 0
+    },
+    {
+      "taskId": "ddd-order-invariants",
+      "title": "DDD Order Aggregate Root & Business Invariants",
+      "category": "Architecture & DDD",
+      "skills": [
+        "ddd",
+        "system-design",
+        "decisions"
+      ],
+      "baseline": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "value-object-immutability",
+            "name": "Enforces immutable Value Objects with invariant validation",
+            "passed": false,
+            "durationMs": 1,
+            "error": "Must export Money Value Object"
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Must export Order aggregate root"
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": false,
+            "durationMs": 1,
+            "error": "Code must model and collect Domain Events"
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": false,
+            "durationMs": 1,
+            "error": "Must provide a decoupled Repository interface"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 4,
+        "totalDurationMs": 4,
+        "code": ""
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Unexpected token ':'",
+        "tests": [
+          {
+            "id": "value-object-immutability",
+            "name": "Enforces immutable Value Objects with invariant validation",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ':'"
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ':'"
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ':'"
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token ':'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 4,
+        "totalDurationMs": 9,
+        "code": "export class Money {\n  constructor(amount: number, currency: string);\n  static of(amount: number, currency: string): Money;\n  add(other: Money): Money;\n  readonly amount: number;\n  readonly currency: string;\n}\n\nexport type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class Order {\n  constructor(id: string, customerId: string);\n  readonly id: string;\n  readonly customerId: string;\n  readonly status: OrderStatus;\n  addItem(itemId: string, quantity: number, price: Money): void;\n  pay(): void;\n  ship(): void;\n  cancel(): void;\n  getDomainEvents(): any[];\n}\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}\n\n// ────────────\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}\n\n// ────────────\n\nexport class Order {\n  private constructor(id: string, customerId: string) { ... }\n  \n  static place(id: string, customerId: string): Order {\n    const order = new Order(id, customerId);\n    order.recordEvent(new OrderPlaced(...));\n    return order;\n  }\n  \n  static reconstitute(snapshot: OrderSnapshot): Order { ... }\n}\n\n// ────────────\n\n/**\n * DDD Order Aggregate Root & Business Invariants\n * ...\n */\n\n// ============ Errors ============\n\n/** Base class for all domain errors */\nexport class DomainError extends Error {\n  constructor(message: string, name?: string) {\n    super(message);\n    this.name = name ?? new.target.name;\n    Object.setPrototypeOf(this, new.target.prototype);\n  }\n}\n\n// ────────────\n\nexport class InvalidMoneyError extends DomainError { ... }\nexport class CurrencyMismatchError extends DomainError { ... }\nexport class InvalidItemIdError extends DomainError { ... }\nexport class InvalidQuantityError extends DomainError { ... }\nexport class InvalidPriceError extends DomainError { ... }\nexport class InvalidOrderStateError extends DomainError { ... }\nexport class EmptyOrderError extends DomainError { ... }\nexport class InconsistentItemPriceError extends DomainError { ... }\n\n// ────────────\n\nconst CURRENCY_DECIMALS: Readonly<Record<string, number>> = Object.freeze({\n  JPY: 0, KRW: 0, VND: 0, CLP: 0, ISK: 0, UGX: 0,\n  BHD: 3, KWD: 3, OMR: 3, TND: 3, JOD: 3,\n});\n\nconst ISO_4217_PATTERN = /^[A-Z]{3}$/;\n\nexport class Money {\n  readonly amount: number;\n  readonly currency: string;\n\n  constructor(amount: number, currency: string) {\n    if (typeof amount !== 'number' || !Number.isFinite(amount)) {\n      throw new InvalidMoneyError(`...`);\n    }\n    if (typeof currency !== 'string' || !ISO_4217_PATTERN.test(currency)) {\n      throw new InvalidMoneyError(`...`);\n    }\n    this.amount = Money.roundTo(amount, currency);\n    this.currency = currency;\n  }\n  \n  ...\n}\n\n// ────────────\n\nprivate static roundTo(amount: number, currency: string): number {\n  const decimals = CURRENCY_DECIMALS[currency] ?? 2;\n  const factor = 10 ** decimals;\n  // Round half away from zero to avoid banker's surprises and float drift.\n  return Math.sign(amount) * Math.round(Math.abs(amount) * factor + Number.EPSILON) / factor;\n}"
+      },
+      "delta": 0
+    },
+    {
+      "taskId": "resilient-api-client",
+      "title": "Type-Safe Resilient API Client with Circuit Breaker",
+      "category": "TypeScript & Reliability",
+      "skills": [
+        "typescript",
+        "system-design",
+        "performance"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected identifier 'execute'",
+        "tests": [
+          {
+            "id": "timeout-abort-handling",
+            "name": "Implements request timeout with AbortController",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'execute'"
+          },
+          {
+            "id": "circuit-breaker-transitions",
+            "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'execute'"
+          },
+          {
+            "id": "structured-error-taxonomy",
+            "name": "Provides typed error taxonomy without secret credential leakage",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'execute'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 3,
+        "totalDurationMs": 3,
+        "code": "async execute<T>(action) {\n  const state = this.getState();\n  if (state === 'OPEN') throw new CircuitOpenError(...);\n  if (state === 'HALF_OPEN') {\n    if (this._halfOpenProbeInFlight) throw new CircuitOpenError(...);\n    this._halfOpenProbeInFlight = true;\n  }\n  try {\n    const result = await action();\n    this.recordSuccess();\n    return result;\n  } catch (err) {\n    this.recordFailure();\n    throw err;\n  } finally {\n    if (state === 'HALF_OPEN') this._halfOpenProbeInFlight = false;\n  }\n}\n\n// ────────────\n\nrecordFailure() {\n  if (this._state === 'HALF_OPEN') {\n    this.trip();\n  } else if (this._state === 'CLOSED') {\n    this._consecutiveFailures++;\n    if (this._consecutiveFailures >= this.failureThreshold) this.trip();\n  }\n  // if OPEN already, stay open (restart timer? maybe reset openedAt to extend). I'll keep timer as is, or reset. I'll keep it simple: no-op.\n}\n\n// ────────────\n\nrecordSuccess() {\n  this._consecutiveFailures = 0;\n  if (this._state === 'HALF_OPEN') this._state = 'CLOSED';\n  // if CLOSED, stay closed.\n}\n\n// ────────────\n\nclass ApiError extends Error {\n  readonly statusCode: number;\n  constructor(message: string, statusCode: number) {\n    super(message);\n    this.name = 'ApiError';\n    this.statusCode = statusCode;\n    Object.setPrototypeOf(this, ApiError.prototype); // for ES5 target compat\n  }\n}\n\n// ────────────\n\ndeclare const fetch: typeof globalThis.fetch;\n\n// ────────────\n\ntype FetchLike = (input: string, init?: RequestInitLike) => Promise<ResponseLike>;\n\n// ────────────\n\nconst globalFetch: typeof fetch = fetch;\n\n// ────────────\n\ntype FetchInit = {\n  method?: string;\n  headers?: Record<string, string>;\n  signal?: AbortSignal;\n};\n\ninterface FetchResponse {\n  readonly ok: boolean;\n  readonly status: number;\n  readonly statusText: string;\n  json(): Promise<unknown>;\n  text(): Promise<string>;\n}\n\ntype FetchFn = (url: string, init?: FetchInit) => Promise<FetchResponse>;\n\nconst fetchFn: FetchFn = (globalThis as unknown as { fetch: FetchFn }).fetch;\n\n// ────────────\n\ninterface MinimalAbortSignal { addEventListener(type: 'abort', listener: () => void): void; removeEventListener(...): void; }\n\n// ────────────\n\nprivate async performRequest(url: string, options: RequestOptions): Promise<unknown> {\n  const timeoutMs = options.timeoutMs ?? this.defaultTimeoutMs;\n  \n  // AbortController-based timeout\n  const abortController = typeof AbortController !== 'undefined' ? new AbortController() : undefined;\n  const timer = abortController\n    ? setTimeout(() => abortController.abort(), timeoutMs)\n    : setTimeout(() => undefined, timeoutMs); // hmm\n  ...\n}\n\n// ────────────\n\nasync get<T>(url: string, options?: RequestOptions): Promise<T> {\n  return this.circuitBreaker.execute<T>(() => this.request<T>(url, options));\n}\n\nprivate async request<T>(url: string, options?: RequestOptions): Promise<T> {\n  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;\n  const headers = { ...(options?.headers ?? {}) };\n  \n  const controller = createAbortController();\n  let timeoutId: ReturnType<typeof setTimeout> | undefined;\n  \n  const timeoutPromise = new Promise<never>((_, reject) => {\n    timeoutId = setTimeout(() => {\n      controller?.abort();\n      reject(new ApiError(`Request to ${url} timed out after ${timeoutMs}ms`, 408));\n    }, timeoutMs);\n  });\n  \n  try {\n    const response = await Promise.race([\n      fetchFn(url, { method: 'GET', headers, ...(controller ? { signal: controller.signal } : {}) }),\n      timeoutPromise,\n    ]);\n    ...\n  } finally {\n    if (timeoutId !== undefined) clearTimeout(timeoutId);\n  }\n}\n\n// ────────────\n\nfunction createAbortController(): { abort(): void; signal: AbortSignalLike } | undefined {\n  const gc = (globalThis as { AbortController?: new () => any }).AbortController;\n  return gc ? new gc() : undefined;\n}\n\n// ────────────\n\nprivate async parseBody(response: Response): Promise<unknown> {\n  const text = await response.text();\n  if (!text) return undefined;\n  try {\n    return JSON.parse(text);\n  } catch {\n    return text;\n  }\n}\n\n// ────────────\n\nexport type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nconst DEFAULT_FAILURE_THRESHOLD = 5;\nconst DEFAULT_RESET_TIMEOUT_MS = 30_000;\n\nexport class CircuitOpenError extends ApiError {\n  constructor(message: string) {\n    super(message, 503);\n    this.name = 'CircuitOpenError';\n    Object.setPrototypeOf(this, CircuitOpenError.prototype);\n  }\n}\n\n// ────────────\n\nexport class CircuitBreaker {\n  private readonly failureThreshold: number;\n  private readonly resetTimeoutMs: number;\n  private _state: CircuitState = 'CLOSED';\n  private consecutiveFailures = 0;\n  private openedAt = 0; // timestamp when circuit opened\n  private halfOpenProbeInFlight = false;\n\n  constructor(options?: CircuitBreakerOptions) {\n    this.failureThreshold = validatePositiveInt(options?.failureThreshold, DEFAULT_FAILURE_THRESHOLD, 'failureThreshold');\n    this.resetTimeoutMs = validatePositiveNumber(options?.resetTimeoutMs, DEFAULT_RESET_TIMEOUT_MS, 'resetTimeoutMs');"
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Unexpected token 'export'",
+        "tests": [
+          {
+            "id": "timeout-abort-handling",
+            "name": "Implements request timeout with AbortController",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "circuit-breaker-transitions",
+            "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          },
+          {
+            "id": "structured-error-taxonomy",
+            "name": "Provides typed error taxonomy without secret credential leakage",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token 'export'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 3,
+        "totalDurationMs": 3,
+        "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nexport class CircuitBreaker {\n  constructor(options?: CircuitBreakerOptions);\n  readonly state: CircuitState;\n  getState(): CircuitState;\n  recordSuccess(): void;\n  recordFailure(): void;\n  execute<T>(action: () => Promise<T>): Promise<T>;\n}\n\nexport class ApiError extends Error {\n  constructor(message: string, statusCode: number);\n  readonly statusCode: number;\n}\n\nexport interface RequestOptions {\n  timeoutMs?: number;\n  headers?: Record<string, string>;\n}\n\nexport class ResilientHttpClient {\n  constructor(circuitBreaker?: CircuitBreaker);\n  get<T>(url: string, options?: RequestOptions): Promise<T>;\n}\n\n// ────────────\n\nprivate transitionIfResetElapsed(): CircuitState {\n  if (this.currentState === 'OPEN') {\n    const elapsed = Date.now() - this.openedAt;\n    if (elapsed >= this.resetTimeoutMs) {\n      this.currentState = 'HALF_OPEN';\n      this.halfOpenInFlight = false; // reset probe tracking\n    }\n  }\n  return this.currentState;\n}\n\n// ────────────\n\nexport class ApiError extends Error {\n  readonly statusCode: number;\n  constructor(message: string, statusCode: number) {\n    super(message);\n    this.name = 'ApiError';\n    this.statusCode = statusCode;\n  }\n}\n\n// ────────────\n\nconstructor(message: string, statusCode: number) {\n  super(message);\n  this.name = 'ApiError';\n  this.statusCode = statusCode;\n  Object.setPrototypeOf(this, new.target.prototype);\n}\n\n// ────────────\n\nObject.setPrototypeOf(this, ApiError.prototype);\n\n// ────────────\n\nconstructor(message: string, statusCode: number) {\n  super(message);\n  this.name = 'ApiError';\n  this.statusCode = statusCode;\n  // Ensure instanceof works correctly when compiled down to ES5\n  Object.setPrototypeOf(this, new.target.prototype);\n}\n\n// ────────────\n\nObject.setPrototypeOf(this, ApiError.prototype);\n\n// ────────────\n\nexport class ResilientHttpClient {\n  private readonly circuitBreaker: CircuitBreaker;\n  private readonly defaultTimeoutMs: number;\n  \n  constructor(circuitBreaker?: CircuitBreaker) {\n    this.circuitBreaker = circuitBreaker ?? new CircuitBreaker();\n  }\n  \n  get<T>(url: string, options?: RequestOptions): Promise<T> {\n    return this.circuitBreaker.execute(() => this.requestJson<T>(url, 'GET', options));\n  }\n}\n\n// ────────────\n\nconst body: unknown = await response.json();\nreturn body as T; // ← type assertion, forbidden!\n\n// ────────────\n\nfunction identityThroughGuard..."
+      },
+      "delta": 0
+    }
+  ]
+}

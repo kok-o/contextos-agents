@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-09-05T11:59:06.689Z",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 100,
+    "skillPassRate": 100,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 100,
+    "skillCompilationRate": 100,
+    "baselineAvgPassed": 4,
+    "skillAvgPassed": 4,
+    "avgTotalTests": 4
+  },
+  "results": [
+    {
+      "taskId": "ddd-order-invariants",
+      "title": "DDD Order Aggregate Root & Business Invariants",
+      "category": "Architecture & DDD",
+      "skills": [
+        "ddd",
+        "system-design",
+        "decisions"
+      ],
+      "baseline": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "value-object-immutability",
+            "name": "Enforces immutable Value Objects with invariant validation",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": true,
+            "durationMs": 0
+          }
+        ],
+        "passRate": 100,
+        "totalPassed": 4,
+        "totalTests": 4,
+        "totalDurationMs": 54,
+        "code": "export class Money {\n  readonly amount: number;\n  readonly currency: string;\n\n  constructor(amount: number, currency: string) {\n    if (!Number.isFinite(amount)) {\n      throw new Error('Money amount must be a finite number');\n    }\n\n    if (amount < 0) {\n      throw new Error('Money amount cannot be negative');\n    }\n\n    if (typeof currency !== 'string' || currency.trim().length === 0) {\n      throw new Error('Money currency must be a non-empty string');\n    }\n\n    this.amount = amount;\n    this.currency = currency.trim();\n    Object.freeze(this);\n  }\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  add(other: Money): Money {\n    if (!(other instanceof Money)) {\n      throw new Error('Can only add another Money value');\n    }\n\n    if (this.currency !== other.currency) {\n      throw new Error(\n        `Cannot add money with different currencies: ${this.currency} and ${other.currency}`\n      );\n    }\n\n    return new Money(this.amount + other.amount, this.currency);\n  }\n}\n\nexport type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\ninterface OrderItem {\n  readonly itemId: string;\n  quantity: number;\n  readonly price: Money;\n}\n\nexport interface OrderDomainEvent {\n  readonly type: string;\n  readonly orderId: string;\n  readonly [key: string]: unknown;\n}\n\nexport class Order {\n  readonly id: string;\n  readonly customerId: string;\n\n  private currentStatus: OrderStatus;\n  private readonly items: Map<string, OrderItem>;\n  private readonly domainEvents: OrderDomainEvent[];\n\n  constructor(id: string, customerId: string) {\n    if (typeof id !== 'string' || id.trim().length === 0) {\n      throw new Error('Order id must be a non-empty string');\n    }\n\n    if (typeof customerId !== 'string' || customerId.trim().length === 0) {\n      throw new Error('Customer id must be a non-empty string');\n    }\n\n    this.id = id;\n    this.customerId = customerId;\n    this.currentStatus = 'PENDING';\n    this.items = new Map<string, OrderItem>();\n    this.domainEvents = [];\n  }\n\n  get status(): OrderStatus {\n    return this.currentStatus;\n  }\n\n  addItem(itemId: string, quantity: number, price: Money): void {\n    if (this.currentStatus !== 'PENDING') {\n      throw new Error('Items can only be added to a pending order');\n    }\n\n    if (typeof itemId !== 'string' || itemId.trim().length === 0) {\n      throw new Error('Item id must be a non-empty string');\n    }\n\n    if (!Number.isInteger(quantity) || quantity <= 0) {\n      throw new Error('Item quantity must be a positive integer');\n    }\n\n    if (!(price instanceof Money)) {\n      throw new Error('Item price must be a Money value');\n    }\n\n    const normalizedItemId = itemId.trim();\n    const existingItem = this.items.get(normalizedItemId);\n\n    if (existingItem) {\n      existingItem.quantity += quantity;\n    } else {\n      this.items.set(normalizedItemId, {\n        itemId: normalizedItemId,\n        quantity,\n        price\n      });\n    }\n\n    this.recordEvent({\n      type: 'OrderItemAdded',\n      orderId: this.id,\n      itemId: normalizedItemId,\n      quantity,\n      price\n    });\n  }\n\n  pay(): void {\n    if (this.currentStatus !== 'PENDING') {\n      throw new Error('Only pending orders can be paid');\n    }\n\n    if (this.items.size === 0) {\n      throw new Error('An order must contain at least one item before payment');\n    }\n\n    this.currentStatus = 'PAID';\n\n    this.recordEvent({\n      type: 'OrderPaid',\n      orderId: this.id\n    });\n  }\n\n  ship(): void {\n    if (this.currentStatus !== 'PAID') {\n      throw new Error('Only paid orders can be shipped');\n    }\n\n    this.currentStatus = 'SHIPPED';\n\n    this.recordEvent({\n      type: 'OrderShipped',\n      orderId: this.id\n    });\n  }\n\n  cancel(): void {\n    if (this.currentStatus !== 'PENDING' && this.currentStatus !== 'PAID') {\n      throw new Error('Only pending or paid orders can be cancelled');\n    }\n\n    this.currentStatus = 'CANCELLED';\n\n    this.recordEvent({\n      type: 'OrderCancelled',\n      orderId: this.id\n    });\n  }\n\n  getDomainEvents(): any[] {\n    return this.domainEvents.slice();\n  }\n\n  private recordEvent(event: OrderDomainEvent): void {\n    this.domainEvents.push(Object.freeze(event));\n  }\n}\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}"
+      },
+      "withSkills": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "value-object-immutability",
+            "name": "Enforces immutable Value Objects with invariant validation",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": true,
+            "durationMs": 0
+          }
+        ],
+        "passRate": 100,
+        "totalPassed": 4,
+        "totalTests": 4,
+        "totalDurationMs": 4,
+        "code": "export class Money {\n  public readonly amount: number;\n  public readonly currency: string;\n\n  constructor(amount: number, currency: string) {\n    if (!Number.isFinite(amount)) {\n      throw new Error('Money amount must be a finite number.');\n    }\n\n    if (amount < 0) {\n      throw new Error('Money amount cannot be negative.');\n    }\n\n    if (typeof currency !== 'string' || currency.trim().length === 0) {\n      throw new Error('Money currency is required.');\n    }\n\n    this.amount = amount;\n    this.currency = currency.trim().toUpperCase();\n  }\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  add(other: Money): Money {\n    if (!(other instanceof Money)) {\n      throw new Error('Money can only be added to another Money value.');\n    }\n\n    if (this.currency !== other.currency) {\n      throw new Error(\n        `Cannot add money with different currencies: ${this.currency} and ${other.currency}.`,\n      );\n    }\n\n    return new Money(this.amount + other.amount, this.currency);\n  }\n}\n\nexport type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\ninterface OrderItem {\n  readonly itemId: string;\n  readonly quantity: number;\n  readonly price: Money;\n}\n\nexport class OrderPaid {\n  public readonly type = 'OrderPaid' as const;\n  public readonly occurredAt: Date;\n\n  constructor(\n    public readonly orderId: string,\n    public readonly customerId: string,\n  ) {\n    this.occurredAt = new Date();\n  }\n}\n\nexport class OrderShipped {\n  public readonly type = 'OrderShipped' as const;\n  public readonly occurredAt: Date;\n\n  constructor(\n    public readonly orderId: string,\n    public readonly customerId: string,\n  ) {\n    this.occurredAt = new Date();\n  }\n}\n\nexport class OrderCancelled {\n  public readonly type = 'OrderCancelled' as const;\n  public readonly occurredAt: Date;\n\n  constructor(\n    public readonly orderId: string,\n    public readonly customerId: string,\n  ) {\n    this.occurredAt = new Date();\n  }\n}\n\nexport class Order {\n  public readonly id: string;\n  public readonly customerId: string;\n\n  private _status: OrderStatus = 'PENDING';\n  private readonly items: OrderItem[] = [];\n  private readonly domainEvents: any[] = [];\n\n  constructor(id: string, customerId: string) {\n    if (typeof id !== 'string' || id.trim().length === 0) {\n      throw new Error('Order id is required.');\n    }\n\n    if (\n      typeof customerId !== 'string' ||\n      customerId.trim().length === 0\n    ) {\n      throw new Error('Order customerId is required.');\n    }\n\n    this.id = id.trim();\n    this.customerId = customerId.trim();\n  }\n\n  public get status(): OrderStatus {\n    return this._status;\n  }\n\n  public addItem(itemId: string, quantity: number, price: Money): void {\n    if (this._status !== 'PENDING') {\n      throw new Error('Items can only be added to a pending order.');\n    }\n\n    if (typeof itemId !== 'string' || itemId.trim().length === 0) {\n      throw new Error('Order item id is required.');\n    }\n\n    if (!Number.isInteger(quantity) || quantity <= 0) {\n      throw new Error('Order item quantity must be a positive integer.');\n    }\n\n    if (!(price instanceof Money)) {\n      throw new Error('Order item price must be a Money value.');\n    }\n\n    this.items.push({\n      itemId: itemId.trim(),\n      quantity,\n      price,\n    });\n  }\n\n  public pay(): void {\n    if (this._status !== 'PENDING') {\n      throw new Error(\n        `An order can only be paid while pending. Current status: ${this._status}.`,\n      );\n    }\n\n    if (this.items.length === 0) {\n      throw new Error('An order must contain at least one item before payment.');\n    }\n\n    this._status = 'PAID';\n    this.domainEvents.push(new OrderPaid(this.id, this.customerId));\n  }\n\n  public ship(): void {\n    if (this._status !== 'PAID') {\n      throw new Error(\n        `An order can only be shipped after payment. Current status: ${this._status}.`,\n      );\n    }\n\n    this._status = 'SHIPPED';\n    this.domainEvents.push(new OrderShipped(this.id, this.customerId));\n  }\n\n  public cancel(): void {\n    if (this._status !== 'PENDING' && this._status !== 'PAID') {\n      throw new Error(\n        `Only pending or paid orders can be cancelled. Current status: ${this._status}.`,\n      );\n    }\n\n    this._status = 'CANCELLED';\n    this.domainEvents.push(new OrderCancelled(this.id, this.customerId));\n  }\n\n  public getDomainEvents(): any[] {\n    const events = [...this.domainEvents];\n    this.domainEvents.length = 0;\n    return events;\n  }\n}\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}"
+      },
+      "delta": 0
+    }
+  ]
+}

@@ -59,6 +59,30 @@ Activate whenever:
 - Follow the "Rule of Three": inline on first use, duplicate cleanly on second, abstract only on third.
 - Keep solutions obvious to a mid-level developer without requiring multi-layered wrapper classes.
 
+### 6. Targeted Tool-Specific Modifications
+
+**Prevent accidental code loss during file updates.**
+
+- For existing files requiring localized updates (< 50% change), always prefer surgical targeted replacement chunks over destructive full-file rewrites.
+- Never discard unrelated file sections, existing comments, or helper utilities.
+
+### 7. Persistent Context & Plan Tracking
+
+**Prevent context drift during multi-step tasks.**
+
+- When an operation requires more than 3 sequential steps, write and maintain a persistent plan or checklist on disk.
+- Never rely exclusively on volatile conversational memory for tracking complex multi-file refactorings.
+
+### 8. Progressive Step Narration (Transparent Pair Programming)
+
+**Eliminate the "black box" by narrating technical decisions.**
+
+- Avoid executing long, silent chains of tool calls without user visibility.
+- Provide a concise 1–2 sentence transparent status update before key operations:
+  - State what was inspected or verified from the code.
+  - State the architectural decision made and the immediate next action.
+- Keep narration crisp and actionable without excessive verbosity.
+
 ---
 
 ## Code Examples
@@ -115,6 +139,9 @@ export async function updateUser(id, data, session) {
 - [ ] Delivered 100% complete code with zero `// TODO` or `// ...` placeholders.
 - [ ] Ran automated tests and validation with green status.
 - [ ] Confined changes to the minimal required blast radius.
+- [ ] Preserved existing code via targeted edits rather than full-file overwrites.
+- [ ] Persisted multi-step task state and milestones to disk.
+- [ ] Narrated progress with concise, transparent step-by-step updates.
 - [ ] Reported final status with verifiable evidence.
 
 ---

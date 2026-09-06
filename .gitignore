@@ -19,12 +19,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Benchmark Run Outputs & Reports
-benchmarks/results/report-*
-benchmarks/results/*.html
-benchmarks/results/*.json
-benchmarks/results/*.md
-!benchmarks/results/.gitkeep
+# Benchmark Run Outputs & Reports (tracked so test results are visible to collaborators)
+!benchmarks/results/
+
 
 # Plugin cache & local installs
 .agents/plugins/

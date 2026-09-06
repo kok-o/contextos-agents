@@ -1,8 +1,9 @@
 {
-  "name": "koko-contextos-agents",
+  "name": "contextos-agents",
   "version": "1.4.1",
   "description": "Install a .agents folder into your project to teach AI assistants best practices: UI/UX, architecture, security, and engineering workflow skills.",
   "bin": {
+    "contextos-agents": "./bin/index.js",
     "koko-contextos-agents": "./bin/index.js"
   },
   "files": [
@@ -51,11 +52,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kok-o/koko-contextos-agents.git"
+    "url": "https://github.com/kok-o/contextos-agents.git"
   },
-  "homepage": "https://github.com/kok-o/koko-contextos-agents#readme",
+  "homepage": "https://github.com/kok-o/contextos-agents#readme",
   "bugs": {
-    "url": "https://github.com/kok-o/koko-contextos-agents/issues"
+    "url": "https://github.com/kok-o/contextos-agents/issues"
   },
   "engines": {
     "node": ">=16.7.0"

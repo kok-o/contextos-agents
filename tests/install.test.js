@@ -35,6 +35,8 @@ describe('bin/index.js — installer', () => {
     assert.ok(output.includes('Usage:'), 'Should include Usage section');
     assert.ok(output.includes('--dry-run'), 'Should list --dry-run flag');
     assert.ok(output.includes('--force'), 'Should list --force flag');
+    assert.ok(output.includes('--with-mcp'), 'Should list --with-mcp flag');
+    assert.ok(output.includes('setup-mcp'), 'Should list setup-mcp command');
   });
 
   test('--dry-run does not create .agents/ folder', () => {
@@ -47,7 +49,7 @@ describe('bin/index.js — installer', () => {
     assert.ok(!fs.existsSync(targetAgents), '.agents/ should NOT be created in dry-run mode');
   });
 
-  test('installs .agents/ folder with required files', () => {
+  test('installs .agents/ folder with required files (excluding mcp by default)', () => {
     const testDir = path.join(tmpDir, 'install-test');
     fs.mkdirSync(testDir, { recursive: true });
 
@@ -58,6 +60,36 @@ describe('bin/index.js — installer', () => {
     assert.ok(fs.existsSync(path.join(agentsDir, 'AGENTS.md')), 'AGENTS.md should exist');
     assert.ok(fs.existsSync(path.join(agentsDir, 'skills.json')), 'skills.json should exist');
     assert.ok(fs.existsSync(path.join(agentsDir, 'ctx.js')), 'ctx.js should exist');
+    assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should NOT be installed by default');
+    assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should NOT be created by default');
+  });
+
+  test('--with-mcp flag installs .agents/mcp and mcp_config.json', () => {
+    const testDir = path.join(tmpDir, 'with-mcp-test');
+    fs.mkdirSync(testDir, { recursive: true });
+
+    execSync(`node "${BIN_PATH}" --with-mcp --skip-compile`, { cwd: testDir });
+
+    const agentsDir = path.join(testDir, '.agents');
+    assert.ok(fs.existsSync(agentsDir), '.agents/ should be created');
+    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should exist with --with-mcp');
+    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should exist with --with-mcp');
+  });
+
+  test('setup-mcp configures MCP in an existing .agents/ folder', () => {
+    const testDir = path.join(tmpDir, 'setup-mcp-test');
+    fs.mkdirSync(testDir, { recursive: true });
+
+    // Step 1: Install without MCP
+    execSync(`node "${BIN_PATH}" --skip-compile`, { cwd: testDir });
+    const agentsDir = path.join(testDir, '.agents');
+    assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should not exist yet');
+
+    // Step 2: Configure MCP
+    const output = execSync(`node "${BIN_PATH}" setup-mcp`, { cwd: testDir }).toString();
+    assert.ok(output.includes('Installed ContextOS MCP'), 'Should confirm MCP installation');
+    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should be installed after setup-mcp');
+    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should be created after setup-mcp');
   });
 
   test('refuses to overwrite an existing .agents/ folder without --force', () => {

@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-09-05T11:08:39.881Z",
+  "provider": "openai",
+  "model": "glm-5.3",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 0,
+    "skillCompilationRate": 0,
+    "baselineAvgPassed": 0,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 5
+  },
+  "results": [
+    {
+      "taskId": "auth-security",
+      "title": "Secure Authentication & Rate Limiting Handler",
+      "category": "Security & Backend",
+      "skills": [
+        "security",
+        "node",
+        "ponytail-mindset"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected identifier 'handlers'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'handlers'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'handlers'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'handlers'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'handlers'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'handlers'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 2,
+        "code": "- Types & Interfaces\n  - User, StoredUser, Credentials\n  - TokenPayload, TokenPair, TokenVerificationResult\n  - RateLimitResult, RateLimitRule, RateLimitOptions\n  - AuthConfig\n  - Middleware handlers\n\n- PasswordHasher class (scrypt-based)\n  - hash(password): Promise<string>\n  - verify(password, hash): Promise<boolean>\n  - needsRehash(hash): boolean\n\n- JwtService class (HMAC-SHA256)\n  - sign(payload, options): string\n  - verify(token): TokenVerificationResult\n  - decode(token): payload | null\n\n- TokenStore (refresh token store with rotation & revocation)\n  - issue, rotate, revoke, revokeAllForUser\n\n- UserStore interface + InMemoryUserStore\n  - create, findByEmail/username, update, etc.\n\n- RateLimiter interface + implementations\n  - TokenBucketRateLimiter\n  - SlidingWindowRateLimiter (sliding window counter with weighted recency)\n  - FixedWindowRateLimiter\n  - CompositeRateLimiter (multiple rules)\n\n- LoginAttemptTracker / brute force protection\n  - track failures, lockout\n\n- AuthService\n  - register\n  - login\n  - refresh\n  - logout\n  - verifyAccessToken\n  - changePassword\n\n- AuthMiddleware / RateLimitMiddleware\n  - Express-compatible (req, res, next)\n  - Framework-agnostic core with adapters\n\n- AuditLogger\n\n- SecureTokenGenerator (random tokens)\n\n// ────────────\n\ninterface RateLimitRule {\n  name: string;\n  limit: number;        // max tokens or requests\n  windowMs: number;     // window duration\n  keyGenerator?: (ctx: RequestContext) => string;\n}\n\ninterface RateLimitResult {\n  allowed: boolean;\n  limit: number;\n  remaining: number;\n  resetAt: number;      // epoch ms\n  retryAfterMs: number; // 0 if allowed\n  ruleName: string;\n}\n\n// ────────────\n\nclass TokenBucket {\n  tokens: number;\n  updatedAt: number;\n}\n\n// ────────────\n\nclass AuthService {\n  constructor(config, userStore, tokenStore, hasher, jwt, audit, loginTracker)\n  \n  async register(input): Promise<AuthResult>\n  async login(credentials, meta): Promise<AuthResult>\n  async refresh(refreshToken, meta): Promise<AuthResult>\n  async logout(refreshToken): Promise<void>\n  async verifyAccessToken(token): Promise<TokenPayload>\n  async changePassword(userId, oldPw, newPw): Promise<void>\n}\n\n// ────────────\n\nfunction createAuthMiddleware(authService, options) {\n  return async (req, res, next) => { ... }\n}\n\n// ────────────\n\ninterface HttpRequest {\n  headers: Record<string, string | string[] | undefined>;\n  socket?: { remoteAddress?: string };\n  method?: string;\n  url?: string;\n  ip?: string;\n}\ninterface HttpResponse {\n  setHeader(name: string, value: string | number): void;\n  status(code: number): HttpResponse;\n  json(body: unknown): void;\n  end(): void;\n}\n\n// ────────────\n\ninterface RefreshTokenRecord {\n  id: string;             // jti\n  tokenHash: string;      // sha256 of the opaque token\n  userId: string;\n  issuedAt: number;\n  expiresAt: number;\n  rotatedFrom?: string;   // previous token id\n  revokedAt?: number;\n  replacedByTokenHash?: string;\n  meta: { ip?: string; userAgent?: string };\n}\n\n// ────────────\n\ninterface AttemptRecord {\n  failures: number;\n  lockedUntil: number;\n  lastFailureAt: number;\n}\n\n// ────────────\n\nclass SecureAuthHandler {\n  constructor(options)\n  \n  // Express-compatible handlers\n  handleRegister: Handler\n  handleLogin: Handler\n  handleRefresh: Handler\n  handleLogout: Handler\n  handleMe: Handler\n  \n  authenticate: Handler        // require valid access token\n  optionalAuthenticate: Handler\n  rateLimit(rules): Handler    // rate limit middleware factory\n  \n  // Body parsing helper (since raw http doesn't parse JSON)\n  readJsonBody(req): Promise<any>\n}\n\n// ────────────\n\n/**\n * secure-auth.ts\n * Secure Authentication & Rate Limiting Handler\n * \n * Zero external dependencies — Node.js built-ins only.\n */\n\nimport * as crypto from 'crypto';\nimport { EventEmitter } from 'events';\n\n// ────────────\n\nconst BASE64URL_CHARS = ...\n\nfunction base64urlEncode(buf: Buffer): string {\n  return buf.toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/g, '');\n}\n\nfunction base64urlDecode(str: string): Buffer {\n  const pad = str.length % 4 === 0 ? '' : '='.repeat(4 - (str.length % 4));\n  return Buffer.from(str.replace(/-/g, '+').replace(/_/g, '/') + pad, 'base64');\n}\n\nfunction randomToken(bytes = 32): string {\n  return base64urlEncode(randomBytes(bytes));\n}\n\nfunction sha256(input: string): string {\n  return createHash('sha256').update(input, 'utf8').digest('hex');\n}\n\nfunction secureCompare(a: string, b: string): boolean {\n  const ab = Buffer.from(a, 'utf8');\n  const bb = Buffer.from(b, 'utf8');\n  if (ab.length !== bb.length) {\n    // Still perform a comparison to keep timing consistent-ish\n    timingSafeEqual(ab, ab);\n    return false;\n  }\n  return timingSafeEqual(ab, bb);\n}\n\nfunction nowMs(): number { return Date.now(); }\n\n// ────────────\n\nexport class HttpError extends Error {\n  readonly status: number;\n  readonly code: string;\n  readonly details?: Record<string, unknown>;\n  constructor(status, code, message, details?) { ... }\n}\n\nexport class ValidationError extends HttpError { constructor(msg, details?) { super(400, 'VALIDATION_ERROR', msg, details) } }\nexport class AuthenticationError extends HttpError { constructor(msg = 'Authentication required', code = 'AUTHENTICATION_FAILED') { super(401, code, msg) } }\nexport class AuthorizationError extends HttpError { constructor(msg = 'Insufficient permissions') { super(403, 'FORBIDDEN', msg) } }\nexport class RateLimitError extends HttpError {\n  readonly retryAfterMs: number;\n  readonly limit: number;\n  constructor(result: RateLimitResult) { super(429, 'RATE_LIMITED', ...); }\n}\nexport class ConflictError extends HttpError { ... 409 }\nexport class LockoutError extends AuthenticationError { ... retryAfterMs }\n\n// ────────────\n\nexport interface PublicUser {\n  id: string;\n  email: string;\n  username: string;\n  roles: string[];\n  createdAt: number;\n  updatedAt: number;\n  lastLoginAt: number | null;\n}\n\nexport interface StoredUser extends PublicUser {\n  passwordHash: string;\n  failedLoginAttempts: number;\n  lockedUntil: number;\n  active: boolean;\n  tokenVersion: number; // bump to invalidate all tokens\n}\n\nexport interface TokenPayload {\n  sub: string;          // user id\n  email: string;\n  roles: string[];\n  typ: 'access';\n  jti: string;\n  iat: number;  // seconds\n  exp: number;  // seconds\n  iss: string;\n  aud: string;\n  ver: number;  // tokenVersion\n}\n\nexport interface TokenPair {\n  tokenType: 'Bearer';\n  accessToken: string;\n  refreshToken: string;\n  accessExpiresIn: number;   // seconds\n  refreshExpiresIn: number;  // seconds\n}\n\nexport interface AuthResult {\n  user: PublicUser;\n  tokens: TokenPair;\n}\n\nexport interface RequestMeta {\n  ip?: string;\n  userAgent?: string;\n}\n\n// ────────────\n\nexport interface PasswordHasherOptions {\n  keylen?: number;      // default 64\n  cost?: number;        // N, default 16384\n  blockSize?: number;   // r, default 8\n  parallelization?: number; // p, default 1\n  maxmem?: number;      // default 64MB\n}\n\nexport class PasswordHasher {\n  private readonly opts: Required<PasswordHasherOptions>;\n  static readonly FORMAT_VERSION = 'scrypt';\n  \n  constructor(options = {}) {\n    this.opts = { keylen: 64, cost: 16384, blockSize: 8, parallelization: 1, maxmem: 64 * 1024 * 1024, ...options };\n  }\n  \n  async hash(password: string): Promise<string> {\n    const salt = randomBytes(16);\n    const derived = await this.derive(password, salt);\n    // Format: scrypt$N$r$p$keylen$saltB64$hashB64\n    return ['scrypt', N, r, p, keylen, salt.toString('base64'), derived.toString('base64')].join('$');\n  }\n  \n  async verify(password: string, stored: string): Promise<boolean> {\n    try {\n      parse; derive with same params; timingSafeEqual;\n    } catch { return false; }\n  }\n  \n  needsRehash(stored: string): boolean {\n    parse params; compare with current opts;\n  }\n  \n  private derive(password, salt): Promise<Buffer> {\n    return new Promise((resolve, reject) => {\n      scrypt(password, salt, keylen, { N, r, p, maxmem }, (err, key) => err ? reject(err) : resolve(key));\n    });\n  }\n}\n\n// ────────────\n\nexport interface PasswordPolicyOptions {\n  minLength: number;       // default 12\n  requireUppercase: boolean;\n  requireLowercase: boolean;\n  requireDigit: boolean;\n  requireSymbol: boolean;\n  maxLength: number;       // 128\n  rejectCommon: boolean;\n}\n\nconst COMMON_PASSWORDS = new Set([...]); // small list\n\nexport class PasswordPolicy {\n  validate(password: string, context?: { username?: string; email?: string }): ValidationError | null\n}\n\n// ────────────\n\nexport interface JwtOptions {\n  secret: string | Buffer;   // must be >= 32 bytes\n  issuer: string;\n  audience: string;\n  accessTtlSeconds: number;  // default 900 (15 min)\n  clockSkewSeconds: number;  // default 5\n}\n\nexport class JwtService {\n  private secret: Buffer;\n  \n  constructor(opts) { validate secret length >= 32 }\n  \n  signAccessToken(user: StoredUser): string {\n    const header = { alg: 'HS256', typ: 'JWT' };\n    const now = Math.floor(Date.now() / 1000);\n    const payload: TokenPayload = { sub, email, roles, typ: 'access', jti: randomToken(16), iat: now, exp: now + ttl, iss, aud, ver: user.tokenVersion };\n    return this.encode(payload);\n  }\n  \n  verify(token: string): TokenPayload {\n    // split, decode header, check alg HS256 exactly (prevent alg confusion)\n    // recompute sig, timingSafeEqual\n    // check exp/nbf with skew, iss, aud, typ\n  }\n  \n  private encode(payload): string {\n    const signingInput = base64url(JSON.stringify(header)) + '.' + base64url(JSON.stringify(payload));\n    const sig = createHmac('sha256', secret).update(signingInput).digest();\n    return signingInput + '.' + base64url(sig);\n  }\n}\n\n// ────────────\n\nexport interface RefreshTokenRecord {\n  id: string;\n  tokenHash: string;\n  userId: string;\n  issuedAt: number;\n  expiresAt: number;\n  rotated: boolean;\n  rotatedAt?: number;\n  replacedByHash?: string;\n  revokedAt?: number;\n  revokedReason?: string;\n  meta: RequestMeta;\n}\n\nexport interface TokenStore {\n  save(record: RefreshTokenRecord): Promise<void>;\n  findByHash(hash: string): Promise<RefreshTokenRecord | null>;\n  markRotated(hash: string, replacedByHash: string): Promise<void>;\n  revokeByHash(hash: string, reason: string): Promise<void>;\n  revokeAllForUser(userId: string, reason: string): Promise<number>;\n  deleteExpired(before: number): Promise<number>;\n}\n\n// ────────────\n\nexport interface UserStore {\n  create(user: StoredUser): Promise<StoredUser>;\n  findById(id): Promise<StoredUser | null>;\n  findByEmail(email): Promise<StoredUser | null>;\n  findByUsername(username): Promise<StoredUser | null>;\n  update(user: StoredUser): Promise<void>;\n  delete(id): Promise<void>;\n}\n\n// ────────────\n\nexport interface BruteForceOptions {\n  maxAttempts: number;      // default 5\n  baseLockoutMs: number;    // default 30s... maybe 15 min? Let's do 5 min base\n  maxLockoutMs: number;     // default 15 min\n  windowMs: number;         // attempts window, default 15 min\n}\n\nexport class LoginAttemptTracker {\n  private records = new Map<string, { failures: number; windowStart: number; lockedUntil: number }>();\n  \n  isLocked(key): { locked: boolean; retryAfterMs: number }\n  recordFailure(key): { failures, lockoutMs }\n  recordSuccess(key): void\n  private lockoutMs(failures): number { min(base * 2^(failures - maxAttempts), max) }\n}\n\n// ────────────\n\nexport interface RateLimitContext {\n  key: string;         // identifier (ip, user id, etc.)\n  weight?: number;     // default 1\n  now?: number;\n}\n\nexport interface RateLimitResult {\n  allowed: boolean;\n  limit: number;\n  remaining: number;\n  resetAt: number;      // epoch ms\n  retryAfterMs: number;\n  rule: string;\n}\n\nexport interface RateLimiter {\n  readonly name: string;\n  consume(ctx: RateLimitContext): Promise<RateLimitResult> | RateLimitResult;\n  reset(key?: string): void | Promise<void>;\n}\n\n// ────────────\n\nexport interface TokenBucketOptions {\n  name: string;\n  capacity: number;      // burst size\n  refillPerSecond: number; // sustained rate\n  cost?: number;         // default 1\n}\n\n// state: { tokens: number, updatedAt: number }\n// On consume: \n//   now; elapsed = now - updatedAt; tokens = min(capacity, tokens + elapsed/1000 * refillPerSecond)\n//   if tokens >= cost: tokens -= cost; allowed\n//   else: retryAfterMs = ceil((cost - tokens) / refillPerSecond * 1000)\n//   resetAt = now + ceil((capacity - tokens)/refillPerSecond*1000)  // when bucket full again\n\n// ────────────\n\n// state: { currentWindow: number (index), currentCount, previousCount }\n// windowIndex = floor(now / windowMs)\n// If stored window < current: shift (previous = current if adjacent, else 0; current = 0)\n// weighted = previousCount * ((windowMs - (now % windowMs)) / windowMs) + currentCount\n// if weighted + cost <= limit: allow, currentCount += cost\n// else deny; resetAt = start of next window"
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "Unexpected token '...'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token '...'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token '...'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token '...'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token '...'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected token '...'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 1,
+        "code": "// Lua script for atomic fixed-window\nconst FIXED_WINDOW = `\nlocal current = redis.call('INCR', KEYS[1])\nif current == 1 then\n  redis.call('EXPIRE', KEYS[1], ARGV[1])\nend\nreturn current\n`;\n\n// ────────────\n\nclass UserRepository {\n  constructor(private db: Pool) {}\n  async findByEmail(email: string) {\n    const { rows } = await this.db.query(\n      'SELECT id, email, password_hash, created_at FROM users WHERE email = $1',\n      [email]\n    );\n    return rows[0] ?? null;\n  }\n  async create(email, passwordHash) {\n    // ON CONFLICT DO NOTHING then check, or catch unique violation → ConflictError\n  }\n  async findById(id) { ... }\n}\n\n// ────────────\n\nconst shutdown = async (signal: string) => {\n  logger.info('shutdown initiated', { signal });\n  server.close(async () => {\n    await Promise.allSettled([pool.end(), redis.quit()]);\n    process.exit(0);\n  });\n  // Force exit after timeout\n  setTimeout(() => process.exit(1), 10_000).unref();\n};\nprocess.on('SIGTERM', () => shutdown('SIGTERM'));\nprocess.on('SIGINT', () => shutdown('SIGINT'));"
+      },
+      "delta": 0
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-09-05T12:59:58.470Z",
+  "provider": "openai-compatible",
+  "model": "claude-opus-5",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 100,
+    "skillPassRate": 100,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 100,
+    "skillCompilationRate": 100,
+    "baselineAvgPassed": 4,
+    "skillAvgPassed": 4,
+    "avgTotalTests": 4
+  },
+  "results": [
+    {
+      "taskId": "ddd-order-invariants",
+      "title": "DDD Order Aggregate Root & Money Value Object",
+      "category": "Architecture & DDD",
+      "skills": [
+        "ddd",
+        "system-design",
+        "typescript"
+      ],
+      "baseline": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "money-value-object-invariants",
+            "name": "Money Value Object is immutable and validates currency matching",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": true,
+            "durationMs": 0
+          }
+        ],
+        "passRate": 100,
+        "totalPassed": 4,
+        "totalTests": 4,
+        "totalDurationMs": 64,
+        "code": "export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class DomainError extends Error {\n  constructor(message: string) {\n    super(message);\n    this.name = 'DomainError';\n  }\n}\n\nconst CURRENCY_RE = /^[A-Z]{3}$/;\n\nexport class Money {\n  readonly amount: number;\n  readonly currency: string;\n\n  constructor(amount: number, currency: string) {\n    if (typeof amount !== 'number' || !Number.isFinite(amount)) {\n      throw new DomainError('Money amount must be a finite number');\n    }\n    if (amount < 0) throw new DomainError('Money amount cannot be negative');\n    if (typeof currency !== 'string' || !CURRENCY_RE.test(currency.toUpperCase())) {\n      throw new DomainError(`Invalid currency code: ${String(currency)}`);\n    }\n    this.amount = Math.round(amount * 100) / 100;\n    this.currency = currency.toUpperCase();\n    Object.freeze(this);\n  }\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  static zero(currency: string): Money {\n    return new Money(0, currency);\n  }\n\n  private assertSameCurrency(other: Money): void {\n    if (!(other instanceof Money)) throw new DomainError('Expected a Money instance');\n    if (other.currency !== this.currency) {\n      throw new DomainError(`Currency mismatch: ${this.currency} vs ${other.currency}`);\n    }\n  }\n\n  add(other: Money): Money {\n    this.assertSameCurrency(other);\n    return new Money(this.amount + other.amount, this.currency);\n  }\n\n  subtract(other: Money): Money {\n    this.assertSameCurrency(other);\n    if (other.amount > this.amount) throw new DomainError('Result would be negative');\n    return new Money(this.amount - other.amount, this.currency);\n  }\n\n  multiply(factor: number): Money {\n    if (typeof factor !== 'number' || !Number.isFinite(factor) || factor < 0) {\n      throw new DomainError('Factor must be a non-negative finite number');\n    }\n    return new Money(this.amount * factor, this.currency);\n  }\n\n  equals(other: Money): boolean {\n    return other instanceof Money && other.currency === this.currency && other.amount === this.amount;\n  }\n\n  toString(): string {\n    return `${this.amount.toFixed(2)} ${this.currency}`;\n  }\n\n  toJSON(): { amount: number; currency: string } {\n    return { amount: this.amount, currency: this.currency };\n  }\n}\n\nexport interface OrderItem {\n  id: string;\n  quantity: number;\n  price: Money;\n}\n\nexport interface DomainEvent {\n  type: string;\n  orderId: string;\n  occurredAt: Date;\n  payload: Record<string, unknown>;\n}\n\nconst TRANSITIONS: Record<OrderStatus, ReadonlyArray<OrderStatus>> = {\n  PENDING: ['PAID', 'CANCELLED'],\n  PAID: ['SHIPPED', 'CANCELLED'],\n  SHIPPED: [],\n  CANCELLED: [],\n};\n\nexport class Order {\n  readonly id: string;\n  readonly customerId: string;\n  private _status: OrderStatus = 'PENDING';\n  private readonly _items = new Map<string, OrderItem>();\n  private readonly _events: DomainEvent[] = [];\n\n  constructor(id: string, customerId: string) {\n    if (!id || typeof id !== 'string') throw new DomainError('Order id is required');\n    if (!customerId || typeof customerId !== 'string') throw new DomainError('customerId is required');\n    this.id = id;\n    this.customerId = customerId;\n    this.record('OrderCreated', { customerId });\n  }\n\n  get status(): OrderStatus {\n    return this._status;\n  }\n\n  get items(): ReadonlyArray<OrderItem> {\n    return Array.from(this._items.values(), (i) => ({ ...i }));\n  }\n\n  private record(type: string, payload: Record<string, unknown> = {}): void {\n    this._events.push({ type, orderId: this.id, occurredAt: new Date(), payload });\n  }\n\n  private transition(next: OrderStatus): void {\n    if (!TRANSITIONS[this._status].includes(next)) {\n      throw new DomainError(`Cannot transition order ${this.id} from ${this._status} to ${next}`);\n    }\n    this._status = next;\n  }\n\n  addItem(productId: string, quantity: number, price: Money): void {\n    if (this._status !== 'PENDING') {\n      throw new DomainError(`Cannot modify items of an order in status ${this._status}`);\n    }\n    if (!productId || typeof productId !== 'string') throw new DomainError('productId is required');\n    if (!Number.isInteger(quantity) || quantity <= 0) {\n      throw new DomainError('quantity must be a positive integer');\n    }\n    if (!(price instanceof Money)) throw new DomainError('price must be a Money instance');\n    const first = this._items.values().next().value as OrderItem | undefined;\n    if (first && first.price.currency !== price.currency) {\n      throw new DomainError(`Currency mismatch: order uses ${first.price.currency}`);\n    }\n    const existing = this._items.get(productId);\n    if (existing) {\n      this._items.set(productId, { id: productId, quantity: existing.quantity + quantity, price });\n    } else {\n      this._items.set(productId, { id: productId, quantity, price });\n    }\n    this.record('OrderItemAdded', { productId, quantity, price: price.toJSON() });\n  }\n\n  removeItem(productId: string): void {\n    if (this._status !== 'PENDING') {\n      throw new DomainError(`Cannot modify items of an order in status ${this._status}`);\n    }\n    if (!this._items.delete(productId)) {\n      throw new DomainError(`Item ${productId} not found in order ${this.id}`);\n    }\n    this.record('OrderItemRemoved', { productId });\n  }\n\n  pay(): void {\n    if (this._items.size === 0) throw new DomainError('Cannot pay an order with no items');\n    this.transition('PAID');\n    this.record('OrderPaid', { total: this.getTotal().toJSON() });\n  }\n\n  ship(): void {\n    this.transition('SHIPPED');\n    this.record('OrderShipped', {});\n  }\n\n  cancel(): void {\n    this.transition('CANCELLED');\n    this.record('OrderCancelled', {});\n  }\n\n  getTotal(): Money {\n    const list = Array.from(this._items.values());\n    if (list.length === 0) return Money.zero('USD');\n    return list.reduce(\n      (sum, item) => sum.add(item.price.multiply(item.quantity)),\n      Money.zero(list[0].price.currency),\n    );\n  }\n\n  getDomainEvents(): DomainEvent[] {\n    return this._events.map((e) => ({ ...e, payload: { ...e.payload } }));\n  }\n\n  pullDomainEvents(): DomainEvent[] {\n    const out = this.getDomainEvents();\n    this._events.length = 0;\n    return out;\n  }\n}\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}\n\nexport class InMemoryOrderRepository implements IOrderRepository {\n  private readonly store = new Map<string, Order>();\n\n  async findById(id: string): Promise<Order | null> {\n    return this.store.get(id) ?? null;\n  }\n\n  async save(order: Order): Promise<void> {\n    if (!(order instanceof Order)) throw new DomainError('save expects an Order aggregate');\n    this.store.set(order.id, order);\n  }\n\n  async delete(id: string): Promise<boolean> {\n    return this.store.delete(id);\n  }\n\n  async findAll(): Promise<Order[]> {\n    return Array.from(this.store.values());\n  }\n}"
+      },
+      "withSkills": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "money-value-object-invariants",
+            "name": "Money Value Object is immutable and validates currency matching",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "order-state-invariants",
+            "name": "Order Aggregate enforces business state-machine invariants",
+            "passed": true,
+            "durationMs": 0
+          },
+          {
+            "id": "domain-events-emission",
+            "name": "Records domain events for downstream side-effects",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "repository-interface-decoupling",
+            "name": "Maintains decoupled repository interface without ORM leakage",
+            "passed": true,
+            "durationMs": 0
+          }
+        ],
+        "passRate": 100,
+        "totalPassed": 4,
+        "totalTests": 4,
+        "totalDurationMs": 8,
+        "code": "/**\n * Orders Bounded Context — Domain Layer (self-contained).\n *\n * Aggregate Root: Order. Value Object: Money.\n * Invariants enforced inside the aggregate; state transitions emit domain events.\n */\n\nexport type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\n/** Domain error base — allows infrastructure to map to HTTP/RPC codes. */\nexport class DomainError extends Error {\n  constructor(\n    message: string,\n    readonly code: string,\n  ) {\n    super(message);\n    this.name = new.target.name;\n  }\n}\n\nexport class InvalidMoneyError extends DomainError {\n  constructor(message: string) {\n    super(message, 'INVALID_MONEY');\n  }\n}\n\nexport class CurrencyMismatchError extends DomainError {\n  constructor(left: string, right: string) {\n    super(`Cannot operate on different currencies: ${left} vs ${right}`, 'CURRENCY_MISMATCH');\n  }\n}\n\nexport class InvalidQuantityError extends DomainError {\n  constructor(quantity: number) {\n    super(`Quantity must be a positive integer, received: ${quantity}`, 'INVALID_QUANTITY');\n  }\n}\n\nexport class InvalidOrderStateError extends DomainError {\n  constructor(action: string, status: OrderStatus) {\n    super(`Cannot ${action} an order in status ${status}`, 'INVALID_ORDER_STATE');\n  }\n}\n\nexport class EmptyOrderError extends DomainError {\n  constructor() {\n    super('Cannot pay for an order without items', 'EMPTY_ORDER');\n  }\n}\n\nconst CURRENCY_PATTERN = /^[A-Z]{3}$/;\n/** Minor-unit scale (cents). Money is stored as integer minor units internally. */\nconst SCALE = 100;\n\n/** Immutable Value Object: equality by value, never by identity. */\nexport class Money {\n  private readonly minorUnits: number;\n\n  constructor(amount: number, currency: string) {\n    if (typeof amount !== 'number' || !Number.isFinite(amount)) {\n      throw new InvalidMoneyError(`Amount must be a finite number, received: ${String(amount)}`);\n    }\n    const normalizedCurrency = currency.trim().toUpperCase();\n    if (!CURRENCY_PATTERN.test(normalizedCurrency)) {\n      throw new InvalidMoneyError(`Currency must be a 3-letter ISO 4217 code, received: ${currency}`);\n    }\n    const minorUnits = Math.round(amount * SCALE);\n    if (minorUnits < 0) {\n      throw new InvalidMoneyError(`Amount cannot be negative, received: ${amount}`);\n    }\n    this.minorUnits = minorUnits;\n    this.currency = normalizedCurrency;\n    Object.freeze(this);\n  }\n\n  readonly currency: string;\n\n  get amount(): number {\n    return this.minorUnits / SCALE;\n  }\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  static zero(currency: string): Money {\n    return new Money(0, currency);\n  }\n\n  add(other: Money): Money {\n    this.assertSameCurrency(other);\n    return new Money((this.minorUnits + other.minorUnits) / SCALE, this.currency);\n  }\n\n  multiply(factor: number): Money {\n    if (!Number.isInteger(factor) || factor < 0) {\n      throw new InvalidMoneyError(`Factor must be a non-negative integer, received: ${factor}`);\n    }\n    return new Money((this.minorUnits * factor) / SCALE, this.currency);\n  }\n\n  equals(other: Money): boolean {\n    return this.currency === other.currency && this.minorUnits === other.minorUnits;\n  }\n\n  toString(): string {\n    return `${this.amount.toFixed(2)} ${this.currency}`;\n  }\n\n  private assertSameCurrency(other: Money): void {\n    if (this.currency !== other.currency) {\n      throw new CurrencyMismatchError(this.currency, other.currency);\n    }\n  }\n}\n\nexport interface OrderItem {\n  id: string;\n  quantity: number;\n  price: Money;\n}\n\nexport interface DomainEvent {\n  readonly name: string;\n  readonly aggregateId: string;\n  readonly occurredAt: Date;\n  readonly payload: Readonly<Record<string, string | number>>;\n}\n\n/** Aggregate Root — the only entry point for mutating order state. */\nexport class Order {\n  private readonly mutableItems: OrderItem[] = [];\n  private readonly events: DomainEvent[] = [];\n  private currentStatus: OrderStatus = 'PENDING';\n\n  constructor(\n    readonly id: string,\n    readonly customerId: string,\n  ) {\n    if (id.trim().length === 0) throw new DomainError('Order id is required', 'INVALID_ORDER_ID');\n    if (customerId.trim().length === 0) {\n      throw new DomainError('Customer id is required', 'INVALID_CUSTOMER_ID');\n    }\n    this.record('OrderCreated', { customerId });\n  }\n\n  get status(): OrderStatus {\n    return this.currentStatus;\n  }\n\n  get items(): ReadonlyArray<OrderItem> {\n    return this.mutableItems.map((item) => ({ ...item }));\n  }\n\n  addItem(productId: string, quantity: number, price: Money): void {\n    if (this.currentStatus !== 'PENDING') throw new InvalidOrderStateError('add items to', this.currentStatus);\n    if (productId.trim().length === 0) throw new DomainError('Product id is required', 'INVALID_PRODUCT_ID');\n    if (!Number.isInteger(quantity) || quantity <= 0) throw new InvalidQuantityError(quantity);\n    const first = this.mutableItems[0];\n    if (first !== undefined && first.price.currency !== price.currency) {\n      throw new CurrencyMismatchError(first.price.currency, price.currency);\n    }\n    const existing = this.mutableItems.find((item) => item.id === productId);\n    if (existing !== undefined) {\n      existing.quantity += quantity;\n      existing.price = price;\n    } else {\n      this.mutableItems.push({ id: productId, quantity, price });\n    }\n    this.record('OrderItemAdded', { productId, quantity, unitPrice: price.amount, currency: price.currency });\n  }\n\n  pay(): void {\n    if (this.currentStatus !== 'PENDING') throw new InvalidOrderStateError('pay', this.currentStatus);\n    if (this.mutableItems.length === 0) throw new EmptyOrderError();\n    this.currentStatus = 'PAID';\n    const total = this.getTotal();\n    this.record('OrderPaid', { total: total.amount, currency: total.currency });\n  }\n\n  ship(): void {\n    if (this.currentStatus !== 'PAID') throw new InvalidOrderStateError('ship', this.currentStatus);\n    this.currentStatus = 'SHIPPED';\n    this.record('OrderShipped', { itemCount: this.mutableItems.length });\n  }\n\n  cancel(): void {\n    if (this.currentStatus === 'SHIPPED' || this.currentStatus === 'CANCELLED') {\n      throw new InvalidOrderStateError('cancel', this.currentStatus);\n    }\n    const previous = this.currentStatus;\n    this.currentStatus = 'CANCELLED';\n    this.record('OrderCancelled', { previousStatus: previous });\n  }\n\n  getTotal(): Money {\n    const first = this.mutableItems[0];\n    if (first === undefined) return Money.zero('USD');\n    return this.mutableItems.reduce<Money>(\n      (sum, item) => sum.add(item.price.multiply(item.quantity)),\n      Money.zero(first.price.currency),\n    );\n  }\n\n  getDomainEvents(): DomainEvent[] {\n    return [...this.events];\n  }\n\n  pullDomainEvents(): DomainEvent[] {\n    return this.events.splice(0, this.events.length);\n  }\n\n  private record(name: string, payload: Record<string, string | number>): void {\n    this.events.push({ name, aggregateId: this.id, occurredAt: new Date(), payload: Object.freeze({ ...payload }) });\n  }\n}\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}\n\n/** In-memory repository for tests and local runtime; one repository per aggregate root. */\nexport class InMemoryOrderRepository implements IOrderRepository {\n  private readonly storage = new Map<string, Order>();\n\n  async findById(id: string): Promise<Order | null> {\n    return this.storage.get(id) ?? null;\n  }\n\n  async save(order: Order): Promise<void> {\n    this.storage.set(order.id, order);\n  }\n}"
+      },
+      "delta": 0
+    }
+  ]
+}

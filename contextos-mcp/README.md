@@ -1,6 +1,6 @@
 # ContextOS MCP Server
 
-An execution layer for the [ContextOS](https://github.com/kok-o/koko-contextos-agents) framework. Exposes an MCP (Model Context Protocol) interface that allows orchestrating agents (like Antigravity) to spawn parallel coding agents in isolated Git worktrees.
+An execution layer for the [ContextOS](https://github.com/kok-o/contextos-agents) framework. Exposes an MCP (Model Context Protocol) interface that allows orchestrating agents (like Antigravity) to spawn parallel coding agents in isolated Git worktrees.
 
 ## Features
 - **Selective & Multilingual Context Loading:** Dynamically reads rules and skills from your `.agents/` directory using bilingual (English & Russian) keyword triggers. Extracts essential sections (`extractEssentialSkillContent`), significantly reducing prompt token overhead while auto-injecting project invariants from `AGENTS.md` and `GEMINI.md`.

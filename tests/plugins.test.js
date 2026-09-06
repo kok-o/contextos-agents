@@ -123,7 +123,7 @@ describe('ctx.js skill — command routing', () => {
   test('skill add --dry-run with a ref exits 0 and shows DRY-RUN message', () => {
     // Use a GitHub ref that points to an actual known-good file
     // (we use the repo's own SKILL.md for a safe test)
-    const { stdout, code } = runCtx('skill add kok-o/koko-contextos-agents/.agents/core/skills/ponytail-mindset --dry-run');
+    const { stdout, code } = runCtx('skill add kok-o/contextos-agents/.agents/core/skills/ponytail-mindset --dry-run');
     // If network is unavailable the test will fail — that's expected on CI without network
     // We only check that it ran (don't assert code=0 since network may be absent)
     assert.ok(

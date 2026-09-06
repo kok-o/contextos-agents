@@ -1,4 +1,4 @@
-# Contributing to koko-contextos-agents
+# Contributing to contextos-agents
 
 Thank you for contributing! This guide explains how to add skills, run tests, and submit pull requests.
 
@@ -74,7 +74,7 @@ All 116 tests across 26 suites must pass before submitting a PR.
 
 ## How to Test Locally (npm link)
 
-To test the full installation flow as if a user ran `npx koko-contextos-agents`:
+To test the full installation flow as if a user ran `npx contextos-agents`:
 
 ```bash
 # In the repo root:
@@ -83,7 +83,7 @@ npm link
 # In a fresh test project directory:
 mkdir /tmp/test-project && cd /tmp/test-project
 npm init -y
-npx koko-contextos-agents
+npx contextos-agents
 
 # Verify:
 ls .agents/
@@ -93,7 +93,7 @@ cat .agents/AGENTS.md
 To unlink when done:
 
 ```bash
-npm unlink koko-contextos-agents
+npm unlink contextos-agents
 ```
 
 ---
@@ -245,9 +245,9 @@ Before opening a PR:
 ## Project Structure
 
 ```
-koko-contextos-agents/
+contextos-agents/
 ├── bin/
-│   └── index.js              ← npm installer CLI (npx koko-contextos-agents)
+│   └── index.js              ← npm installer CLI (npx contextos-agents)
 ├── registry.json             ← Community skill registry
 ├── registry.schema.json      ← JSON Schema for registry entries
 ├── .agents/

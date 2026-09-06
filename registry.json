@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kok-o/koko-contextos-agents/main/registry.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kok-o/contextos-agents/main/registry.schema.json",
   "version": "1",
   "description": "ContextOS Community Skill Registry. Submit a PR to add your skill.",
   "skills": [
@@ -10,7 +10,7 @@
       "author": "koko-o",
       "tags": ["minimalism", "efficiency", "yagni"],
       "npm": null,
-      "github": "kok-o/koko-contextos-agents",
+      "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/ponytail-mindset",
       "builtin": true
     },
@@ -21,7 +21,7 @@
       "author": "koko-o",
       "tags": ["roles", "workflow", "planning"],
       "npm": null,
-      "github": "kok-o/koko-contextos-agents",
+      "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/gstack-roles",
       "builtin": true
     },
@@ -32,7 +32,7 @@
       "author": "koko-o",
       "tags": ["ui", "design", "frontend", "anti-patterns"],
       "npm": null,
-      "github": "kok-o/koko-contextos-agents",
+      "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/impeccable-design",
       "builtin": true
     },
@@ -43,11 +43,11 @@
       "author": "koko-o",
       "tags": ["knowledge-graph", "ast", "tree-sitter", "dependencies", "architecture"],
       "npm": null,
-      "github": "kok-o/koko-contextos-agents",
+      "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/graphify",
       "builtin": true
     }
   ],
-  "contributing": "https://github.com/kok-o/koko-contextos-agents/blob/main/CONTRIBUTING.md#publishing-a-skill-as-a-plugin",
-  "schema": "https://raw.githubusercontent.com/kok-o/koko-contextos-agents/main/registry.schema.json"
+  "contributing": "https://github.com/kok-o/contextos-agents/blob/main/CONTRIBUTING.md#publishing-a-skill-as-a-plugin",
+  "schema": "https://raw.githubusercontent.com/kok-o/contextos-agents/main/registry.schema.json"
 }

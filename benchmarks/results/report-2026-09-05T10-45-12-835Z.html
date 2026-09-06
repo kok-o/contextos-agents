@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContextOS Benchmark Dashboard — deepseek-v4-flash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f293d;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --warning: #f59e0b;
+      --primary-grad: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --glow-grad: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15), transparent 70%);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      background-image: var(--glow-grad);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: var(--primary-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    /* Hero Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .stat-delta {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--success);
+      background: var(--success-bg);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* Comparison Section */
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .task-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      margin-bottom: 28px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+      transition: border-color 0.2s;
+    }
+
+    .task-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .task-header {
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .task-title-group h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    .meta-tag {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    .task-scores {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .score-box {
+      text-align: right;
+    }
+
+    .score-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .score-num {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .task-body {
+      padding: 24px;
+    }
+
+    /* Checklist */
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .check-pass { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+    .check-fail { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+
+    /* Side-by-Side Code Viewer */
+    .code-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .code-comparison { grid-template-columns: 1fr; }
+    }
+
+    .code-panel {
+      background: #0d1117;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .code-pre {
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      overflow-x: auto;
+      max-height: 480px;
+      color: #e6edf3;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 60px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge">ContextOS Live Benchmark Suite</div>
+      <h1>Side-by-Side Quality Verification</h1>
+      <p class="subtitle">Provider: <strong>OPENAI</strong> &nbsp;|&nbsp; Model: <strong>deepseek-v4-flash</strong> &nbsp;|&nbsp; Evaluated: 05.09.2026</p>
+    </header>
+
+    <!-- Hero Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Baseline Score (Without Skills)</div>
+        <div class="stat-value">40.0 <span style="font-size: 1rem; color: var(--text-muted);">/ 100</span></div>
+      </div>
+      <div class="stat-card" style="border-color: rgba(99, 102, 241, 0.5);">
+        <div class="stat-label">ContextOS Score (With Skills)</div>
+        <div class="stat-value" style="color: #818cf8;">80.0 <span style="font-size: 1rem; color: var(--text-muted);">/ 100</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Net Score Delta</div>
+        <div class="stat-value" style="color: var(--success);">+40.0 <span class="stat-delta">+100%</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Quality Pass Rate (≥80)</div>
+        <div class="stat-value">100% <span class="stat-delta">+100%</span></div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="section-title">Comprehensive Benchmark Scenarios</div>
+
+    
+    <div class="task-card">
+      <div class="task-header">
+        <div class="task-title-group">
+          <h3>1. Secure Authentication &amp; Rate Limiting Handler</h3>
+          <div class="task-meta">
+            <span class="meta-tag">Security &amp; Backend</span>
+            <span class="meta-tag">Skills: security, node, ponytail-mindset</span>
+          </div>
+        </div>
+        <div class="task-scores">
+          <div class="score-box">
+            <div class="score-title">Baseline</div>
+            <div class="score-num" style="color: var(--text-muted);">40/100</div>
+          </div>
+          <div class="score-box">
+            <div class="score-title">ContextOS</div>
+            <div class="score-num" style="color: #818cf8;">80/100</div>
+          </div>
+          <div class="stat-delta" style="font-size: 1.1rem; padding: 6px 12px;">
+            +40 pts
+          </div>
+        </div>
+      </div>
+
+      <div class="task-body">
+        <!-- Static Checks Matrix -->
+        <div class="checklist-grid">
+          
+            <div class="check-item">
+              <span class="check-icon check-pass">✓</span>
+              <span><strong>Uses crypto.timingSafeEqual for timing-attack prevention</strong> (Baseline: ✗ → ContextOS: ✓)</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon check-pass">✓</span>
+              <span><strong>Implements rate limiting or brute-force tracking</strong> (Baseline: ✓ → ContextOS: ✓)</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon check-pass">✓</span>
+              <span><strong>Does not leak stack trace in 500 error responses</strong> (Baseline: ✓ → ContextOS: ✓)</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon check-fail">✗</span>
+              <span><strong>Performs explicit input validation on email/password</strong> (Baseline: ✗ → ContextOS: ✗)</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon check-pass">✓</span>
+              <span><strong>Configures JWT with expiresIn / audience / issuer</strong> (Baseline: ✓ → ContextOS: ✓)</span>
+            </div>
+        </div>
+
+        <!-- Code Comparison -->
+        <div class="code-comparison">
+          <div class="code-panel">
+            <div class="code-panel-header" style="color: #f87171;">
+              <span>[FAIL] Baseline (Without ContextOS)</span>
+              <span>Score: 40/100</span>
+            </div>
+            <pre class="code-pre"><code>type RateLimitBucket = {
+  failedAttempts: number;
+  lockoutUntil: number;
+}
+
+// ────────────
+
+export interface RateLimitRecord {
+  attempts: number;
+  blockedUntil: number;
+}
+async isBlocked(key): Promise&lt;boolean&gt;:
+  const record = get(key)
+  if (!record) return false
+  if (record.blockedUntil &gt; Date.now()) return true
+  return false
+async registerFailure(key): void
+  const now = Date.now()
+  let record = store.get(key)
+  if (!record) { record = { attempts: 0, blockedUntil: 0 } }
+  if (record.blockedUntil &gt; now) {
+    // if currently locked out, maybe extend? Not needed.
+    return;
+  }
+  if (now &gt;= record.blockedUntil &amp;&amp; record.blockedUntil &gt; 0) {
+     // lockout expired; reset attempts
+     record.attempts = 0;
+     record.blockedUntil = 0;
+  }
+  record.attempts += 1;
+  if (record.attempts &gt;= this.maxAttempts) {
+     record.blockedUntil = now + this.getLockoutDuration(record.attempts);
+     record.attempts = 0? Or maintain count. 
+  }
+  this.store.set(key, record)
+}
+
+// ────────────
+
+record.attempts = 0;
+record.lockoutCount = 0?
+
+// ────────────
+
+record.failedAttempts = record.failedAttempts + 1
+if record.lockedUntil &gt; now:
+  return &#039;locked&#039;
+if record.failedAttempts &gt;= maxAttempts:
+  record.lockedUntil = now + lockoutDelay(record.failedAttempts)
+  record.failedAttempts = 0?
+
+// ────────────
+
+record.lockoutCount = (record.lockoutCount || 0) + 1
+record.lockedUntil = now + baseMs * Math.pow(2, record.lockoutCount - 1)
+
+// ────────────
+
+export interface LoginInput {
+ email: string;
+ password: string;
+ ipAddress: string;
+}
+export type ValidationResult = { ok: true; data: LoginInput } | { ok: false; errors: string[]}
+
+// ────────────
+
+const token = jwt.sign({ sub: user.id, ... }, secret, {
+ algorithm: &#039;HS256&#039;,
+ expiresIn: &#039;15m&#039;,
+ issuer: &#039;auth-service&#039;,
+ audience: &#039;my-app&#039;,
+ jwtid: randomUUID(),
+ notBefore: ? not needed
+});
+
+// ────────────
+
+import jwt, { SignOptions } from &#039;jsonwebtoken&#039;;
+
+// ────────────
+
+interface JwtConfig { secret: string; issuer: string; audience: string; expiresIn: &#039;15m&#039;; }
+
+// ────────────
+
+generateToken(user: User): Promise&lt;string&gt;</code></pre>
+          </div>
+
+          <div class="code-panel">
+            <div class="code-panel-header" style="color: #34d399;">
+              <span>[PASS] ContextOS (Dynamic Skills Applied)</span>
+              <span>Score: 80/100</span>
+            </div>
+            <pre class="code-pre"><code>import crypto from &#039;node:crypto&#039;;
+import { promisify } from &#039;node:util&#039;;
+
+const scryptAsync = promisify(crypto.scrypt);
+const timingSafeEqual = crypto.timingSafeEqual;
+
+export async function verifyPassword(password: string, storedHash: string, salt: string): Promise&lt;boolean&gt; {
+  const hashBuffer = Buffer.from(storedHash, &#039;hex&#039;);
+  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
+  const keyBuffer = Buffer.from(derivedKey); // already Buffer
+  if (hashBuffer.length !== keyBuffer.length) return false;
+  return timingSafeEqual(hashBuffer, keyBuffer);
+}
+
+// ────────────
+
+const user = await userRepo.findByEmail(email);
+const passwordHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
+const salt = user?.salt ?? DUMMY_SALT;
+const valid = await verifyPassword(password, passwordHash, salt);
+if (!user || !valid) throw new InvalidCredentialsError();
+
+// ────────────
+
+const jwt = sign({ sub: user.id, email: user.email, role: user.role }, jwtSecret, {
+  expiresIn: &#039;15m&#039;,
+  audience: jwtAudience,
+  issuer: jwtIssuer,
+});
+
+// ────────────
+
+res.cookie(&#039;access_token&#039;, token, {
+  httpOnly: true,
+  secure: env.NODE_ENV === &#039;production&#039;,
+  sameSite: &#039;strict&#039;,
+  maxAge: 15 * 60 * 1000,
+  path: &#039;/&#039;,
+});
+
+// ────────────
+
+export interface RateLimitRecord {
+  count: number;
+  fails: number;
+  blockedUntil: number | null;
+  firstAttemptAt: number;
+}
+
+export interface RateLimitStore {
+  get(key: string): Promise&lt;RateLimitRecord | undefined&gt;;
+  set(key: string, record: RateLimitRecord, ttlMs?: number): Promise&lt;void&gt;;
+  incr(key: string, windowMs: number): Promise&lt;void&gt;;
+  delete(key: string): Promise&lt;void&gt;;
+}
+
+// ────────────
+
+export class InMemoryRateLimitStore implements RateLimitStore {
+  private store = new Map&lt;string, { fails: number; blockedUntil: number | null }&gt;();
+  async increment(key: string): Promise&lt;void&gt; ...
+  async get(key) ...
+  async reset(key) ...
+}
+
+// ────────────
+
+export class AppError extends Error {
+  constructor(public statusCode: number, public message: string, public code: string = &#039;APP_ERROR&#039;) { super(message); }
+}
+
+export class InvalidCredentialsError extends AppError { constructor() { super(401, &#039;Invalid email or password&#039;, &#039;INVALID_CREDENTIALS&#039;); } }
+export class RateLimitError extends AppError { constructor(retryAfterSeconds = 1) { super(429, &#039;Too many attempts. Try again later.&#039;, &#039;RATE_LIMITED&#039;); } }
+export class AppValidationError extends AppError { ... }
+export class UnauthorizedError maybe for JWT verify.
+
+// ────────────
+
+src/
+  config/env.ts
+  shared/errors.ts
+  shared/logger.ts? maybe not.
+  modules/auth/
+    auth.types.ts
+    auth.validation.ts
+    auth.service.ts
+    auth.store.ts
+    auth.controller.ts
+    auth.routes.ts
+  app.ts
+  server.ts
+
+// ────────────
+
+const scryptAsync = promisify(crypto.scrypt) as (
+  password: string,
+  salt: string,
+  keylen: number,
+) =&gt; Promise&lt;Buffer&gt;;
+
+// ────────────
+
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+  salt: string;
+  role: &#039;user&#039; | &#039;admin&#039;;
+}
+export interface UserRepository {
+  findByEmail(email: string): Promise&lt;User | null&gt;;
+}
+
+// ────────────
+
+export class InMemoryUserRepository implements UserRepository {
+  constructor(private users: User[] = []) {}
+  async findByEmail(email: string) { return this.users.find(u =&gt; u.email === email) ?? null; }
+}
+
+// ────────────
+
+export interface RateLimitStore {
+  get(key: string): Promise&lt;RateLimitRecord | undefined&gt;;
+  set(key: string, record: RateLimitRecord): Promise&lt;void&gt;;
+  delete(key: string): Promise&lt;void&gt;;
+}
+
+export interface RateLimitRecord {
+  failures: number;
+  blockedUntil: number | null;
+}
+
+// ────────────
+
+export class InMemoryRateLimitStore implements RateLimitStore {
+  private records = new Map&lt;string, RateLimitRecord&gt;();
+  async get(key) { return this.records.get(key); }
+  async set(key, record) { this.records.set(key, record); }
+  async delete(key) { this.records.delete(key); }
+}
+
+// ────────────
+
+private async checkAndRecordFailure(key: string): Promise&lt;void&gt; {
+  const record = await this.rateLimitStore.get(key);
+  const now = Date.now();
+
+  if (record?.blockedUntil &amp;&amp; record.blockedUntil &gt; now) {
+    throw new RateLimitError(Math.ceil((record.blockedUntil - now)/1000));
+  }
+
+  // If lockout expired and record exists, reset failures to 0? Actually if expired, we still have failures from before. If next failure should double lockout? We can keep failure count to double. But if lockout expired, maybe old failures should be considered? &quot;exponential lockout&quot; means after expiry, if another attempt fails, lockout increases. Keep failures. If no record, new record.
+  const failures = (record?.blockedUntil &amp;&amp; record.blockedUntil &lt;= now ? record.failures : record?.failures ?? 0);
+  const nextFailures = failures + 1;
+  let blockedUntil: number | null = null;
+  if (nextFailures &gt;= MAX_FAILURES) {
+    const exponent = nextFailures - MAX_FAILURES;
+    const delayMs = Math.min(LOCKOUT_BASE_MS * 2 ** exponent, LOCKOUT_MAX_MS);
+    blockedUntil = now + delayMs;
+  }
+  await this.rateLimitStore.set(key, { failures: nextFailures, blockedUntil });
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+
+    <footer>
+      <p>ContextOS Multi-Model Benchmark Engine &bull; Generated automatically with reproducible paired execution.</p>
+    </footer>
+  </div>
+
+</body>
+</html>

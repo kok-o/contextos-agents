@@ -25,7 +25,7 @@
         "npm":         { "type": ["string", "null"], "description": "npm package name if published" },
         "github":      { "type": ["string", "null"], "description": "GitHub repo in owner/repo format" },
         "path":        { "type": ["string", "null"], "description": "Path within the GitHub repo to the skill directory" },
-        "builtin":     { "type": "boolean", "description": "true = ships with koko-contextos-agents core" }
+        "builtin":     { "type": "boolean", "description": "true = ships with contextos-agents core" }
       }
     }
   }

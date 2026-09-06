@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-09-05T12:54:12.139Z",
+  "provider": "openai",
+  "model": "deepseek-v4-flash",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 0,
+    "skillPassRate": 0,
+    "passRateDelta": 0,
+    "baselineCompilationRate": 0,
+    "skillCompilationRate": 0,
+    "baselineAvgPassed": 0,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 5
+  },
+  "results": [
+    {
+      "taskId": "auth-security",
+      "title": "Secure Authentication & Rate Limiting Handler",
+      "category": "Security & Backend",
+      "skills": [
+        "security",
+        "node",
+        "ponytail-mindset"
+      ],
+      "baseline": {
+        "compiled": false,
+        "compilationError": "Unexpected identifier 'hashPassword'",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'hashPassword'"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'hashPassword'"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'hashPassword'"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'hashPassword'"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: Unexpected identifier 'hashPassword'"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 61,
+        "code": "async hashPassword(password: string): Promise<string> {\n  const salt = crypto.randomBytes(16).toString('hex');\n  const hash = crypto.scryptSync(password, salt, 64).toString('hex');\n  return `${salt}:${hash}`;\n}\nconstructor() {\n  this.users.set('admin', { passwordHash: ??? });\n}\n\nimport { createHmac, randomBytes, scryptSync, scrypt, timingSafeEqual } from 'crypto';\nimport { promisify } from 'util';\nconst scryptAsync = promisify(scrypt);\n\nasync hashPassword(password: string): Promise<string> {\n const salt = randomBytes(16).toString('hex');\n const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;\n return `scrypt:${salt}:${derivedKey.toString('hex')}`;\n}\n\nasync verifyPassword(password: string, hash: string): Promise<boolean> {\n const [scheme, salt, key] = hash.split(':');\n if (scheme !== 'scrypt' || !salt || !key) return false;\n const derived = (await scryptAsync(password, salt, 64)) as Buffer;\n const expected = Buffer.from(key, 'hex');\n return derived.length === expected.length && timingSafeEqual(derived, expected);\n}\n\nprivate static hashSync(password: string): string {\n const salt = randomBytes(16).toString('hex');\n const key = scryptSync(password, salt, 64).toString('hex');\n return `scrypt:${salt}:${key}`;\n}\n\nconst email = process.env.AUTH_USER_EMAIL ?? 'admin';\nconst password = process.env.AUTH_USER_PASSWORD ?? 'admin123';"
+      },
+      "withSkills": {
+        "compiled": false,
+        "compilationError": "await is only valid in async functions and the top level bodies of modules",
+        "tests": [
+          {
+            "id": "timing-safe-comparison",
+            "name": "Executes timing-safe password / hash verification",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: await is only valid in async functions and the top level bodies of modules"
+          },
+          {
+            "id": "rate-limiting-lockout",
+            "name": "Enforces rate-limiting and lockout after repeated failures",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: await is only valid in async functions and the top level bodies of modules"
+          },
+          {
+            "id": "no-stack-trace-leak",
+            "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: await is only valid in async functions and the top level bodies of modules"
+          },
+          {
+            "id": "input-sanitization-validation",
+            "name": "Performs explicit input validation on email and credentials",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: await is only valid in async functions and the top level bodies of modules"
+          },
+          {
+            "id": "jwt-claims-and-expiry",
+            "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Compilation/Syntax Failure: await is only valid in async functions and the top level bodies of modules"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 5,
+        "totalDurationMs": 8,
+        "code": "const service = new AuthService();\nconst hash = await service.hashPassword('password');\nconst login = await service.handleLogin({email:'x', password:'password'}) -> could expect 401 because no user.\n\nexport class AuthService implements IAuthService {\n  private users = new Map<string,{ passwordHash:string; role?:string }>();\n  private attempts = new Map<string, AttempRecord>();\n  constructor(users: Array<{ email: string; passwordHash: string; role?: string }> = []) {\n    for(const u of users) this.users.set(normalizeEmail(u.email), u)\n  }\n}\n\ntype StoredUser = { passwordHash: string; role?: string };\ntype AttemptRecord = { failCount: number; windowStart: number; lockEnd: number };\n\nconst MAX_ATTEMPTS = 5;\nconst WINDOW_MS = 15*60*1000;\nconst LOCK_MS = 15*60*1000;\nconst KEY_LEN = 64;\n\nconst emailKey = (email??'').trim().toLowerCase()\nconst key = `${ip || 'unknown'}|${emailKey || 'brute:no-email'}`\n\nconst email = normalize(request.email);\nif (!email || !regex.test(email)) return { status: 400, body: { code: 'VALIDATION_ERROR', message: 'A valid email is required' } };\nif (!request.password) return...\n\nprivate recordFailure(key) {\n const now = Date.now();\n const rec = this.attempts.get(key) ?? { count:0, windowStart:now, lockUntil:0 };\n if (now - rec.windowStart > WINDOW) { rec.count=0; rec.windowStart=now;}\n rec.count +=1;\n if (rec.count >= MAX) { rec.lockUntil = now + LOCK_MS; rec.count=0; }\n this.attempts.set(key, rec)\n}\n\nconst r = this.attempts.get(key);\nif(!r) return false;\nif(r.lockUntil > now) return true;\nif(now - r.windowStart > WINDOW) { this.attempts.delete(key); return false; }\nreturn false;\n\nprivate getAttempt(key): Attempt { ... over window reset }\nprivate isRateLimited(key): boolean {\n const a = this.attempts.get(key); if(!a)return false;\n if(a.lockUntil > now) return true;\n if(now - a.windowStart >= WINDOW) { this.attempts.delete(key); return false; }\n return a.failures >= MAX;\n}\nprivate registerFailure(key) {\n let a = this.attempts.get(key);\n const now=Date.now();\n if(!a || now - a.windowStart >= WINDOW) { a={failures:0, windowStart:now, lockUntil:0};}\n a.failures +=1;\n if(a.failures >= MAX) { a.lockUntil=now+LOCK; a.failures=0; }\n this.attempts.set(key,a);\n}\nprivate clearAttempts(key){ this.attempts.delete(key);}\n\nconst encodeBase64Url = (buf: Buffer | string) => Buffer.from(buf).toString('base"
+      },
+      "delta": 0
+    }
+  ]
+}

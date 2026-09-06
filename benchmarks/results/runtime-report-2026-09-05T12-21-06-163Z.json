@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-09-05T12:21:06.161Z",
+  "provider": "openai",
+  "model": "google/gemini-3.8-flash",
+  "summary": {
+    "suitesCount": 1,
+    "baselinePassRate": 100,
+    "skillPassRate": 0,
+    "passRateDelta": -100,
+    "baselineCompilationRate": 100,
+    "skillCompilationRate": 100,
+    "baselineAvgPassed": 3,
+    "skillAvgPassed": 0,
+    "avgTotalTests": 3
+  },
+  "results": [
+    {
+      "taskId": "resilient-api-client",
+      "title": "Type-Safe Resilient API Client with Circuit Breaker",
+      "category": "TypeScript & Reliability",
+      "skills": [
+        "typescript",
+        "system-design",
+        "performance"
+      ],
+      "baseline": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "timeout-abort-handling",
+            "name": "Implements request timeout with AbortController",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "circuit-breaker-transitions",
+            "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+            "passed": true,
+            "durationMs": 1
+          },
+          {
+            "id": "structured-error-taxonomy",
+            "name": "Provides typed error taxonomy without secret credential leakage",
+            "passed": true,
+            "durationMs": 0
+          }
+        ],
+        "passRate": 100,
+        "totalPassed": 3,
+        "totalTests": 3,
+        "totalDurationMs": 64,
+        "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nexport class CircuitBreaker {\n  private currentState: CircuitState = 'CLOSED';\n  private failureCount: number = 0;\n  private readonly failureThreshold: number;\n  private readonly resetTimeoutMs: number;\n  private nextAttemptTimestamp: number = 0;\n\n  constructor(options?: CircuitBreakerOptions) {\n    this.failureThreshold = options?.failureThreshold ?? 5;\n    this.resetTimeoutMs = options?.resetTimeoutMs ?? 10000;\n  }\n\n  public get state(): CircuitState {\n    return this.getState();\n  }\n\n  public getState(): CircuitState {\n    if (this.currentState === 'OPEN' && Date.now() >= this.nextAttemptTimestamp) {\n      this.currentState = 'HALF_OPEN';\n    }\n    return this.currentState;\n  }\n\n  public recordSuccess(): void {\n    this.failureCount = 0;\n    this.currentState = 'CLOSED';\n  }\n\n  public recordFailure(): void {\n    this.failureCount += 1;\n    if (this.currentState === 'HALF_OPEN' || this.failureCount >= this.failureThreshold) {\n      this.currentState = 'OPEN';\n      this.nextAttemptTimestamp = Date.now() + this.resetTimeoutMs;\n    }\n  }\n\n  public async execute<T>(action: () => Promise<T>): Promise<T> {\n    const currentState = this.getState();\n\n    if (currentState === 'OPEN') {\n      throw new Error(\n        `Circuit breaker is OPEN. Next attempt allowed after ${new Date(this.nextAttemptTimestamp).toISOString()}`\n      );\n    }\n\n    try {\n      const result = await action();\n      this.recordSuccess();\n      return result;\n    } catch (error) {\n      this.recordFailure();\n      throw error;\n    }\n  }\n}\n\nexport class ApiError extends Error {\n  public readonly statusCode: number;\n\n  constructor(message: string, statusCode: number) {\n    super(message);\n    this.name = 'ApiError';\n    this.statusCode = statusCode;\n    Object.setPrototypeOf(this, ApiError.prototype);\n  }\n}\n\nexport interface RequestOptions {\n  timeoutMs?: number;\n  headers?: Record<string, string>;\n}\n\nexport class ResilientHttpClient {\n  private readonly circuitBreaker: CircuitBreaker;\n\n  constructor(circuitBreaker?: CircuitBreaker) {\n    this.circuitBreaker = circuitBreaker ?? new CircuitBreaker();\n  }\n\n  public async get<T>(url: string, options?: RequestOptions): Promise<T> {\n    return this.circuitBreaker.execute(async () => {\n      const controller = new AbortController();\n      const timeoutMs = options?.timeoutMs ?? 5000;\n      let timeoutTriggered = false;\n\n      const timeoutHandle = setTimeout(() => {\n        timeoutTriggered = true;\n        controller.abort();\n      }, timeoutMs);\n\n      try {\n        const response = await fetch(url, {\n          method: 'GET',\n          headers: {\n            Accept: 'application/json',\n            ...(options?.headers ?? {}),\n          },\n          signal: controller.signal,\n        });\n\n        if (!response.ok) {\n          let errorMessage: string;\n          try {\n            const errorBody = await response.text();\n            errorMessage = errorBody.length > 0 ? errorBody : response.statusText;\n          } catch {\n            errorMessage = response.statusText;\n          }\n          throw new ApiError(errorMessage || `HTTP ${response.status}`, response.status);\n        }\n\n        const contentType = response.headers.get('content-type');\n        if (contentType && contentType.includes('application/json')) {\n          return (await response.json()) as T;\n        }\n\n        const textData = await response.text();\n        try {\n          return JSON.parse(textData) as T;\n        } catch {\n          return textData as unknown as T;\n        }\n      } catch (error) {\n        if (timeoutTriggered) {\n          throw new ApiError(`Request timeout after ${timeoutMs}ms`, 408);\n        }\n        if (error instanceof ApiError) {\n          throw error;\n        }\n        const message = error instanceof Error ? error.message : 'Network request failed';\n        throw new ApiError(message, 500);\n      } finally {\n        clearTimeout(timeoutHandle);\n      }\n    });\n  }\n}"
+      },
+      "withSkills": {
+        "compiled": true,
+        "compilationError": null,
+        "tests": [
+          {
+            "id": "timeout-abort-handling",
+            "name": "Implements request timeout with AbortController",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Must implement timeout via AbortController"
+          },
+          {
+            "id": "circuit-breaker-transitions",
+            "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Must model Circuit Breaker states: CLOSED, OPEN, HALF-OPEN"
+          },
+          {
+            "id": "structured-error-taxonomy",
+            "name": "Provides typed error taxonomy without secret credential leakage",
+            "passed": false,
+            "durationMs": 0,
+            "error": "Must implement custom typed Error classes"
+          }
+        ],
+        "passRate": 0,
+        "totalPassed": 0,
+        "totalTests": 3,
+        "totalDurationMs": 1,
+        "code": ""
+      },
+      "delta": -100
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-# <img src="./Frame%202.png" height="40" align="absmiddle" /> koko-contextos-agents
+# <img src="./Frame%202.png" height="40" align="absmiddle" /> contextos-agents
 
-[![npm version](https://img.shields.io/npm/v/koko-contextos-agents.svg)](https://www.npmjs.com/package/koko-contextos-agents)
+[![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16.7.0-brightgreen.svg)](https://nodejs.org/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#testing)
@@ -12,7 +12,7 @@ This is an open-source set of skills and behavioral rules for AI assistants. The
 You do not need to clone anything manually. Just open your terminal in the root of your project and run:
 
 ```bash
-npx koko-contextos-agents
+npx contextos-agents
 ```
 
 The script will automatically detect your project tech stack, create the `.agents` folder, configure skills, and compile them for your AI agent.
@@ -20,20 +20,39 @@ The script will automatically detect your project tech stack, create the `.agent
 ### Options
 
 ```bash
-npx koko-contextos-agents --help          # Show all options
-npx koko-contextos-agents --version       # Show version
-npx koko-contextos-agents --profile mvp   # Install with specific profile (mvp, startup, enterprise, frontend, backend)
-npx koko-contextos-agents --auto          # Auto-detect tech stack and apply recommended profile
-npx koko-contextos-agents --dry-run       # Preview what will be installed
-npx koko-contextos-agents --force         # Overwrite an existing .agents/ folder
-npx koko-contextos-agents --skip-compile  # Skip auto-compilation step
+npx contextos-agents --help          # Show all options
+npx contextos-agents --version       # Show version
+npx contextos-agents --profile mvp   # Install with specific profile (mvp, startup, enterprise, frontend, backend)
+npx contextos-agents --auto          # Auto-detect tech stack and apply recommended profile
+npx contextos-agents --with-mcp      # Install with MCP execution server enabled (.agents/mcp/)
+npx contextos-agents setup-mcp       # Add MCP server to an existing .agents/ project
+npx contextos-agents --dry-run       # Preview what will be installed
+npx contextos-agents --force         # Overwrite an existing .agents/ folder
+npx contextos-agents --skip-compile  # Skip auto-compilation step
 ```
 
-## Why Use This? (Benefits)
+## Why ContextOS?
 
-- **Save Tokens & Context:** ContextOS prevents prompt bloat by generating scoped, modular rules (e.g., `.cursor/rules/*.mdc` with file-pattern matching), compact index templates, and dynamic skill resolution (`node .agents/ctx.js resolve`) so assistants load only the relevant domain rules.
-- **Superior Code Quality:** Pre-configured skills guide the AI to follow modern design patterns (DDD, microservices) and professional UI standards (no pure black colors, semantic palettes) rather than generic internet code.
-- **Save Time:** Stop writing massive system prompts or arguing with the AI. The assistant instantly knows your architectural decisions and coding standards from the start.
+Most AI coding assistants suffer from two extremes: they either operate in a vacuum with zero knowledge of your architectural standards, or they are choked with massive monolithic system prompts that cause context overflow, hallucinated dependencies, and lazy code stubs (`// TODO`).
+
+**ContextOS transforms chaotic AI code generation into a disciplined, senior-level software engineering team.**
+
+### The Problem vs. The Solution
+
+| Without ContextOS (Everyday AI Frustrations) | With ContextOS (Engineering Discipline) |
+|---|---|
+| **Prompt Bloat & Token Waste:** Pasting giant system prompts burns tokens, slows responses, and degrades reasoning. | **Dynamic Context Resolution:** Dynamically resolves only 2–3 required skills per task (`ctx.js resolve`), saving up to 70–80% in prompt tokens. |
+| **Lazy Code & Slop:** Output full of `// TODO: implement later`, missing imports, and broken refactorings. | **Zero-Placeholder Invariant:** Strict guardrails enforce 100% complete, drop-in ready code with verified syntax and error boundaries. |
+| **Tool Zoo Fragmentation:** Inconsistent rules across Cursor (`.cursorrules`), Zed (`.zed/`), Aider, and Claude Code. | **Single Source of Truth:** Author skills once in markdown; ContextOS exports optimized configurations for all major AI editors (`ctx.js export all`). |
+| **Destructive File Rewrites:** Agents overwrite hundreds of lines without reading existing code first. | **Surgical Blast Radius & Sandboxing:** Changes are confined to planned lines or executed safely in isolated Git worktrees via ContextOS MCP. |
+| **"Black Box" Hallucinations:** You only see the start and end, with no insight into the agent's decisions. | **Transparent Pair Programming:** The agent outlines technical decisions, adheres to strict phases (DEFINE → PLAN → BUILD → VERIFY), and proves work with test runs. |
+
+### Key Developer Advantages
+
+- 🚀 **Zero-Config Onboarding:** Run `npx contextos-agents` in your repository. It auto-detects your stack (React, Node, Python, etc.) and sets up the ideal profile in seconds.
+- 🎯 **Tailored Project Profiles:** Use `mvp` for lean, rapid prototyping without bloated microservices boilerplate, or `enterprise` for strict TDD, DDD, and security auditing.
+- 🛡️ **Autonomous Multi-Agent Worktrees:** Run parallel tasks safely with the bundled MCP server—subagents work in isolated Git worktrees without corrupting your active workspace.
+- 📊 **Verifiable Benchmarks:** Backed by reproducible side-by-side benchmarks demonstrating measurable code quality improvements and reduced token usage.
 
 ## Project Profiles & Stack Auto-Detection
 
@@ -196,18 +215,35 @@ You can expand your `.agents` folder with community plugins or validate your own
 
 ```bash
 # Launch the interactive skill installer to browse and install community skills
-npx koko-contextos-agents install-skill
+npx contextos-agents install-skill
 
 # Or install a specific skill from a GitHub repository automatically
-npx koko-contextos-agents install-skill --from-repo kok-o/awesome-skill
+npx contextos-agents install-skill --from-repo kok-o/awesome-skill
 
 # Validate your local skills (checks frontmatter, dependencies, and sync)
-npx koko-contextos-agents audit
+npx contextos-agents audit
 ```
 
 ## ContextOS MCP Server & Autonomous Multi-Agent Swarm
 
 ContextOS includes a standalone **Model Context Protocol (MCP)** execution server located in `contextos-mcp/` and bundled as `.agents/mcp/server.mjs`. It allows orchestrator agents (like Antigravity, Claude Code, or Cursor) to safely delegate coding tasks to parallel subagents running in isolated Git worktrees.
+
+> [!TIP]
+> **Lightweight by default:** Standard installation (`npx contextos-agents`) installs only lightweight skills, adapters, and behavioral rules (~400 KB) without copying the bundled MCP runtime. To enable MCP worktrees and subagents, pass `--with-mcp` during installation, or run `npx contextos-agents setup-mcp` at any time.
+
+### Installing & Enabling MCP
+
+To add the MCP execution server to an existing `.agents/` project:
+
+```bash
+npx contextos-agents setup-mcp
+```
+
+Or install a new project with MCP enabled from the start:
+
+```bash
+npx contextos-agents --with-mcp
+```
 
 ### MCP Server Configuration
 
@@ -359,7 +395,7 @@ $env:OPENAI_API_KEY = "sk-..."
 npm run benchmark:runtime -- --provider openai --model gpt-4o
 ```
 
-When executed, reports are generated in `benchmarks/results/` (`.html`, `.md`, `.json`). These run outputs are kept in your local directory (git-ignored) to keep the repository clean.
+When executed, reports are generated in `benchmarks/results/` (`.html`, `.md`, `.json`) and tracked so results are visible and shareable.
 
 ## Contributing
 

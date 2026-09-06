@@ -14,7 +14,7 @@
  *   node .agents/ctx.js skill search <query>
  *
  * Or via npx:
- *   npx koko-contextos-agents --add-skill username/my-skill
+ *   npx contextos-agents --add-skill username/my-skill
  */
 
 'use strict';
@@ -32,7 +32,7 @@ const AGENTS_DIR     = path.join(ROOT, '.agents');
 const CORE_SKILLS    = path.join(AGENTS_DIR, 'core', 'skills');
 const PLUGINS_DIR    = path.join(AGENTS_DIR, 'plugins');          // installed third-party skills
 const PLUGINS_JSON   = path.join(AGENTS_DIR, 'plugins.json');     // local lock file
-const REGISTRY_URL   = 'https://raw.githubusercontent.com/kok-o/koko-contextos-agents/main/registry.json';
+const REGISTRY_URL   = 'https://raw.githubusercontent.com/kok-o/contextos-agents/main/registry.json';
 const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024;
 const SAFE_SKILL_NAME = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
@@ -85,7 +85,7 @@ function writeLock(lock) {
 // ── HTTP fetch helper (no deps) ───────────────────────────────────────────────
 function fetchText(url) {
   return new Promise((resolve, reject) => {
-    const request = https.get(url, { headers: { 'User-Agent': 'koko-contextos-agents' } }, (res) => {
+    const request = https.get(url, { headers: { 'User-Agent': 'contextos-agents' } }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         const redirect = new URL(res.headers.location, url);
         if (redirect.protocol !== 'https:' || redirect.hostname !== 'raw.githubusercontent.com') {
