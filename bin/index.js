@@ -268,8 +268,8 @@ function installAtomically(source, target, options = {}) {
       force: true,
       filter: (src) => {
         if (!options.withMcp) {
-          const rel = path.relative(source, src);
-          if (rel === 'mcp' || rel.startsWith('mcp' + path.sep) || rel === 'mcp_config.json') {
+          const norm = src.replace(/\\/g, '/');
+          if (norm.endsWith('/mcp') || norm.includes('/mcp/') || norm.endsWith('/mcp_config.json')) {
             return false;
           }
         }
@@ -312,8 +312,8 @@ if (flags.dryRun) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (!flags.withMcp) {
-        const rel = path.relative(sourcePath, full);
-        if (rel === 'mcp' || rel.startsWith('mcp' + path.sep) || rel === 'mcp_config.json') {
+        const norm = full.replace(/\\/g, '/');
+        if (norm.endsWith('/mcp') || norm.includes('/mcp/') || norm.endsWith('/mcp_config.json')) {
           continue;
         }
       }
