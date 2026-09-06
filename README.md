@@ -49,10 +49,10 @@ Most AI coding assistants suffer from two extremes: they either operate in a vac
 
 ### Key Developer Advantages
 
-- 🚀 **Zero-Config Onboarding:** Run `npx contextos-agents` in your repository. It auto-detects your stack (React, Node, Python, etc.) and sets up the ideal profile in seconds.
-- 🎯 **Tailored Project Profiles:** Use `mvp` for lean, rapid prototyping without bloated microservices boilerplate, or `enterprise` for strict TDD, DDD, and security auditing.
-- 🛡️ **Autonomous Multi-Agent Worktrees:** Run parallel tasks safely with the bundled MCP server—subagents work in isolated Git worktrees without corrupting your active workspace.
-- 📊 **Verifiable Benchmarks:** Backed by reproducible side-by-side benchmarks demonstrating measurable code quality improvements and reduced token usage.
+- **Zero-Config Onboarding:** Run `npx contextos-agents` in your repository. It auto-detects your stack (React, Node, Python, etc.) and sets up the ideal profile in seconds.
+- **Tailored Project Profiles:** Use `mvp` for lean, rapid prototyping without bloated microservices boilerplate, or `enterprise` for strict TDD, DDD, and security auditing.
+- **Autonomous Multi-Agent Worktrees:** Run parallel tasks safely with the bundled MCP server—subagents work in isolated Git worktrees without corrupting your active workspace.
+- **Verifiable Benchmarks:** Backed by reproducible side-by-side benchmarks demonstrating measurable code quality improvements and reduced token usage.
 
 ## Project Profiles & Stack Auto-Detection
 
