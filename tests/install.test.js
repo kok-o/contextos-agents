@@ -16,13 +16,26 @@ const AGENTS_SOURCE = path.join(__dirname, '..', '.agents');
 
 describe('bin/index.js — installer', () => {
   let tmpDir;
+  let createdStubMcp = false;
 
   before(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'koko-test-'));
+    const sourceMcp = path.join(AGENTS_SOURCE, 'mcp');
+    if (!fs.existsSync(sourceMcp)) {
+      fs.mkdirSync(sourceMcp, { recursive: true });
+      fs.writeFileSync(path.join(sourceMcp, 'server.mjs'), '// test stub\n');
+      fs.writeFileSync(path.join(sourceMcp, 'runtime.py'), '# test stub\n');
+      createdStubMcp = true;
+    }
   });
 
   after(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+    if (createdStubMcp) {
+      try {
+        fs.rmSync(path.join(AGENTS_SOURCE, 'mcp'), { recursive: true, force: true });
+      } catch {}
+    }
   });
 
   test('--version flag prints version', () => {
