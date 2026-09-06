@@ -142,10 +142,14 @@ export class ThreadDashboard {
 				return cyan("capturing diff");
 			case "compressing":
 				return dim("compressing");
+			case "verifying":
+				return cyan("verifying");
 			case "completed":
 				return green(`${symbols.check} completed`);
 			case "failed":
 				return red(`${symbols.cross} failed`);
+			case "verification_failed":
+				return red(`${symbols.cross} verification failed`);
 			case "cancelled":
 				return yellow("cancelled");
 			case "retrying":

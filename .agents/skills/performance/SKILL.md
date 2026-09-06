@@ -3,101 +3,6 @@ name: Web Performance
 description: >
   ContextOS skill for Web Performance
 ---
-# Web Performance — Best Practices
-
-## Core Web Vitals
-
-| Metric | Target | What it measures |
-| --- | --- | --- |
-| LCP (Largest Contentful Paint) | < 2.5s | Loading performance |
-| INP (Interaction to Next Paint) | < 200ms | Responsiveness |
-| CLS (Cumulative Layout Shift) | < 0.1 | Visual stability |
-
-## Loading Performance
-
-- **Code splitting** — split by route, lazy load non-critical components
-- **Tree shaking** — use ES modules, avoid side-effect imports
-- **Image optimization** — WebP/AVIF, responsive srcset, lazy loading
-- **Font loading** — `font-display: swap`, preload critical fonts
-- **Critical CSS** — inline above-the-fold styles
-- **Preconnect** — `<link rel="preconnect">` for third-party origins
-
-## Runtime Performance
-
-- **Avoid layout thrashing** — batch DOM reads and writes
-- **Debounce/throttle** — expensive event handlers (scroll, resize, input)
-- **Web Workers** — offload heavy computation
-- **Virtualize long lists** — render only visible items
-- **Avoid synchronous operations** — use async/await, requestIdleCallback
-
-## Bundle Optimization
-
-- **Analyze bundle** — use webpack-bundle-analyzer or similar
-- **Dynamic imports** — `import()` for heavy libraries
-- **Avoid barrel exports** — they prevent tree shaking
-- **Vendor splitting** — separate vendor chunks for caching
-- **Compression** — Brotli > gzip
-
-## Caching Strategy
-
-| Asset | Cache | Strategy |
-| --- | --- | --- |
-| HTML | Short (5min) | Revalidate |
-| JS/CSS (hashed) | Long (1 year) | Immutable |
-| Images | Long (1 year) | Immutable |
-| API responses | Depends | stale-while-revalidate |
-| Fonts | Long (1 year) | Immutable |
-
-## Anti-Patterns
-
-- [FAIL] Importing entire libraries (`import _ from 'lodash'`)
-- [FAIL] Unoptimized images (PNG > 500KB)
-- [FAIL] Blocking scripts in `<head>` without `defer`
-- [FAIL] Layout shifts from dynamic content (no dimensions on images)
-- [FAIL] Premature optimization — measure first, optimize second
-
-
-<!-- Source: EXAMPLES.md -->
-
-# performance Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Dynamic Imports for Heavy Libraries
-
-### Anti-pattern: Static Import of Heavy Visualizers in Initial Bundle
-
-```typescript
-// BAD: Adds 800KB (Monaco editor or Three.js) to the critical first-paint bundle!
-import { CodeEditor } from '@/components/CodeEditor';
-
-export default function Page() {
-  return <div><CodeEditor /></div>;
-}
-```
-
-### Best practice: ContextOS Standard (Lazy Load on Demand)
-
-```typescript
-// GOOD: Dynamic import splits chunk, only downloads when component renders
-import dynamic from 'next/dynamic';
-
-const CodeEditor = dynamic(
-  () => import('@/components/CodeEditor'),
-  { loading: () => <EditorSkeleton />, ssr: false }
-);
-
-export default function Page() {
-  return <div><CodeEditor /></div>;
-}
-```
-
-<!-- Source: SKILL.md -->
-
----
-name: Web Performance
-description: >
-  ContextOS skill for Web Performance, Core Web Vitals, waterfall elimination, bundle size optimization, and caching strategies.
----
-
 # Web Performance & Core Web Vitals
 
 ## Overview
@@ -167,6 +72,95 @@ See `EXAMPLES.md` for detailed performance patterns and benchmark snippets.
 
 - Pairs with `nextjs` and `react` for App Router caching and component lifecycle tuning.
 - Pairs with `ui-ux-pro` for smooth animations and responsive design tokens.
+
+
+<!-- Source: performance.md -->
+
+# Web Performance — Best Practices
+
+## Core Web Vitals
+
+| Metric | Target | What it measures |
+| --- | --- | --- |
+| LCP (Largest Contentful Paint) | < 2.5s | Loading performance |
+| INP (Interaction to Next Paint) | < 200ms | Responsiveness |
+| CLS (Cumulative Layout Shift) | < 0.1 | Visual stability |
+
+## Loading Performance
+
+- **Code splitting** — split by route, lazy load non-critical components
+- **Tree shaking** — use ES modules, avoid side-effect imports
+- **Image optimization** — WebP/AVIF, responsive srcset, lazy loading
+- **Font loading** — `font-display: swap`, preload critical fonts
+- **Critical CSS** — inline above-the-fold styles
+- **Preconnect** — `<link rel="preconnect">` for third-party origins
+
+## Runtime Performance
+
+- **Avoid layout thrashing** — batch DOM reads and writes
+- **Debounce/throttle** — expensive event handlers (scroll, resize, input)
+- **Web Workers** — offload heavy computation
+- **Virtualize long lists** — render only visible items
+- **Avoid synchronous operations** — use async/await, requestIdleCallback
+
+## Bundle Optimization
+
+- **Analyze bundle** — use webpack-bundle-analyzer or similar
+- **Dynamic imports** — `import()` for heavy libraries
+- **Avoid barrel exports** — they prevent tree shaking
+- **Vendor splitting** — separate vendor chunks for caching
+- **Compression** — Brotli > gzip
+
+## Caching Strategy
+
+| Asset | Cache | Strategy |
+| --- | --- | --- |
+| HTML | Short (5min) | Revalidate |
+| JS/CSS (hashed) | Long (1 year) | Immutable |
+| Images | Long (1 year) | Immutable |
+| API responses | Depends | stale-while-revalidate |
+| Fonts | Long (1 year) | Immutable |
+
+## Anti-Patterns
+
+- [FAIL] Importing entire libraries (`import _ from 'lodash'`)
+- [FAIL] Unoptimized images (PNG > 500KB)
+- [FAIL] Blocking scripts in `<head>` without `defer`
+- [FAIL] Layout shifts from dynamic content (no dimensions on images)
+- [FAIL] Premature optimization — measure first, optimize second
+
+<!-- Source: EXAMPLES.md -->
+
+# performance Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Dynamic Imports for Heavy Libraries
+
+### Anti-pattern: Static Import of Heavy Visualizers in Initial Bundle
+
+```typescript
+// BAD: Adds 800KB (Monaco editor or Three.js) to the critical first-paint bundle!
+import { CodeEditor } from '@/components/CodeEditor';
+
+export default function Page() {
+  return <div><CodeEditor /></div>;
+}
+```
+
+### Best practice: ContextOS Standard (Lazy Load on Demand)
+
+```typescript
+// GOOD: Dynamic import splits chunk, only downloads when component renders
+import dynamic from 'next/dynamic';
+
+const CodeEditor = dynamic(
+  () => import('@/components/CodeEditor'),
+  { loading: () => <EditorSkeleton />, ssr: false }
+);
+
+export default function Page() {
+  return <div><CodeEditor /></div>;
+}
+```
 
 <!-- Source: TROUBLESHOOTING.md -->
 

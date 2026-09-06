@@ -459,6 +459,10 @@ export class StreamingFeed {
 				return cyan("capturing diff");
 			case "compressing":
 				return dim("compressing");
+			case "verifying":
+				return cyan("verifying");
+			case "verification_failed":
+				return red("verification failed");
 			default:
 				return dim(phase);
 		}

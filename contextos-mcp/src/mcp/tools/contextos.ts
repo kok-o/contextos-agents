@@ -30,6 +30,7 @@ import {
 	recordAsyncJob,
 	spawnThread,
 } from "../session.js";
+import { recordThreadState } from "../state.js";
 
 const ALLOWED_VERIFY_TOOLS = new Set([
 	"npm",

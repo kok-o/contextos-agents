@@ -147,7 +147,7 @@ async function initSession(absDir: string): Promise<SwarmSession> {
 	// Rehydrate threads from persisted state (survives server restart)
 	const persisted = getPersistedThreads(absDir, config.worktree_base_dir);
 	for (const thread of persisted) {
-		if (thread.status === "completed" || thread.status === "failed") {
+		if (thread.status === "completed" || thread.status === "failed" || thread.status === "verification_failed") {
 			threadManager.restoreThread(thread);
 		}
 	}

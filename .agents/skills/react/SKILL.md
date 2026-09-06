@@ -3,191 +3,6 @@ name: React
 description: >
   ContextOS skill for React
 ---
-# React — Best Practices
-
-## Component Architecture
-
-- **Prefer function components** with hooks over class components
-- **One component per file** — name file same as component
-- **Composition over inheritance** — use children and render props
-- **Keep components small** — if > 150 lines, split it
-
-## Hooks
-
-- **useState** for local state, **useReducer** for complex state
-- **useEffect** — always specify dependencies, clean up subscriptions
-- **Custom hooks** — extract reusable logic into `use*` functions
-- **useMemo/useCallback** — only when you have measured a performance problem
-
-## State Management
-
-- **Local state first** — don't reach for global state until you need it
-- **Lift state up** — find the closest common ancestor
-- **Context** — for cross-cutting concerns (theme, auth, locale)
-- **External store** (Zustand, Jotai) — for truly global, frequently updated state
-
-## Patterns
-
-### Container/Presenter
-
-```tsx
-// Container — handles logic
-function UserListContainer() {
-  const users = useUsers();
-  return <UserList users={users} />;
-}
-
-// Presenter — handles display
-function UserList({ users }: { users: User[] }) {
-  return <ul>{users.map(u => <UserItem key={u.id} user={u} />)}</ul>;
-}
-```
-
-### Error Boundaries
-
-- Wrap major sections in Error Boundaries
-- Provide meaningful fallback UI
-- Log errors to monitoring service
-
-### Loading States
-
-- Always handle: `loading`, `error`, `empty`, `data` states
-- Use Suspense where supported
-- Show skeleton screens, not spinners
-
-## Performance
-
-- **React.memo** — only for expensive renders with stable props
-- **Code splitting** — lazy load routes and heavy components
-- **Virtualization** — for lists > 100 items
-- **Image optimization** — use next/image or lazy loading
-- **Avoid** — inline object/array creation in JSX props
-
-## Anti-Patterns (Avoid)
-
-- [FAIL] Props drilling more than 2 levels — use Context or state management
-- [FAIL] useEffect for derived state — use useMemo instead
-- [FAIL] Index as key — use stable unique IDs
-- [FAIL] Mutating state directly — always create new references
-- [FAIL] God components — split into smaller, focused components
-- [FAIL] Business logic in components — extract to hooks or services
-
-## Testing
-
-- **React Testing Library** — test behavior, not implementation
-- Test user interactions, not component internals
-- Mock API calls, not React hooks
-- Use `screen.getByRole` over `getByTestId`
-
-## File Structure
-
-```
-components/
-  Button/
-    Button.tsx
-    Button.test.tsx
-    Button.module.css
-    index.ts
-hooks/
-  useAuth.ts
-  useDebounce.ts
-services/
-  api.ts
-types/
-  user.ts
-```
-
-
-<!-- Source: EXAMPLES.md -->
-
-# React Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Derived State vs. useEffect
-
-### Anti-pattern: Anti-pattern (Redundant state + extra render with useEffect)
-
-```tsx
-// BAD: causes an unnecessary extra render cycle and potential state desync
-function OrderSummary({ items }: { items: CartItem[] }) {
-  const [total, setTotal] = useState(0);
-
-  useEffect(() => {
-    const calculated = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    setTotal(calculated);
-  }, [items]);
-
-  return <div>Total: ${total}</div>;
-}
-```
-
-### Best practice: ContextOS Standard (Inline derived calculation / useMemo)
-
-```tsx
-// GOOD: calculated instantly during render with zero extra render pass
-function OrderSummary({ items }: { items: CartItem[] }) {
-  const total = useMemo(
-    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [items]
-  );
-
-  return <div>Total: ${total.toFixed(2)}</div>;
-}
-```
-
----
-
-## Example 2: Custom Hook Encapsulation
-
-### Anti-pattern: Anti-pattern (Scattered listener logic inside component)
-
-```tsx
-// BAD: window listener logic cluttering UI component
-function NavHeader() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  return <header className={isScrolled ? 'scrolled' : ''}>Header</header>;
-}
-```
-
-### Best practice: ContextOS Standard (Reusable Custom Hook)
-
-```tsx
-// GOOD: extracted into a reusable, testable custom hook
-export function useScrollThreshold(threshold = 50): boolean {
-  const [isPassed, setIsPassed] = useState(() => typeof window !== 'undefined' && window.scrollY > threshold);
-
-  useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setIsPassed(window.scrollY > threshold);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [threshold]);
-
-  return isPassed;
-}
-```
-
-<!-- Source: SKILL.md -->
-
----
-name: React
-description: >
-  ContextOS skill for modern React (v18/v19), component architecture, state colocation, render optimization, and Vercel performance rules.
----
-
 # React Engineering & Performance Best Practices
 
 ## Overview
@@ -314,6 +129,185 @@ See `EXAMPLES.md` for detailed code examples and hook implementations.
 
 - Pairs with `typescript` for type safety on props, generics, and ref forwarding.
 - Pairs with `ui-ux-pro` and `web-accessibility` for UI tokens and ARIA standards.
+
+
+<!-- Source: react.md -->
+
+# React — Best Practices
+
+## Component Architecture
+
+- **Prefer function components** with hooks over class components
+- **One component per file** — name file same as component
+- **Composition over inheritance** — use children and render props
+- **Keep components small** — if > 150 lines, split it
+
+## Hooks
+
+- **useState** for local state, **useReducer** for complex state
+- **useEffect** — always specify dependencies, clean up subscriptions
+- **Custom hooks** — extract reusable logic into `use*` functions
+- **useMemo/useCallback** — only when you have measured a performance problem
+
+## State Management
+
+- **Local state first** — don't reach for global state until you need it
+- **Lift state up** — find the closest common ancestor
+- **Context** — for cross-cutting concerns (theme, auth, locale)
+- **External store** (Zustand, Jotai) — for truly global, frequently updated state
+
+## Patterns
+
+### Container/Presenter
+
+```tsx
+// Container — handles logic
+function UserListContainer() {
+  const users = useUsers();
+  return <UserList users={users} />;
+}
+
+// Presenter — handles display
+function UserList({ users }: { users: User[] }) {
+  return <ul>{users.map(u => <UserItem key={u.id} user={u} />)}</ul>;
+}
+```
+
+### Error Boundaries
+
+- Wrap major sections in Error Boundaries
+- Provide meaningful fallback UI
+- Log errors to monitoring service
+
+### Loading States
+
+- Always handle: `loading`, `error`, `empty`, `data` states
+- Use Suspense where supported
+- Show skeleton screens, not spinners
+
+## Performance
+
+- **React.memo** — only for expensive renders with stable props
+- **Code splitting** — lazy load routes and heavy components
+- **Virtualization** — for lists > 100 items
+- **Image optimization** — use next/image or lazy loading
+- **Avoid** — inline object/array creation in JSX props
+
+## Anti-Patterns (Avoid)
+
+- [FAIL] Props drilling more than 2 levels — use Context or state management
+- [FAIL] useEffect for derived state — use useMemo instead
+- [FAIL] Index as key — use stable unique IDs
+- [FAIL] Mutating state directly — always create new references
+- [FAIL] God components — split into smaller, focused components
+- [FAIL] Business logic in components — extract to hooks or services
+
+## Testing
+
+- **React Testing Library** — test behavior, not implementation
+- Test user interactions, not component internals
+- Mock API calls, not React hooks
+- Use `screen.getByRole` over `getByTestId`
+
+## File Structure
+
+```
+components/
+  Button/
+    Button.tsx
+    Button.test.tsx
+    Button.module.css
+    index.ts
+hooks/
+  useAuth.ts
+  useDebounce.ts
+services/
+  api.ts
+types/
+  user.ts
+```
+
+<!-- Source: EXAMPLES.md -->
+
+# React Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Derived State vs. useEffect
+
+### Anti-pattern: Anti-pattern (Redundant state + extra render with useEffect)
+
+```tsx
+// BAD: causes an unnecessary extra render cycle and potential state desync
+function OrderSummary({ items }: { items: CartItem[] }) {
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    const calculated = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    setTotal(calculated);
+  }, [items]);
+
+  return <div>Total: ${total}</div>;
+}
+```
+
+### Best practice: ContextOS Standard (Inline derived calculation / useMemo)
+
+```tsx
+// GOOD: calculated instantly during render with zero extra render pass
+function OrderSummary({ items }: { items: CartItem[] }) {
+  const total = useMemo(
+    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [items]
+  );
+
+  return <div>Total: ${total.toFixed(2)}</div>;
+}
+```
+
+---
+
+## Example 2: Custom Hook Encapsulation
+
+### Anti-pattern: Anti-pattern (Scattered listener logic inside component)
+
+```tsx
+// BAD: window listener logic cluttering UI component
+function NavHeader() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  return <header className={isScrolled ? 'scrolled' : ''}>Header</header>;
+}
+```
+
+### Best practice: ContextOS Standard (Reusable Custom Hook)
+
+```tsx
+// GOOD: extracted into a reusable, testable custom hook
+export function useScrollThreshold(threshold = 50): boolean {
+  const [isPassed, setIsPassed] = useState(() => typeof window !== 'undefined' && window.scrollY > threshold);
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsPassed(window.scrollY > threshold);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [threshold]);
+
+  return isPassed;
+}
+```
 
 <!-- Source: TROUBLESHOOTING.md -->
 

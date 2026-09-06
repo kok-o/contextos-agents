@@ -3,126 +3,6 @@ name: Next.js
 description: >
   ContextOS skill for Next.js
 ---
-# Next.js — Best Practices (App Router)
-
-## Routing
-
-- Use **App Router** (`app/` directory) — not Pages Router
-- **Layouts** — shared UI in `layout.tsx`, nested layouts for sections
-- **Loading states** — `loading.tsx` for Suspense boundaries
-- **Error handling** — `error.tsx` for error boundaries per route
-- **Not found** — `not-found.tsx` for 404 pages
-
-## Server vs Client Components
-
-- **Default to Server Components** — they're server by default
-- **Use `'use client'`** only when you need: event handlers, useState, useEffect, browser APIs
-- **Push client boundaries down** — keep as much as possible on the server
-- **Don't pass functions** from Server to Client components
-
-## Data Fetching
-
-- **Server Components** — fetch directly, no useEffect
-- **Server Actions** — for mutations (`'use server'`)
-- **Route Handlers** — `app/api/` for REST endpoints
-- **Parallel fetching** — use Promise.all for independent requests
-- **Caching** — leverage Next.js cache, revalidate strategically
-
-```tsx
-// Server Component — direct fetch
-async function UserProfile({ id }: { id: string }) {
-  const user = await getUser(id); // No useEffect needed
-  return <div>{user.name}</div>;
-}
-```
-
-## File Structure
-
-```
-app/
-├── layout.tsx              # Root layout
-├── page.tsx                # Home page
-├── globals.css
-├── (auth)/                 # Route group (no URL impact)
-│   ├── login/page.tsx
-│   └── register/page.tsx
-├── dashboard/
-│   ├── layout.tsx          # Dashboard layout
-│   ├── page.tsx            # Dashboard home
-│   └── settings/page.tsx
-├── api/
-│   └── users/route.ts      # API route
-└── components/             # Shared components
-```
-
-## Performance
-
-- **Image optimization** — always use `next/image`
-- **Font optimization** — use `next/font`
-- **Metadata** — export metadata object from pages
-- **Static generation** — prefer SSG over SSR when possible
-- **Edge runtime** — for latency-sensitive routes
-
-## Anti-Patterns
-
-- [FAIL] Using `useEffect` for data fetching in Server Components
-- [FAIL] Making everything a Client Component
-- [FAIL] Not using `loading.tsx` and `error.tsx`
-- [FAIL] Importing server-only code in Client Components
-- [FAIL] Not leveraging caching and revalidation
-
-
-<!-- Source: EXAMPLES.md -->
-
-# nextjs Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Server Components vs Client Components
-
-### Anti-pattern: Marking the Entire Page as Client Component
-
-```tsx
-// BAD: app/dashboard/page.tsx with 'use client' at top
-// Bloats client bundle, loses SEO benefits, eliminates direct DB access
-'use client';
-
-export default function DashboardPage() {
-  const [data, setData] = useState(null);
-  useEffect(() => { fetch('/api/dashboard').then(...) }, []);
-  return <div>...</div>;
-}
-```
-
-### Best practice: ContextOS Standard (RSC by Default, Client Leaf Nodes)
-
-```tsx
-// GOOD: Server Component fetches data directly with zero bundle cost
-// app/dashboard/page.tsx (Server Component)
-import { Suspense } from 'react';
-import { db } from '@/lib/db';
-import { InteractiveChart } from './InteractiveChart'; // 'use client' leaf component
-
-export default async function DashboardPage() {
-  const stats = await db.analytics.getStats();
-  return (
-    <main>
-      <h1>Dashboard</h1>
-      <p>Total Revenue: {stats.revenue}</p>
-      <Suspense fallback={<ChartSkeleton />}>
-        <InteractiveChart initialData={stats.chartData} />
-      </Suspense>
-    </main>
-  );
-}
-```
-
-<!-- Source: SKILL.md -->
-
----
-name: Next.js
-description: >
-  ContextOS skill for Next.js App Router, Server Components, Server Actions, performance optimization, and Vercel best practices.
----
-
 # Next.js App Router Best Practices
 
 ## Overview
@@ -280,6 +160,120 @@ See `EXAMPLES.md` for detailed code examples and component templates.
 
 - Pairs with `react` and `ui-ux-pro` for component design and state management.
 - Pairs with `security` for session authorization and input sanitization.
+
+
+<!-- Source: nextjs.md -->
+
+# Next.js — Best Practices (App Router)
+
+## Routing
+
+- Use **App Router** (`app/` directory) — not Pages Router
+- **Layouts** — shared UI in `layout.tsx`, nested layouts for sections
+- **Loading states** — `loading.tsx` for Suspense boundaries
+- **Error handling** — `error.tsx` for error boundaries per route
+- **Not found** — `not-found.tsx` for 404 pages
+
+## Server vs Client Components
+
+- **Default to Server Components** — they're server by default
+- **Use `'use client'`** only when you need: event handlers, useState, useEffect, browser APIs
+- **Push client boundaries down** — keep as much as possible on the server
+- **Don't pass functions** from Server to Client components
+
+## Data Fetching
+
+- **Server Components** — fetch directly, no useEffect
+- **Server Actions** — for mutations (`'use server'`)
+- **Route Handlers** — `app/api/` for REST endpoints
+- **Parallel fetching** — use Promise.all for independent requests
+- **Caching** — leverage Next.js cache, revalidate strategically
+
+```tsx
+// Server Component — direct fetch
+async function UserProfile({ id }: { id: string }) {
+  const user = await getUser(id); // No useEffect needed
+  return <div>{user.name}</div>;
+}
+```
+
+## File Structure
+
+```
+app/
+├── layout.tsx              # Root layout
+├── page.tsx                # Home page
+├── globals.css
+├── (auth)/                 # Route group (no URL impact)
+│   ├── login/page.tsx
+│   └── register/page.tsx
+├── dashboard/
+│   ├── layout.tsx          # Dashboard layout
+│   ├── page.tsx            # Dashboard home
+│   └── settings/page.tsx
+├── api/
+│   └── users/route.ts      # API route
+└── components/             # Shared components
+```
+
+## Performance
+
+- **Image optimization** — always use `next/image`
+- **Font optimization** — use `next/font`
+- **Metadata** — export metadata object from pages
+- **Static generation** — prefer SSG over SSR when possible
+- **Edge runtime** — for latency-sensitive routes
+
+## Anti-Patterns
+
+- [FAIL] Using `useEffect` for data fetching in Server Components
+- [FAIL] Making everything a Client Component
+- [FAIL] Not using `loading.tsx` and `error.tsx`
+- [FAIL] Importing server-only code in Client Components
+- [FAIL] Not leveraging caching and revalidation
+
+<!-- Source: EXAMPLES.md -->
+
+# nextjs Examples — Anti-patterns vs ContextOS Standard
+
+## Example 1: Server Components vs Client Components
+
+### Anti-pattern: Marking the Entire Page as Client Component
+
+```tsx
+// BAD: app/dashboard/page.tsx with 'use client' at top
+// Bloats client bundle, loses SEO benefits, eliminates direct DB access
+'use client';
+
+export default function DashboardPage() {
+  const [data, setData] = useState(null);
+  useEffect(() => { fetch('/api/dashboard').then(...) }, []);
+  return <div>...</div>;
+}
+```
+
+### Best practice: ContextOS Standard (RSC by Default, Client Leaf Nodes)
+
+```tsx
+// GOOD: Server Component fetches data directly with zero bundle cost
+// app/dashboard/page.tsx (Server Component)
+import { Suspense } from 'react';
+import { db } from '@/lib/db';
+import { InteractiveChart } from './InteractiveChart'; // 'use client' leaf component
+
+export default async function DashboardPage() {
+  const stats = await db.analytics.getStats();
+  return (
+    <main>
+      <h1>Dashboard</h1>
+      <p>Total Revenue: {stats.revenue}</p>
+      <Suspense fallback={<ChartSkeleton />}>
+        <InteractiveChart initialData={stats.chartData} />
+      </Suspense>
+    </main>
+  );
+}
+```
 
 <!-- Source: TROUBLESHOOTING.md -->
 

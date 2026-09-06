@@ -39,16 +39,18 @@ export interface AgentProvider {
 
 // ── Thread types ────────────────────────────────────────────────────────────
 
-export type ThreadStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
+export type ThreadStatus = "pending" | "running" | "completed" | "failed" | "cancelled" | "verification_failed";
 
 export type ThreadProgressPhase =
 	| "queued"
 	| "creating_worktree"
 	| "agent_running"
+	| "verifying"
 	| "capturing_diff"
 	| "compressing"
 	| "completed"
 	| "failed"
+	| "verification_failed"
 	| "cancelled"
 	| "retrying";
 
