@@ -229,7 +229,9 @@ const contextosDirectLlm: AgentProvider = {
 			// Build the coding prompt with ContextOS rules
 			const codingPrompt = buildCodingPrompt(options.task, options.workDir, options.files, extOptions.contextosPrompt);
 
-			const response = await completeSimple(model, {
+			// Abort-aware LLM call — race against cancellation signal to stop
+			// spending money on abandoned requests (P1.9 fix)
+			const llmPromise = completeSimple(model, {
 				systemPrompt:
 					"You are an expert coding agent. You write complete, production-ready code. Follow all project standards provided to you.",
 				messages: [
@@ -240,6 +242,27 @@ const contextosDirectLlm: AgentProvider = {
 					},
 				],
 			});
+
+			let response;
+			const { signal } = options;
+			if (signal) {
+				const abortPromise = new Promise<never>((_, reject) => {
+					if (signal.aborted) {
+						reject(new DOMException("LLM request aborted", "AbortError"));
+						return;
+					}
+					signal.addEventListener(
+						"abort",
+						() => {
+							reject(new DOMException("LLM request aborted", "AbortError"));
+						},
+						{ once: true },
+					);
+				});
+				response = await Promise.race([llmPromise, abortPromise]);
+			} else {
+				response = await llmPromise;
+			}
 
 			const output = response.content
 				.filter((b): b is { type: "text"; text: string } => b.type === "text")

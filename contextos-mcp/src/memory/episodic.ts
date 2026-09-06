@@ -18,6 +18,7 @@
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { redactSecrets } from "../security/secret-filter.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -253,7 +254,7 @@ export class EpisodicMemory {
 			estimatedCostUsd: params.estimatedCostUsd,
 			filesChangedCount: params.filesChanged.length,
 			filesChanged: params.filesChanged,
-			summary: params.summary.slice(0, 2000), // Cap stored summary
+			summary: redactSecrets(params.summary.slice(0, 2000)), // Cap stored summary + redact secrets
 			timestamp,
 		};
 

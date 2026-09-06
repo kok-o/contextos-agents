@@ -68,6 +68,19 @@ function printHelp() {
   console.log('  node .agents/ctx.js skill add alice/my-cool-skill');
 }
 
+// ── Helper: parse checksum flag ─────────────────────────────────────────────
+function extractChecksum(argv) {
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i].startsWith('--checksum=')) {
+      return argv[i].split('=')[1];
+    }
+    if (argv[i] === '--checksum' && argv[i + 1] && !argv[i + 1].startsWith('--')) {
+      return argv[i + 1];
+    }
+  }
+  return undefined;
+}
+
 const command = args[0];
 const target  = args[1];
 
@@ -261,14 +274,15 @@ if (command === 'export') {
 } else if (command === 'install-skill') {
   const ref = args[1];
   const dryRun = args.includes('--dry-run');
+  const checksum = extractChecksum(args);
   const plugins = require('./plugins.js');
   
   if (!ref) {
-    console.error('[ERROR] Usage: ctx.js install-skill <ref>');
+    console.error('[ERROR] Usage: ctx.js install-skill <ref> [--checksum <sha256>]');
     process.exit(1);
   }
   
-  plugins.add(ref, { dryRun }).catch(err => {
+  plugins.add(ref, { dryRun, checksum }).catch(err => {
     console.error(`[ERROR] ${err.message}`);
     process.exit(1);
   });
@@ -278,6 +292,7 @@ if (command === 'export') {
   const subcommand = args[1];
   const ref        = args[2];
   const dryRun     = args.includes('--dry-run');
+  const checksum   = extractChecksum(args);
   const plugins    = require('./plugins.js');
 
   if (!subcommand || subcommand === 'help') {
@@ -286,7 +301,7 @@ if (command === 'export') {
   }
 
   if (subcommand === 'add') {
-    plugins.add(ref, { dryRun }).catch(err => {
+    plugins.add(ref, { dryRun, checksum }).catch(err => {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     });

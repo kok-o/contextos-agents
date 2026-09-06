@@ -30,10 +30,14 @@ class SecurityError(Exception):
     """Raised when code execution attempts an unauthorized or dangerous operation."""
     pass
 
-_ALLOWED_MODULES = {'json', 'math', 're', 'asyncio', 'datetime', 'random', 'collections'}
+_ALLOWED_MODULES = {'json', 'math', 're', 'datetime', 'random', 'collections'}
+# asyncio removed from _ALLOWED_MODULES: it allows socket/network access.
+# asyncio is still available via _runtime_symbols() for async_thread/async_llm_query.
 _FORBIDDEN_ATTRIBUTES = {
     '__class__', '__subclasses__', '__bases__', '__mro__',
-    '__globals__', '__code__', '__builtins__', '__import__'
+    '__globals__', '__code__', '__builtins__', '__import__',
+    '__getattr__', '__setattr__', '__delattr__',
+    '__reduce__', '__reduce_ex__',  # pickle-based escapes
 }
 
 def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
@@ -87,7 +91,11 @@ _SAFE_BUILTINS = {
     'str': str,
     'sum': sum,
     'tuple': tuple,
-    'type': type,
+    # type() with 1 arg is safe (type checking), but type('X', bases, dict)
+    # creates arbitrary classes that can call __import__ — block it.
+    'type': lambda *args: type(*args) if len(args) == 1 else (_ for _ in ()).throw(
+        SecurityError("type() with 3 arguments is forbidden in sandboxed runtime")
+    ),
     'zip': zip,
     'True': True,
     'False': False,
@@ -123,6 +131,10 @@ def _validate_ast(code: str) -> None:
         elif isinstance(node, ast.Attribute):
             if node.attr in _FORBIDDEN_ATTRIBUTES:
                 raise SecurityError(f"Security error: access to dangerous attribute '{node.attr}' is forbidden")
+        elif isinstance(node, ast.Call):
+            # Block type('X', bases, dict) class creation at AST level
+            if isinstance(node.func, ast.Name) and node.func.id == 'type' and len(node.args) == 3:
+                raise SecurityError("Security error: type() with 3 arguments is forbidden in sandboxed runtime")
 
 # Real stdio handles — saved before exec() can redirect sys.stdout/sys.stderr.
 _real_stdout = sys.stdout

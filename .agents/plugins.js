@@ -36,6 +36,26 @@ const REGISTRY_URL   = 'https://raw.githubusercontent.com/kok-o/koko-contextos-a
 const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024;
 const SAFE_SKILL_NAME = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
+// ── Prompt Injection Scanner ──────────────────────────────────────────────────
+const PROMPT_INJECTION_PATTERNS = [
+  /ignore\s+(all\s+)?previous\s+instructions/i,
+  /forget\s+(all\s+)?previous/i,
+  /you\s+are\s+now/i,
+  /system\s*:\s*/i,
+  /\[SYSTEM\]/i,
+];
+
+function scanForPromptInjection(content) {
+  if (typeof content !== 'string') return false;
+  const found = PROMPT_INJECTION_PATTERNS.filter(p => p.test(content));
+  if (found.length > 0) {
+    console.warn(c.yellow('  ⚠️ Potential prompt injection detected in downloaded skill'));
+    console.warn(c.yellow(`     Patterns: ${found.map(p => p.source).join(', ')}`));
+    return true;
+  }
+  return false;
+}
+
 // ── ANSI helpers ──────────────────────────────────────────────────────────────
 const NO_COLOR = process.env.NO_COLOR || !process.stdout.isTTY;
 const c = {
@@ -146,7 +166,7 @@ function parseRef(ref) {
 }
 
 // ── GitHub installer ──────────────────────────────────────────────────────────
-async function installFromGitHub(descriptor, skillName, dryRun) {
+async function installFromGitHub(descriptor, skillName, dryRun, checksum) {
   const { owner, repo, gitRef, isPinned, subPath } = descriptor;
   const skillPath  = subPath || '';
   const base       = `https://raw.githubusercontent.com/${owner}/${repo}/${gitRef}`;
@@ -174,6 +194,12 @@ async function installFromGitHub(descriptor, skillName, dryRun) {
     throw new Error('Fetched SKILL.md appears empty or invalid');
   }
 
+  const sha256 = crypto.createHash('sha256').update(skillMdContent).digest('hex');
+  if (checksum && sha256.toLowerCase() !== checksum.toLowerCase()) {
+    throw new Error(`Checksum mismatch for ${skillName}: expected ${checksum}, got ${sha256}`);
+  }
+  scanForPromptInjection(skillMdContent);
+
   // Optionally fetch skill.yaml if it exists
   const yamlUrl = skillPath
     ? `${base}/${skillPath}/skill.yaml`
@@ -190,8 +216,8 @@ async function installFromGitHub(descriptor, skillName, dryRun) {
 
   if (dryRun) {
     console.log(c.yellow(`  [DRY-RUN] Would install to: ${targetDir}`));
-    console.log(c.yellow(`  [DRY-RUN] SKILL.md size: ${skillMdContent.length} bytes`));
-    return;
+    console.log(c.yellow(`  [DRY-RUN] SKILL.md size: ${skillMdContent.length} bytes (sha256: ${sha256})`));
+    return sha256;
   }
 
   fs.mkdirSync(targetDir, { recursive: true });
@@ -208,28 +234,30 @@ async function installFromGitHub(descriptor, skillName, dryRun) {
     gitRef,
     subPath: skillPath,
     ref:     descriptor.raw,
-    sha256:  crypto.createHash('sha256').update(skillMdContent).digest('hex'),
+    sha256,
     installedAt: new Date().toISOString(),
   }, null, 2));
 
-  console.log(c.green(`  ✓ Installed SKILL.md (${skillMdContent.length} bytes)`));
+  console.log(c.green(`  ✓ Installed SKILL.md (${skillMdContent.length} bytes, sha256: ${sha256.slice(0, 12)}...)`));
   if (yamlContent) console.log(c.green(`  ✓ Installed skill.yaml`));
+  return sha256;
 }
 
 // ── npm installer ─────────────────────────────────────────────────────────────
-function installFromNpm(descriptor, skillName, dryRun) {
+function installFromNpm(descriptor, skillName, dryRun, checksum) {
   const pkgName = descriptor.package;
 
   if (dryRun) {
     console.log(c.yellow(`  [DRY-RUN] Would run: npm install ${pkgName}`));
     console.log(c.yellow(`  [DRY-RUN] Would copy skill to: ${path.join(PLUGINS_DIR, skillName)}`));
-    return;
+    return null;
   }
 
   console.log(c.dim(`  Installing npm package: ${pkgName}`));
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   const temporaryPrefix = fs.mkdtempSync(path.join(os.tmpdir(), 'contextos-plugin-'));
 
+  let sha256 = null;
   try {
     // `--prefix` keeps both node_modules and npm metadata outside the user's
     // project. Lifecycle scripts remain disabled for untrusted packages.
@@ -247,6 +275,13 @@ function installFromNpm(descriptor, skillName, dryRun) {
       throw new Error(`Package '${pkgName}' does not contain a SKILL.md at its root or skill/ subdirectory`);
     }
 
+    const skillMdContent = fs.readFileSync(path.join(skillSrc, 'SKILL.md'), 'utf8');
+    sha256 = crypto.createHash('sha256').update(skillMdContent).digest('hex');
+    if (checksum && sha256.toLowerCase() !== checksum.toLowerCase()) {
+      throw new Error(`Checksum mismatch for ${skillName}: expected ${checksum}, got ${sha256}`);
+    }
+    scanForPromptInjection(skillMdContent);
+
     const targetDir = path.join(PLUGINS_DIR, skillName);
     fs.rmSync(targetDir, { recursive: true, force: true });
     fs.mkdirSync(targetDir, { recursive: true });
@@ -257,13 +292,15 @@ function installFromNpm(descriptor, skillName, dryRun) {
       type:        'npm',
       package:     pkgName,
       ref:         descriptor.raw,
+      sha256,
       installedAt: new Date().toISOString(),
     }, null, 2));
   } finally {
     fs.rmSync(temporaryPrefix, { recursive: true, force: true });
   }
 
-  console.log(c.green(`  ✓ Installed from npm: ${pkgName}`));
+  console.log(c.green(`  ✓ Installed from npm: ${pkgName} (sha256: ${sha256 ? sha256.slice(0, 12) + '...' : 'unknown'})`));
+  return sha256;
 }
 
 // ── Derive skill name from ref ────────────────────────────────────────────────
@@ -284,11 +321,11 @@ function isSafeSkillName(skillName) {
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * skill add <ref> [--dry-run]
+ * skill add <ref> [--dry-run] [--checksum <sha256>]
  */
-async function add(ref, { dryRun = false } = {}) {
+async function add(ref, { dryRun = false, checksum } = {}) {
   if (!ref) {
-    console.error(c.red('Usage: ctx.js skill add <ref>'));
+    console.error(c.red('Usage: ctx.js skill add <ref> [--checksum <sha256>]'));
     console.error('  ref can be: username/repo, username/repo/path/to/skill, or npm-package-name');
     process.exit(1);
   }
@@ -321,11 +358,12 @@ async function add(ref, { dryRun = false } = {}) {
     console.log(c.yellow('  Re-installing will overwrite it. Continuing...'));
   }
 
+  let installedSha256 = null;
   try {
     if (descriptor.type === 'github') {
-      await installFromGitHub(descriptor, skillName, dryRun);
+      installedSha256 = await installFromGitHub(descriptor, skillName, dryRun, checksum);
     } else {
-      installFromNpm(descriptor, skillName, dryRun);
+      installedSha256 = installFromNpm(descriptor, skillName, dryRun, checksum);
     }
   } catch (err) {
     console.error(c.red(`\n[ERROR] Failed to install '${skillName}': ${err.message}`));
@@ -339,6 +377,7 @@ async function add(ref, { dryRun = false } = {}) {
       name:        skillName,
       ref,
       type:        descriptor.type,
+      sha256:      installedSha256,
       installedAt: new Date().toISOString(),
     };
     if (idx >= 0) lock.plugins[idx] = entry;
@@ -519,4 +558,17 @@ function collectAllSkillDirs() {
   return dirs;
 }
 
-module.exports = { add, remove, list, search, collectAllSkillDirs, readLock, parseRef, deriveSkillName, isSafeSkillName, PLUGINS_DIR };
+module.exports = {
+  add,
+  remove,
+  list,
+  search,
+  collectAllSkillDirs,
+  readLock,
+  parseRef,
+  deriveSkillName,
+  isSafeSkillName,
+  scanForPromptInjection,
+  PROMPT_INJECTION_PATTERNS,
+  PLUGINS_DIR,
+};

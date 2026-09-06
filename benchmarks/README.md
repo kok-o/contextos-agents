@@ -110,23 +110,12 @@ npm run benchmark:runtime -- \
 
 ---
 
-## Frontier Model Leaderboard
-
-Results from live V8 sandbox evaluation across 13 behavioral unit test assertions:
-
-| Model | Provider | Baseline Pass Rate | With ContextOS | Delta | V8 Compilation |
-|:---|:---|:---:|:---:|:---:|:---:|
-| **`gpt-5.6-sol`** | AgentRouter | 93% | **100%** | **+7%** | **100%** |
-| **`claude-opus-5`** | AgentRouter | 87% | **100%** | **+13%** | **100%** |
-| **`glm-5.3`** | AgentRouter | 78% | **100%** | **+22%** | **100%** |
-| **`google/gemini-3.8-flash`** | OpenRouter (Flex) | 85% | **92%** | **+7%** | **100%** |
-| **`deepseek-v4-flash`** | AgentRouter | 59% | **74%** | **+15%** | **100%** |
-
----
-
 ## Output Artifacts
 
-Every benchmark run generates:
-- **`benchmarks/results/runtime-report-latest.html`**: Interactive dark-mode dashboard with per-assertion indicators.
-- **`benchmarks/results/runtime-report-latest.md`**: Markdown summary table ready for PR reviews.
-- **`benchmarks/results/runtime-report-latest.json`**: Full machine-readable execution telemetry.
+When you run the benchmark suite locally (`npm run benchmark:runtime` or `npm run benchmark:live`), execution outputs are written to:
+- `benchmarks/results/runtime-report-latest.html`: Interactive dark-mode dashboard with per-assertion indicators.
+- `benchmarks/results/runtime-report-latest.md`: Markdown summary table ready for PR reviews.
+- `benchmarks/results/runtime-report-latest.json`: Full machine-readable execution telemetry.
+
+> [!NOTE]
+> The `benchmarks/results/` directory is git-ignored by design so that individual local evaluation runs do not pollute repository version control. Run the benchmarks with your own API keys to generate fresh local reports.

@@ -11,8 +11,14 @@
  *   - Per-thread error isolation
  */
 
+import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import * as path from "node:path";
+import { promisify } from "node:util";
 import { getAgent, listAgents } from "../agents/provider.js";
+
+const execFileAsync = promisify(execFile);
+
 import { compressResult } from "../compression/compressor.js";
 import type {
 	BudgetState,
@@ -298,6 +304,7 @@ export type ThreadProgressCallback = (threadId: string, phase: ThreadProgressPha
 export type ThreadOutputCallback = (threadId: string, chunk: string) => void;
 
 export class ThreadManager {
+	private repoRoot: string;
 	private threads: Map<string, ThreadState> = new Map();
 	private totalSpawned: number = 0;
 	private semaphore: AsyncSemaphore;
@@ -317,6 +324,7 @@ export class ThreadManager {
 		onThreadProgress?: ThreadProgressCallback,
 		sessionAbort?: AbortSignal,
 	) {
+		this.repoRoot = path.resolve(repoRoot);
 		this.config = config;
 		this.semaphore = new AsyncSemaphore(config.max_threads);
 		this.worktreeManager = new WorktreeManager(repoRoot, config.worktree_base_dir);
@@ -345,6 +353,15 @@ export class ThreadManager {
 		await this.threadCache.init();
 	}
 
+	private async getCurrentCommitSha(): Promise<string> {
+		try {
+			const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: this.repoRoot });
+			return stdout.trim();
+		} catch {
+			return "";
+		}
+	}
+
 	/**
 	 * Spawn a thread — creates a worktree, runs the agent, returns compressed result.
 	 * Checks the subthread cache first; on cache hit, returns immediately (Slate-style reuse).
@@ -352,11 +369,19 @@ export class ThreadManager {
 	 * Error-isolated: a failure here never throws — always returns a CompressedResult.
 	 */
 	async spawnThread(threadConfig: ThreadConfig): Promise<CompressedResult> {
-		// Subthread cache lookup — return cached result for identical tasks
+		// Subthread cache lookup — return cached result for identical tasks scoped by repo and commit
+		const commitSha = await this.getCurrentCommitSha();
 		const cacheAgent = threadConfig.agent.backend || this.config.default_agent;
 		const cacheModel = threadConfig.agent.model || this.config.default_model;
 		const cacheFiles = threadConfig.files || [];
-		const cached = this.threadCache.get(threadConfig.task, cacheFiles, cacheAgent, cacheModel);
+		const cached = this.threadCache.get(
+			threadConfig.task,
+			cacheFiles,
+			cacheAgent,
+			cacheModel,
+			this.repoRoot,
+			commitSha,
+		);
 		if (cached) {
 			const threadId = threadConfig.id || randomBytes(6).toString("hex");
 			this.onThreadProgress?.(threadId, "completed", "cache hit");
@@ -652,12 +677,15 @@ export class ThreadManager {
 			// Cache successful results for subthread reuse
 			if (result.success) {
 				const cfg = state.config;
+				const commitSha = await this.getCurrentCommitSha();
 				this.threadCache.set(
 					cfg.task,
 					cfg.files || [],
 					cfg.agent.backend || this.config.default_agent,
 					cfg.agent.model || this.config.default_model,
 					result,
+					this.repoRoot,
+					commitSha,
 				);
 
 				// Record episode in episodic memory (fire-and-forget)
@@ -736,6 +764,13 @@ export class ThreadManager {
 	/** Get a specific thread's state. */
 	getThread(threadId: string): ThreadState | undefined {
 		return this.threads.get(threadId);
+	}
+
+	/** Restore a completed/failed thread from persisted state (server restart recovery). */
+	restoreThread(state: ThreadState): void {
+		if (!this.threads.has(state.id)) {
+			this.threads.set(state.id, state);
+		}
 	}
 
 	/** Get the worktree manager for merge operations. */

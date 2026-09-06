@@ -127,7 +127,8 @@ export class PythonRepl {
 
 	/**
 	 * Pending resolvers for messages we're waiting on from Python.
-	 * Each entry maps a message type to a one-shot resolve/reject pair.
+	 * Each entry maps a unique key (requestId or message type) to a one-shot resolve/reject pair.
+	 * Using requestId prevents collisions when two messages of the same type are in-flight.
 	 */
 	private pending: Map<string, { resolve: (msg: InboundMessage) => void; reject: (err: Error) => void }> = new Map();
 
@@ -308,9 +309,13 @@ export class PythonRepl {
 			return;
 		}
 
-		const entry = this.pending.get(msg.type);
+		// Dispatch by msg.id first (request-response pairs), then fall back to msg.type
+		// (singleton messages like ready, context_set, final_reset, exec_done)
+		const id = (msg as unknown as Record<string, unknown>).id as string | undefined;
+		const key = id && this.pending.has(id) ? id : msg.type;
+		const entry = this.pending.get(key);
 		if (entry) {
-			this.pending.delete(msg.type);
+			this.pending.delete(key);
 			entry.resolve(msg);
 		}
 	}
@@ -404,21 +409,30 @@ export class PythonRepl {
 		}
 	}
 
-	private waitForMessage(type: string): Promise<InboundMessage> {
+	/**
+	 * Wait for an inbound message from Python.
+	 * @param type - Message type to wait for.
+	 * @param requestId - Optional unique key for request-response pairs.
+	 *   Prevents collisions when multiple in-flight messages share the same type.
+	 *   Falls back to `type` when omitted (safe for singleton messages like "ready").
+	 */
+	private waitForMessage(type: string, requestId?: string): Promise<InboundMessage> {
 		return new Promise((resolve, reject) => {
 			if (!this.isAlive) {
 				reject(new Error(`REPL subprocess is not running (waiting for "${type}")`));
 				return;
 			}
 
+			const key = requestId || type;
+
 			const timeout = setTimeout(() => {
-				if (this.pending.has(type)) {
-					this.pending.delete(type);
-					reject(new Error(`Timeout waiting for "${type}" from Python REPL`));
+				if (this.pending.has(key)) {
+					this.pending.delete(key);
+					reject(new Error(`Timeout waiting for "${type}" (key=${key}) from Python REPL`));
 				}
 			}, 300_000);
 
-			this.pending.set(type, {
+			this.pending.set(key, {
 				resolve: (msg) => {
 					clearTimeout(timeout);
 					resolve(msg);

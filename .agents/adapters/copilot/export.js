@@ -55,18 +55,40 @@ function run() {
     `<!-- Source: .agents/core/skills/  ·  Do not edit manually. -->\n\n`
   );
 
-  // ── Project rules from AGENTS.md ─────────────────────────────────────────────
-  if (fs.existsSync(AGENTS_MD_PATH)) {
-    const agentsMd = fs.readFileSync(AGENTS_MD_PATH, 'utf8');
-    lines.push(`## Project Rules\n\n${agentsMd}\n\n---\n`);
-  }
+  // ── Project rules & Step 0 ───────────────────────────────────────────────────
+  lines.push(`## Project Rules\n\n`);
+  lines.push(`### Step 0 — Identify Before Acting\n\n`);
+  lines.push(`Before writing a single line of code or plan, state:\n`);
+  lines.push(`\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n`);
+  lines.push(`### Non-Negotiable Rules\n\n`);
+  lines.push(`- **Zero-Assumption Investigation**: Never guess file paths or signatures. Inspect before modifying.\n`);
+  lines.push(`- **Zero-Placeholder Production Code**: Never emit lazy stubs, \`// TODO\`, or partial code.\n`);
+  lines.push(`- **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.\n`);
+  lines.push(`- **Surgical Blast Radius**: Modify only files strictly within scope.\n\n`);
+  lines.push(`---\n`);
 
   // ── Skills ───────────────────────────────────────────────────────────────────
-  lines.push(`\n## Skills Library\n`);
-  lines.push(`The following skills define specialist knowledge.\n`);
-  lines.push(`Reference the relevant skill when working on a task.\n`);
+  lines.push(`\n## Skills Library\n\n`);
+  lines.push(`ContextOS uses on-demand progressive disclosure. Read the relevant \`SKILL.md\` file only when your task matches the trigger.\n\n`);
+  lines.push(`### Skill Routing Table\n\n`);
+  lines.push(`| Trigger / Domain | Skill | Path |\n`);
+  lines.push(`| --- | --- | --- |\n`);
 
   const skills = collectSkillDirectories();
+  for (const skill of skills) {
+    const skillName = path.basename(skill);
+    const yamlPath = path.join(skill, 'skill.yaml');
+    let tags = skillName;
+    if (fs.existsSync(yamlPath)) {
+      const yaml = fs.readFileSync(yamlPath, 'utf8');
+      const rawTags = extractYamlField(yaml, 'tags');
+      if (rawTags) tags = rawTags.replace(/[\[\]]/g, '');
+    }
+    const relPath = `.agents/core/skills/${skillName}/SKILL.md`;
+    lines.push(`| \`${tags}\` | **${skillName}** | \`${relPath}\` |\n`);
+  }
+  lines.push(`\n---\n`);
+
   let count = 0;
   for (const skill of skills) {
     const section = buildSkillSection(skill);

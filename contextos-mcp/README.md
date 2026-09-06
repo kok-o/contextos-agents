@@ -14,6 +14,24 @@ An execution layer for the [ContextOS](https://github.com/kok-o/koko-contextos-a
 - **Deterministic 3-Way Merge:** The MCP server computes structured diffs, identifies conflicts, and safely executes `git merge` only when instructed by the orchestrator.
 - **Direct API & Router Support:** Direct multi-provider integration with Anthropic, OpenAI, Google Gemini, OpenRouter, Groq, and Ollama via `pi-ai`.
 
+## Security & Execution Model
+
+The ContextOS MCP execution runtime applies strict defense-in-depth isolation across all supported subagent backends:
+
+- **Isolated Git Worktrees (`.swarm-worktrees/`):** Every subagent operates in a private git worktree branch (`swarm/<threadId>`). The developer's primary workspace and active staging area cannot be altered or reset during subagent execution.
+- **Headless CLI Execution & `--dangerously-skip-permissions`:**
+  - Non-interactive agents (like Claude Code) execute with `--dangerously-skip-permissions` to allow headless autonomous editing without interactive user prompts.
+  - This is safe within ContextOS because:
+    1. Subagents are confined to their specific worktree directory;
+    2. Path validation (`isPathAllowed`, `path.relative`) blocks path traversal outside the worktree;
+    3. Sensitive paths (`.env`, SSH keys, `.pem`, `.git`) are strictly blocked before staging (`isBlockedPath`);
+    4. Child process environments are sanitized via strict allowlists (`getSanitizedEnv`) to prevent credential leakage.
+- **Python Sandbox Restrictions:** The embedded Python REPL (`runtime.py`) enforces strict AST validation, forbids dangerous dunder attributes (`__subclasses__`, `__globals__`, `__reduce__`), restricts module imports to safe standard libraries (`json`, `math`, `re`, `datetime`, `random`, `collections`), and blocks dynamic class creation via 3-argument `type()`.
+- **Egress Secret Redaction:** All output channels (episodic memory, compression diffs, MCP error messages, direct LLM prompts) pass through `SecretFilter` (`redactSecrets`) to redact API keys and tokens.
+- **Safe Verification & Non-Destructive Merges:**
+  - `verify_command` enforces a strict whitelist of verification binaries (`npm`, `pytest`, `cargo`, `go`, etc.), sanitizes environment variables, and rejects shell metacharacters and operator chaining (`&&`, `;`, `|`).
+  - Merge failures invoke `git merge --abort` and strictly forbid destructive commands like `git reset --hard HEAD` in the user's workspace.
+
 ---
 
 # Original Documentation (swarm-code)
@@ -332,6 +350,17 @@ thread_cache_ttl_hours: 24
 - **Episodic memory**: Persists successful thread strategies to disk; trigram-based similarity recall informs agent/model selection in future sessions
 - **DAG composition**: Thread results compose via Python variable persistence (T1+T2 → T3); orchestrator prompt teaches multi-stage pipelines and failure re-routing
 - **Failure tracking**: Exponential-decay weighted failure rates per agent/model pair — recent failures penalized more, agents that keep failing get routed around
+
+## Security & Execution Model
+
+### Headless Agent Execution & `--dangerously-skip-permissions`
+When running Claude Code or other CLI backends non-interactively in automated swarm threads, the `--dangerously-skip-permissions` flag is required so child processes do not block waiting on interactive terminal confirmation prompts.
+
+This execution model is strictly protected by four architectural safety layers:
+1. **Isolated Git Worktrees:** Every agent thread executes inside an ephemeral git worktree directory (`.swarm-worktrees/mcp-*`) completely separate from the user's primary working tree.
+2. **Worktree Path Traversal Verification:** All paths are checked via `resolve()` and verified to reside strictly within the intended repository boundaries.
+3. **Secret Egress Filtering (`SecretFilter`):** Diffs, error messages, and episodic memory records are passed through redaction regexes before leaving the sandbox, preventing accidental disclosure of `.env` secrets, tokens, or credentials.
+4. **Sanitized Environment & Resource Safety:** API credentials are not leaked to child processes, and unbounded process outputs are constrained via `RollingBuffer` (2MB stdout, 512KB stderr) to eliminate out-of-memory denial-of-service risks.
 
 ## Architecture
 

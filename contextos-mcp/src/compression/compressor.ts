@@ -13,6 +13,7 @@
  */
 
 import type { SwarmConfig } from "../core/types.js";
+import { redactSecrets } from "../security/secret-filter.js";
 
 export interface CompressionInput {
 	agentOutput: string;
@@ -156,9 +157,11 @@ export async function compressResult(
 	maxChars: number = 1000,
 ): Promise<string> {
 	// Episode quality: filter agent output to successful conclusions only
+	// Security: redact secrets from diff and agent output before any compression
 	const filtered: CompressionInput = {
 		...input,
 		agentOutput: filterToSuccessfulOutput(input.agentOutput),
+		diff: redactSecrets(input.diff),
 	};
 
 	switch (strategy) {

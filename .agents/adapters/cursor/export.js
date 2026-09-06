@@ -175,6 +175,7 @@ ${agentsMd}
   sections.push('\n---\n\n# Skills Index (Loaded On-Demand)\n\n' +
     'The following specialist skills are configured as `.cursor/rules/<skill>.mdc`:\n');
   const skills = collectSkillDirectories();
+  const activeMdcFiles = new Set(['00-project-rules.mdc']);
 
   for (const skill of skills) {
     const section = buildSkillSection(skill);
@@ -185,8 +186,19 @@ ${agentsMd}
 
     const mdc = generateCursorMdc(skill);
     if (mdc) {
-      fs.writeFileSync(path.join(CURSOR_RULES_DIR, `${mdc.skillName}.mdc`), mdc.mdcContent);
+      const mdcFileName = `${mdc.skillName}.mdc`;
+      activeMdcFiles.add(mdcFileName);
+      fs.writeFileSync(path.join(CURSOR_RULES_DIR, mdcFileName), mdc.mdcContent);
       mdcCount++;
+    }
+  }
+
+  // Clean up stale .mdc rules from uninstalled skills/plugins
+  if (fs.existsSync(CURSOR_RULES_DIR)) {
+    for (const file of fs.readdirSync(CURSOR_RULES_DIR)) {
+      if (file.endsWith('.mdc') && !activeMdcFiles.has(file)) {
+        fs.unlinkSync(path.join(CURSOR_RULES_DIR, file));
+      }
     }
   }
 

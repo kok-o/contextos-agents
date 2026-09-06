@@ -181,6 +181,15 @@ node .agents/ctx.js export aider     # Compile for Aider
 node .agents/ctx.js export zed       # Compile for Zed IDE
 ```
 
+### Pre-Compiled Artifacts & Git Architecture
+
+ContextOS commits generated adapter configurations (`.cursorrules`, `.cursor/rules/*.mdc`, `.github/copilot-instructions.md`, `.aider.conf.yml`, `CONVENTIONS.md`, `.zed/rules.md`) directly into Git:
+
+- **Zero-Build Onboarding:** AI assistants (Cursor, Claude Code, GitHub Copilot, Zed, Aider) activate instantly upon repository clone without requiring `npm install` or separate build steps.
+- **Git-Native Context:** Assistant engines index project rules using native file matchers and git tree walking without depending on background daemon processes.
+- **Automated Sync & Drift Prevention:** CI strictly validates that generated exports match source skills (`node .agents/ctx.js validate`). Any uncommitted adapter drift fails CI checks via `git diff --exit-code`.
+- **Contributor Workflow:** Source rules are authored exclusively in `.agents/core/skills/<name>/SKILL.md`. Running `node .agents/ctx.js export all` regenerates all assistant configurations deterministically.
+
 ### Plugin Skills & Validation
 
 You can expand your `.agents` folder with community plugins or validate your own custom skills using the top-level commands:
@@ -241,28 +250,28 @@ Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):
 
 Tests use the **Node.js built-in test runner** for the core framework and **Vitest** for the MCP engine — zero external test bloat.
 
-### 1. Root Test Suite (116 tests)
+### 1. Root Test Suite (121 tests)
 
 ```bash
 npm test
 ```
 
 ```text
-# tests 116
-# suites 26
-# pass  116
+# tests 121
+# suites 27
+# pass  121
 # fail  0
 ```
 
-### 2. MCP Server Test Suite (405 tests)
+### 2. MCP Server Test Suite (428 tests)
 
 ```bash
 cd contextos-mcp && npm test
 ```
 
 ```text
-Test Files  21 passed (21)
-     Tests  405 passed (405)
+Test Files  24 passed (24)
+     Tests  428 passed (428)
 ```
 
 **Test coverage:**

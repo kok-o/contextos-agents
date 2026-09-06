@@ -13,6 +13,7 @@
 
 import { execFileSync, execSync, spawn, spawn as spawnChild } from "node:child_process";
 import * as fs from "node:fs";
+import * as http from "node:http";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as readline from "node:readline";
@@ -204,16 +205,22 @@ async function installOllama(): Promise<boolean> {
 	return false;
 }
 
-function isOllamaServing(): boolean {
-	try {
-		execFileSync("curl", ["-sf", "http://127.0.0.1:11434/api/tags"], {
-			stdio: ["ignore", "pipe", "pipe"],
-			timeout: 3000,
-		});
-		return true;
-	} catch {
-		return false;
-	}
+function isOllamaServing(): Promise<boolean> {
+	return new Promise<boolean>((resolve) => {
+		try {
+			const req = http.get("http://127.0.0.1:11434/api/tags", { timeout: 3000 }, (res) => {
+				res.resume();
+				resolve(res.statusCode === 200);
+			});
+			req.on("error", () => resolve(false));
+			req.on("timeout", () => {
+				req.destroy();
+				resolve(false);
+			});
+		} catch {
+			resolve(false);
+		}
+	});
 }
 
 function startOllamaServe(): void {
@@ -254,15 +261,15 @@ async function ensureOllamaSetup(promptFn: () => ReturnType<typeof createPrompt>
 		process.stderr.write(`  ${green(symbols.check)} Ollama installed\n`);
 	}
 
-	if (!isOllamaServing()) {
+	if (!(await isOllamaServing())) {
 		process.stderr.write(`  ${dim("Starting Ollama server...")}\n`);
 		startOllamaServe();
 		let retries = 10;
-		while (retries > 0 && !isOllamaServing()) {
+		while (retries > 0 && !(await isOllamaServing())) {
 			await new Promise((r) => setTimeout(r, 1000));
 			retries--;
 		}
-		if (isOllamaServing()) {
+		if (await isOllamaServing()) {
 			process.stderr.write(`  ${green(symbols.check)} Ollama server running\n`);
 		} else {
 			process.stderr.write(

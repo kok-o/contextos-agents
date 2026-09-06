@@ -22,7 +22,15 @@ import { loadConfig } from "../config.js";
 import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
 import { ThreadManager } from "../threads/manager.js";
 import { mergeAllThreads } from "../worktree/merge.js";
-import { clearPersistedState, getPersistedThreads, purgeOrphans, recordThreadState } from "./state.js";
+import {
+	type AsyncTaskRecord,
+	clearPersistedState,
+	getPersistedAsyncTasks,
+	getPersistedThreads,
+	purgeOrphans,
+	recordAsyncTask,
+	recordThreadState,
+} from "./state.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -129,12 +137,28 @@ async function initSession(absDir: string): Promise<SwarmSession> {
 			const current = threadManager.getThreads();
 			const t = current.find((item) => item.id === threadId);
 			if (t) {
-				recordThreadState(absDir, t);
+				recordThreadState(absDir, t, config.worktree_base_dir);
 			}
 		},
 		abortController.signal,
 	);
 	await threadManager.init();
+
+	// Rehydrate threads from persisted state (survives server restart)
+	const persisted = getPersistedThreads(absDir, config.worktree_base_dir);
+	for (const thread of persisted) {
+		if (thread.status === "completed" || thread.status === "failed") {
+			threadManager.restoreThread(thread);
+		}
+	}
+
+	// Mark lingering running async tasks as unknown_after_restart
+	const asyncTasks = getPersistedAsyncTasks(absDir, config.worktree_base_dir);
+	for (const task of Object.values(asyncTasks)) {
+		if (task.status === "running") {
+			recordAsyncTask(absDir, { ...task, status: "unknown_after_restart" }, config.worktree_base_dir);
+		}
+	}
 
 	const session: SwarmSession = {
 		dir: absDir,
@@ -168,12 +192,12 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 	const resultPromise = session.threadManager.spawnThread(threadConfig);
 	const initialThread = session.threadManager.getThreads().find((t) => t.id === threadId);
 	if (initialThread) {
-		recordThreadState(session.dir, initialThread);
+		recordThreadState(session.dir, initialThread, session.config.worktree_base_dir);
 	}
 	const result = await resultPromise;
 	const finalThread = session.threadManager.getThreads().find((t) => t.id === threadId);
 	if (finalThread) {
-		recordThreadState(session.dir, finalThread);
+		recordThreadState(session.dir, finalThread, session.config.worktree_base_dir);
 	}
 	return result;
 }
@@ -183,11 +207,30 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
  */
 export function getThreads(session: SwarmSession): ThreadState[] {
 	const memoryThreads = session.threadManager.getThreads();
-	const persisted = getPersistedThreads(session.dir);
+	const persisted = getPersistedThreads(session.dir, session.config.worktree_base_dir);
 	const map = new Map<string, ThreadState>();
 	for (const t of persisted) map.set(t.id, t);
 	for (const t of memoryThreads) map.set(t.id, t);
 	return Array.from(map.values());
+}
+
+/**
+ * Record an async job into persistent state.
+ */
+export function recordAsyncJob(
+	session: SwarmSession,
+	taskId: string,
+	agentCount: number,
+	status: "running" | "completed" | "failed" | "unknown_after_restart" = "running",
+): void {
+	recordAsyncTask(session.dir, { taskId, agentCount, startedAt: Date.now(), status }, session.config.worktree_base_dir);
+}
+
+/**
+ * Get all async jobs from persistent state.
+ */
+export function getAsyncJobs(session: SwarmSession): Record<string, AsyncTaskRecord> {
+	return getPersistedAsyncTasks(session.dir, session.config.worktree_base_dir);
 }
 
 /**
@@ -229,26 +272,32 @@ export function cancelThreads(session: SwarmSession, threadId?: string): { cance
 
 /**
  * Cleanup a session — destroy worktrees, remove session.
+ * @param dryRun - If true, report what would be cleaned without actually deleting.
  */
-export async function cleanupSession(dir: string, purgeAllOrphans = false): Promise<string> {
+export async function cleanupSession(dir: string, purgeAllOrphans = false, dryRun = false): Promise<string> {
 	const absDir = path.resolve(dir);
 	const session = sessions.get(absDir);
+	const worktreeBaseDir = session?.config.worktree_base_dir;
 	if (!session && !purgeAllOrphans) {
-		clearPersistedState(absDir);
+		if (!dryRun) clearPersistedState(absDir, worktreeBaseDir);
 		return "No active session for this directory";
 	}
 
-	if (session) {
+	if (session && !dryRun) {
 		session.abortController.abort();
 		await session.threadManager.cleanup();
 		sessions.delete(absDir);
 	}
 
-	clearPersistedState(absDir);
+	if (!dryRun) {
+		clearPersistedState(absDir, worktreeBaseDir);
+	}
 
 	if (purgeAllOrphans) {
-		const { prunedWorktrees, deletedBranches } = await purgeOrphans(absDir);
-		return `Session cleaned up for ${absDir} (purged ${prunedWorktrees} orphan worktree dirs, ${deletedBranches} branches)`;
+		const { prunedWorktrees, deletedBranches, report } = await purgeOrphans(absDir, dryRun, worktreeBaseDir);
+		const prefix = dryRun ? "[DRY RUN] " : "";
+		const reportStr = report.length > 0 ? `\n${report.join("\n")}` : "";
+		return `${prefix}Session cleaned up for ${absDir} (purged ${prunedWorktrees} orphan worktree dirs, ${deletedBranches} branches)${reportStr}`;
 	}
 
 	return `Session cleaned up for ${absDir}`;

@@ -8,6 +8,7 @@
 import * as os from "node:os";
 import type { AgentProvider, AgentResult, AgentRunOptions } from "../core/types.js";
 import { commandExists } from "../utils/command-exists.js";
+import { RollingBuffer } from "../utils/rolling-buffer.js";
 import { safeSpawn } from "../utils/safe-spawn.js";
 import { registerAgent } from "./provider.js";
 
@@ -117,7 +118,12 @@ const claudeCodeProvider: AgentProvider = {
 	async run(options: AgentRunOptions): Promise<AgentResult> {
 		const { task, workDir, model, files, signal } = options;
 		const startTime = Date.now();
-
+		// --dangerously-skip-permissions is REQUIRED for non-interactive/headless Claude Code execution.
+		// This flag is safe in our context because:
+		//   1. Agent runs strictly in an isolated git worktree (not the user's working tree)
+		//   2. Worktree paths are validated against path traversal
+		//   3. Files are security-checked before commit (isBlockedPath + isPathAllowed)
+		//   4. Environment is sanitized (no sensitive credentials leaked to child process)
 		const args = ["-p", "--output-format", "json", "--dangerously-skip-permissions", "--no-session-persistence"];
 
 		if (model) {
@@ -150,8 +156,8 @@ const claudeCodeProvider: AgentProvider = {
 		}
 
 		return new Promise<AgentResult>((resolve) => {
-			let stdout = "";
-			let stderr = "";
+			const stdoutBuf = new RollingBuffer(2 * 1024 * 1024); // 2MB
+			const stderrBuf = new RollingBuffer(512 * 1024); // 512KB
 			let resolved = false;
 
 			const doResolve = (result: AgentResult) => {
@@ -162,12 +168,12 @@ const claudeCodeProvider: AgentProvider = {
 
 			proc.stdout?.on("data", (chunk: Buffer) => {
 				const text = chunk.toString();
-				stdout += text;
+				stdoutBuf.append(text);
 				options.onOutput?.(text);
 			});
 
 			proc.stderr?.on("data", (chunk: Buffer) => {
-				stderr += chunk.toString();
+				stderrBuf.append(chunk.toString());
 			});
 
 			if (signal) {
@@ -191,6 +197,8 @@ const claudeCodeProvider: AgentProvider = {
 			}
 
 			proc.on("close", (code) => {
+				const stdout = stdoutBuf.toString();
+				const stderr = stderrBuf.toString();
 				const durationMs = Date.now() - startTime;
 
 				const parsed = extractJson(stdout);

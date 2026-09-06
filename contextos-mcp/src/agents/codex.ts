@@ -13,6 +13,7 @@
 import * as os from "node:os";
 import type { AgentProvider, AgentResult, AgentRunOptions } from "../core/types.js";
 import { commandExists } from "../utils/command-exists.js";
+import { RollingBuffer } from "../utils/rolling-buffer.js";
 import { safeSpawn } from "../utils/safe-spawn.js";
 import { registerAgent } from "./provider.js";
 
@@ -160,8 +161,8 @@ const codexProvider: AgentProvider = {
 		}
 
 		return new Promise<AgentResult>((resolve) => {
-			let stdout = "";
-			let stderr = "";
+			const stdoutBuf = new RollingBuffer(2 * 1024 * 1024); // 2MB
+			const stderrBuf = new RollingBuffer(512 * 1024); // 512KB
 			let resolved = false;
 
 			const doResolve = (result: AgentResult) => {
@@ -172,12 +173,12 @@ const codexProvider: AgentProvider = {
 
 			proc.stdout?.on("data", (chunk: Buffer) => {
 				const text = chunk.toString();
-				stdout += text;
+				stdoutBuf.append(text);
 				options.onOutput?.(text);
 			});
 
 			proc.stderr?.on("data", (chunk: Buffer) => {
-				stderr += chunk.toString();
+				stderrBuf.append(chunk.toString());
 			});
 
 			if (signal) {
@@ -201,6 +202,8 @@ const codexProvider: AgentProvider = {
 			}
 
 			proc.on("close", (code) => {
+				const stdout = stdoutBuf.toString();
+				const stderr = stderrBuf.toString();
 				const durationMs = Date.now() - startTime;
 
 				// Parse JSONL events

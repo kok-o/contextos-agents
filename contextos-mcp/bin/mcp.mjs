@@ -15,6 +15,20 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distServer = join(__dirname, "..", "dist", "mcp", "server.js");
 
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+	console.log(`
+contextos-mcp — ContextOS Execution Layer and MCP Server CLI
+
+Usage:
+  contextos-mcp [options]
+
+Options:
+  --dir <path>     Target repository directory (default: current working directory)
+  --help, -h       Show this help message
+`);
+	process.exit(0);
+}
+
 if (existsSync(distServer)) {
 	try {
 		const mod = await import(pathToFileURL(distServer).href);

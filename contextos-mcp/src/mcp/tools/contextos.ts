@@ -18,9 +18,18 @@ import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
+import { redactSecrets } from "../../security/secret-filter.js";
 import { resolveExecutablePath } from "../../utils/command-exists.js";
 import { mergeThreadBranch } from "../../worktree/merge.js";
-import { cleanupSession, getBudgetState, getSession, getThreads, spawnThread } from "../session.js";
+import {
+	cleanupSession,
+	getAsyncJobs,
+	getBudgetState,
+	getSession,
+	getThreads,
+	recordAsyncJob,
+	spawnThread,
+} from "../session.js";
 
 const ALLOWED_VERIFY_TOOLS = new Set([
 	"npm",
@@ -68,7 +77,7 @@ function _textResult(text: string) {
 }
 
 function errorResult(text: string) {
-	return { content: [{ type: "text" as const, text }], isError: true as const };
+	return { content: [{ type: "text" as const, text: redactSecrets(text) }], isError: true as const };
 }
 
 function jsonResult(data: unknown) {
@@ -278,10 +287,11 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 							context: contextPrompt,
 						});
 
+						const threads = getThreads(session);
+						const currentThread = threads.find((t) => t.id === threadId);
+
 						let verificationResult: { verified: boolean; output: string } | undefined;
 						if (args.verify_command && result.success) {
-							const threads = getThreads(session);
-							const currentThread = threads.find((t) => t.id === threadId);
 							if (currentThread?.worktreePath) {
 								log(`Running verification inside worktree for thread ${threadId}: ${args.verify_command}`);
 								verificationResult = await runWorktreeVerification(currentThread.worktreePath, args.verify_command);
@@ -293,6 +303,12 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 								? "verification_failed"
 								: "completed"
 							: "failed";
+
+						if (currentThread) {
+							currentThread.status = status;
+							currentThread.phase = status;
+							recordThreadState(session.dir, currentThread, session.config.worktree_base_dir);
+						}
 
 						return {
 							thread_id: threadId,
@@ -320,11 +336,20 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 
 				// Non-blocking async mode
 				if (args.wait === false) {
+					recordAsyncJob(session, taskId, args.agents.length, "running");
 					const asyncPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
 					// Run in background without blocking MCP response
-					Promise.allSettled(asyncPromises).catch((err) => {
-						log(`Background delegation error: ${err}`);
-					});
+					Promise.allSettled(asyncPromises)
+						.then((results) => {
+							const allSucceeded = results.every(
+								(r) => r.status === "fulfilled" && (r.value as any)?.success !== false,
+							);
+							recordAsyncJob(session, taskId, args.agents.length, allSucceeded ? "completed" : "failed");
+						})
+						.catch((err) => {
+							log(`Background delegation error: ${err}`);
+							recordAsyncJob(session, taskId, args.agents.length, "failed");
+						});
 
 					return jsonResult({
 						task_id: taskId,
@@ -389,6 +414,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				const session = await getSession(dir);
 				const threads = getThreads(session);
 				const budget = getBudgetState(session);
+				const asyncTasks = getAsyncJobs(session);
 
 				const threadSummaries = threads.map((t) => ({
 					id: t.id,
@@ -409,11 +435,12 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				return jsonResult({
 					dir: session.dir,
 					threads: threadSummaries,
+					async_tasks: asyncTasks,
 					counts: {
 						total: threads.length,
 						running: threads.filter((t) => t.status === "running").length,
 						completed: threads.filter((t) => t.status === "completed").length,
-						failed: threads.filter((t) => t.status === "failed").length,
+						failed: threads.filter((t) => t.status === "failed" || t.status === "verification_failed").length,
 					},
 					budget: {
 						spent_usd: budget.totalSpentUsd,
@@ -614,6 +641,10 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					.describe(
 						"Whether to deeply scan and purge all stale worktree directories and swarm/* branches left by dead processes",
 					),
+				dry_run: z
+					.boolean()
+					.optional()
+					.describe("If true, report what would be cleaned without actually deleting. Default: false."),
 			}),
 		},
 		async (args) => {
@@ -621,8 +652,8 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			if (!dir) return errorResult("'dir' is required");
 
 			try {
-				const message = await cleanupSession(dir, args.purge_orphans);
-				return jsonResult({ cleaned_up: true, message });
+				const message = await cleanupSession(dir, args.purge_orphans, args.dry_run);
+				return jsonResult({ cleaned_up: !args.dry_run, dry_run: !!args.dry_run, message });
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
 				return errorResult(`Cleanup failed: ${msg}`);

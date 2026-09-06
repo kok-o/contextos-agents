@@ -100,6 +100,8 @@ vi.mock("../../src/mcp/session.js", () => ({
 		actualCostThreads: 2,
 		estimatedCostThreads: 0,
 	})),
+	recordAsyncJob: vi.fn(),
+	getAsyncJobs: vi.fn(() => ({})),
 	cleanupSession: vi.fn(async () => "Session cleaned up"),
 }));
 

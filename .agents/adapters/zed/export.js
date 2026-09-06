@@ -79,14 +79,26 @@ function run() {
   lines.push(`The following specialist skills guide architecture and implementation:\n`);
 
   const skills = collectSkillDirectories();
+  const activePromptFiles = new Set(['contextos.md']);
   let count = 0;
 
   for (const skill of skills) {
     const skillData = buildSkillSection(skill);
     if (skillData) {
       lines.push(skillData.section);
-      fs.writeFileSync(path.join(PROMPTS_DIR, `${skillData.skillName}.md`), skillData.prompt);
+      const promptFileName = `${skillData.skillName}.md`;
+      activePromptFiles.add(promptFileName);
+      fs.writeFileSync(path.join(PROMPTS_DIR, promptFileName), skillData.prompt);
       count++;
+    }
+  }
+
+  // Clean up stale prompts from uninstalled skills/plugins
+  if (fs.existsSync(PROMPTS_DIR)) {
+    for (const file of fs.readdirSync(PROMPTS_DIR)) {
+      if (file.endsWith('.md') && !activePromptFiles.has(file)) {
+        fs.unlinkSync(path.join(PROMPTS_DIR, file));
+      }
     }
   }
 

@@ -13,11 +13,19 @@ import type { ThreadState } from "../core/types.js";
 
 const execFileAsync = promisify(execFile);
 
+export interface AsyncTaskRecord {
+	taskId: string;
+	agentCount: number;
+	startedAt: number;
+	status: "running" | "completed" | "failed" | "unknown_after_restart";
+}
+
 export interface PersistedSessionState {
 	dir: string;
 	createdAt: number;
 	lastUpdatedAt: number;
 	threads: Record<string, ThreadState>;
+	asyncTasks?: Record<string, AsyncTaskRecord>;
 }
 
 export interface OrphanReport {
@@ -26,10 +34,10 @@ export interface OrphanReport {
 }
 
 const STATE_FILE_NAME = "session-state.json";
-const WORKTREE_BASE_DIR = ".swarm-worktrees";
+const DEFAULT_WORKTREE_BASE_DIR = ".swarm-worktrees";
 
-function getStatePath(dir: string): string {
-	const baseDir = path.join(dir, WORKTREE_BASE_DIR);
+function getStatePath(dir: string, worktreeBaseDir?: string): string {
+	const baseDir = path.join(dir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
 	return path.join(baseDir, STATE_FILE_NAME);
 }
 
@@ -67,8 +75,8 @@ function atomicWriteJson(filePath: string, data: unknown): void {
 /**
  * Loads persisted session state from disk.
  */
-export function loadPersistedState(dir: string): PersistedSessionState | null {
-	const statePath = getStatePath(dir);
+export function loadPersistedState(dir: string, worktreeBaseDir?: string): PersistedSessionState | null {
+	const statePath = getStatePath(dir, worktreeBaseDir);
 	if (!fs.existsSync(statePath)) {
 		return null;
 	}
@@ -88,16 +96,16 @@ export function loadPersistedState(dir: string): PersistedSessionState | null {
 /**
  * Saves or updates entire persisted session state.
  */
-export function savePersistedState(dir: string, state: PersistedSessionState): void {
+export function savePersistedState(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
 	state.lastUpdatedAt = Date.now();
-	atomicWriteJson(getStatePath(dir), state);
+	atomicWriteJson(getStatePath(dir, worktreeBaseDir), state);
 }
 
 /**
  * Records or updates an individual thread state in the persisted storage.
  */
-export function recordThreadState(dir: string, thread: ThreadState): void {
-	let state = loadPersistedState(dir);
+export function recordThreadState(dir: string, thread: ThreadState, worktreeBaseDir?: string): void {
+	let state = loadPersistedState(dir, worktreeBaseDir);
 	if (!state) {
 		state = {
 			dir,
@@ -109,23 +117,54 @@ export function recordThreadState(dir: string, thread: ThreadState): void {
 
 	state.threads[thread.id] = thread;
 	state.lastUpdatedAt = Date.now();
-	savePersistedState(dir, state);
+	savePersistedState(dir, state, worktreeBaseDir);
+}
+
+/**
+ * Records or updates an async task execution in persisted storage.
+ */
+export function recordAsyncTask(dir: string, task: AsyncTaskRecord, worktreeBaseDir?: string): void {
+	let state = loadPersistedState(dir, worktreeBaseDir);
+	if (!state) {
+		state = {
+			dir,
+			createdAt: Date.now(),
+			lastUpdatedAt: Date.now(),
+			threads: {},
+		};
+	}
+
+	if (!state.asyncTasks) {
+		state.asyncTasks = {};
+	}
+	state.asyncTasks[task.taskId] = task;
+	state.lastUpdatedAt = Date.now();
+	savePersistedState(dir, state, worktreeBaseDir);
 }
 
 /**
  * Retrieves all persisted threads for a directory.
  */
-export function getPersistedThreads(dir: string): ThreadState[] {
-	const state = loadPersistedState(dir);
+export function getPersistedThreads(dir: string, worktreeBaseDir?: string): ThreadState[] {
+	const state = loadPersistedState(dir, worktreeBaseDir);
 	if (!state) return [];
 	return Object.values(state.threads);
 }
 
 /**
+ * Retrieves all persisted async tasks for a directory.
+ */
+export function getPersistedAsyncTasks(dir: string, worktreeBaseDir?: string): Record<string, AsyncTaskRecord> {
+	const state = loadPersistedState(dir, worktreeBaseDir);
+	if (!state || !state.asyncTasks) return {};
+	return state.asyncTasks;
+}
+
+/**
  * Clears the persisted state file.
  */
-export function clearPersistedState(dir: string): void {
-	const statePath = getStatePath(dir);
+export function clearPersistedState(dir: string, worktreeBaseDir?: string): void {
+	const statePath = getStatePath(dir, worktreeBaseDir);
 	if (fs.existsSync(statePath)) {
 		try {
 			fs.unlinkSync(statePath);
@@ -138,8 +177,8 @@ export function clearPersistedState(dir: string): void {
 /**
  * Scans for orphan worktrees and git branches created by dead or terminated threads.
  */
-export async function scanOrphanWorktrees(repoRoot: string): Promise<OrphanReport> {
-	const baseDir = path.join(repoRoot, WORKTREE_BASE_DIR);
+export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: string): Promise<OrphanReport> {
+	const baseDir = path.join(repoRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
 	const worktreeDirs: string[] = [];
 	const swarmBranches: string[] = [];
 
@@ -172,32 +211,48 @@ export async function scanOrphanWorktrees(repoRoot: string): Promise<OrphanRepor
 
 /**
  * Purges orphan worktrees and git branches.
+ * @param repoRoot - Root of the git repository.
+ * @param dryRun - If true, report what would be deleted without actually deleting.
  */
-export async function purgeOrphans(repoRoot: string): Promise<{ prunedWorktrees: number; deletedBranches: number }> {
+export async function purgeOrphans(
+	repoRoot: string,
+	dryRun = false,
+	worktreeBaseDir?: string,
+): Promise<{ prunedWorktrees: number; deletedBranches: number; report: string[] }> {
 	let prunedWorktrees = 0;
 	let deletedBranches = 0;
+	const report: string[] = [];
 
 	// 1. Tell git to prune worktrees first
-	try {
-		await execFileAsync("git", ["worktree", "prune"], { cwd: repoRoot });
-	} catch {
-		// Ignore
+	if (!dryRun) {
+		try {
+			await execFileAsync("git", ["worktree", "prune"], { cwd: repoRoot });
+		} catch {
+			// Ignore
+		}
 	}
 
-	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(repoRoot);
+	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(repoRoot, worktreeBaseDir);
 
 	// 2. Remove lingering directories
 	for (const wtDir of worktreeDirs) {
+		if (dryRun) {
+			report.push(`[DRY RUN] Would remove worktree: ${wtDir}`);
+			prunedWorktrees++;
+			continue;
+		}
 		try {
 			// Try git worktree remove first
 			await execFileAsync("git", ["worktree", "remove", "--force", wtDir], { cwd: repoRoot });
 			prunedWorktrees++;
+			report.push(`Removed worktree: ${wtDir}`);
 		} catch {
 			// If git fails, force remove directory
 			try {
 				if (fs.existsSync(wtDir)) {
 					fs.rmSync(wtDir, { recursive: true, force: true });
 					prunedWorktrees++;
+					report.push(`Force-removed worktree dir: ${wtDir}`);
 				}
 			} catch {
 				// Ignore
@@ -207,15 +262,23 @@ export async function purgeOrphans(repoRoot: string): Promise<{ prunedWorktrees:
 
 	// 3. Delete swarm branches
 	for (const branch of swarmBranches) {
+		if (dryRun) {
+			report.push(`[DRY RUN] Would delete branch: ${branch}`);
+			deletedBranches++;
+			continue;
+		}
 		try {
 			await execFileAsync("git", ["branch", "-D", branch], { cwd: repoRoot });
 			deletedBranches++;
+			report.push(`Deleted branch: ${branch}`);
 		} catch {
 			// Ignore branch deletion failure
 		}
 	}
 
-	clearPersistedState(repoRoot);
+	if (!dryRun) {
+		clearPersistedState(repoRoot);
+	}
 
-	return { prunedWorktrees, deletedBranches };
+	return { prunedWorktrees, deletedBranches, report };
 }
