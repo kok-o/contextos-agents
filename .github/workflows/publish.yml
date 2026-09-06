@@ -117,6 +117,27 @@ jobs:
       - name: Build (export all adapters)
         run: npm run build
 
+      # ── Validate & Build contextos-mcp package ──────────────────────────────
+      - name: Install MCP dependencies
+        working-directory: ./contextos-mcp
+        run: npm ci
+
+      - name: Lint MCP package (Biome)
+        working-directory: ./contextos-mcp
+        run: npm run lint
+
+      - name: Build MCP package (TypeScript)
+        working-directory: ./contextos-mcp
+        run: npm run build
+
+      - name: Run MCP test suite (Vitest + Security + Handshake)
+        working-directory: ./contextos-mcp
+        run: npm test
+
+      - name: Verify MCP npm pack dry-run
+        working-directory: ./contextos-mcp
+        run: npm pack --dry-run
+
       # ── Publish ─────────────────────────────────────────────────────────────
       - name: Publish to npm
         run: npm publish --access public

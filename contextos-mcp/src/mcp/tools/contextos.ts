@@ -12,17 +12,54 @@
  * IMPORTANT: Never use console.log() — stdout is the MCP protocol stream.
  */
 
-import { exec } from "node:child_process";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
+import { existsSync, lstatSync, realpathSync, statSync } from "node:fs";
+import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
+import { resolveExecutablePath } from "../../utils/command-exists.js";
 import { mergeThreadBranch } from "../../worktree/merge.js";
 import { cleanupSession, getBudgetState, getSession, getThreads, spawnThread } from "../session.js";
 
-const execAsync = promisify(exec);
+const ALLOWED_VERIFY_TOOLS = new Set([
+	"npm",
+	"npx",
+	"pnpm",
+	"yarn",
+	"pytest",
+	"python",
+	"python3",
+	"cargo",
+	"go",
+	"vitest",
+	"jest",
+	"node",
+]);
+
+const STRICT_ENV_ALLOWLIST = new Set([
+	"PATH",
+	"HOME",
+	"USERPROFILE",
+	"SYSTEMROOT",
+	"WINDIR",
+	"TEMP",
+	"TMP",
+	"NODE_ENV",
+	"LANG",
+	"LC_ALL",
+	"CI",
+]);
+
+function getSanitizedEnv(): NodeJS.ProcessEnv {
+	const sanitized: NodeJS.ProcessEnv = { CI: "true" };
+	for (const key of STRICT_ENV_ALLOWLIST) {
+		if (process.env[key] !== undefined) {
+			sanitized[key] = process.env[key];
+		}
+	}
+	return sanitized;
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -46,36 +83,116 @@ async function runWorktreeVerification(
 	worktreePath: string,
 	command: string,
 ): Promise<{ verified: boolean; output: string }> {
-	try {
-		const { stdout, stderr } = await execAsync(command, {
-			cwd: worktreePath,
-			timeout: 60000,
-			maxBuffer: 1024 * 1024,
-			env: { ...process.env, CI: "true" },
-		});
-		return {
-			verified: true,
-			output: `${stdout}\n${stderr}`.trim().slice(0, 1500),
-		};
-	} catch (err: unknown) {
-		const anyErr = err as { stdout?: string; stderr?: string; message?: string };
-		const out = `${anyErr.stdout || ""}\n${anyErr.stderr || ""}\n${anyErr.message || ""}`;
+	const trimmed = command.trim();
+	if (!trimmed) {
+		return { verified: false, output: "Empty verification command" };
+	}
+
+	// Reject shell metacharacters and command chaining
+	if (/[&|;`$><%]/.test(trimmed)) {
 		return {
 			verified: false,
-			output: out.trim().slice(0, 1500),
+			output: "Security error: Shell metacharacters and command chaining are not permitted in verify_command",
 		};
 	}
+
+	const parts = trimmed.split(/\s+/);
+	const rawTool = parts[0];
+	const baseTool = rawTool.toLowerCase().replace(/\.(cmd|bat|exe)$/i, "");
+
+	if (!ALLOWED_VERIFY_TOOLS.has(baseTool)) {
+		return {
+			verified: false,
+			output: `Security error: Command "${rawTool}" is not in the allowed verification tools whitelist (${Array.from(ALLOWED_VERIFY_TOOLS).join(", ")})`,
+		};
+	}
+
+	const exePath = await resolveExecutablePath(rawTool);
+	const targetExecutable = exePath || rawTool;
+
+	return new Promise((resolveResult) => {
+		try {
+			const child = spawn(targetExecutable, parts.slice(1), {
+				cwd: worktreePath,
+				timeout: 60000,
+				env: getSanitizedEnv(),
+				shell: false,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+
+			let stdout = "";
+			let stderr = "";
+			child.stdout?.on("data", (d) => {
+				if (stdout.length < 10000) stdout += d.toString();
+			});
+			child.stderr?.on("data", (d) => {
+				if (stderr.length < 10000) stderr += d.toString();
+			});
+
+			child.on("close", (code) => {
+				const output = `${stdout}\n${stderr}`.trim().slice(0, 1500);
+				resolveResult({
+					verified: code === 0,
+					output,
+				});
+			});
+
+			child.on("error", (err) => {
+				resolveResult({
+					verified: false,
+					output: `Verification execution failed: ${err.message}`,
+				});
+			});
+		} catch (err: unknown) {
+			resolveResult({
+				verified: false,
+				output: err instanceof Error ? err.message : String(err),
+			});
+		}
+	});
 }
 
 // ── Tool Registration ──────────────────────────────────────────────────────
 
 export function registerContextosTools(server: McpServer, defaultDir?: string): void {
+	function findGitRoot(startDir: string): string | null {
+		let current = startDir;
+		while (true) {
+			if (existsSync(resolve(current, ".git"))) {
+				return current;
+			}
+			const parent = resolve(current, "..");
+			if (parent === current) break;
+			current = parent;
+		}
+		return null;
+	}
+
 	function resolveDir(dir?: string): string | null {
-		const resolved = dir || defaultDir;
-		if (!resolved) return null;
-		const abs = resolve(resolved);
+		const target = dir || defaultDir;
+		if (!target) return null;
+		const abs = resolve(target);
 		if (!existsSync(abs)) return null;
-		return abs;
+		try {
+			const stat = statSync(abs);
+			if (!stat.isDirectory()) return null;
+			// Reject symlinks for security
+			const lstat = lstatSync(abs);
+			if (lstat.isSymbolicLink()) return null;
+			// Ensure it's inside a valid git repository
+			if (!findGitRoot(abs)) return null;
+			const real = realpathSync(abs);
+			if (defaultDir) {
+				const realDefault = realpathSync(resolve(defaultDir));
+				const rel = relative(realDefault, real);
+				if (rel.startsWith("..") || isAbsolute(rel)) {
+					return null;
+				}
+			}
+			return real;
+		} catch {
+			return null;
+		}
 	}
 
 	// ── contextos_delegate ─────────────────────────────────────────────────
@@ -132,7 +249,9 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			const resolvedDir = resolveDir(args.dir);
 			if (!resolvedDir) {
 				if (!args.dir && !defaultDir) return errorResult("'dir' is required — specify the repo path");
-				return errorResult(`Directory does not exist: ${resolve(args.dir || defaultDir || "")}`);
+				return errorResult(
+					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+				);
 			}
 
 			try {
@@ -143,11 +262,11 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				const session = await getSession(resolvedDir);
 				const taskId = `ctx_${Date.now().toString(36)}`;
 
-				// Spawn agents
-				const spawnPromises = args.agents.map(async (agentConfig) => {
+				const executeAgent = async (agentConfig: (typeof args.agents)[number], index: number) => {
 					const model = agentConfig.model || getDefaultModel(agentConfig.provider);
 					const backend = agentConfig.backend || "direct-llm";
-					const threadId = `${taskId}_${agentConfig.provider}`;
+					// Enforce unique, safe thread ID without collisions
+					const threadId = `${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}_${Math.random().toString(36).slice(2, 7)}`;
 
 					try {
 						const result = await spawnThread(session, {
@@ -197,12 +316,13 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 							error: err instanceof Error ? err.message : String(err),
 						};
 					}
-				});
+				};
 
 				// Non-blocking async mode
 				if (args.wait === false) {
+					const asyncPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
 					// Run in background without blocking MCP response
-					Promise.allSettled(spawnPromises).catch((err) => {
+					Promise.allSettled(asyncPromises).catch((err) => {
 						log(`Background delegation error: ${err}`);
 					});
 
@@ -211,8 +331,8 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 						status: "running",
 						contextos_rules_loaded: contextPrompt.length > 0,
 						mode: args.mode || "parallel",
-						agents: args.agents.map((a) => ({
-							thread_id: `${taskId}_${a.provider}`,
+						agents: args.agents.map((a, i) => ({
+							thread_id: `${taskId}_${a.provider}_${i}`,
 							provider: a.provider,
 							model: a.model || getDefaultModel(a.provider),
 							backend: a.backend || "direct-llm",
@@ -226,11 +346,12 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				let threadResults;
 				if (args.mode === "sequential") {
 					threadResults = [];
-					for (const promise of spawnPromises) {
-						threadResults.push(await promise);
+					for (let i = 0; i < args.agents.length; i++) {
+						threadResults.push(await executeAgent(args.agents[i], i));
 					}
 				} else {
-					threadResults = await Promise.all(spawnPromises);
+					const parallelPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
+					threadResults = await Promise.all(parallelPromises);
 				}
 
 				return jsonResult({

@@ -14,6 +14,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { AgentProvider, AgentResult, AgentRunOptions } from "../core/types.js";
+import { isPathAllowed } from "../security/file-policy.js";
+import { containsSecrets, isBlockedPath, redactSecrets } from "../security/secret-filter.js";
 import { registerAgent } from "./provider.js";
 
 // ── Code Block Parser ──────────────────────────────────────────────────────
@@ -143,15 +145,22 @@ Do NOT use placeholders like "// ... rest of the code". Write the full file.
 	// Include existing file contents for context
 	if (files && files.length > 0) {
 		sections.push("\n## Existing Files (for context)\n");
-		for (const file of files.slice(0, 10)) { // Cap at 10 files
-			const fullPath = path.join(workDir, file);
+		for (const file of files.slice(0, 10)) {
+			// Cap at 10 files
+			if (!isPathAllowed(file, workDir) || isBlockedPath(file)) {
+				process.stderr.write(`[direct-llm] Skipping blocked or out-of-boundary file: ${file}\n`);
+				continue;
+			}
+			const fullPath = path.resolve(workDir, file);
 			if (existsSync(fullPath)) {
 				try {
-					const content = readFileSync(fullPath, "utf-8");
+					const rawContent = readFileSync(fullPath, "utf-8");
+					if (containsSecrets(rawContent)) {
+						process.stderr.write(`[direct-llm] Redacting detected secrets in: ${file}\n`);
+					}
+					const content = redactSecrets(rawContent);
 					// Cap per-file content at 3000 chars
-					const truncated = content.length > 3000
-						? content.slice(0, 3000) + "\n// ... [truncated]"
-						: content;
+					const truncated = content.length > 3000 ? `${content.slice(0, 3000)}\n// ... [truncated]` : content;
 					sections.push(`### ${file}\n\`\`\`\n${truncated}\n\`\`\`\n`);
 				} catch {
 					// Skip unreadable files
@@ -191,7 +200,8 @@ const contextosDirectLlm: AgentProvider = {
 
 		try {
 			const { completeSimple, getModels, getProviders } = await import("@mariozechner/pi-ai");
-			const modelId = options.model || process.env.CONTEXTOS_DEFAULT_MODEL || process.env.RLM_MODEL || "claude-sonnet-4-6";
+			const modelId =
+				options.model || process.env.CONTEXTOS_DEFAULT_MODEL || process.env.RLM_MODEL || "claude-sonnet-4-6";
 
 			// Find model
 			let model;
@@ -217,15 +227,11 @@ const contextosDirectLlm: AgentProvider = {
 			}
 
 			// Build the coding prompt with ContextOS rules
-			const codingPrompt = buildCodingPrompt(
-				options.task,
-				options.workDir,
-				options.files,
-				extOptions.contextosPrompt,
-			);
+			const codingPrompt = buildCodingPrompt(options.task, options.workDir, options.files, extOptions.contextosPrompt);
 
 			const response = await completeSimple(model, {
-				systemPrompt: "You are an expert coding agent. You write complete, production-ready code. Follow all project standards provided to you.",
+				systemPrompt:
+					"You are an expert coding agent. You write complete, production-ready code. Follow all project standards provided to you.",
 				messages: [
 					{
 						role: "user" as const,
@@ -250,9 +256,7 @@ const contextosDirectLlm: AgentProvider = {
 					`[contextos-agent] Parsed ${codeBlocks.length} code blocks, wrote ${filesChanged.length} files\n`,
 				);
 			} else {
-				process.stderr.write(
-					`[contextos-agent] No code blocks found in LLM response (${output.length} chars)\n`,
-				);
+				process.stderr.write(`[contextos-agent] No code blocks found in LLM response (${output.length} chars)\n`);
 			}
 
 			return {

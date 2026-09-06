@@ -1,6 +1,6 @@
 ---
 description: "Vitest, React Testing Library, and Playwright testing standards. Enforces TDD/BDD, test pyramid, zero brittle mocks, and complete assertion coverage."
-globs: ""
+globs: "**/*.{test,spec}.{ts,js,tsx,jsx},vitest.config.*,jest.config.*"
 alwaysApply: false
 ---
 

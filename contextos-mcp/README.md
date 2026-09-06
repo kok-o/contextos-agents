@@ -3,7 +3,7 @@
 An execution layer for the [ContextOS](https://github.com/kok-o/koko-contextos-agents) framework. Exposes an MCP (Model Context Protocol) interface that allows orchestrating agents (like Antigravity) to spawn parallel coding agents in isolated Git worktrees.
 
 ## Features
-- **Selective & Multilingual Context Loading:** Dynamically reads rules and skills from your `.agents/` directory using bilingual (English & Russian) keyword triggers. Extracts essential sections (`extractEssentialSkillContent`), saving up to 65% in prompt tokens while auto-injecting project invariants from `AGENTS.md` and `GEMINI.md`.
+- **Selective & Multilingual Context Loading:** Dynamically reads rules and skills from your `.agents/` directory using bilingual (English & Russian) keyword triggers. Extracts essential sections (`extractEssentialSkillContent`), significantly reducing prompt token overhead while auto-injecting project invariants from `AGENTS.md` and `GEMINI.md`.
 - **Git Worktree Isolation & Concurrency Safety:** Spawns agents in isolated `git worktree` environments (`.swarm-worktrees/`). Agents cannot corrupt your main working tree, and transient git lock contention (`.git/index.lock`) is mitigated with mutexes and retries.
 - **Disk-Backed Session Persistence & Recovery:** All thread lifecycles, states, and diffs are persisted to `.swarm-worktrees/session-state.json`. If the MCP server or IDE process restarts, background tasks and branches remain trackable and recoverable.
 - **Automated In-Worktree Proof-of-Work Verification:** Support for `verify_command` (e.g. `npm test`, `pytest`) executes test suites directly in the agent's worktree before marking tasks as successful.
@@ -179,46 +179,42 @@ Swarm runs, creates a PR with the changes, and posts a summary back on the issue
 Expose swarm as tools for Claude Code, Cursor, or any MCP-compatible agent:
 
 ```bash
-swarm mcp                       # Start MCP server (stdio)
-swarm mcp --dir ./my-project    # Start with default directory
+# Start MCP server via stdio
+npx contextos-mcp
+npx contextos-mcp --dir ./my-project
 ```
 
-**Tools exposed:**
+**Tools exposed (`contextos_*`):**
 
 | Tool | Description |
 |------|-------------|
-| `swarm_run` | Full swarm orchestration — decompose, spawn threads, merge, return result |
-| `swarm_thread` | Spawn a single coding agent in an isolated worktree |
-| `swarm_status` | Get session status — threads, budget, costs |
-| `swarm_merge` | Merge completed thread branches back to main |
-| `swarm_cancel` | Cancel running thread(s) |
-| `swarm_cleanup` | Destroy session and clean up worktrees |
+| `contextos_delegate` | Delegate task(s) to isolated git worktree agents with automatic skill selection, secret filtering, and proof-of-work verification |
+| `contextos_status` | Query active task lifecycle, thread states, verification results, and token costs |
+| `contextos_compare` | Benchmark and compare competing candidate thread solutions (tests, tokens, diff size) |
+| `contextos_diff` | Inspect the clean, structured Git diff produced by a thread before deciding to merge |
+| `contextos_merge` | Perform a safe 3-way Git merge with conflict detection and non-destructive rollback |
+| `contextos_cleanup` | Clean up active worktree sessions or safely purge orphaned `swarm/*` branches |
 
-**Claude Code setup:**
+**IDE / MCP Client Setup (Claude Code, Antigravity, Cursor):**
 
-```bash
-claude mcp add swarm-code -- npx swarm-code mcp
-```
-
-Or add to your project's `.mcp.json`:
+Add to your project's `.mcp.json` or MCP settings:
 
 ```json
 {
   "mcpServers": {
-    "swarm-code": {
+    "contextos": {
       "command": "npx",
-      "args": ["swarm-code", "mcp", "--dir", "."],
+      "args": ["-y", "contextos-mcp", "--dir", "."],
       "env": {
-        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}"
       }
     }
   }
 }
 ```
 
-**Cursor setup:** Add to `.cursor/mcp.json` with the same format.
-
-Once configured, Claude Code or Cursor can call `swarm_thread` to spawn coding agents in worktrees, check progress with `swarm_status`, and merge with `swarm_merge` — giving the host agent full orchestration control.
+Once configured, your host orchestrator can invoke `contextos_delegate` to spawn subagents, inspect progress with `contextos_status` and `contextos_diff`, and safely integrate changes with `contextos_merge`.
 
 ### Trajectory Viewer
 

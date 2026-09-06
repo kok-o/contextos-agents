@@ -1,5 +1,7 @@
 # ContextOS — FastAPI
 
+> High-performance Python backend engineering using FastAPI, Pydantic v2, and async SQLAlchemy/Tortoise ORM. Enforces type-driven request validation, OpenAPI contracts, and async non-blocking endpoints.
+
 # FastAPI
 
 ## Overview
@@ -143,60 +145,3 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
-
-# fastapi Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Asynchronous Route Handlers
-
-### Anti-pattern: Blocking I/O inside `async def`
-
-```python
-# BAD: time.sleep or synchronous requests blocks the entire asyncio event loop!
-import time
-import requests
-
-@app.get("/slow")
-async def slow_route():
-    time.sleep(5)  # BLOCKS ALL CONCURRENT USERS!
-    return {"status": "done"}
-```
-
-### Best practice: ContextOS Standard (Non-blocking Async or Def Offload)
-
-```python
-# GOOD: Use async non-blocking client (httpx) or standard def for sync CPU work
-import asyncio
-import httpx
-
-@app.get("/fast")
-async def fast_route():
-    async with httpx.AsyncClient() as client:
-        response = await client.get("https://api.example.com/data")
-    return response.json()
-
-# Or standard def (FastAPI automatically runs it in a background threadpool):
-@app.get("/sync-worker")
-def sync_worker():
-    time.sleep(5)  # Runs in worker thread without blocking event loop
-    return {"status": "done"}
-```
-
-# fastapi Troubleshooting & Common Mistakes
-
-## 1. Pydantic v1 vs v2 Deprecations
-
-- **Symptom**: Warnings or crashes regarding @validator or .dict() methods.
-- **Root Cause**: FastAPI projects upgrading to Pydantic v2.
-- **Fix**: Use @field_validator instead of @validator, and .model_dump() instead of .dict().
-
-## 2. Database Session Leaks
-
-- **Symptom**: Database pool runs out of connections after a few requests.
-- **Root Cause**: Database sessions opened manually without proper try...finally or dependency injection.
-- **Fix**: Always provide database sessions via Depends(get_db) with a yield block.
-
-## 3. Unhandled Validation Errors Returning Inconsistent JSON
-
-- **Symptom**: Frontend receives raw 422 arrays without matching standard API error response envelope.
-- **Root Cause**: Missing custom RequestValidationError handler.
-- **Fix**: Register an app-level exception handler for RequestValidationError that normalizes error shapes.

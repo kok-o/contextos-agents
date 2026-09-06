@@ -283,5 +283,21 @@ describe("ThreadCache", () => {
 				vi.useRealTimers();
 			}
 		});
+
+		it("isolates cache entries by repository and commit SHA", () => {
+			const cache = new ThreadCache();
+			const res = makeResult();
+
+			cache.set("task", ["a.ts"], "opencode", "sonnet", res, "/repo/project-a", "sha-commit-1");
+
+			// Same task/files/agent/model, but different repo -> MISS
+			expect(cache.get("task", ["a.ts"], "opencode", "sonnet", "/repo/project-b", "sha-commit-1")).toBeUndefined();
+
+			// Same repo, but different commit -> MISS
+			expect(cache.get("task", ["a.ts"], "opencode", "sonnet", "/repo/project-a", "sha-commit-2")).toBeUndefined();
+
+			// Exact match -> HIT
+			expect(cache.get("task", ["a.ts"], "opencode", "sonnet", "/repo/project-a", "sha-commit-1")).toEqual(res);
+		});
 	});
 });

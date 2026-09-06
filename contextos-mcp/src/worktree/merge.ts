@@ -24,16 +24,13 @@ function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: str
 	});
 }
 
-/** Abort a merge safely, falling back to hard reset if --abort fails. */
+/** Abort a merge safely without ever destroying user's uncommitted work tree. */
 async function abortMergeSafe(repoRoot: string): Promise<void> {
 	try {
 		await git(["merge", "--abort"], repoRoot);
 	} catch {
-		try {
-			await git(["reset", "--hard", "HEAD"], repoRoot);
-		} catch {
-			/* last resort failed — repo may be in bad state */
-		}
+		// NEVER run git reset --hard HEAD in repoRoot: it would erase user's uncommitted files.
+		// If git merge --abort failed, leave the workspace intact for manual inspection.
 	}
 }
 

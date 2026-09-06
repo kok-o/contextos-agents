@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for performance"
-globs: ""
+globs: "**/*.{ts,tsx,js,jsx,json}"
 alwaysApply: false
 ---
 

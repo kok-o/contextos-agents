@@ -1,7 +1,7 @@
 ---
 name: engineering-workflow
 description: >
-  >
+  Senior engineering workflow skill inspired by Addy Osmani's agent-skills. Enforces the full development lifecycle: spec → plan → build → test → review → ship. AI must never write code before a spec and plan are approved.
 ---
 # engineering-workflow
 

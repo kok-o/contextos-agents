@@ -3,7 +3,7 @@ description: >
   Minimalist coding mindset based on DietrichGebert/ponytail.
   Teaches the AI to write only what is strictly necessary.
   Uses a 7-rung ladder: YAGNI → reuse → stdlib → platform → deps → one-liner → minimum.
-  Reduces code output by ~54% while keeping all safety, validation and security guards.
+  Minimizes unnecessary boilerplate and over-engineering while keeping all safety, validation and security guards.
 tags:
   - minimalism
   - efficiency

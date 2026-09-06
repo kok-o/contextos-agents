@@ -13,12 +13,14 @@
  * lazily and shutting them down when the session ends.
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import * as fs from "node:fs";
 import * as http from "node:http";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentProvider, AgentResult, AgentRunOptions } from "../core/types.js";
+import { commandExists } from "../utils/command-exists.js";
+import { safeSpawn } from "../utils/safe-spawn.js";
 import { registerAgent } from "./provider.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -48,14 +50,6 @@ function normalizeModelForOpenCode(model: string): string {
 	}
 	// Can't infer — return as-is and let OpenCode handle it
 	return model;
-}
-
-async function commandExists(cmd: string): Promise<boolean> {
-	return new Promise((resolve) => {
-		const proc = spawn("which", [cmd], { stdio: "pipe" });
-		proc.on("close", (code) => resolve(code === 0));
-		proc.on("error", () => resolve(false));
-	});
 }
 
 interface OpenCodeJsonOutput {
@@ -260,11 +254,19 @@ class OpenCodeServerPool {
 		// communicated via the null return from startServer(), not via this promise.
 		readyPromise.catch(() => {});
 
-		const proc = spawn("opencode", ["serve", "--port", String(port), "--hostname", hostname], {
-			cwd,
-			stdio: ["ignore", "pipe", "pipe"],
-			env: buildAgentEnv(),
-		});
+		let proc: ChildProcess;
+		try {
+			proc = await safeSpawn("opencode", ["serve", "--port", String(port), "--hostname", hostname], {
+				cwd,
+				stdio: ["ignore", "pipe", "pipe"],
+				env: buildAgentEnv(),
+			});
+		} catch (err) {
+			process.stderr.write(
+				`[opencode] Failed to spawn opencode server: ${err instanceof Error ? err.message : String(err)}\n`,
+			);
+			return null;
+		}
 
 		const server: ManagedServer = {
 			process: proc,
@@ -571,20 +573,32 @@ function runViaSubprocess(
 }
 
 /** Shared subprocess runner for both attach and cold-start modes. */
-function runSubprocess(
+async function runSubprocess(
 	args: string[],
 	workDir: string,
 	startTime: number,
 	signal?: AbortSignal,
 	onOutput?: (chunk: string) => void,
 ): Promise<AgentResult> {
-	return new Promise<AgentResult>((resolve) => {
-		const proc = spawn("opencode", args, {
+	let proc: ChildProcess;
+	try {
+		proc = await safeSpawn("opencode", args, {
 			cwd: workDir,
 			stdio: ["ignore", "pipe", "pipe"],
 			env: buildAgentEnv(),
 		});
+	} catch (err) {
+		return {
+			success: false,
+			output: "",
+			filesChanged: [],
+			diff: "",
+			error: `Failed to spawn opencode: ${err instanceof Error ? err.message : String(err)}`,
+			durationMs: 0,
+		};
+	}
 
+	return new Promise<AgentResult>((resolve) => {
 		let stdout = "";
 		let stderr = "";
 		let resolved = false;

@@ -25,28 +25,26 @@ function buildSkillSection(skillDir) {
   const yamlPath   = path.join(skillDir, 'skill.yaml');
 
   let title = skillName;
+  let description = '';
   if (fs.existsSync(yamlPath)) {
     const yaml = fs.readFileSync(yamlPath, 'utf8');
     title = extractYamlField(yaml, 'name') || skillName;
+    description = extractYamlField(yaml, 'description') || '';
   }
 
   if (!fs.existsSync(skillMdPath)) return null;
 
-  let raw = fs.readFileSync(skillMdPath, 'utf8');
-  
-  const examples = readMeaningfulMarkdown(path.join(skillDir, 'EXAMPLES.md'));
-  if (examples) {
-    raw += '\n\n' + examples;
-  }
-  
-  const troubleshooting = readMeaningfulMarkdown(path.join(skillDir, 'TROUBLESHOOTING.md'));
-  if (troubleshooting) {
-    raw += '\n\n' + troubleshooting;
-  }
-  
+  const raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw);
 
-  return `\n## Skill: ${title}\n\n${body}`;
+  if (!description) {
+    const firstLine = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
+    description = firstLine || '';
+  }
+
+  const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
+  const skillRef = `*Source: \`.agents/skills/${skillName}/SKILL.md\` — Load via \`/read .agents/skills/${skillName}/SKILL.md\`*\n`;
+  return `\n## Skill: ${title}\n${descLine}${skillRef}`;
 }
 
 function generateAiderConf() {

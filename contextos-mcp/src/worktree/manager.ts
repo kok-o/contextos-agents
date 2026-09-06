@@ -14,9 +14,11 @@
  */
 
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { WorktreeInfo } from "../core/types.js";
+import { isPathAllowed } from "../security/file-policy.js";
+import { isBlockedPath } from "../security/secret-filter.js";
 
 function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
@@ -109,8 +111,17 @@ export class WorktreeManager {
 	}
 
 	private async createWorktreeWithRetry(threadId: string): Promise<WorktreeInfo> {
+		if (!/^[a-zA-Z0-9_-]+$/.test(threadId)) {
+			throw new Error(
+				`Invalid threadId "${threadId}": must contain only alphanumeric characters, underscores, and dashes.`,
+			);
+		}
 		const branch = `swarm/${threadId}`;
-		const wtPath = path.join(this.baseDir, `wt-${threadId}`);
+		const wtPath = path.resolve(this.baseDir, `wt-${threadId}`);
+		const rel = path.relative(path.resolve(this.baseDir), wtPath);
+		if (rel.startsWith("..") || path.isAbsolute(rel)) {
+			throw new Error(`Path traversal detected: worktree path "${wtPath}" escapes base directory "${this.baseDir}"`);
+		}
 
 		// Remove stale worktree if it exists
 		if (existsSync(wtPath)) {
@@ -135,6 +146,25 @@ export class WorktreeManager {
 				await git(["worktree", "add", "-b", branch, wtPath, "HEAD"], this.repoRoot);
 				const info: WorktreeInfo = { id: threadId, path: wtPath, branch };
 				this.worktrees.set(threadId, info);
+
+				// Write ownership marker to distinguish ContextOS worktrees from user directories
+				try {
+					writeFileSync(
+						path.join(wtPath, ".contextos-owner"),
+						JSON.stringify(
+							{
+								threadId,
+								createdAt: Date.now(),
+								creatorPid: process.pid,
+							},
+							null,
+							2,
+						),
+					);
+				} catch {
+					// Non-fatal
+				}
+
 				return info;
 			} catch (err) {
 				lastErr = err instanceof Error ? err : new Error(String(err));
@@ -164,11 +194,16 @@ export class WorktreeManager {
 		// Stage all changes first to include new files in diff
 		try {
 			await git(["add", "-A"], info.path);
+			try {
+				await git(["reset", "--", ".contextos-owner"], info.path);
+			} catch {
+				/* non-fatal */
+			}
 		} catch {
 			// Might be empty
 		}
 
-		const { stdout: fullDiff } = await git(["diff", "--cached"], info.path);
+		const { stdout: fullDiff } = await git(["diff", "--cached", "--", ":(exclude).contextos-owner"], info.path);
 		return fullDiff || "(no changes)";
 	}
 
@@ -179,11 +214,16 @@ export class WorktreeManager {
 
 		try {
 			await git(["add", "-A"], info.path);
+			try {
+				await git(["reset", "--", ".contextos-owner"], info.path);
+			} catch {
+				/* non-fatal */
+			}
 		} catch {
 			/* empty */
 		}
 
-		const { stdout } = await git(["diff", "--cached", "--stat"], info.path);
+		const { stdout } = await git(["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner"], info.path);
 		return stdout.trim() || "(no changes)";
 	}
 
@@ -194,12 +234,21 @@ export class WorktreeManager {
 
 		try {
 			await git(["add", "-A"], info.path);
+			try {
+				await git(["reset", "--", ".contextos-owner"], info.path);
+			} catch {
+				/* non-fatal */
+			}
 		} catch {
 			/* empty */
 		}
 
-		const { stdout } = await git(["diff", "--cached", "--name-only"], info.path);
-		return stdout.trim().split("\n").filter(Boolean);
+		const { stdout } = await git(["diff", "--cached", "--name-only", "--", ":(exclude).contextos-owner"], info.path);
+		return stdout
+			.trim()
+			.split("\n")
+			.filter(Boolean)
+			.filter((f) => f !== ".contextos-owner");
 	}
 
 	/** Commit all changes in a worktree. */
@@ -208,14 +257,48 @@ export class WorktreeManager {
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 
 		try {
-			await git(["add", "-A"], info.path);
-			const { stdout: status } = await git(["status", "--porcelain"], info.path);
-			if (!status.trim()) return false; // Nothing to commit
+			// 1. Check porcelain status to inspect changed & untracked files
+			const { stdout: statusRaw } = await git(["status", "--porcelain"], info.path);
+			if (!statusRaw.trim()) return false;
+
+			// 2. Validate changed paths against security policies
+			const lines = statusRaw
+				.split("\n")
+				.map((l) => l.trim())
+				.filter(Boolean);
+			const pathsToStage: string[] = [];
+			for (const line of lines) {
+				const rawPathPart = line.slice(2).trim();
+				const cleanPath = rawPathPart.includes("->") ? rawPathPart.split("->")[1].trim() : rawPathPart;
+				const unquoted = cleanPath.replace(/^"(.*)"$/, "$1");
+
+				if (unquoted === ".contextos-owner") {
+					continue; // Do not commit internal ownership marker
+				}
+				if (isBlockedPath(unquoted)) {
+					process.stderr.write(`[worktree-manager] Blocked staging of sensitive path: ${unquoted}\n`);
+					continue;
+				}
+				if (!isPathAllowed(unquoted, info.path)) {
+					process.stderr.write(`[worktree-manager] Blocked path traversal attempt: ${unquoted}\n`);
+					continue;
+				}
+				pathsToStage.push(unquoted);
+			}
+
+			if (pathsToStage.length === 0) {
+				return false;
+			}
+
+			// 3. Stage only verified paths
+			await git(["add", "--", ...pathsToStage], info.path);
+
+			const { stdout: stagedStatus } = await git(["status", "--porcelain"], info.path);
+			if (!stagedStatus.trim()) return false;
 
 			await git(["commit", "-m", message], info.path);
 			return true;
 		} catch (err) {
-			// Nothing to commit is fine
 			if (String(err).includes("nothing to commit")) return false;
 			throw err;
 		}

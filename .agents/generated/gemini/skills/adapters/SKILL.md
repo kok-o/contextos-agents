@@ -1,7 +1,7 @@
 ---
 name: adapters
 description: >
-  >
+  Generates agent-specific configuration files from unified ContextOS format. Produces configs for Claude, Gemini, Copilot, Cursor, Aider, Continue, and Zed.
 ---
 # agent-adapters
 

@@ -2,8 +2,8 @@
 name: ponytail-mindset
 description: >
   Minimalist coding mindset. Write only what is strictly necessary for the task.
-  7-rung decision ladder before writing any code. Reduces output ~54% while keeping
-  all safety, validation, error handling, and security guards intact.
+  7-rung decision ladder before writing any code. Eliminates premature abstraction
+  while keeping all safety, validation, error handling, and security guards intact.
 ---
 
 # ponytail-mindset
@@ -22,7 +22,7 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 > _He says nothing. He writes one line. It works._
 
-**Benchmark**: 54% less code on average. 94% less in over-build scenarios. 100% safe (validation, error handling, security: never cut).
+**Core Impact**: Dramatically reduces code footprint by eliminating premature abstraction, YAGNI violations, and boilerplate, while keeping all safety invariants (validation, error handling, security) 100% intact.
 
 ---
 

@@ -1,5 +1,7 @@
 # ContextOS — TypeScript
 
+> Strict TypeScript engineering standard. Enforces noImplicitAny, discriminated unions, branded types, immutability, exhaustive switch checks, and zero unsafe any or as unknown as T casts.
+
 # TypeScript
 
 ## Overview
@@ -107,88 +109,3 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
-
-# TypeScript Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Type-Safe Parsing with Zod (No `any`)
-
-### Anti-pattern: Anti-pattern (Blind type assertion with `as`)
-
-```typescript
-// BAD: using 'as User' bypasses runtime validation completely
-async function fetchUser(id: string): Promise<User> {
-  const res = await fetch(`/api/users/${id}`);
-  const data = await res.json();
-  return data as User; // Runtime crash if payload changes!
-}
-```
-
-### Best practice: ContextOS Standard (Runtime schema validation with Zod)
-
-```typescript
-// GOOD: guaranteed runtime and compile-time type safety
-import { z } from 'zod';
-
-export const UserSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-  email: z.string().email(),
-  role: z.enum(['admin', 'member', 'guest']),
-  createdAt: z.string().datetime(),
-});
-
-export type User = z.infer<typeof UserSchema>;
-
-export async function fetchUser(id: string): Promise<User> {
-  const res = await fetch(`/api/users/${id}`);
-  if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`);
-  const raw: unknown = await res.json();
-  return UserSchema.parse(raw);
-}
-```
-
----
-
-## Example 2: Discriminated Unions for State Handling
-
-### Anti-pattern: Anti-pattern (Optional soup with boolean flags)
-
-```typescript
-// BAD: impossible states can be represented (e.g. isLoading: true AND error: 'Failed')
-interface AsyncState<T> {
-  data?: T;
-  isLoading: boolean;
-  error?: string;
-}
-```
-
-### Best practice: ContextOS Standard (Discriminated Union)
-
-```typescript
-// GOOD: impossible states are impossible at compile-time
-export type AsyncState<T> =
-  | { readonly status: 'idle' }
-  | { readonly status: 'loading' }
-  | { readonly status: 'success'; readonly data: T }
-  | { readonly status: 'error'; readonly error: Error };
-```
-
-# typescript Troubleshooting & Common Mistakes
-
-## 1. Excessive Use of `any` or `as unknown as T`
-
-- **Symptom**: Runtime `TypeError: Cannot read properties of undefined` in supposedly typed TypeScript code.
-- **Root Cause**: Bypassing type checking with `any` or forceful type assertions.
-- **Fix**: Use `unknown` with type guards, Zod schemas, or discriminated unions.
-
-## 2. Non-Exhaustive Switch on Unions
-
-- **Symptom**: New union member added but some switch statements fail to handle it, producing bugs.
-- **Root Cause**: Missing exhaustive type checking in `default:` case.
-- **Fix**: Add `default: const _exhaustive: never = action; throw new Error(_exhaustive);` to let the compiler catch missing branches.
-
-## 3. Inaccurate Generics Constraints
-
-- **Symptom**: Generic functions that lose type inference and resolve to `unknown`.
-- **Root Cause**: Over-specifying generics or missing `extends` constraints.
-- **Fix**: Constrain generics narrowly: `function get<T, K extends keyof T>(obj: T, key: K): T[K]`.

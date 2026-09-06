@@ -1,7 +1,7 @@
 ---
 name: context-manager
 description: >
-  >
+  Smart context selection engine. Analyzes the current task, consults the Project Graph, and returns only the documents and skills needed to prevent token overflow.
 ---
 # context-manager
 

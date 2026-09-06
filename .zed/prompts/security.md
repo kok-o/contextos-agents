@@ -1,5 +1,7 @@
 # ContextOS — Application Security
 
+> Enforces zero-trust defense-in-depth, OWASP API Top 10 mitigation, cryptographic hardening, sensitive data leakage protection, and AI/LLM safety across all services, endpoints, and agent integrations.
+
 # security
 
 ## Overview
@@ -152,88 +154,3 @@ export async function validateSafeUrl(urlString: string): Promise<URL> {
 - Integrates with `engineering-workflow` during Phase 5 (5-axis quality gate).
 - Pairs with `system-design` to mandate secure network boundaries and authorization layers.
 
-
-# Application Security Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Timing-Safe Secret Verification
-
-### Anti-pattern: Anti-pattern (Vulnerable to side-channel timing attack)
-
-```typescript
-// BAD: string comparison returns early on the first mismatched byte
-export function verifyApiKey(providedKey: string, storedKey: string): boolean {
-  return providedKey === storedKey; // Vulnerable to timing analysis!
-}
-```
-
-### Best practice: ContextOS Standard (Constant-time buffer comparison)
-
-```typescript
-// GOOD: crypto.timingSafeEqual executes in constant time
-import crypto from 'crypto';
-
-export function verifyApiKey(providedKey: string, storedKey: string): boolean {
-  const providedBuffer = Buffer.from(providedKey, 'utf8');
-  const storedBuffer = Buffer.from(storedKey, 'utf8');
-
-  if (providedBuffer.length !== storedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(providedBuffer, storedBuffer);
-}
-```
-
----
-
-## Example 2: Preventing IDOR (Insecure Direct Object Reference)
-
-### Anti-pattern: Anti-pattern (Trusting client ID without ownership check)
-
-```typescript
-// BAD: any authenticated user can delete any other user's document!
-app.delete('/api/documents/:id', requireAuth, async (req, res) => {
-  await prisma.document.delete({ where: { id: req.params.id } });
-  res.status(204).end();
-});
-```
-
-### Best practice: ContextOS Standard (Multi-tenant scoped authorization check)
-
-```typescript
-// GOOD: document deletion is strictly scoped to authenticated user or org
-app.delete('/api/documents/:id', requireAuth, async (req, res) => {
-  const deleted = await prisma.document.deleteMany({
-    where: {
-      id: req.params.id,
-      organizationId: req.user.organizationId, // Tenant isolation
-    },
-  });
-
-  if (deleted.count === 0) {
-    return res.status(404).json({ error: 'Document not found or access denied' });
-  }
-
-  return res.status(204).end();
-});
-```
-
-# security Troubleshooting & Common Mistakes
-
-## 1. Insecure Direct Object References (IDOR)
-
-- **Symptom**: User A can access User B's invoices by simply modifying the ID in the URL.
-- **Root Cause**: Querying by record ID without scoping to the authenticated `user.id` or tenant ID.
-- **Fix**: Always query with ownership predicate: `db.invoice.findFirst({ where: { id, userId: auth.user.id } })`.
-
-## 2. SQL Injection via Raw String Concatenation
-
-- **Symptom**: Database compromised through input fields.
-- **Root Cause**: String templating in raw queries (`db.query("SELECT * FROM users WHERE id = " + id)`).
-- **Fix**: Always use parameterized queries (`$1, $2`) or ORM/query-builder methods.
-
-## 3. Storing Sensitive Secrets in Git or Client Bundles
-
-- **Symptom**: API keys or JWT signing secrets exposed publicly.
-- **Root Cause**: Hardcoding secrets in source files or prefixing server secrets with NEXT_PUBLIC_.
-- **Fix**: Store all secrets in server-only environment variables; add git-secrets to pre-commit hooks.

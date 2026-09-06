@@ -1,7 +1,7 @@
 ---
 name: ui-ux-pro
 description: >
-  >
+  Professional UI/UX design skill with strict anti-pattern enforcement. Prevents AI slop design, enforces accessibility standards, semantic color palettes, proper spacing, and bans overused design clichés.
 ---
 # ui-ux-pro
 

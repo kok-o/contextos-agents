@@ -382,20 +382,11 @@ async function installOllama(): Promise<boolean> {
 				console.log(`  ${c.dim}Homebrew install failed, trying curl installer...${c.reset}`);
 			}
 		} catch {
-			// No brew — fall through to curl
+			// No brew — fall through
 		}
 	}
-	// Linux / macOS fallback: official install script
-	if (process.platform === "linux" || process.platform === "darwin") {
-		try {
-			execSync("curl -fsSL https://ollama.com/install.sh | sh", { stdio: "inherit", timeout: 180000 });
-			return true;
-		} catch {
-			return false;
-		}
-	}
-	// Windows: direct user to download page
-	console.log(`  ${c.dim}Download Ollama from: https://ollama.com/download${c.reset}`);
+	// Direct user to official install page (avoiding unverified pipe-to-shell)
+	console.log(`  ${c.dim}Please install Ollama from official site: https://ollama.com/download${c.reset}`);
 	return false;
 }
 

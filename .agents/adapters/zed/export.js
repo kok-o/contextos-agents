@@ -32,26 +32,21 @@ function buildSkillSection(skillDir) {
 
   if (!fs.existsSync(skillMdPath)) return null;
 
-  let raw = fs.readFileSync(skillMdPath, 'utf8');
-  
-  const examples = readMeaningfulMarkdown(path.join(skillDir, 'EXAMPLES.md'));
-  if (examples) {
-    raw += '\n\n' + examples;
-  }
-  
-  const troubleshooting = readMeaningfulMarkdown(path.join(skillDir, 'TROUBLESHOOTING.md'));
-  if (troubleshooting) {
-    raw += '\n\n' + troubleshooting;
-  }
-  
+  const raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw);
 
-  const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n\n` : '';
+  if (!description) {
+    const firstLine = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
+    description = firstLine || '';
+  }
+
+  const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
+  const promptRef = `*Prompt template: \`.zed/prompts/${skillName}.md\` (Use via /${skillName})*\n`;
   return {
     skillName,
     title,
-    section: `\n### Skill: ${title}\n\n${descLine}${body}`,
-    prompt: `# ContextOS — ${title}\n\n${descLine}${body}\n`,
+    section: `\n### Skill: ${title}\n${descLine}${promptRef}`,
+    prompt: `# ContextOS — ${title}\n\n${descLine}\n${body}\n`,
   };
 }
 

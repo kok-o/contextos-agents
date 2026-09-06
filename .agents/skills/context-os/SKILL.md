@@ -1,7 +1,7 @@
 ---
 name: context-os
 description: >
-  >
+  AI Project Operating System context compiler that transforms user intent into minimal, relevant context for any AI agent across the full development lifecycle.
 ---
 # context-os
 

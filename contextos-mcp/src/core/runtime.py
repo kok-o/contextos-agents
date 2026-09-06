@@ -24,6 +24,105 @@ import traceback
 import asyncio
 import threading
 import queue
+import ast
+
+class SecurityError(Exception):
+    """Raised when code execution attempts an unauthorized or dangerous operation."""
+    pass
+
+_ALLOWED_MODULES = {'json', 'math', 're', 'asyncio', 'datetime', 'random', 'collections'}
+_FORBIDDEN_ATTRIBUTES = {
+    '__class__', '__subclasses__', '__bases__', '__mro__',
+    '__globals__', '__code__', '__builtins__', '__import__'
+}
+
+def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+    root_pkg = name.split('.')[0]
+    if root_pkg not in _ALLOWED_MODULES:
+        raise SecurityError(f"Security error: import of module '{name}' is forbidden in sandboxed runtime")
+    return __import__(name, globals, locals, fromlist, level)
+
+_SAFE_BUILTINS = {
+    'abs': abs,
+    'all': all,
+    'any': any,
+    'ascii': ascii,
+    'bin': bin,
+    'bool': bool,
+    'bytearray': bytearray,
+    'bytes': bytes,
+    'callable': callable,
+    'chr': chr,
+    'complex': complex,
+    'dict': dict,
+    'divmod': divmod,
+    'enumerate': enumerate,
+    'filter': filter,
+    'float': float,
+    'format': format,
+    'frozenset': frozenset,
+    'hash': hash,
+    'hex': hex,
+    'int': int,
+    'isinstance': isinstance,
+    'issubclass': issubclass,
+    'iter': iter,
+    'len': len,
+    'list': list,
+    'map': map,
+    'max': max,
+    'min': min,
+    'next': next,
+    'oct': oct,
+    'ord': ord,
+    'pow': pow,
+    'print': print,
+    'range': range,
+    'repr': repr,
+    'reversed': reversed,
+    'round': round,
+    'set': set,
+    'slice': slice,
+    'sorted': sorted,
+    'str': str,
+    'sum': sum,
+    'tuple': tuple,
+    'type': type,
+    'zip': zip,
+    'True': True,
+    'False': False,
+    'None': None,
+    'Exception': Exception,
+    'ValueError': ValueError,
+    'TypeError': TypeError,
+    'KeyError': KeyError,
+    'IndexError': IndexError,
+    'RuntimeError': RuntimeError,
+    'SyntaxError': SyntaxError,
+    'SecurityError': SecurityError,
+    '__import__': _safe_import,
+}
+
+def _validate_ast(code: str) -> None:
+    """Validate python code AST to reject dangerous imports, attributes, and calls."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root_pkg = alias.name.split('.')[0]
+                if root_pkg not in _ALLOWED_MODULES:
+                    raise SecurityError(f"Security error: import of module '{alias.name}' is forbidden in sandboxed runtime")
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                root_pkg = node.module.split('.')[0]
+                if root_pkg not in _ALLOWED_MODULES:
+                    raise SecurityError(f"Security error: import from module '{node.module}' is forbidden in sandboxed runtime")
+        elif isinstance(node, ast.Attribute):
+            if node.attr in _FORBIDDEN_ATTRIBUTES:
+                raise SecurityError(f"Security error: access to dangerous attribute '{node.attr}' is forbidden")
 
 # Real stdio handles — saved before exec() can redirect sys.stdout/sys.stderr.
 _real_stdout = sys.stdout
@@ -232,7 +331,7 @@ def merge_threads() -> str:
 def _runtime_symbols() -> dict:
     """Return the dict of runtime symbols injected into the user namespace."""
     return {
-        '__builtins__': __builtins__,
+        '__builtins__': _SAFE_BUILTINS,
         'context': context,
         'llm_query': llm_query,
         'async_llm_query': async_llm_query,
@@ -241,6 +340,8 @@ def _runtime_symbols() -> dict:
         'merge_threads': merge_threads,
         'FINAL': FINAL,
         'FINAL_VAR': FINAL_VAR,
+        'asyncio': asyncio,
+        'json': json,
     }
 
 
@@ -250,7 +351,7 @@ def _refresh_user_ns() -> None:
 
 
 def _execute_code(code: str) -> None:
-    """Execute a code snippet in an isolated namespace, capturing output."""
+    """Execute a code snippet in a sandboxed namespace, capturing output."""
     global __final_result__
     _refresh_user_ns()
     captured_stdout = io.StringIO()
@@ -261,6 +362,8 @@ def _execute_code(code: str) -> None:
     try:
         sys.stdout = captured_stdout
         sys.stderr = captured_stderr
+        # Enforce AST security validation
+        _validate_ast(code)
         try:
             compiled = compile(code, "<repl>", "exec")
             exec(compiled, _user_ns)
@@ -271,10 +374,14 @@ def _execute_code(code: str) -> None:
                 for line in code.split("\n"):
                     async_code += f"    {line}\n"
                 async_code += "    return {k: v for k, v in locals().items()}\n"
-                async_code += "\nimport asyncio as _asyncio\n"
-                async_code += "_async_locals = _asyncio.run(__async_exec__())\n"
-                async_code += f"globals().update({{k: v for k, v in _async_locals.items() if k not in {_protected!r}}})\n"
-                exec(compile(async_code, "<repl>", "exec"), _user_ns)
+                _validate_ast(async_code)
+                compiled_async = compile(async_code, "<repl>", "exec")
+                exec(compiled_async, _user_ns)
+                async_fn = _user_ns.pop("__async_exec__")
+                _async_locals = asyncio.run(async_fn())
+                for k, v in _async_locals.items():
+                    if k not in _protected:
+                        _user_ns[k] = v
             else:
                 raise e
     except Exception:

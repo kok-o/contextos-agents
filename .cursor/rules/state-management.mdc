@@ -1,6 +1,6 @@
 ---
 description: "Client and server state management standards using Zustand and TanStack Query. Enforces minimal global state, optimistic updates, and clean query invalidation."
-globs: ""
+globs: "**/*{store,state,slice,reducer,atom}*.{ts,js,tsx,jsx}"
 alwaysApply: false
 ---
 

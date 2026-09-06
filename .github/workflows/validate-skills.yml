@@ -24,11 +24,12 @@ concurrency:
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
   test:
-    name: Tests (Node ${{ matrix.node }})
-    runs-on: ubuntu-latest
+    name: Tests (Node ${{ matrix.node }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         node: ["18", "20", "22"]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +47,7 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-skills:
-    name: ctx.js validate
+    name: ctx.js validate & drift check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +63,9 @@ jobs:
 
       - name: Compile skills (export all)
         run: node .agents/ctx.js export all
+
+      - name: Check for uncommitted generated file drift
+        run: git diff --exit-code
 
       - name: Run skill validator
         run: |
@@ -208,3 +212,38 @@ jobs:
             console.log(`registry.json is valid — ${registry.skills.length} skill(s) registered.`);
           }
           EOF
+
+  # ───────────────────────────────────────────────────────────────────────────
+  validate-contextos-mcp:
+    name: contextos-mcp (Lint, Test, Build, Pack Smoke-Test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install MCP dependencies
+        working-directory: ./contextos-mcp
+        run: npm ci
+
+      - name: Lint MCP package (Biome)
+        working-directory: ./contextos-mcp
+        run: npm run lint
+
+      - name: Build MCP package (TypeScript)
+        working-directory: ./contextos-mcp
+        run: npm run build
+
+      - name: Run MCP test suite (Vitest)
+        working-directory: ./contextos-mcp
+        run: npm test
+
+      - name: Verify npm package dry-run and CLI entry point
+        working-directory: ./contextos-mcp
+        run: |
+          npm pack --dry-run
+          node bin/mcp.mjs --help
+

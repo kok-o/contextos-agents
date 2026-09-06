@@ -194,6 +194,13 @@ describe('plugins — parseRef and deriveSkillName logic', () => {
     assert.equal(plugins.isSafeSkillName('my-skill'), true);
     assert.equal(plugins.isSafeSkillName('../core'), false);
   });
+
+  test('rejects npm package names with flag injection or invalid characters', () => {
+    assert.throws(() => plugins.parseRef('--flag'));
+    assert.throws(() => plugins.parseRef('-bad-package'));
+    assert.throws(() => plugins.parseRef('@scope/-bad'));
+    assert.throws(() => plugins.parseRef('pkg with spaces'));
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

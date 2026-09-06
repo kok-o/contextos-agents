@@ -14,7 +14,7 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 > _He says nothing. He writes one line. It works._
 
-**Benchmark**: 54% less code on average. 94% less in over-build scenarios. 100% safe (validation, error handling, security: never cut).
+**Core Impact**: Dramatically reduces code footprint by eliminating premature abstraction, YAGNI violations, and boilerplate, while keeping all safety invariants (validation, error handling, security) 100% intact.
 
 ---
 

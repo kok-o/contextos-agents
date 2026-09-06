@@ -1,6 +1,6 @@
 ---
 description: "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics."
-globs: ""
+globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
 alwaysApply: false
 ---
 

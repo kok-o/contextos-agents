@@ -21,17 +21,16 @@ const FORBIDDEN_DIRS: string[] = [
  * @returns true if access is ALLOWED
  */
 export function isPathAllowed(filePath: string, worktreeRoot: string): boolean {
-	const absPath = path.isAbsolute(filePath) ? filePath : path.join(worktreeRoot, filePath);
-	const normalizedPath = path.normalize(absPath);
-	const normalizedRoot = path.normalize(worktreeRoot);
+	const normalizedRoot = path.resolve(worktreeRoot);
+	const absPath = path.isAbsolute(filePath) ? path.resolve(filePath) : path.resolve(normalizedRoot, filePath);
 
-	// Must be within worktree root
-	if (!normalizedPath.startsWith(normalizedRoot)) {
+	// Must be strictly within worktree root (using path.relative to prevent sibling prefix bypass)
+	const relativePath = path.relative(normalizedRoot, absPath);
+	if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
 		return false;
 	}
 
 	// Check for forbidden directories in the relative path
-	const relativePath = path.relative(normalizedRoot, normalizedPath);
 	const segments = relativePath.split(path.sep);
 
 	for (const segment of segments) {

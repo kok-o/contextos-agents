@@ -1,7 +1,7 @@
 ---
 name: impeccable-design
 description: >
-  >
+  Visual design quality skill based on pbakaus/impeccable. 46 deterministic anti-pattern rules that prevent AI design slop. Bans overused fonts, pure black/gray, nested cards, bounce animations, and all generic AI-generated design clichés.
 ---
 # impeccable-design
 

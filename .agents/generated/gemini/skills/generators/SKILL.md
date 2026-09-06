@@ -1,7 +1,7 @@
 ---
 name: generators
 description: >
-  >
+  Generates complete project documentation (PRD, Architecture, Database, API, UI, Roadmap, Tasks) from ideas and templates with incremental update support.
 ---
 # document-generator
 

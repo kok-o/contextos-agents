@@ -1,6 +1,6 @@
 ---
 description: "Database architecture, schema design, Prisma, Drizzle ORM, indexing strategies, migrations, and N+1 query resolution."
-globs: ""
+globs: "**/*.{prisma,sql,sqlite,db,drizzle.config.*}"
 alwaysApply: false
 ---
 

@@ -1,6 +1,6 @@
 # ContextOS — decisions
 
-> >
+> Architecture Decision Records (ADR) management. Creates, tracks, and queries architectural decisions so AI assistants understand why choices were made.
 
 # decision-engine
 
@@ -86,53 +86,3 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
-
-# decisions Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Documenting Tech Choices
-
-### Anti-pattern: Tribal Knowledge & Undocumented Decisions
-
-```text
-"We switched to Redis for session storage last month because Dan said so on Slack."
-Three months later, Dan leaves and nobody knows why the config is set up this way.
-```
-
-### Best practice: ContextOS Standard (MADR Architecture Decision Record)
-
-```markdown
-# ADR 0003: Use Redis for Distributed Session Storage
-
-## Context and Problem Statement
-Our application is transitioning from a single server to horizontally auto-scaled instances.
-Sticky sessions on load balancer cause uneven distribution and drop sessions on node recycling.
-
-## Considered Options
-1. PostgreSQL session table
-2. Redis cluster
-3. JWT stateless tokens in cookies
-
-## Decision Outcome
-Chosen option: "Redis cluster", because:
-- Sub-millisecond read/write latency compared to relational DB queries.
-- Built-in TTL automatically handles session expiration without cron cleanup.
-- Avoids security risks of client-stored JWT revocation.
-
-## Consequences
-- Positive: Stateless web tier, zero session drops on deployment.
-- Negative: Adds operational dependency on Redis cluster infrastructure.
-```
-
-# decisions Troubleshooting & Common Mistakes
-
-## 1. Post-Hoc Justifications
-
-- **Symptom**: ADR written weeks after code is merged, omitting all rejected options.
-- **Root Cause**: Treating ADRs as paperwork rather than decision-making tools.
-- **Fix**: Write the ADR during the PLAN phase _before_ implementing the decision.
-
-## 2. Omitting Trade-offs
-
-- **Symptom**: ADR lists only benefits, claiming the chosen tech has zero downsides.
-- **Root Cause**: Confirmation bias.
-- **Fix**: Every architecture decision has costs. Explicitly document negative trade-offs and operational overhead.

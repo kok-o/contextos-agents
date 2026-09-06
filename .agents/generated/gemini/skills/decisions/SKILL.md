@@ -1,7 +1,7 @@
 ---
 name: decisions
 description: >
-  >
+  Architecture Decision Records (ADR) management. Creates, tracks, and queries architectural decisions so AI assistants understand why choices were made.
 ---
 # decision-engine
 

@@ -44,12 +44,21 @@ export interface ThreadCacheStats {
  * Compute a stable cache key from thread parameters.
  * Normalizes inputs: trims task, sorts files, lowercases agent/model.
  */
-function computeCacheKey(task: string, files: string[], agent: string, model: string): string {
+function computeCacheKey(
+	task: string,
+	files: string[],
+	agent: string,
+	model: string,
+	repoRoot: string = "",
+	commitSha: string = "",
+): string {
 	const normalized = JSON.stringify({
 		task: task.trim(),
 		files: [...files].sort(),
 		agent: agent.toLowerCase(),
 		model: model.toLowerCase(),
+		repo: repoRoot.trim().toLowerCase(),
+		commit: commitSha.trim(),
 	});
 	return createHash("sha256").update(normalized).digest("hex");
 }
@@ -128,8 +137,15 @@ export class ThreadCache {
 	 * Look up a cached result for the given thread parameters.
 	 * Returns undefined on cache miss.
 	 */
-	get(task: string, files: string[], agent: string, model: string): CompressedResult | undefined {
-		const key = computeCacheKey(task, files, agent, model);
+	get(
+		task: string,
+		files: string[],
+		agent: string,
+		model: string,
+		repoRoot: string = "",
+		commitSha: string = "",
+	): CompressedResult | undefined {
+		const key = computeCacheKey(task, files, agent, model, repoRoot, commitSha);
 		const entry = this.cache.get(key);
 
 		if (!entry) {
@@ -163,7 +179,15 @@ export class ThreadCache {
 	 * Store a thread result in the cache.
 	 * Only caches successful results — failed threads should be retried.
 	 */
-	set(task: string, files: string[], agent: string, model: string, result: CompressedResult): void {
+	set(
+		task: string,
+		files: string[],
+		agent: string,
+		model: string,
+		result: CompressedResult,
+		repoRoot: string = "",
+		commitSha: string = "",
+	): void {
 		// Don't cache failures
 		if (!result.success) return;
 
@@ -176,7 +200,7 @@ export class ThreadCache {
 			}
 		}
 
-		const key = computeCacheKey(task, files, agent, model);
+		const key = computeCacheKey(task, files, agent, model, repoRoot, commitSha);
 		const now = Date.now();
 
 		this.cache.set(key, {

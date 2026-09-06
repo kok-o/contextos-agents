@@ -48,9 +48,42 @@ function stripFrontmatter(content) {
 }
 
 function extractYamlField(yamlText, field) {
-  const regex = new RegExp(`^${field}:\\s*(.+)$`, 'm');
-  const match = yamlText.match(regex);
-  return match ? match[1].trim() : null;
+  const lines = yamlText.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(new RegExp(`^${field}:\\s*(.*)$`));
+    if (match) {
+      let rest = match[1].trim();
+      if (rest === '>' || rest === '|' || rest === '>-' || rest === '|-' || rest === '') {
+        const blockLines = [];
+        let j = i + 1;
+        while (j < lines.length) {
+          const nextLine = lines[j];
+          if (nextLine.trim() === '') {
+            blockLines.push('');
+            j++;
+            continue;
+          }
+          if (/^(\s{2,}|\t)/.test(nextLine)) {
+            blockLines.push(nextLine.trim());
+            j++;
+          } else {
+            break;
+          }
+        }
+        if (blockLines.length > 0) {
+          const sep = rest.startsWith('|') ? '\n' : ' ';
+          return blockLines.filter(Boolean).join(sep).trim();
+        }
+      }
+      // Strip surrounding quotes if present
+      if ((rest.startsWith('"') && rest.endsWith('"')) || (rest.startsWith("'") && rest.endsWith("'"))) {
+        rest = rest.slice(1, -1);
+      }
+      return rest || null;
+    }
+  }
+  return null;
 }
 
 /**

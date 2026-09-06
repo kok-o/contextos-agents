@@ -84,4 +84,28 @@ describe('resolver.js — Dynamic Skill Resolver & Progressive Index', () => {
     assert.ok(res.skills.includes('security'));
     assert.ok(res.skills.includes('testing'));
   });
+
+  test('resolveSkills enforces negative boundaries and does not over-activate irrelevant skills', () => {
+    const res = resolver.resolveSkills({
+      prompt: 'Refactor button styles and add tailwind gradient animations to the modal dialog',
+    });
+    assert.ok(res.skills.includes('ui-ux-pro'));
+    // Negative checks: unrelated heavy backend skills must NOT be activated
+    assert.ok(!res.skills.includes('docker'), 'docker should not activate on UI task');
+    assert.ok(!res.skills.includes('database'), 'database should not activate on UI task');
+    assert.ok(!res.skills.includes('nestjs'), 'nestjs should not activate on UI task');
+    assert.ok(!res.skills.includes('fastapi'), 'fastapi should not activate on UI task');
+  });
+
+  test('resolveSkills filters casual words and caps total skills on ambiguous multi-topic sentence', () => {
+    const res = resolver.resolveSkills({
+      prompt: 'I need to update the user module and query the index type of the container session token',
+    });
+    // Should NOT blindly activate docker (from container), nestjs (from module), or typescript (from type)
+    assert.ok(!res.skills.includes('docker'), 'docker should not trigger on casual "container" mention');
+    assert.ok(!res.skills.includes('nestjs'), 'nestjs should not trigger on casual "module" mention');
+    assert.ok(!res.skills.includes('typescript'), 'typescript should not trigger on casual "type" mention');
+    // Context window cap: total skills should be minimal and focused (<= 5)
+    assert.ok(res.skills.length <= 5, `Expected <= 5 skills, got ${res.skills.length}: ${res.skills.join(', ')}`);
+  });
 });

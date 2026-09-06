@@ -1,7 +1,7 @@
 ---
 name: gstack-roles
 description: >
-  >
+  Role-based AI specialist system inspired by Garry Tan's gstack. Defines 23 specialist roles (CEO, Eng Manager, Designer, QA, Security etc.) and teaches the AI to adopt the correct role before each task phase.
 ---
 # gstack-roles
 

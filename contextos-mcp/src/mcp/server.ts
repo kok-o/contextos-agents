@@ -90,8 +90,7 @@ function getVersion(): string {
 // ── Direct execution ──────────────────────────────────────────────────────
 
 // If this file is run directly, start the server
-const isMain = process.argv[1] &&
-	(process.argv[1].endsWith("server.js") || process.argv[1].endsWith("server.ts"));
+const isMain = process.argv[1] && (process.argv[1].endsWith("server.js") || process.argv[1].endsWith("server.ts"));
 
 if (isMain) {
 	startMcpServer(process.argv.slice(2)).catch((err) => {

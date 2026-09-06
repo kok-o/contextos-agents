@@ -102,6 +102,12 @@ function fetchText(url) {
  *   username/repo/path/to/skill      → GitHub: fetch /path/to/skill/SKILL.md
  *   my-npm-package                   → npm: install package, copy skill dir
  */
+function isValidNpmPackage(name) {
+  if (typeof name !== 'string' || !name.trim()) return false;
+  if (name.startsWith('-') || name.includes('/-')) return false;
+  return /^(?:@[a-z0-9_.-]+\/)?[a-z0-9_.-]+$/.test(name);
+}
+
 function parseRef(ref) {
   if (typeof ref !== 'string' || !ref.trim()) {
     throw new Error('A plugin reference is required');
@@ -109,6 +115,9 @@ function parseRef(ref) {
 
   // Scoped packages contain a slash but are npm packages, not GitHub refs.
   if (ref.startsWith('@')) {
+    if (!isValidNpmPackage(ref)) {
+      throw new Error(`Invalid scoped npm package name: '${ref}'`);
+    }
     return { type: 'npm', package: ref, raw: ref };
   }
 
@@ -130,6 +139,9 @@ function parseRef(ref) {
     return { type: 'github', owner, repo, gitRef, isPinned: repoRef.includes('@'), subPath, raw: ref };
   }
   // npm package
+  if (!isValidNpmPackage(ref)) {
+    throw new Error(`Invalid npm package name: '${ref}'`);
+  }
   return { type: 'npm', package: ref, raw: ref };
 }
 

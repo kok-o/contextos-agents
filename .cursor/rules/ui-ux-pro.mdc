@@ -1,5 +1,5 @@
 ---
-description: ">"
+description: "Professional UI/UX design skill with strict anti-pattern enforcement. Prevents AI slop design, enforces accessibility standards, semantic color palettes, proper spacing, and bans overused design clichés."
 globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
 alwaysApply: false
 ---

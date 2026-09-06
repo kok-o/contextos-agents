@@ -1,14 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const { collectSkillDirectories, resetDirectory, readMeaningfulMarkdown } = require('../shared.js');
+const { collectSkillDirectories, resetDirectory, readMeaningfulMarkdown, extractYamlField } = require('../shared.js');
 
 const GENERATED_SKILLS_PATH = path.join(__dirname, '..', '..', 'generated', 'gemini', 'skills');
-
-function extractYamlField(yamlText, field) {
-  const regex = new RegExp(`^${field}:\\s*(.+)$`, 'm');
-  const match = yamlText.match(regex);
-  return match ? match[1].trim() : null;
-}
 
 function generateGeminiSkill(skillDir) {
   const skillName = path.basename(skillDir);

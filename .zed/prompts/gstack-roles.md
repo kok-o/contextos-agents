@@ -1,6 +1,6 @@
 # ContextOS — gstack-roles
 
-> >
+> Role-based AI specialist system inspired by Garry Tan's gstack. Defines 23 specialist roles (CEO, Eng Manager, Designer, QA, Security etc.) and teaches the AI to adopt the correct role before each task phase.
 
 # gstack-roles
 
@@ -148,41 +148,3 @@ Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
 
 How this skill interacts with other skills.
 
-
-# gstack-roles Examples — Anti-patterns vs ContextOS Standard
-
-## Example 1: Specialist Persona Activation
-
-### Anti-pattern: Undifferentiated Generalist Response
-
-```text
-User: "Should we migrate our monolithic PostgreSQL database to MongoDB?"
-Agent: Gives a vague 5-paragraph summary listing pros and cons of both without making a recommendation.
-```
-
-### Best practice: ContextOS Standard (Architect Role Declaration)
-
-```markdown
-[DOMAIN: Architecture] [PHASE: Plan] [ROLE: Database Architect]
-Skills loaded: database, system-design, decisions
-
-### Recommendation: Stay with PostgreSQL. Do NOT migrate to MongoDB.
-1. Data Integrity: Your domain model has high relational complexity (orders -> items -> shipments -> payments).
-2. Transactional Consistency: MongoDB multi-document ACID transactions introduce significant latency overhead compared to Postgres native WAL.
-3. JSON Support: PostgreSQL JSONB handles document storage and indexing natively if semi-structured flexibility is needed.
-Decision: Draft ADR 0004-retain-postgresql-with-jsonb.md.
-```
-
-# gstack-roles Troubleshooting & Common Mistakes
-
-## 1. Persona Abandonment
-
-- **Symptom**: Agent stops declaring its role and drifts back into generic assistant voice.
-- **Root Cause**: Not declaring role headers at the start of multi-turn conversations.
-- **Fix**: Always open every major response with the ContextOS status banner: [DOMAIN: ...] [PHASE: ...] [ROLE: ...].
-
-## 2. Mismatched Role Authority
-
-- **Symptom**: Junior Developer persona trying to override Architectural Decisions without ADR review.
-- **Root Cause**: Role boundary confusion.
-- **Fix**: Respect hierarchy: Product Manager owns scope, Architect owns topology, Senior Dev owns implementation.

@@ -31,8 +31,8 @@ npx koko-contextos-agents --skip-compile  # Skip auto-compilation step
 
 ## Why Use This? (Benefits)
 
-- **Save Tokens & Context:** ContextOS dynamically loads only the required skills (e.g., loads UI skills for frontend tasks, skips backend rules). This prevents context window bloat and saves token costs.
-- **Superior Code Quality:** Pre-configured skills force the AI to use modern design patterns (DDD, microservices) and professional UI standards (no pure black colors, semantic palettes) rather than generic internet code.
+- **Save Tokens & Context:** ContextOS prevents prompt bloat by generating scoped, modular rules (e.g., `.cursor/rules/*.mdc` with file-pattern matching), compact index templates, and dynamic skill resolution (`node .agents/ctx.js resolve`) so assistants load only the relevant domain rules.
+- **Superior Code Quality:** Pre-configured skills guide the AI to follow modern design patterns (DDD, microservices) and professional UI standards (no pure black colors, semantic palettes) rather than generic internet code.
 - **Save Time:** Stop writing massive system prompts or arguing with the AI. The assistant instantly knows your architectural decisions and coding standards from the start.
 
 ## Project Profiles & Stack Auto-Detection
@@ -75,7 +75,7 @@ node .agents/ctx.js export all
 | ---------- | ------- | ------------- |
 | Core | `engineering-workflow` | Enforces DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline and slash commands |
 | Core | `gstack-roles` | 23 specialist roles (PM, Architect, QA Lead, etc.) — AI declares its role before each task |
-| Core | `ponytail-mindset` | 7-rung decision ladder before writing any code. Reduces code output ~54% |
+| Core | `ponytail-mindset` | 7-rung decision ladder before writing any code. Eliminates premature abstraction |
 | Core | `interview-me` | Progressive single-question requirements elicitation before drafting specs |
 | Core | `subagent-orchestrator` | Multi-agent task decomposition, context boundary isolation, and merge synthesis |
 | Core | `gemini-precision` | High-precision engineering guardrails, zero-assumption verification, and zero-placeholder output |
@@ -235,7 +235,7 @@ Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):
 - **Git Worktree Sandboxing:** Each subagent operates in a private git worktree (`.swarm-worktrees/`). The developer's active workspace cannot be corrupted by experimental changes or failing tests.
 - **Disk-Backed Session Persistence:** Active and completed threads are recorded in `.swarm-worktrees/session-state.json`. If the MCP process is restarted, tasks and diffs can be recovered without losing work.
 - **Automated In-Worktree Verification (`verify_command`):** Runs test commands (`npm test`, `cargo test`, `pytest`) inside the isolated worktree before marking tasks as successful.
-- **Context Token Compression:** The server extracts essential rules and sections (`extractEssentialSkillContent`), saving up to 65% in active prompt tokens.
+- **Context Token Compression:** The server extracts essential rules, constraints, and checklists (`extractEssentialSkillContent`), eliminating verbose samples and reducing prompt overhead.
 
 ## Testing
 
@@ -326,33 +326,31 @@ Submissions are evaluated using a strict, multi-stage verification pipeline:
 2. **Behavioral Invariant Testing:** Stress-tests timing attacks (`crypto.timingSafeEqual`), brute-force IP/Account rate-limiting, error stack redaction, immutable Value Objects, domain event dispatch, and circuit breaker state transitions.
 3. **Deterministic Static Analysis:** AST verification checking for zero ORM/HTTP transport leakage in domain layers and contract compliance.
 
-### Frontier Model Runtime Benchmark Results (Sandbox V8)
+### Production Scenarios Evaluated
 
-Evaluated across frontier and open model families in live runtime sandboxes:
+The runtime sandbox evaluates model outputs against real-world engineering invariants:
 
-| Model | Gateway / Provider | Baseline Pass Rate | With ContextOS | Delta | V8 Compilation | Real-World Runtime Behavior |
-|---|---|:---:|:---:|:---:|:---:|---|
-| **`gpt-5.6-sol`** | AgentRouter | 93% (12/13) | **100% (13/13)** | **+7%** _(Auth: +20%)_ | **100%** | Flawless V8 compilation. Baseline missed input validation rules; ContextOS achieved 100% across all 13 behavioral invariant tests. |
-| **`google/gemini-3.8-flash`** | OpenRouter (Flex) | 85% (11/13) | **92% (12/13)** | **+7%** _(Auth: +20%)_ | **100%** | Ultra-low latency (~5.4s). 100% V8 compilation. Enforced constant-time token auth, bounded 15m JWT TTLs, and resilient circuit breaker states. |
-| **`claude-opus-5`** | AgentRouter | 87% (11/13) | **100% (13/13)** | **+13%** _(Auth: +40%)_ | **100%** | Ponytail guidelines prevented runaway verbosity, producing concise single-module architecture without EOF cuts. 100% test pass with ContextOS. |
-| **`glm-5.3`** | AgentRouter | 78% (10/13) | **100% (13/13)** | **+22%** _(Auth: +40%, DDD: +25%)_ | **100%** | Zero crashes under sandbox globals. ContextOS enforced rate-limiting, timing attacks defenses, and strict DDD Money/Order state machine transitions. |
-| **`deepseek-v4-flash`** | AgentRouter | 59% (8/13) | **74% (10/13)** | **+15%** _(Auth: +20%)_ | **100%** | Robust AST pre-cleaning resolved conversational ellipsis. ContextOS successfully injected cryptographic rate-limiting and circuit breaker timeouts. |
+| Scenario | Category | Skills Activated | Key Technical Invariant Proved |
+|---|---|---|---|
+| **Secure Auth & Rate Limiting** | Security & Backend | `security`, `node`, `ponytail-mindset` | Constant-time password verification (`timingSafeEqual`), dual-key rate-limiting, strict email/credential sanitization, zero stack-trace leak in 500s. |
+| **DDD Order Aggregate Root** | Architecture & DDD | `ddd`, `system-design`, `decisions` | Immutable `Money` Value Object, state-machine invariants (PENDING → PAID → SHIPPED), explicit Domain Event classes with queue draining. |
+| **Resilient API Client** | Reliability & Async | `typescript`, `system-design`, `performance` | 3-state Circuit Breaker (CLOSED → OPEN → HALF-OPEN), `AbortController` timeouts, typed error taxonomy without credential leakage. |
 
-### Production Scenarios Breakdown
+### Running Benchmarks Locally
 
-| Scenario | Category | Skills Activated | Baseline Pass | ContextOS Pass | Delta | Key Technical Invariant Proved |
-|---|---|---|:---:|:---:|:---:|---|
-| **Secure Auth & Rate Limiting** | Security & Backend | `security`, `node`, `ponytail-mindset` | 80% (4/5) | **100% (5/5)** | **+20%** | Constant-time password verification (`timingSafeEqual`), dual-key rate-limiting, strict email/credential sanitization, zero stack-trace leak in 500s. |
-| **DDD Order Aggregate Root** | Architecture & DDD | `ddd`, `system-design`, `decisions` | 100% (4/4) | **100% (4/4)** | **+0%** | Immutable `Money` Value Object, state-machine invariants (PENDING → PAID → SHIPPED), explicit Domain Event classes with queue draining. |
-| **Resilient API Client** | Reliability & Async | `typescript`, `system-design`, `performance` | 100% (3/3) | **100% (3/3)** | **+0%** | 3-state Circuit Breaker (CLOSED → OPEN → HALF-OPEN), `AbortController` timeouts, typed error taxonomy without credential leakage. |
+You can run the benchmark suite locally with your own API keys:
 
-### Artifacts and Reports
+```bash
+# Run runtime sandbox benchmark with Google Gemini:
+$env:GEMINI_API_KEY = "your-key"
+npm run benchmark:runtime -- --provider gemini --model gemini-2.5-flash
 
-Every benchmark execution generates the following artifacts:
+# Run with OpenAI:
+$env:OPENAI_API_KEY = "sk-..."
+npm run benchmark:runtime -- --provider openai --model gpt-4o
+```
 
-- **Interactive HTML Dashboard** ([`benchmarks/results/runtime-report-latest.html`](./benchmarks/results/runtime-report-latest.html)): Visual scorecard with per-assertion pass/fail indicators.
-- **Markdown Summary** ([`benchmarks/results/runtime-report-latest.md`](./benchmarks/results/runtime-report-latest.md)): Exportable tables for CI/CD and pull request reviews.
-- **Machine-Readable JSON** ([`benchmarks/results/runtime-report-latest.json`](./benchmarks/results/runtime-report-latest.json)): Full benchmark logs, latencies, and execution telemetry.
+When executed, reports are generated in `benchmarks/results/` (`.html`, `.md`, `.json`). These run outputs are kept in your local directory (git-ignored) to keep the repository clean.
 
 ## Contributing
 

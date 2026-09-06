@@ -22,24 +22,10 @@ const BLOCKED_FILENAMES: string[] = [
 ];
 
 /** File extensions that should never be sent. */
-const BLOCKED_EXTENSIONS: string[] = [
-	".pem",
-	".key",
-	".p12",
-	".pfx",
-	".jks",
-	".keystore",
-];
+const BLOCKED_EXTENSIONS: string[] = [".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"];
 
 /** Directory names that should be blocked entirely. */
-const BLOCKED_DIRS: string[] = [
-	".ssh",
-	".gnupg",
-	".aws",
-	".azure",
-	".gcp",
-	".kube",
-];
+const BLOCKED_DIRS: string[] = [".ssh", ".gnupg", ".aws", ".azure", ".gcp", ".kube"];
 
 /** Patterns in file content that indicate secrets. */
 const SECRET_CONTENT_PATTERNS: RegExp[] = [

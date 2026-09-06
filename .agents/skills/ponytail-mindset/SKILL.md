@@ -1,7 +1,7 @@
 ---
 name: ponytail-mindset
 description: >
-  >
+  Minimalist coding mindset based on DietrichGebert/ponytail. Teaches the AI to write only what is strictly necessary. Uses a 7-rung ladder: YAGNI → reuse → stdlib → platform → deps → one-liner → minimum. Minimizes unnecessary boilerplate and over-engineering while keeping all safety, validation and security guards.
 ---
 # ponytail-mindset
 
@@ -19,7 +19,7 @@ Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
 > _He says nothing. He writes one line. It works._
 
-**Benchmark**: 54% less code on average. 94% less in over-build scenarios. 100% safe (validation, error handling, security: never cut).
+**Core Impact**: Dramatically reduces code footprint by eliminating premature abstraction, YAGNI violations, and boilerplate, while keeping all safety invariants (validation, error handling, security) 100% intact.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: "Observability-first Vercel performance and cost reduction optimization skill."
-globs: ""
+globs: "**/*.{ts,tsx,js,jsx,json}"
 alwaysApply: false
 ---
 

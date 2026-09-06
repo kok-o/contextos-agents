@@ -196,18 +196,11 @@ async function installOllama(): Promise<boolean> {
 				process.stderr.write(`  ${dim("Homebrew install failed, trying curl installer...")}\n`);
 			}
 		} catch {
-			// No brew — fall through to curl
+			// No brew — fall through
 		}
 	}
-	if (process.platform === "linux" || process.platform === "darwin") {
-		try {
-			execSync("curl -fsSL https://ollama.com/install.sh | sh", { stdio: "inherit", timeout: 180000 });
-			return true;
-		} catch {
-			return false;
-		}
-	}
-	process.stderr.write(`  ${dim("Download Ollama from: https://ollama.com/download")}\n`);
+	// Direct user to official install page (avoiding unverified pipe-to-shell)
+	process.stderr.write(`  ${dim("Please install Ollama from official site: https://ollama.com/download")}\n`);
 	return false;
 }
 

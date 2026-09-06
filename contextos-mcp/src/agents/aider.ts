@@ -8,18 +8,11 @@
  * Edit confirmations appear as "Applied edit to <file>" lines.
  */
 
-import { spawn } from "node:child_process";
 import * as os from "node:os";
 import type { AgentProvider, AgentResult, AgentRunOptions } from "../core/types.js";
+import { commandExists } from "../utils/command-exists.js";
+import { safeSpawn } from "../utils/safe-spawn.js";
 import { registerAgent } from "./provider.js";
-
-async function commandExists(cmd: string): Promise<boolean> {
-	return new Promise((resolve) => {
-		const proc = spawn("which", [cmd], { stdio: "pipe" });
-		proc.on("close", (code) => resolve(code === 0));
-		proc.on("error", () => resolve(false));
-	});
-}
 
 /** Whitelist of env vars safe to pass to agent subprocess. */
 function buildAgentEnv(): Record<string, string | undefined> {
@@ -124,13 +117,25 @@ const aiderProvider: AgentProvider = {
 			}
 		}
 
-		return new Promise<AgentResult>((resolve) => {
-			const proc = spawn("aider", args, {
+		let proc;
+		try {
+			proc = await safeSpawn("aider", args, {
 				cwd: workDir,
 				stdio: ["ignore", "pipe", "pipe"],
 				env: buildAgentEnv(),
 			});
+		} catch (err) {
+			return {
+				success: false,
+				output: "",
+				filesChanged: [],
+				diff: "",
+				error: `Failed to spawn aider: ${err instanceof Error ? err.message : String(err)}`,
+				durationMs: 0,
+			};
+		}
 
+		return new Promise<AgentResult>((resolve) => {
 			let stdout = "";
 			let stderr = "";
 			let resolved = false;

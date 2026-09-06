@@ -6,15 +6,25 @@
  *
  * The assembled prompt is injected into every agent's system message,
  * ensuring all coding agents follow the same architectural standards.
+ *
+ * Guaranteed context efficiency:
+ * - Dynamic selection limited to exact 2–4 domain skills
+ * - Hard character payload budget (preventing 35k–51k token bloat)
  */
 
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type SelectedContext, selectContext } from "./selector.js";
+import { type SelectedContext, type SelectorOptions, selectContext } from "./selector.js";
 
 function log(msg: string): void {
 	process.stderr.write(`[contextos-loader] ${msg}\n`);
 }
+
+/**
+ * Maximum total characters allocated for all loaded skills combined.
+ * Prevents prompt bloat while preserving essential architectural rules and checklists.
+ */
+export const MAX_TOTAL_SKILLS_CHARS = 14000;
 
 /**
  * Try to read a file, return its content or null.
@@ -125,7 +135,7 @@ function loadRules(agentsDir: string, ruleFiles: string[]): string[] {
  * Smart markdown extraction: preserves rules, patterns, negative constraints
  * and checklists without truncating mid-block or wasting tokens on huge verbose samples.
  */
-function extractEssentialSkillContent(content: string, maxLen = 4500): string {
+function extractEssentialSkillContent(content: string, maxLen = 3500): string {
 	// Strip YAML frontmatter
 	const cleaned = content.replace(/^---[\s\S]*?---\r?\n/, "").trim();
 
@@ -157,7 +167,9 @@ function extractEssentialSkillContent(content: string, maxLen = 4500): string {
 	if (mistakesMatch) sections.push(mistakesMatch[0].trim());
 
 	if (sections.length > 0) {
-		return sections.join("\n\n");
+		const combined = sections.join("\n\n");
+		if (combined.length <= maxLen) return combined;
+		return `${combined.slice(0, maxLen).trim()}\n\n... [remaining rules omitted for context budget]`;
 	}
 
 	// Fallback to safe character boundary
@@ -165,9 +177,15 @@ function extractEssentialSkillContent(content: string, maxLen = 4500): string {
 }
 
 /**
- * Load SKILL.md from candidate skill directories (.agents/skills, .agents/core/skills, etc.).
+ * Load SKILL.md from candidate skill directories (.agents/skills, .agents/core/skills, etc.)
+ * with hard budget enforcement across all skills.
  */
-function loadSkills(agentsDir: string, skillNames: string[], excludedSkills: Set<string>): string[] {
+function loadSkills(
+	agentsDir: string,
+	skillNames: string[],
+	excludedSkills: Set<string>,
+	maxTotalChars = MAX_TOTAL_SKILLS_CHARS,
+): string[] {
 	const candidateRoots = [
 		path.join(agentsDir, "skills"),
 		path.join(agentsDir, "core", "skills"),
@@ -177,6 +195,10 @@ function loadSkills(agentsDir: string, skillNames: string[], excludedSkills: Set
 
 	const loaded: string[] = [];
 	const loadedNames = new Set<string>();
+	let totalChars = 0;
+
+	// Calculate fair budget per skill based on number of active skills
+	const perSkillBudget = Math.max(1500, Math.floor(maxTotalChars / Math.max(1, skillNames.length)));
 
 	for (const skillName of skillNames) {
 		if (excludedSkills.has(skillName)) {
@@ -185,6 +207,10 @@ function loadSkills(agentsDir: string, skillNames: string[], excludedSkills: Set
 		}
 
 		if (loadedNames.has(skillName)) continue;
+		if (totalChars >= maxTotalChars) {
+			log(`Total skills character budget (${maxTotalChars}) reached, omitting remaining skills`);
+			break;
+		}
 
 		for (const root of candidateRoots) {
 			if (!existsSync(root)) continue;
@@ -193,9 +219,12 @@ function loadSkills(agentsDir: string, skillNames: string[], excludedSkills: Set
 			const rawContent = tryReadFile(skillMdPath);
 
 			if (rawContent) {
-				const essential = extractEssentialSkillContent(rawContent);
-				loaded.push(`# Skill: ${skillName}\n\n${essential}`);
+				const remainingBudget = Math.min(perSkillBudget, maxTotalChars - totalChars);
+				const essential = extractEssentialSkillContent(rawContent, remainingBudget);
+				const formatted = `# Skill: ${skillName}\n\n${essential}`;
+				loaded.push(formatted);
 				loadedNames.add(skillName);
+				totalChars += formatted.length;
 				log(`Loaded skill: ${skillName} (${essential.length} chars from ${path.relative(agentsDir, skillMdPath)})`);
 				break;
 			}
@@ -205,14 +234,20 @@ function loadSkills(agentsDir: string, skillNames: string[], excludedSkills: Set
 	return loaded;
 }
 
+export interface BuildPromptOptions extends SelectorOptions {
+	/** Maximum total character budget for domain skills (default: MAX_TOTAL_SKILLS_CHARS). */
+	maxTotalSkillsChars?: number;
+}
+
 /**
  * Build a complete system prompt from .agents/ for a given task.
  *
  * @param projectRoot - Absolute path to the project root
  * @param task - The task description (used for selective loading)
+ * @param options - Optional configuration (maxSkills, maxTotalSkillsChars, files)
  * @returns The assembled system prompt string, or empty string if no .agents/ found
  */
-export function buildContextPrompt(projectRoot: string, task: string): string {
+export function buildContextPrompt(projectRoot: string, task: string, options: BuildPromptOptions = {}): string {
 	const agentsDir = findAgentsDir(projectRoot);
 	if (!agentsDir) {
 		log(`No .agents/ directory found in ${projectRoot}`);
@@ -222,8 +257,11 @@ export function buildContextPrompt(projectRoot: string, task: string): string {
 	// 1. Profile exclusions
 	const excludedSkills = getExcludedSkills(agentsDir);
 
-	// 2. Select relevant context based on task
-	const selection: SelectedContext = selectContext(task);
+	// 2. Select relevant context based on task (capped to max 4 skills)
+	const selection: SelectedContext = selectContext(task, {
+		maxSkills: options.maxSkills,
+		files: options.files,
+	});
 	log(`Task analysis → skills: [${selection.skills.join(", ")}]`);
 
 	// 3. Assemble prompt sections
@@ -241,8 +279,8 @@ export function buildContextPrompt(projectRoot: string, task: string): string {
 		sections.push(...rules);
 	}
 
-	// Domain skills
-	const skills = loadSkills(agentsDir, selection.skills, excludedSkills);
+	// Domain skills (strictly capped and budget-constrained)
+	const skills = loadSkills(agentsDir, selection.skills, excludedSkills, options.maxTotalSkillsChars);
 	if (skills.length > 0) {
 		sections.push(...skills);
 	}

@@ -20,107 +20,149 @@ const CORE_SKILLS_DIR = path.join(AGENTS_DIR, 'core', 'skills');
 const SKILL_RULES = [
   {
     skill: 'nextjs',
-    triggers: [/\bnext(?:\.js)?\b/i, /\bapp\s*router\b/i, /\bserver\s*actions?\b/i, /\brsc\b/i, /\bpage\.tsx\b/i, /\blayout\.tsx\b/i, /некст/i],
+    strong: [/\bnext(?:\.js)?\b/i, /\bapp\s*router\b/i, /\bserver\s*actions?\b/i, /\brsc\b/i, /некст/i],
+    medium: [/\bpage\.tsx\b/i, /\blayout\.tsx\b/i],
+    weak: [],
     fileGlobs: [/app\/.*\.(tsx|jsx|ts|js)$/, /next\.config\./],
   },
   {
     skill: 'react',
-    triggers: [/\breact\b/i, /\bcomponent\b/i, /\bhooks?\b/i, /\buseState\b/i, /\buseEffect\b/i, /\buseOptimistic\b/i, /\buseMemo\b/i, /\bprops\b/i, /компонент/i, /хук/i, /модал\w*/i],
+    strong: [/\breact\b/i, /\buseOptimistic\b/i, /компонент/i, /хук/i],
+    medium: [/\bcomponent\b/i, /\bhooks?\b/i, /\buseState\b/i, /\buseEffect\b/i, /\buseMemo\b/i, /\bprops\b/i, /модал\w*/i],
+    weak: [],
     fileGlobs: [/\.(tsx|jsx)$/],
   },
   {
     skill: 'typescript',
-    triggers: [/\btypescript\b/i, /\btype-?safe\b/i, /\bgenerics?\b/i, /\binterface\b/i, /\btsconfig\b/i, /\btypes?\b/i, /тайпскрипт/i, /типизац/i],
+    strong: [/\btypescript\b/i, /\btype-?safe\b/i, /\bgenerics?\b/i, /\binterface\b/i, /\btsconfig\b/i, /тайпскрипт/i, /типизац/i],
+    medium: [],
+    weak: [/\btypes?\b/i],
     fileGlobs: [/\.tsx?$/, /tsconfig\.json$/],
   },
   {
     skill: 'ui-ux-pro',
-    triggers: [/\bui\b/i, /\bux\b/i, /\bdesign\b/i, /\bcss\b/i, /\btailwind\b/i, /\bstyling\b/i, /\btheme\b/i, /\bmodal\b/i, /\bbutton\b/i, /модал\w*/i, /кнопк/i, /дизайн/i, /верстк/i, /макет/i, /интерфейс/i],
+    strong: [/\bui\b/i, /\bux\b/i, /\btailwind\b/i, /\bstyling\b/i, /дизайн/i, /верстк/i, /макет/i, /интерфейс/i],
+    medium: [/\bcss\b/i, /\btheme\b/i, /\bmodal\b/i, /\bbutton\b/i, /модал\w*/i, /кнопк/i],
+    weak: [/\bdesign\b/i],
     fileGlobs: [/\.(css|scss|sass)$/, /tailwind\.config\./],
   },
   {
     skill: 'web-accessibility',
-    triggers: [/\baccessib\w*\b/i, /\ba11y\b/i, /\baria\b/i, /\bfocus\s*trap\b/i, /\bkeyboard\s*nav/i, /\bwcag\b/i, /\bscreen\s*reader\b/i, /доступност/i, /скринридер/i],
+    strong: [/\baccessib\w*\b/i, /\ba11y\b/i, /\baria\b/i, /\bfocus\s*trap\b/i, /\bkeyboard\s*nav/i, /\bwcag\b/i, /\bscreen\s*reader\b/i, /доступност/i, /скринридер/i],
+    medium: [],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'impeccable-design',
-    triggers: [/\bpolish\b/i, /\bvisual\s*qa\b/i, /\bmicro-?animation\b/i, /\bglassmorphism\b/i, /\btypography\b/i, /анимац/i, /полировк/i],
+    strong: [/\bvisual\s*qa\b/i, /\bmicro-?animation\b/i, /\bglassmorphism\b/i, /\btypography\b/i, /анимац/i, /полировк/i],
+    medium: [/\bpolish\b/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'database',
-    triggers: [/\bdatabase\b/i, /\bsql\b/i, /\bpostgres(?:ql)?\b/i, /\bprisma\b/i, /\bdrizzle\b/i, /\bmigration\b/i, /\bquery\b/i, /\borm\b/i, /\bindex(?:ing)?\b/i, /\bschema\b/i, /баз.*данн/i, /миграц/i, /таблиц/i],
+    strong: [/\bdatabase\b/i, /\bsql\b/i, /\bpostgres(?:ql)?\b/i, /\bprisma\b/i, /\bdrizzle\b/i, /\bmigration\b/i, /\borm\b/i, /баз.*данн/i, /миграц/i, /таблиц/i],
+    medium: [/\bschema\b/i],
+    weak: [/\bquery\b/i, /\bindex(?:ing)?\b/i],
     fileGlobs: [/\.prisma$/, /drizzle\.config\./, /\bmigrations?\/.*\.sql$/],
   },
   {
     skill: 'security',
-    triggers: [/\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /\bpermission\b/i, /\bsession\b/i, /\btoken\b/i, /авториз/i, /аутентифик/i, /парол/i, /токен/i, /безопасност/i],
+    strong: [/\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /авториз/i, /аутентифик/i, /парол/i, /безопасност/i],
+    medium: [/\bpermission\b/i, /\bsession\b/i, /\btoken\b/i, /токен/i],
+    weak: [],
     fileGlobs: [/\bauth\b/, /\bsecurity\b/],
   },
   {
     skill: 'performance',
-    triggers: [/\bperformance\b/i, /\boptimize\b/i, /\bslow\b/i, /\blatency\b/i, /\blcp\b/i, /\bcls\b/i, /\binp\b/i, /\bcore\s*web\s*vitals\b/i, /\bwaterfall\b/i, /\bbundle\s*size\b/i, /производительн/i, /оптимиз/i, /медленн/i, /ускор/i],
+    strong: [/\bperformance\b/i, /\blatency\b/i, /\blcp\b/i, /\bcls\b/i, /\binp\b/i, /\bcore\s*web\s*vitals\b/i, /\bwaterfall\b/i, /\bbundle\s*size\b/i, /производительн/i, /ускор/i],
+    medium: [/\boptimize\b/i, /\bslow\b/i, /оптимиз/i, /медленн/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'testing',
-    triggers: [/\btest(?:s|ing)?\b/i, /\bvitest\b/i, /\bjest\b/i, /\bplaywright\b/i, /\btdd\b/i, /\bbdd\b/i, /\be2e\b/i, /\bmock\b/i, /тест/i, /тестирован/i, /покрыти/i, /юнит/i],
+    strong: [/\bvitest\b/i, /\bjest\b/i, /\bplaywright\b/i, /\btdd\b/i, /\bbdd\b/i, /\be2e\b/i, /тестирован/i, /покрыти/i, /юнит/i],
+    medium: [/\btest(?:s|ing)?\b/i, /\bmock\b/i, /тест/i],
+    weak: [],
     fileGlobs: [/\.(test|spec)\.(ts|js|tsx|jsx|py)$/, /vitest\.config\./, /playwright\.config\./],
   },
   {
     skill: 'docker',
-    triggers: [/\bdocker\b/i, /\bcontainer\b/i, /\bdockerfile\b/i, /\bcompose\b/i, /\bkubernetes\b/i, /\bk8s\b/i, /докер/i, /контейнер/i],
+    strong: [/\bdocker\b/i, /\bdockerfile\b/i, /\bcompose\b/i, /\bkubernetes\b/i, /\bk8s\b/i, /докер/i],
+    medium: [],
+    weak: [/\bcontainer\b/i, /контейнер/i],
     fileGlobs: [/Dockerfile/, /docker-compose\./],
   },
   {
     skill: 'fastapi',
-    triggers: [/\bfastapi\b/i, /\bpython\b/i, /\bpydantic\b/i, /\buvicorn\b/i, /\bpytest\b/i, /питон/i],
+    strong: [/\bfastapi\b/i, /\bpydantic\b/i, /\buvicorn\b/i, /\bpytest\b/i, /питон/i],
+    medium: [/\bpython\b/i],
+    weak: [],
     fileGlobs: [/\.py$/, /requirements\.txt$/, /pyproject\.toml$/],
   },
   {
     skill: 'nestjs',
-    triggers: [/\bnestjs\b/i, /\b@nestjs\b/i, /\bmodule\b/i, /\bcontroller\b/i, /\binjectable\b/i, /нест/i],
+    strong: [/\bnestjs\b/i, /\b@nestjs\b/i, /нест/i],
+    medium: [],
+    weak: [/\bmodule\b/i, /\bcontroller\b/i, /\binjectable\b/i],
     fileGlobs: [/nest-cli\.json$/],
   },
   {
     skill: 'node',
-    triggers: [/\bnode(?:\.js)?\b/i, /\bexpress\b/i, /\bfastify\b/i, /\bbackend\b/i, /\bapi\s*route\b/i, /бэкенд/i, /эндпоинт/i],
+    strong: [/\bnode(?:\.js)?\b/i, /\bexpress\b/i, /\bfastify\b/i],
+    medium: [/\bbackend\b/i, /\bapi\s*route\b/i, /бэкенд/i, /эндпоинт/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'ddd',
-    triggers: [/\bddd\b/i, /\bdomain-?driven\b/i, /\baggregate\b/i, /\bentity\b/i, /\bvalue\s*object\b/i, /\bbounded\s*context\b/i, /домен/i, /агрегат/i],
+    strong: [/\bddd\b/i, /\bdomain-?driven\b/i, /\baggregate\b/i, /\bvalue\s*object\b/i, /\bbounded\s*context\b/i],
+    medium: [/\bentity\b/i, /домен/i, /агрегат/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'microservices',
-    triggers: [/\bmicroservices?\b/i, /\bevent-?driven\b/i, /\brabbitmq\b/i, /\bkafka\b/i, /\bpub\/?sub\b/i, /\bgrpc\b/i, /микросервис/i, /очеред/i],
+    strong: [/\bmicroservices?\b/i, /\bevent-?driven\b/i, /\brabbitmq\b/i, /\bkafka\b/i, /\bgrpc\b/i, /микросервис/i],
+    medium: [/\bpub\/?sub\b/i, /очеред/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'system-design',
-    triggers: [/\barchitecture\b/i, /\bsystem\s*design\b/i, /\bscalab(?:le|ility)\b/i, /\bhigh\s*concurrency\b/i, /\bcircuit\s*breaker\b/i, /архитектур/i, /масштабируем/i],
+    strong: [/\bsystem\s*design\b/i, /\bhigh\s*concurrency\b/i, /\bcircuit\s*breaker\b/i, /масштабируем/i],
+    medium: [/\barchitecture\b/i, /\bscalab(?:le|ility)\b/i, /архитектур/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'graphify',
-    triggers: [/\bgraphify\b/i, /\bknowledge\s*graph\b/i, /\bcodebase\s*graph\b/i, /\bproject\s*graph\b/i, /\bblast\s*radius\b/i, /\bmap\s*(?:the\s*)?codebase\b/i, /граф\s*проект/i, /граф\s*зависимост/i],
+    strong: [/\bgraphify\b/i, /\bknowledge\s*graph\b/i, /\bcodebase\s*graph\b/i, /\bproject\s*graph\b/i, /\bblast\s*radius\b/i, /\bmap\s*(?:the\s*)?codebase\b/i, /граф\s*проект/i, /граф\s*зависимост/i],
+    medium: [],
+    weak: [],
     fileGlobs: [/graph\.json$/, /GRAPH_REPORT\.md$/],
   },
   {
     skill: 'architecture-diagrams',
-    triggers: [/\bdiagrams?\b/i, /\bflowchart\b/i, /\bsequence\s*diagram\b/i, /диаграмм/i, /схем/i, /нарисуй/i],
+    strong: [/\bflowchart\b/i, /\bsequence\s*diagram\b/i],
+    medium: [/\bdiagrams?\b/i, /диаграмм/i, /схем/i, /нарисуй/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'subagent-orchestrator',
-    triggers: [/\bsubagent\b/i, /\bdelegate\b/i, /\bparallel\s*tasks\b/i, /субагент/i, /делегируй/i, /распараллел/i],
+    strong: [/\bsubagent\b/i, /\bparallel\s*tasks\b/i, /субагент/i, /распараллел/i],
+    medium: [/\bdelegate\b/i, /делегируй/i],
+    weak: [],
     fileGlobs: [],
   },
   {
     skill: 'interview-me',
-    triggers: [/\binterview\b/i, /\bclarify\b/i, /\bquestions\b/i, /интервью/i, /уточни\b/i, /расспроси/i],
+    strong: [/\binterview\b/i, /интервью/i, /расспроси/i],
+    medium: [/\bclarify\b/i, /\bquestions\b/i, /уточни\b/i],
+    weak: [],
     fileGlobs: [],
   },
 ];
@@ -190,42 +232,71 @@ function buildSkillIndex(projectDir = process.cwd()) {
  * @returns {ResolvedSkillsResult} Resolved domain, role, and activated skill names
  */
 function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' } = {}) {
-  const selectedSkills = new Set();
   const promptText = (prompt || '').toLowerCase();
+  const scores = new Map();
 
-  // Always include foundational skills
-  selectedSkills.add('ponytail-mindset');
-  selectedSkills.add('engineering-workflow');
-
-  // Match skills against prompt text
   for (const rule of SKILL_RULES) {
-    const hasPromptMatch = rule.triggers.some(pattern => pattern.test(promptText));
-    if (hasPromptMatch) {
-      selectedSkills.add(rule.skill);
-    }
-  }
+    let score = 0;
 
-  // Match skills against file paths
-  for (const file of files) {
-    const normalized = file.replace(/\\/g, '/');
-    for (const rule of SKILL_RULES) {
-      const hasFileMatch = rule.fileGlobs.some(pattern => pattern.test(normalized));
-      if (hasFileMatch) {
-        selectedSkills.add(rule.skill);
+    // Strong triggers (10 points each match)
+    for (const pat of rule.strong || []) {
+      if (pat.test(promptText)) score += 10;
+    }
+
+    // Medium triggers (5 points each match)
+    for (const pat of rule.medium || []) {
+      if (pat.test(promptText)) score += 5;
+    }
+
+    // Weak triggers (2 points each match)
+    for (const pat of rule.weak || []) {
+      if (pat.test(promptText)) score += 2;
+    }
+
+    // File matches (10 points per matching file)
+    for (const file of files) {
+      const normalized = file.replace(/\\/g, '/');
+      for (const pat of rule.fileGlobs || []) {
+        if (pat.test(normalized)) score += 10;
       }
     }
+
+    // Minimum score threshold for domain skill activation
+    if (score >= 5) {
+      scores.set(rule.skill, score);
+    }
   }
 
+  // Sort matched domain skills by score descending
+  const sortedDomainSkills = Array.from(scores.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([skill]) => skill);
+
+  // Cap domain skills to top 4 max to prevent context bloat
+  const MAX_DOMAIN_SKILLS = 4;
+  const topDomainSkills = sortedDomainSkills.slice(0, MAX_DOMAIN_SKILLS);
+
   // Synergy rules (from AGENTS.md matrix)
-  if (selectedSkills.has('database') || selectedSkills.has('microservices') || selectedSkills.has('ddd') || selectedSkills.has('graphify')) {
-    selectedSkills.add('system-design');
+  const hasSynergyPrereq = topDomainSkills.includes('database') ||
+    topDomainSkills.includes('microservices') ||
+    topDomainSkills.includes('ddd') ||
+    topDomainSkills.includes('graphify');
+
+  if (hasSynergyPrereq && !topDomainSkills.includes('system-design')) {
+    if (topDomainSkills.length < MAX_DOMAIN_SKILLS + 1) {
+      topDomainSkills.push('system-design');
+    }
   }
+
+  // Foundational skills (always active)
+  const allSkills = ['ponytail-mindset', 'engineering-workflow', ...topDomainSkills];
+  const finalSkills = Array.from(new Set(allSkills));
 
   // Infer Domain if not specified
   let inferredDomain = domain;
   if (!inferredDomain) {
-    const isFrontend = selectedSkills.has('react') || selectedSkills.has('nextjs') || selectedSkills.has('ui-ux-pro');
-    const isBackend = selectedSkills.has('database') || selectedSkills.has('fastapi') || selectedSkills.has('nestjs') || selectedSkills.has('node') || selectedSkills.has('system-design');
+    const isFrontend = finalSkills.includes('react') || finalSkills.includes('nextjs') || finalSkills.includes('ui-ux-pro');
+    const isBackend = finalSkills.includes('database') || finalSkills.includes('fastapi') || finalSkills.includes('nestjs') || finalSkills.includes('node') || finalSkills.includes('system-design');
     if (isFrontend && isBackend) inferredDomain = 'Full-Stack';
     else if (isFrontend) inferredDomain = 'Frontend';
     else if (isBackend) inferredDomain = 'Backend';
@@ -244,7 +315,7 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' }
     domain: inferredDomain,
     phase: phase,
     role: inferredRole,
-    skills: Array.from(selectedSkills),
+    skills: finalSkills,
   };
 }
 

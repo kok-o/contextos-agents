@@ -1,7 +1,7 @@
 ---
 name: system-design
 description: >
-  >
+  Architecture and system design skill based on donnemartin's System Design Primer. Teaches scalable architecture thinking: load balancers, caching, DB partitioning, microservices, CAP theorem, and trade-off analysis before writing backend code.
 ---
 # system-design
 

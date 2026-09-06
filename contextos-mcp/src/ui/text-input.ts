@@ -73,7 +73,7 @@ export function readTextInput(_prompt: string): Promise<TextInputResult> {
 				const lineText = linesBuf[i];
 				const prefix = i === 0 ? promptChar : `${dim("·")} `;
 				const contentWidth = w - promptVisibleLen;
-				const displayText = lineText.length > contentWidth ? lineText.slice(0, contentWidth - 1) + "…" : lineText;
+				const displayText = lineText.length > contentWidth ? `${lineText.slice(0, contentWidth - 1)}…` : lineText;
 				const padding = Math.max(0, contentWidth - displayText.length);
 				rows.push(`${BG_DARK}${prefix}${displayText}${" ".repeat(padding)}${RESET}`);
 			}
@@ -259,7 +259,7 @@ export function readTextInput(_prompt: string): Promise<TextInputResult> {
 				// Tab — insert spaces
 				if (ch === "\t") {
 					const line = linesBuf[linesBuf.length - 1];
-					linesBuf[linesBuf.length - 1] = line.slice(0, cursorPos) + "  " + line.slice(cursorPos);
+					linesBuf[linesBuf.length - 1] = `${line.slice(0, cursorPos)}  ${line.slice(cursorPos)}`;
 					cursorPos += 2;
 					drawBox();
 					continue;
