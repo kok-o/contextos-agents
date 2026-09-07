@@ -68,13 +68,13 @@ cat .agents/generated/claude/skills/<your-skill-name>/SKILL.md
 npm test
 ```
 
-All 116 tests across 26 suites must pass before submitting a PR.
+All 131 tests across 27 suites (and 440 MCP tests) must pass before submitting a PR.
 
 ---
 
 ## How to Test Locally (npm link)
 
-To test the full installation flow as if a user ran `npx contextos-agents`:
+To test the full installation flow as if a user ran `npx contextos`:
 
 ```bash
 # In the repo root:
@@ -83,7 +83,7 @@ npm link
 # In a fresh test project directory:
 mkdir /tmp/test-project && cd /tmp/test-project
 npm init -y
-npx contextos-agents
+npx contextos
 
 # Verify:
 ls .agents/
@@ -102,20 +102,26 @@ npm unlink contextos-agents
 
 | Command | Description |
 | --------- | ------------- |
-| `node .agents/ctx.js export gemini` | Compile skills for Gemini / Antigravity |
-| `node .agents/ctx.js export claude` | Compile skills for Claude Code |
-| `node .agents/ctx.js export cursor` | Compile → `.cursorrules` |
-| `node .agents/ctx.js export copilot` | Compile → `.github/copilot-instructions.md` |
-| `node .agents/ctx.js export aider` | Compile → `.aider.conf.yml` + `CONVENTIONS.md` |
-| `node .agents/ctx.js export all` | Compile for all agents |
-| `node .agents/ctx.js validate` | Validate skills, frontmatter, deps & sync |
+| `contextos doctor` | Diagnostic health check for skills, profiles, and sync |
+| `contextos stats` | Token savings telemetry report across task categories |
+| `contextos watch` | Continuous background watcher & auto-compiler daemon |
+| `contextos resolve <prompt>` | Dynamic minimal skill resolution |
+| `contextos export gemini` | Compile skills for Gemini / Antigravity |
+| `contextos export claude` | Compile skills for Claude Code |
+| `contextos export cursor` | Compile → `.cursorrules` + `.cursor/rules/*.mdc` |
+| `contextos export copilot` | Compile → `.github/copilot-instructions.md` |
+| `contextos export aider` | Compile → `.aider.conf.yml` + `CONVENTIONS.md` |
+| `contextos export zed` | Compile → `.zed/rules.md` + `.zed/prompts/*.md` |
+| `contextos export all` | Compile for all agents |
+| `contextos validate` | Validate skills, frontmatter, deps & sync |
 | `node .agents/ctx.js skill add <ref>` | Install a plugin skill |
 | `node .agents/ctx.js skill remove <name>` | Remove a plugin skill |
 | `node .agents/ctx.js skill list` | List built-in + plugin skills |
 | `node .agents/ctx.js skill search [q]` | Search community registry |
-| `npm test` | Run full test suite (116 tests, 26 suites) |
+| `npm test` | Run full test suite (131 tests, 27 suites) |
 | `npm run validate` | Alias for `ctx.js validate` |
 | `npm run build` | Alias for `export all` |
+| `npm run watch` | Alias for `contextos watch` |
 | `npm run benchmark` | Run deterministic static benchmark suite |
 | `npm run benchmark:runtime` | Run execution-backed V8 runtime benchmark suite |
 
@@ -247,7 +253,7 @@ Before opening a PR:
 ```
 contextos-agents/
 ├── bin/
-│   └── index.js              ← npm installer CLI (npx contextos-agents)
+│   └── index.js              ← npm installer & unified CLI (contextos)
 ├── registry.json             ← Community skill registry
 ├── registry.schema.json      ← JSON Schema for registry entries
 ├── .agents/
@@ -256,6 +262,11 @@ contextos-agents/
 │   ├── ctx.js                ← Context compiler + skill plugin CLI
 │   ├── validate.js           ← Skill validation engine
 │   ├── plugins.js            ← Plugin manager (add/remove/list/search)
+│   ├── profiles.js           ← Profile definitions & stack auto-detection
+│   ├── resolver.js           ← AST import graph & dynamic skill resolver
+│   ├── doctor.js             ← Repository health diagnostic checker
+│   ├── stats.js              ← Token savings benchmark reporter
+│   ├── watch.js              ← Continuous file watcher auto-sync daemon
 │   ├── core/
 │   │   └── skills/           ← SKILL SOURCE FILES (edit these)
 │   │       ├── gstack-roles/
@@ -266,7 +277,8 @@ contextos-agents/
 │   │   ├── claude/export.js  ← Claude adapter
 │   │   ├── cursor/export.js  ← Cursor adapter
 │   │   ├── copilot/export.js ← GitHub Copilot adapter
-│   │   └── aider/export.js   ← Aider adapter
+│   │   ├── aider/export.js   ← Aider adapter
+│   │   └── zed/export.js     ← Zed IDE adapter
 │   ├── plugins/              ← THIRD-PARTY SKILLS (auto-created on install)
 │   │   └── <plugin-name>/
 │   │       ├── SKILL.md
@@ -275,12 +287,16 @@ contextos-agents/
 │   └── generated/            ← COMPILED OUTPUT (do not edit manually)
 │       ├── gemini/skills/
 │       └── claude/skills/
+├── contextos-mcp/            ← MCP EXECUTION ENGINE (worktree subagent swarm)
 ├── tests/
 │   ├── install.test.js
 │   ├── export.test.js
 │   ├── skills.test.js
 │   ├── validate.test.js
-│   └── plugins.test.js
+│   ├── plugins.test.js
+│   ├── profile.test.js
+│   ├── resolver.test.js
+│   └── benchmark.test.js
 └── package.json
 ```
 

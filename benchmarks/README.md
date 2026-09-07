@@ -118,4 +118,4 @@ When you run the benchmark suite locally (`npm run benchmark:runtime` or `npm ru
 - `benchmarks/results/runtime-report-latest.json`: Full machine-readable execution telemetry.
 
 > [!NOTE]
-> The `benchmarks/results/` directory is git-ignored by design so that individual local evaluation runs do not pollute repository version control. Run the benchmarks with your own API keys to generate fresh local reports.
+> Benchmark summary reports in `benchmarks/results/` are tracked in git so results are visible and shareable across pull requests and documentation. Individual evaluation runs with your own API keys update these reports locally.

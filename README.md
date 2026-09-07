@@ -12,7 +12,8 @@ This is an open-source set of skills and behavioral rules for AI assistants. The
 You do not need to clone anything manually. Just open your terminal in the root of your project and run:
 
 ```bash
-npx contextos-agents
+npx contextos
+# or: npx contextos-agents
 ```
 
 The script will automatically detect your project tech stack, create the `.agents` folder, configure skills, and compile them for your AI agent.
@@ -20,15 +21,16 @@ The script will automatically detect your project tech stack, create the `.agent
 ### Options
 
 ```bash
-npx contextos-agents --help          # Show all options
-npx contextos-agents --version       # Show version
-npx contextos-agents --profile mvp   # Install with specific profile (mvp, startup, enterprise, frontend, backend)
-npx contextos-agents --auto          # Auto-detect tech stack and apply recommended profile
-npx contextos-agents --with-mcp      # Install with MCP execution server enabled (.agents/mcp/)
-npx contextos-agents setup-mcp       # Add MCP server to an existing .agents/ project
-npx contextos-agents --dry-run       # Preview what will be installed
-npx contextos-agents --force         # Overwrite an existing .agents/ folder
-npx contextos-agents --skip-compile  # Skip auto-compilation step
+npx contextos --help             # Show all options
+npx contextos --version          # Show version
+npx contextos --minimal          # Install only 5 core skills (lightweight footprint)
+npx contextos --profile mvp      # Install with specific profile (mvp, startup, enterprise, frontend, backend)
+npx contextos --auto             # Auto-detect tech stack and apply recommended profile
+npx contextos --with-mcp         # Install with MCP execution server enabled (.agents/mcp/)
+npx contextos setup-mcp          # Add MCP server to an existing .agents/ project
+npx contextos --dry-run          # Preview what will be installed
+npx contextos --force            # Overwrite an existing .agents/ folder
+npx contextos --skip-compile     # Skip auto-compilation step
 ```
 
 ## Why ContextOS?
@@ -70,16 +72,17 @@ ContextOS allows you to tailor your AI rules to the project lifecycle and archit
 
 ```bash
 # Auto-detect tech stack in the current project
-node .agents/ctx.js detect
+contextos detect
+# or: node .agents/ctx.js detect
 
 # List available profiles and current active profile
-node .agents/ctx.js profile list
+contextos profile list
 
 # Apply a profile
-node .agents/ctx.js profile apply mvp
+contextos profile apply mvp
 
 # Recompile all agent exports for the active profile
-node .agents/ctx.js export all
+contextos export all
 ```
 
 ## What's Inside?
@@ -146,9 +149,9 @@ ContextOS maps development phases directly to slash commands in your AI chat:
 | `/review` | Staff Engineer + Designer | 5-axis quality gate (correctness, architecture, security, performance, design) |
 | `/ship` | Release Engineer | Verify clean CI, lint checks, docs, and rollback plan before merging |
 
-## Dynamic Skill Resolution & CLI (`ctx.js`)
+## Dynamic Skill Resolution & Unified CLI (`contextos` / `ctx.js`)
 
-The `.agents/ctx.js` file is the **Context Engine** — it resolves minimal skills on the fly and compiles exports for AI assistants.
+ContextOS provides a unified CLI (`contextos` or `npx contextos`) and local engine (`.agents/ctx.js`) to resolve minimal skills on the fly, run health diagnostics, and compile exports for AI assistants.
 
 ### Dynamic Skill Resolution (`resolve` & `index`)
 
@@ -156,48 +159,74 @@ To prevent context bloat, ContextOS dynamically resolves the exact 2–4 skills 
 
 ```bash
 # Resolve skills for a task description (English):
-node .agents/ctx.js resolve "Build an accessible modal component with React and Tailwind"
+contextos resolve "Build an accessible modal component with React and Tailwind"
 
 # Output:
 # [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer]
 # Skills loaded: ponytail-mindset, engineering-workflow, react, ui-ux-pro, web-accessibility
 
 # Multilingual support (Russian):
-node .agents/ctx.js resolve "создай модальное окно авторизации и напиши юнит-тесты"
+contextos resolve "создай модальное окно авторизации и напиши юнит-тесты"
 
 # Output:
 # [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer]
 # Skills loaded: ponytail-mindset, engineering-workflow, react, ui-ux-pro, security, testing
 
-# Resolve skills based on active files:
-node .agents/ctx.js resolve --files "app/api/auth/route.ts"
+# Resolve skills based on active files (hybrid AST & config analysis):
+contextos resolve --files "app/api/auth/route.ts"
 
 # Generate/update progressive lightweight skills index:
-node .agents/ctx.js index
+contextos index
 
 # Clean up lingering .swarm-worktrees directories and orphaned swarm/* git branches:
-node .agents/ctx.js clean-worktrees
+contextos clean-worktrees
+```
+
+### Diagnostic Health Check (`contextos doctor`)
+
+Run a comprehensive pre-flight verification across your repository to ensure valid skills, profile alignment, symlinks, git worktree status, and compiler synchronization:
+
+```bash
+contextos doctor
+# or: npx contextos doctor
+```
+
+### Context Savings Analytics (`contextos stats`)
+
+Measure your real token savings. Compares monolithic prompt injection against ContextOS dynamic skill resolution across frontend, backend, security, and full-stack tasks:
+
+```bash
+contextos stats
+```
+
+### Continuous Auto-Sync Daemon (`contextos watch`)
+
+Watch your source skills in `.agents/core/skills/` and automatically recompile adapter outputs (`.cursorrules`, `.zed/rules.md`, `.github/copilot-instructions.md`, etc.) upon saving:
+
+```bash
+contextos watch
+# or: npm run watch
 ```
 
 ### Supported Agents & Compilation
 
 | Agent | Command | Output Format |
 |-------|---------|---------------|
-| **Gemini / Antigravity** | `export gemini` | `.agents/generated/gemini/skills/` |
-| **Claude Code** | `export claude` | `.agents/generated/claude/skills/` |
-| **Cursor IDE** | `export cursor` | `.cursor/rules/*.mdc` (modular globs) + `.cursorrules` |
-| **GitHub Copilot** | `export copilot` | `.github/copilot-instructions.md` |
-| **Aider** | `export aider` | `.aider.conf.yml` + `CONVENTIONS.md` |
-| **Zed IDE** | `export zed` | `.zed/rules.md` + `.zed/prompts/*.md` |
+| **Gemini / Antigravity** | `contextos export gemini` | `.agents/generated/gemini/skills/` |
+| **Claude Code** | `contextos export claude` | `.agents/generated/claude/skills/` |
+| **Cursor IDE** | `contextos export cursor` | `.cursor/rules/*.mdc` (modular globs) + `.cursorrules` |
+| **GitHub Copilot** | `contextos export copilot` | `.github/copilot-instructions.md` |
+| **Aider** | `contextos export aider` | `.aider.conf.yml` + `CONVENTIONS.md` |
+| **Zed IDE** | `contextos export zed` | `.zed/rules.md` + `.zed/prompts/*.md` |
 
 ```bash
-node .agents/ctx.js export all       # Compile for all agents
-node .agents/ctx.js export gemini    # Compile for Gemini / Antigravity
-node .agents/ctx.js export claude    # Compile for Claude Code
-node .agents/ctx.js export cursor    # Compile for Cursor (.cursor/rules/*.mdc)
-node .agents/ctx.js export copilot   # Compile for GitHub Copilot
-node .agents/ctx.js export aider     # Compile for Aider
-node .agents/ctx.js export zed       # Compile for Zed IDE
+contextos export all       # Compile for all agents (or: node .agents/ctx.js export all)
+contextos export gemini    # Compile for Gemini / Antigravity
+contextos export claude    # Compile for Claude Code
+contextos export cursor    # Compile for Cursor (.cursor/rules/*.mdc)
+contextos export copilot   # Compile for GitHub Copilot
+contextos export aider     # Compile for Aider
+contextos export zed       # Compile for Zed IDE
 ```
 
 ### Pre-Compiled Artifacts & Git Architecture
@@ -241,13 +270,14 @@ You can expand your `.agents` folder with community plugins or validate your own
 
 ```bash
 # Launch the interactive skill installer to browse and install community skills
-npx contextos-agents install-skill
+contextos install-skill
+# or: npx contextos install-skill
 
 # Or install a specific skill from a GitHub repository automatically
-npx contextos-agents install-skill --from-repo kok-o/awesome-skill
+contextos install-skill --from-repo kok-o/awesome-skill
 
 # Validate your local skills (checks frontmatter, dependencies, and sync)
-npx contextos-agents audit
+contextos audit
 ```
 
 ## ContextOS MCP Server & Autonomous Multi-Agent Swarm
@@ -312,39 +342,39 @@ Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):
 
 Tests use the **Node.js built-in test runner** for the core framework and **Vitest** for the MCP engine — zero external test bloat.
 
-### 1. Root Test Suite (121 tests)
+### 1. Root Test Suite (131 tests)
 
 ```bash
 npm test
 ```
 
 ```text
-# tests 121
+# tests 131
 # suites 27
-# pass  121
+# pass  131
 # fail  0
 ```
 
-### 2. MCP Server Test Suite (428 tests)
+### 2. MCP Server Test Suite (440 tests)
 
 ```bash
 cd contextos-mcp && npm test
 ```
 
 ```text
-Test Files  24 passed (24)
-     Tests  428 passed (428)
+Test Files  25 passed | 1 skipped (26)
+     Tests  440 passed | 13 skipped (453)
 ```
 
 **Test coverage:**
 
-- `tests/install.test.js` — installer CLI flags (--help, --dry-run, --force)
-- `tests/export.test.js` — ctx.js export for gemini, claude, cursor (.mdc rules), copilot, aider
+- `tests/install.test.js` — installer CLI flags (--help, --minimal, --dry-run, --force)
+- `tests/export.test.js` — ctx.js export for gemini, claude, cursor (.mdc rules), copilot, aider, zed
 - `tests/skills.test.js` — validates all skill source files and frontmatter
 - `tests/profile.test.js` — profile resolution, stack auto-detection, and skill filtering
 - `tests/validate.test.js` — validator rules, dependency graph, and sync checks
 - `tests/plugins.test.js` — plugin lockfile, registry fetching, and security checks
-- `tests/resolver.test.js` — dynamic skill resolution, progressive index, and bilingual prompt matching
+- `tests/resolver.test.js` — dynamic skill resolution, AST import graph analysis, progressive index, and bilingual prompt matching
 - `tests/benchmark.test.js` — benchmark scoring engine, static AST checks, runtime sandbox, and reporters
 - `contextos-mcp/tests/unit/session-persistence.test.ts` — session disk persistence, thread state tracking, and orphan purge
 - `contextos-mcp/tests/unit/contextos-tools.test.ts` — all 6 MCP tool handlers and validation
