@@ -65,6 +65,20 @@ describe("Security Guardrails", () => {
 			expect(containsSecrets("OPENAI_API_KEY=sk-1234567890abcdef1234567890abcdef123456")).toBe(true);
 			expect(containsSecrets("-----BEGIN RSA PRIVATE KEY-----")).toBe(true);
 			expect(containsSecrets("export const token = 'ghp_123456789012345678901234567890123456';")).toBe(true);
+			expect(
+				containsSecrets(
+					"export const pat = 'github_pat_11AAAAAAA0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abc';",
+				),
+			).toBe(true);
+			expect(containsSecrets("const npmToken = 'npm_0123456789abcdef0123456789abcdef';")).toBe(true);
+		});
+
+		it("blocks credentials files and mixed-slash subpaths", () => {
+			expect(isBlockedPath(".npmrc")).toBe(true);
+			expect(isBlockedPath(".netrc")).toBe(true);
+			expect(isBlockedPath(".git-credentials")).toBe(true);
+			expect(isBlockedPath("sub/dir/.npmrc")).toBe(true);
+			expect(isBlockedPath("sub/.ssh/id_rsa")).toBe(true);
 		});
 
 		it("redacts sensitive content safely", () => {
@@ -132,6 +146,19 @@ describe("Security Guardrails", () => {
 			expect(res.stdout).toContain("4.0");
 			expect(res.hasFinal).toBe(true);
 			expect(res.finalValue).toBe("computed");
+		});
+
+		it("blocks dangerous asyncio subprocess and network attributes", async () => {
+			repl = new PythonRepl();
+			await repl.start();
+
+			const res1 = await repl.execute("asyncio.create_subprocess_shell('whoami')");
+			expect(res1.stderr).toContain(
+				"Security error: access to dangerous attribute 'create_subprocess_shell' is forbidden",
+			);
+
+			const res2 = await repl.execute("asyncio.open_connection('attacker.com', 80)");
+			expect(res2.stderr).toContain("Security error: access to dangerous attribute 'open_connection' is forbidden");
 		});
 	});
 });

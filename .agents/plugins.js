@@ -43,14 +43,20 @@ const PROMPT_INJECTION_PATTERNS = [
   /you\s+are\s+now/i,
   /system\s*:\s*/i,
   /\[SYSTEM\]/i,
+  /base64\s*,\s*[A-Za-z0-9+/=]{40,}/i,
+  /https?:\/\/[^\s)]+\/(?:exfil|steal|leak|webhook|collect)/i,
+  /\b(?:eval|exec|Function)\s*\(/i,
 ];
 
-function scanForPromptInjection(content) {
+function scanForPromptInjection(content, options = {}) {
   if (typeof content !== 'string') return false;
   const found = PROMPT_INJECTION_PATTERNS.filter(p => p.test(content));
   if (found.length > 0) {
-    console.warn(c.yellow('  ⚠️ Potential prompt injection detected in downloaded skill'));
-    console.warn(c.yellow(`     Patterns: ${found.map(p => p.source).join(', ')}`));
+    console.warn(c.red('  🚨 Potential prompt injection or unsafe pattern detected in skill:'));
+    console.warn(c.yellow(`     Pattern matches: ${found.map(p => p.source).join(', ')}`));
+    if (options.throwOnMatch) {
+      throw new Error(`Security validation failed: prompt injection detected (${found.length} pattern matches). Installation aborted. Pass --force-unsafe-prompts to override.`);
+    }
     return true;
   }
   return false;
@@ -166,7 +172,7 @@ function parseRef(ref) {
 }
 
 // ── GitHub installer ──────────────────────────────────────────────────────────
-async function installFromGitHub(descriptor, skillName, dryRun, checksum) {
+async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe = false) {
   const { owner, repo, gitRef, isPinned, subPath } = descriptor;
   const skillPath  = subPath || '';
   const base       = `https://raw.githubusercontent.com/${owner}/${repo}/${gitRef}`;
@@ -198,7 +204,7 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum) {
   if (checksum && sha256.toLowerCase() !== checksum.toLowerCase()) {
     throw new Error(`Checksum mismatch for ${skillName}: expected ${checksum}, got ${sha256}`);
   }
-  scanForPromptInjection(skillMdContent);
+  scanForPromptInjection(skillMdContent, { throwOnMatch: !forceUnsafe });
 
   // Optionally fetch skill.yaml if it exists
   const yamlUrl = skillPath
@@ -244,7 +250,7 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum) {
 }
 
 // ── npm installer ─────────────────────────────────────────────────────────────
-function installFromNpm(descriptor, skillName, dryRun, checksum) {
+function installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe = false) {
   const pkgName = descriptor.package;
 
   if (dryRun) {
@@ -280,7 +286,7 @@ function installFromNpm(descriptor, skillName, dryRun, checksum) {
     if (checksum && sha256.toLowerCase() !== checksum.toLowerCase()) {
       throw new Error(`Checksum mismatch for ${skillName}: expected ${checksum}, got ${sha256}`);
     }
-    scanForPromptInjection(skillMdContent);
+    scanForPromptInjection(skillMdContent, { throwOnMatch: !forceUnsafe });
 
     const targetDir = path.join(PLUGINS_DIR, skillName);
     fs.rmSync(targetDir, { recursive: true, force: true });
@@ -321,9 +327,13 @@ function isSafeSkillName(skillName) {
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * skill add <ref> [--dry-run] [--checksum <sha256>]
+ * skill add <ref> [--dry-run] [--checksum <sha256>] [--force-unsafe-prompts]
  */
-async function add(ref, { dryRun = false, checksum } = {}) {
+async function add(ref, options = {}) {
+  const dryRun   = Boolean(options.dryRun || options['dry-run']);
+  const checksum = options.checksum || null;
+  const forceUnsafe = Boolean(options.forceUnsafe || options['force-unsafe-prompts']);
+
   if (!ref) {
     console.error(c.red('Usage: ctx.js skill add <ref> [--checksum <sha256>]'));
     console.error('  ref can be: username/repo, username/repo/path/to/skill, or npm-package-name');
@@ -361,9 +371,9 @@ async function add(ref, { dryRun = false, checksum } = {}) {
   let installedSha256 = null;
   try {
     if (descriptor.type === 'github') {
-      installedSha256 = await installFromGitHub(descriptor, skillName, dryRun, checksum);
+      installedSha256 = await installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe);
     } else {
-      installedSha256 = installFromNpm(descriptor, skillName, dryRun, checksum);
+      installedSha256 = installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe);
     }
   } catch (err) {
     console.error(c.red(`\n[ERROR] Failed to install '${skillName}': ${err.message}`));

@@ -19,6 +19,9 @@ const BLOCKED_FILENAMES: string[] = [
 	"credentials.json",
 	"service-account.json",
 	"serviceAccountKey.json",
+	".netrc",
+	".git-credentials",
+	".npmrc",
 ];
 
 /** File extensions that should never be sent. */
@@ -34,9 +37,12 @@ const SECRET_CONTENT_PATTERNS: RegExp[] = [
 	/-----BEGIN\s+CERTIFICATE-----/,
 	/ghp_[A-Za-z0-9]{36}/, // GitHub personal access token
 	/gho_[A-Za-z0-9]{36}/, // GitHub OAuth token
+	/github_pat_[A-Za-z0-9_]{82}/, // GitHub fine-grained PAT
 	/sk-[A-Za-z0-9]{32,}/, // OpenAI API key
 	/sk-ant-[A-Za-z0-9-]{90,}/, // Anthropic API key
 	/AIza[A-Za-z0-9_-]{35}/, // Google API key
+	/npm_[A-Za-z0-9]{32,36}/, // npm access token
+	/xox[baprs]-[A-Za-z0-9_-]{10,48}/, // Slack token
 ];
 
 /**
@@ -46,9 +52,10 @@ const SECRET_CONTENT_PATTERNS: RegExp[] = [
  * @returns true if the file should be BLOCKED (not sent to agents)
  */
 export function isBlockedPath(filePath: string): boolean {
-	const basename = path.basename(filePath).toLowerCase();
-	const ext = path.extname(filePath).toLowerCase();
-	const parts = filePath.split(path.sep).map((p) => p.toLowerCase());
+	const normalized = path.normalize(filePath);
+	const basename = path.basename(normalized).toLowerCase();
+	const ext = path.extname(normalized).toLowerCase();
+	const parts = normalized.split(/[/\\]/).map((p) => p.toLowerCase());
 
 	// Check blocked filenames
 	if (BLOCKED_FILENAMES.some((f) => basename === f.toLowerCase())) {
@@ -80,8 +87,9 @@ export function isBlockedPath(filePath: string): boolean {
  * @returns true if secrets were detected (file should NOT be sent to agents)
  */
 export function containsSecrets(content: string): boolean {
-	// Only scan first 5000 chars for performance
-	const sample = content.slice(0, 5000);
+	if (!content) return false;
+	// Scan up to 1MB of content for comprehensive coverage without memory spikes
+	const sample = content.length > 1_000_000 ? content.slice(0, 1_000_000) : content;
 	return SECRET_CONTENT_PATTERNS.some((pattern) => pattern.test(sample));
 }
 

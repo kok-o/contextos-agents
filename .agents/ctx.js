@@ -301,7 +301,8 @@ if (command === 'export') {
   }
 
   if (subcommand === 'add') {
-    plugins.add(ref, { dryRun, checksum }).catch(err => {
+    const forceUnsafe = args.includes('--force-unsafe-prompts') || args.includes('--force-unsafe');
+    plugins.add(ref, { dryRun, checksum, forceUnsafe }).catch(err => {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     });
@@ -323,7 +324,7 @@ if (command === 'export') {
 
 // ── clean-worktrees ──────────────────────────────────────────────────────────
 } else if (command === 'clean-worktrees' || command === 'clean') {
-  const { execSync } = require('child_process');
+  const { execSync, execFileSync } = require('child_process');
   const fs = require('fs');
   const path = require('path');
   const rootDir = path.resolve(__dirname, '..');
@@ -331,16 +332,16 @@ if (command === 'export') {
   
   console.log('Cleaning up ContextOS swarm worktrees and branches...');
   try {
-    execSync('git worktree prune', { cwd: rootDir, stdio: 'pipe' });
+    execFileSync('git', ['worktree', 'prune'], { cwd: rootDir, stdio: 'pipe' });
   } catch {}
 
   let branchCount = 0;
   try {
-    const branches = execSync('git branch --list "swarm/*"', { cwd: rootDir, encoding: 'utf-8' });
+    const branches = execFileSync('git', ['branch', '--list', 'swarm/*'], { cwd: rootDir, encoding: 'utf-8' });
     const list = branches.split('\n').map(b => b.replace(/^[*+\s]+/, '').trim()).filter(Boolean);
     for (const b of list) {
       try {
-        execSync(`git branch -D "${b}"`, { cwd: rootDir, stdio: 'pipe' });
+        execFileSync('git', ['branch', '-D', b], { cwd: rootDir, stdio: 'pipe' });
         branchCount++;
       } catch {}
     }
