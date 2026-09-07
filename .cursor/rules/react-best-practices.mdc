@@ -1,6 +1,6 @@
 ---
 description: "React and Next.js performance optimization guidelines from Vercel Engineering."
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "**/*.{tsx,jsx}"
 alwaysApply: false
 ---
 

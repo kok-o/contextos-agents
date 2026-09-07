@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for nextjs"
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "app/**/*,pages/**/*,next.config.*"
 alwaysApply: false
 ---
 

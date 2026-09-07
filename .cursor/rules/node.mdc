@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for node"
-globs: "**/*.{ts,js,json,prisma,sql}"
+globs: "**/*.{ts,js}"
 alwaysApply: false
 ---
 

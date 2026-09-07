@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for web-accessibility"
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "**/*.{tsx,jsx,html}"
 alwaysApply: false
 ---
 

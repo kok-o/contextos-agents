@@ -1,5 +1,5 @@
 ---
-description: "Architecture Decision Records (ADR) management. Creates, tracks, and queries architectural decisions so AI assistants understand why choices were made."
+description: "Agent-requested: invoke when working on decisions. Architecture Decision Records (ADR) management. Creates, tracks, and queries architectural decisions so AI assistants understand why choices were made."
 globs: ""
 alwaysApply: false
 ---

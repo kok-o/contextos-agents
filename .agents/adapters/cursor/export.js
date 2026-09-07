@@ -22,42 +22,36 @@ function getSkillGlobsAndFlags(skillName) {
     return { globs: '', alwaysApply: true };
   }
 
-  const FRONTEND_SKILLS = [
-    'react', 'nextjs', 'typescript', 'ui-ux-pro', 'impeccable-design',
-    'ui-design', 'ux-design', 'web-accessibility', 'brutalist-design',
-    'minimalist-design', 'soft-design', 'redesign-audit', 'react-best-practices',
-  ];
-  if (FRONTEND_SKILLS.includes(skillName)) {
-    return { globs: '**/*.{ts,tsx,js,jsx,css,scss,html}', alwaysApply: false };
-  }
+  // Precise surgical globs mapping to prevent context flooding
+  const GLOB_MAP = {
+    'react': '**/*.{tsx,jsx}',
+    'react-best-practices': '**/*.{tsx,jsx}',
+    'nextjs': 'app/**/*,pages/**/*,next.config.*',
+    'typescript': '**/*.{ts,tsx}',
+    'ui-design': '**/*.{tsx,jsx,css,scss}',
+    'ui-ux-pro': '**/*.{tsx,jsx,css,scss}',
+    'ux-design': '**/*.{tsx,jsx}',
+    'impeccable-design': '**/*.{tsx,jsx,css,scss}',
+    'brutalist-design': '**/*.{tsx,jsx,css,scss}',
+    'minimalist-design': '**/*.{tsx,jsx,css,scss}',
+    'soft-design': '**/*.{tsx,jsx,css,scss}',
+    'redesign-audit': '**/*.{tsx,jsx,css,scss}',
+    'web-accessibility': '**/*.{tsx,jsx,html}',
+    'ddd': '**/domain/**/*,**/entities/**/*,**/aggregates/**/*',
+    'microservices': '**/services/**/*,docker-compose.*,**/gateway/**/*',
+    'nestjs': '**/*.module.ts,**/*.controller.ts,**/*.service.ts,nest-cli.json',
+    'node': '**/*.{ts,js}',
+    'database': '**/*.{prisma,sql,sqlite,db,drizzle.config.*}',
+    'docker': '**/Dockerfile*,**/docker-compose*.{yml,yaml}',
+    'testing': '**/*.{test,spec}.{ts,js,tsx,jsx},vitest.config.*,jest.config.*',
+    'state-management': '**/*{store,state,slice,reducer,atom}*.{ts,js,tsx,jsx}',
+    'performance': '**/*.{ts,tsx,js,jsx,json}',
+    'vercel-optimize': '**/*.{ts,tsx,js,jsx,json}',
+    'fastapi': '**/*.{py,requirements.txt,Pipfile,pyproject.toml}',
+  };
 
-  const BACKEND_SKILLS = ['system-design', 'node', 'nestjs', 'microservices', 'ddd'];
-  if (BACKEND_SKILLS.includes(skillName)) {
-    return { globs: '**/*.{ts,js,json,prisma,sql}', alwaysApply: false };
-  }
-
-  if (skillName === 'database') {
-    return { globs: '**/*.{prisma,sql,sqlite,db,drizzle.config.*}', alwaysApply: false };
-  }
-
-  if (skillName === 'docker') {
-    return { globs: '**/Dockerfile*,**/docker-compose*.{yml,yaml}', alwaysApply: false };
-  }
-
-  if (skillName === 'testing') {
-    return { globs: '**/*.{test,spec}.{ts,js,tsx,jsx},vitest.config.*,jest.config.*', alwaysApply: false };
-  }
-
-  if (skillName === 'state-management') {
-    return { globs: '**/*{store,state,slice,reducer,atom}*.{ts,js,tsx,jsx}', alwaysApply: false };
-  }
-
-  if (skillName === 'performance' || skillName === 'vercel-optimize') {
-    return { globs: '**/*.{ts,tsx,js,jsx,json}', alwaysApply: false };
-  }
-
-  if (skillName === 'fastapi') {
-    return { globs: '**/*.{py,requirements.txt,Pipfile,pyproject.toml}', alwaysApply: false };
+  if (GLOB_MAP[skillName]) {
+    return { globs: GLOB_MAP[skillName], alwaysApply: false };
   }
 
   return { globs: '', alwaysApply: false };
@@ -118,7 +112,10 @@ function generateCursorMdc(skillDir) {
   const body = stripFrontmatter(raw);
   const { globs, alwaysApply } = getSkillGlobsAndFlags(skillName);
 
-  const cleanDescription = description.replace(/\r?\n+/g, ' ').replace(/"/g, "'").trim();
+  let cleanDescription = description.replace(/\r?\n+/g, ' ').replace(/"/g, "'").trim();
+  if (!globs && !alwaysApply) {
+    cleanDescription = `Agent-requested: invoke when working on ${title}. ${cleanDescription}`.trim();
+  }
   const mdcContent = `---
 description: "${cleanDescription}"
 globs: ${globs ? `"${globs}"` : '""'}

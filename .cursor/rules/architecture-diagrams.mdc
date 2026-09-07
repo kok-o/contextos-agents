@@ -1,5 +1,5 @@
 ---
-description: "Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows."
+description: "Agent-requested: invoke when working on architecture-diagrams. Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows."
 globs: ""
 alwaysApply: false
 ---

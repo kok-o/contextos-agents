@@ -1,5 +1,5 @@
 ---
-description: "Subagent delegation and parallel coordination skill. Implements task decomposition, context hand-offs, blast-radius boundary isolation, and conflict-free merge synthesis."
+description: "Agent-requested: invoke when working on subagent-orchestrator. Subagent delegation and parallel coordination skill. Implements task decomposition, context hand-offs, blast-radius boundary isolation, and conflict-free merge synthesis."
 globs: ""
 alwaysApply: false
 ---

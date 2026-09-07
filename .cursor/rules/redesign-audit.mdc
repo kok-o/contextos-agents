@@ -1,6 +1,6 @@
 ---
 description: "Audits and upgrades existing web codebases with high-end typography, color, layout, and interaction polish."
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "**/*.{tsx,jsx,css,scss}"
 alwaysApply: false
 ---
 

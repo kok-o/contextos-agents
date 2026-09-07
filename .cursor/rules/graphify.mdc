@@ -1,5 +1,5 @@
 ---
-description: "Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius."
+description: "Agent-requested: invoke when working on graphify. Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius."
 globs: ""
 alwaysApply: false
 ---

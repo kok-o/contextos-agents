@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for nestjs"
-globs: "**/*.{ts,js,json,prisma,sql}"
+globs: "**/*.module.ts,**/*.controller.ts,**/*.service.ts,nest-cli.json"
 alwaysApply: false
 ---
 

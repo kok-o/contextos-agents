@@ -1,5 +1,5 @@
 ---
-description: "High-precision engineering and execution guardrails optimized for Google Gemini models. Enforces zero-assumption file inspection, complete non-lazy implementations, surgical blast-radius containment, and mandatory proof-of-work execution."
+description: "Agent-requested: invoke when working on gemini-precision. High-precision engineering and execution guardrails optimized for Google Gemini models. Enforces zero-assumption file inspection, complete non-lazy implementations, surgical blast-radius containment, and mandatory proof-of-work execution."
 globs: ""
 alwaysApply: false
 ---

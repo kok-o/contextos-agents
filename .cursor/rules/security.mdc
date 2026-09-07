@@ -1,5 +1,5 @@
 ---
-description: "ContextOS rules for security"
+description: "Agent-requested: invoke when working on Application Security. ContextOS rules for security"
 globs: ""
 alwaysApply: false
 ---

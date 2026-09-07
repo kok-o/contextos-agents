@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for ux-design"
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "**/*.{tsx,jsx}"
 alwaysApply: false
 ---
 

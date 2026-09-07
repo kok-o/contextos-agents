@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for microservices"
-globs: "**/*.{ts,js,json,prisma,sql}"
+globs: "**/services/**/*,docker-compose.*,**/gateway/**/*"
 alwaysApply: false
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: "AI Project Operating System context compiler that transforms user intent into minimal, relevant context for any AI agent across the full development lifecycle."
+description: "Agent-requested: invoke when working on context-os. AI Project Operating System context compiler that transforms user intent into minimal, relevant context for any AI agent across the full development lifecycle."
 globs: ""
 alwaysApply: false
 ---

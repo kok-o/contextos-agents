@@ -1,6 +1,6 @@
 ---
 description: "Clean editorial-style interfaces with warm monochrome palettes and flat bento grids."
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "**/*.{tsx,jsx,css,scss}"
 alwaysApply: false
 ---
 

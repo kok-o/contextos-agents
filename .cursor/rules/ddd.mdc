@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for ddd"
-globs: "**/*.{ts,js,json,prisma,sql}"
+globs: "**/domain/**/*,**/entities/**/*,**/aggregates/**/*"
 alwaysApply: false
 ---
 

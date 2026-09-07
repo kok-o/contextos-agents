@@ -1,6 +1,6 @@
 ---
 description: "ContextOS rules for typescript"
-globs: "**/*.{ts,tsx,js,jsx,css,scss,html}"
+globs: "**/*.{ts,tsx}"
 alwaysApply: false
 ---
 

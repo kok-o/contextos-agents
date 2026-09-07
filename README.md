@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D16.7.0-brightgreen.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#testing)
 
 This is an open-source set of skills and behavioral rules for AI assistants. The package automatically installs an `.agents` folder into your project, teaching your AI assistant software development best practices (UI Design, Architecture, Security, and more).
@@ -209,6 +209,32 @@ ContextOS commits generated adapter configurations (`.cursorrules`, `.cursor/rul
 - **Automated Sync & Drift Prevention:** CI strictly validates that generated exports match source skills (`node .agents/ctx.js validate`). Any uncommitted adapter drift fails CI checks via `git diff --exit-code`.
 - **Contributor Workflow:** Source rules are authored exclusively in `.agents/core/skills/<name>/SKILL.md`. Running `node .agents/ctx.js export all` regenerates all assistant configurations deterministically.
 
+### CI Quality Gate Action (`contextos-gate`)
+
+You can guard your repository against skill drift, secret leaks, and rule regressions using the official reusable GitHub Composite Action:
+
+```yaml
+# .github/workflows/pr-gate.yml
+name: ContextOS Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@main
+        with:
+          node-version: '20'
+```
+
+The action validates skill frontmatter integrity, checks for adapter configuration drift, scans for accidental secrets or API keys, and runs your test suite.
+
 ### Plugin Skills & Validation
 
 You can expand your `.agents` folder with community plugins or validate your own custom skills using the top-level commands:
@@ -381,7 +407,7 @@ The runtime sandbox evaluates model outputs against real-world engineering invar
 | **DDD Order Aggregate Root** | Architecture & DDD | `ddd`, `system-design`, `decisions` | Immutable `Money` Value Object, state-machine invariants (PENDING → PAID → SHIPPED), explicit Domain Event classes with queue draining. |
 | **Resilient API Client** | Reliability & Async | `typescript`, `system-design`, `performance` | 3-state Circuit Breaker (CLOSED → OPEN → HALF-OPEN), `AbortController` timeouts, typed error taxonomy without credential leakage. |
 
-### Running Benchmarks Locally
+### Running Benchmarks Locally & in CI
 
 You can run the benchmark suite locally with your own API keys:
 
@@ -393,9 +419,23 @@ npm run benchmark:runtime -- --provider gemini --model gemini-2.5-flash
 # Run with OpenAI:
 $env:OPENAI_API_KEY = "sk-..."
 npm run benchmark:runtime -- --provider openai --model gpt-4o
+
+# Run complete multi-model runtime matrix (Gemini, OpenRouter, AgentRouter):
+GEMINI_API_KEY=... OPENROUTER_API_KEY=... AGENTROUTER_API_KEY=... node benchmarks/run-multi-runtime.cjs
 ```
 
 When executed, reports are generated in `benchmarks/results/` (`.html`, `.md`, `.json`) and tracked so results are visible and shareable.
+
+> [!NOTE]
+> **Why Runtime Benchmarks Are Dispatch-Only in CI:** Standard CI checks (`validate-skills.yml`) run hermetically without external API calls to avoid flaky network dependencies and API token expenditures on every pull request. Live runtime evaluation is triggered on demand via GitHub Actions **Workflow Dispatch** ([`benchmark-runtime.yml`](.github/workflows/benchmark-runtime.yml)) using secure repository secrets.
+
+
+## Security — Third-Party Skills
+
+ContextOS skills are **executable context** — they become part of the system prompt that controls your AI agent's behavior. A malicious skill could instruct the AI agent to exfiltrate environment variables, modify files, or ignore your project's security policies.
+
+> [!CAUTION]
+> **Install skills only from repositories you trust as you would trust executable code.** Skills installed via `ctx.js skill add` from npm or GitHub are not sandboxed. ContextOS includes a built-in prompt injection scanner, but it cannot guarantee safety of arbitrary third-party content.
 
 ## Contributing
 

@@ -1,5 +1,5 @@
 ---
-description: "Smart context selection engine. Analyzes the current task, consults the Project Graph, and returns only the documents and skills needed to prevent token overflow."
+description: "Agent-requested: invoke when working on context-manager. Smart context selection engine. Analyzes the current task, consults the Project Graph, and returns only the documents and skills needed to prevent token overflow."
 globs: ""
 alwaysApply: false
 ---
