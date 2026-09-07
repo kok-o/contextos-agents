@@ -14,6 +14,7 @@ const flags = {
   force:       args.includes('--force'),
   skipCompile: args.includes('--skip-compile'),
   auto:        args.includes('--auto'),
+  minimal:     args.includes('--minimal'),
   withMcp:     args.includes('--with-mcp') || args.includes('--mcp'),
   profile:     (() => {
     const i = args.indexOf('--profile');
@@ -33,17 +34,19 @@ if (flags.ver) {
 
 if (flags.help) {
   console.log(`
-contextos-agents v${version}
+contextos / contextos-agents v${version}
 Install AI assistant skills and rules into your project.
 
 Usage:
-  npx contextos-agents [options]
+  npx contextos [options]
+  contextos <command> [args...]
 
 Options:
   --help, -h          Show this help message
   --version, -v       Show version number
   --dry-run           Preview what will be copied without making changes
   --force             Overwrite an existing .agents/ folder
+  --minimal           Install only 5 core skills (lightweight footprint)
   --profile <name>    Install a specific profile (mvp, startup, enterprise, frontend, backend)
   --auto              Auto-detect tech stack and apply recommended profile
   --with-mcp, --mcp   Install with MCP execution server enabled (.agents/mcp/ & mcp_config.json)
@@ -51,7 +54,14 @@ Options:
   --add-skill <ref>   Install a community plugin skill after setup
 
 Commands:
+  doctor              Run full project diagnostic health check
   audit               Validate local skills (alias for validate)
+  validate            Validate local skills, frontmatter, and sync
+  profile <subcmd>    Manage profiles (list, apply, show, remove)
+  export <target>     Export skills (gemini, claude, cursor, copilot, aider, zed, all)
+  resolve <prompt>    Dynamically resolve minimal skills for a prompt or files
+  stats               Display token context savings report
+  watch               Start continuous file watcher and auto-sync daemon
   detect              Analyze project and display detected tech stack
   install-skill       Interactive skill installer (or pass <ref> / --from-repo)
   setup-mcp           Add MCP execution server to an existing .agents/ project
@@ -72,31 +82,74 @@ Plugin ref formats:
   @scope/npm-package               A scoped npm skill package
 
 Examples:
-  npx contextos-agents                          Install .agents/ into current project
-  npx contextos-agents --profile mvp            Install with MVP profile
-  npx contextos-agents --auto                   Auto-detect tech stack and configure
-  npx contextos-agents --dry-run                Preview files that would be copied
-  npx contextos-agents --add-skill alice/my-skill
-
-Export skills to your AI tool:
-  node .agents/ctx.js export gemini    → .agents/generated/gemini/   (Gemini / Antigravity)
-  node .agents/ctx.js export claude    → .agents/generated/claude/   (Claude Code)
-  node .agents/ctx.js export cursor    → .cursorrules & .cursor/rules (Cursor IDE)
-  node .agents/ctx.js export copilot   → .github/copilot-instructions.md
-  node .agents/ctx.js export aider     → .aider.conf.yml + CONVENTIONS.md
-  node .agents/ctx.js export zed       → .zed/rules.md & .zed/prompts/ (Zed IDE)
-  node .agents/ctx.js export all       → all of the above
-
-Profile commands (after installation):
-  node .agents/ctx.js profile list           List available profiles
-  node .agents/ctx.js profile apply <name>   Switch project profile
-  node .agents/ctx.js detect                 Detect project tech stack
+  npx contextos                                 Install .agents/ into current project
+  npx contextos --minimal                       Install only 5 core essential skills
+  npx contextos --profile startup               Install with startup profile
+  contextos doctor                              Run project health check
+  contextos export gemini                       Compile skills for Gemini
+  contextos profile list                        List available profiles
 `);
   process.exit(0);
 }
 
-// ── Top-level Commands ────────────────────────────────────────────────────────
+// ── Top-level Commands & Proxy Routing ────────────────────────────────────────
 const mainCommand = args[0] && !args[0].startsWith('-') ? args[0] : null;
+
+// Doctor diagnostic health check
+if (mainCommand === 'doctor') {
+  let doctorModule;
+  const localDoctor = path.join(process.cwd(), '.agents', 'doctor.js');
+  if (fs.existsSync(localDoctor)) {
+    doctorModule = require(localDoctor);
+  } else {
+    doctorModule = require('../.agents/doctor.js');
+  }
+  doctorModule.runDoctor(process.cwd());
+  process.exit(0);
+}
+
+// Context savings statistics report
+if (mainCommand === 'stats') {
+  let statsModule;
+  const localStats = path.join(process.cwd(), '.agents', 'stats.js');
+  if (fs.existsSync(localStats)) {
+    statsModule = require(localStats);
+  } else {
+    statsModule = require('../.agents/stats.js');
+  }
+  statsModule.runStats(process.cwd());
+  process.exit(0);
+}
+
+// Background auto-sync file watcher daemon
+if (mainCommand === 'watch') {
+  let watchModule;
+  const localWatch = path.join(process.cwd(), '.agents', 'watch.js');
+  if (fs.existsSync(localWatch)) {
+    watchModule = require(localWatch);
+  } else {
+    watchModule = require('../.agents/watch.js');
+  }
+  watchModule.runWatch(process.cwd());
+}
+
+// Proxy commands to .agents/ctx.js when executed in a ContextOS project
+const PROXY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees'];
+if (mainCommand && PROXY_COMMANDS.includes(mainCommand)) {
+  const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
+  if (!fs.existsSync(ctxPath)) {
+    console.error('[ERROR] .agents/ctx.js not found in current directory.');
+    console.error('        Are you in a ContextOS project? Run `contextos` or `npx contextos-agents` first.');
+    process.exit(1);
+  }
+  const { execFileSync } = require('child_process');
+  try {
+    execFileSync(process.execPath, [ctxPath, ...args], { stdio: 'inherit' });
+  } catch (e) {
+    process.exit(e.status || 1);
+  }
+  process.exit(0);
+}
 
 if (mainCommand === 'audit') {
   const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
@@ -245,6 +298,14 @@ if (mainCommand === 'install-skill') {
 const sourcePath = path.join(__dirname, '..', '.agents');
 const targetPath = path.join(process.cwd(), '.agents');
 
+const MINIMAL_SKILLS = new Set([
+  'engineering-workflow',
+  'ponytail-mindset',
+  'gstack-roles',
+  'gemini-precision',
+  'react',
+]);
+
 function uniqueSiblingPath(basePath, suffix) {
   let candidate = `${basePath}.${suffix}`;
   let index = 1;
@@ -267,9 +328,19 @@ function installAtomically(source, target, options = {}) {
       recursive: true,
       force: true,
       filter: (src) => {
+        const norm = src.replace(/\\/g, '/');
         if (!options.withMcp) {
-          const norm = src.replace(/\\/g, '/');
           if (norm.endsWith('/mcp') || norm.includes('/mcp/') || norm.endsWith('/mcp_config.json')) {
+            return false;
+          }
+        }
+        if (options.minimal) {
+          const skillMatch = norm.match(/\/core\/skills\/([^/]+)/);
+          if (skillMatch && !MINIMAL_SKILLS.has(skillMatch[1])) {
+            return false;
+          }
+          const genMatch = norm.match(/\/generated\/gemini\/skills\/([^/]+)/);
+          if (genMatch && !MINIMAL_SKILLS.has(genMatch[1])) {
             return false;
           }
         }
@@ -311,9 +382,19 @@ if (flags.dryRun) {
     let count = 0;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
+      const norm = full.replace(/\\/g, '/');
       if (!flags.withMcp) {
-        const norm = full.replace(/\\/g, '/');
         if (norm.endsWith('/mcp') || norm.includes('/mcp/') || norm.endsWith('/mcp_config.json')) {
+          continue;
+        }
+      }
+      if (flags.minimal) {
+        const skillMatch = norm.match(/\/core\/skills\/([^/]+)/);
+        if (skillMatch && !MINIMAL_SKILLS.has(skillMatch[1])) {
+          continue;
+        }
+        const genMatch = norm.match(/\/generated\/gemini\/skills\/([^/]+)/);
+        if (genMatch && !MINIMAL_SKILLS.has(genMatch[1])) {
           continue;
         }
       }
@@ -330,6 +411,9 @@ if (flags.dryRun) {
   console.log(`[INFO] Detected stack: ${stackDetection.detected.length ? stackDetection.detected.join(', ') : 'Generic JavaScript'}`);
   const targetProfile = flags.profile || (flags.auto ? stackDetection.recommendedProfile : 'none');
   console.log(`[INFO] Selected profile: ${targetProfile}`);
+  if (flags.minimal) {
+    console.log(`[INFO] Minimal mode: copying only 5 core essential skills`);
+  }
   console.log(`[INFO] ${total} files would be copied from the package.`);
   console.log('\nRun without --dry-run to apply changes.');
   process.exit(0);
@@ -355,9 +439,14 @@ try {
     process.exit(1);
   }
 
-  installAtomically(sourcePath, targetPath, { withMcp: flags.withMcp });
+  installAtomically(sourcePath, targetPath, { withMcp: flags.withMcp, minimal: flags.minimal });
 
   console.log('[OK] .agents/ successfully installed in your project!');
+  if (flags.minimal) {
+    console.log('[OK] Minimal profile: 5 core skills installed.');
+    console.log('     (engineering-workflow, ponytail-mindset, gstack-roles, gemini-precision, react)');
+    console.log('     Tip: Add more skills anytime with: contextos skill add <name>');
+  }
   if (stackDetection.detected.length > 0) {
     console.log(`[OK] Detected project stack: ${stackDetection.detected.join(', ')}`);
   }
@@ -405,30 +494,31 @@ try {
         });
       } catch (e) {
         console.warn('[WARN] Skill compilation failed — run manually:');
-        console.warn('       node .agents/ctx.js export gemini');
+        console.warn('       contextos export gemini');
       }
     }
   } else {
-    console.log('Tip: Run `node .agents/ctx.js export gemini` to compile skills.');
+    console.log('Tip: Run `contextos export gemini` to compile skills.');
   }
 
   console.log('\n Next steps:');
   console.log('  1. Open your project in your AI assistant');
   console.log('  2. The assistant will automatically load .agents/AGENTS.md');
-  console.log('  3. Skills are pre-compiled in .agents/generated/gemini/skills/');
+  console.log('  3. Inspect project health anytime:');
+  console.log('       contextos doctor');
   console.log('  4. Switch profiles anytime:');
-  console.log('       node .agents/ctx.js profile list');
-  console.log('       node .agents/ctx.js profile apply mvp');
+  console.log('       contextos profile list');
+  console.log('       contextos profile apply mvp');
   console.log('  5. Export to other AI tools:');
-  console.log('       node .agents/ctx.js export cursor   → .cursorrules & .cursor/rules');
-  console.log('       node .agents/ctx.js export copilot  → .github/copilot-instructions.md');
-  console.log('       node .agents/ctx.js export aider    → .aider.conf.yml + CONVENTIONS.md');
+  console.log('       contextos export cursor   → .cursorrules & .cursor/rules');
+  console.log('       contextos export copilot  → .github/copilot-instructions.md');
+  console.log('       contextos export aider    → .aider.conf.yml + CONVENTIONS.md');
   console.log('  6. Add community skills (plugins):');
-  console.log('       node .agents/ctx.js skill add   username/my-skill');
-  console.log('       node .agents/ctx.js skill list');
+  console.log('       contextos skill add   username/my-skill');
+  console.log('       contextos skill list');
   if (!flags.withMcp) {
     console.log('  7. Enable MCP parallel subagents & worktrees (optional):');
-    console.log('       npx contextos-agents setup-mcp');
+    console.log('       contextos setup-mcp');
   }
   console.log('');
 

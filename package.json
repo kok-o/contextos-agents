@@ -3,6 +3,7 @@
   "version": "1.5.0",
   "description": "Install a .agents folder into your project to teach AI assistants best practices: UI/UX, architecture, security, and engineering workflow skills.",
   "bin": {
+    "contextos": "./bin/index.js",
     "contextos-agents": "./bin/index.js",
     "koko-contextos-agents": "./bin/index.js"
   },
@@ -17,6 +18,9 @@
     ".agents/plugins.js",
     ".agents/profiles.js",
     ".agents/resolver.js",
+    ".agents/doctor.js",
+    ".agents/stats.js",
+    ".agents/watch.js",
     ".agents/skills-index.json",
     ".agents/adapters",
     ".agents/core",
@@ -32,6 +36,9 @@
     "benchmark:live": "node benchmarks/run-live-benchmark.js",
     "benchmark:runtime": "node benchmarks/run-runtime-benchmark.js",
     "lint:md": "markdownlint README.md CONTRIBUTING.md .agents/core/skills/**/*.md --ignore .agents/generated/** --config .markdownlint.json",
+    "check:secrets": "node scripts/check-secrets.js --all",
+    "setup:hooks": "node scripts/install-hooks.js",
+    "watch": "node .agents/watch.js",
     "test": "node --test --test-concurrency=1 tests/install.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js",
     "prepublishOnly": "npm run validate && cd contextos-mcp && npm install && npm run build:bundle && cd .. && npm run build"
   },
@@ -59,7 +66,7 @@
     "url": "https://github.com/kok-o/contextos-agents/issues"
   },
   "engines": {
-    "node": ">=16.7.0"
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "markdownlint-cli": "^0.43.0"

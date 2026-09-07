@@ -139,4 +139,56 @@ describe('bin/index.js — installer', () => {
       'Successful replacement should clean temporary backup and staging directories'
     );
   });
+
+  test('--minimal flag installs only the 5 core essential skills', () => {
+    const testDir = path.join(tmpDir, 'minimal-test');
+    fs.mkdirSync(testDir, { recursive: true });
+
+    execSync(`node "${BIN_PATH}" --minimal --skip-compile`, { cwd: testDir });
+
+    const skillsDir = path.join(testDir, '.agents', 'core', 'skills');
+    assert.ok(fs.existsSync(skillsDir), 'skills directory should exist');
+    const installedSkills = fs.readdirSync(skillsDir);
+    assert.equal(installedSkills.length, 5, 'Should install exactly 5 skills in minimal mode');
+    const expected = ['engineering-workflow', 'gemini-precision', 'gstack-roles', 'ponytail-mindset', 'react'];
+    assert.deepEqual(installedSkills.sort(), expected.sort(), 'Installed skills must match 5 core essential skills');
+  });
+
+  test('contextos doctor runs successfully and outputs diagnostic report', () => {
+    const output = execSync(`node "${BIN_PATH}" doctor`, { cwd: path.join(__dirname, '..') }).toString();
+    assert.ok(output.includes('ContextOS Doctor'), 'Should print Doctor header');
+    assert.ok(output.includes('Node.js'), 'Should report Node.js version');
+    assert.ok(output.includes('Skills loaded:'), 'Should report loaded skills');
+  });
+
+  test('proxy commands delegate to ctx.js when in a project', () => {
+    const output = execSync(`node "${BIN_PATH}" profile list`, { cwd: path.join(__dirname, '..') }).toString();
+    assert.ok(output.includes('Available ContextOS Profiles:'), 'Should proxy profile list to ctx.js');
+  });
+
+  test('contextos stats runs successfully and outputs context savings report', () => {
+    const output = execSync(`node "${BIN_PATH}" stats`, { cwd: path.join(__dirname, '..') }).toString();
+    assert.ok(output.includes('Context Savings Report'), 'Should print stats header');
+    assert.ok(output.includes('Full ('), 'Should report full token payload');
+    assert.ok(output.includes('Savings'), 'Should report percentage savings');
+  });
+
+  test('contextos watch module initializes and closes cleanly', () => {
+    const watchModule = require('../.agents/watch.js');
+    const controller = watchModule.runWatch(path.join(__dirname, '..'), {
+      exitOnSigint: false,
+      debounceMs: 50,
+    });
+    assert.ok(typeof controller.close === 'function', 'Watcher should expose close() method');
+    assert.ok(typeof controller.triggerRecompile === 'function', 'Watcher should expose triggerRecompile');
+    controller.close();
+  });
+
+  test('package.json includes contextos in bin', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+    assert.equal(pkg.bin.contextos, './bin/index.js', 'package.json must map "contextos" to ./bin/index.js');
+  });
 });
+
+
+
