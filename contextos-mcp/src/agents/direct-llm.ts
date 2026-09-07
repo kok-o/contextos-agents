@@ -79,10 +79,15 @@ function writeCodeBlocks(workDir: string, blocks: ParsedFileBlock[]): string[] {
 	const written: string[] = [];
 
 	for (const block of blocks) {
-		// Security: prevent path traversal
+		// Security: prevent path traversal and blocked/forbidden paths
 		const normalized = path.normalize(block.filePath);
 		if (normalized.startsWith("..") || path.isAbsolute(normalized)) {
-			process.stderr.write(`[contextos-agent] Skipping unsafe path: ${block.filePath}\n`);
+			process.stderr.write(`[contextos-agent] Skipping unsafe path (traversal): ${block.filePath}\n`);
+			continue;
+		}
+
+		if (isBlockedPath(normalized) || !isPathAllowed(normalized, workDir)) {
+			process.stderr.write(`[contextos-agent] Skipping forbidden/policy-blocked path: ${block.filePath}\n`);
 			continue;
 		}
 

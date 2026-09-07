@@ -25,7 +25,7 @@ import { readTextInput } from "./ui/text-input.js";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 await import("@mariozechner/pi-ai");
-const { PythonRepl } = await import("./core/repl.js");
+const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
@@ -921,8 +921,9 @@ export async function runInteractiveSwarm(rawArgs: string[]): Promise<void> {
 	spinner.stop();
 	logSuccess(`Scanned codebase — ${(context.length / 1024).toFixed(1)}KB context`);
 
-	// Start REPL and thread infrastructure
-	const repl = new PythonRepl();
+	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
+	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
+	const repl = usePython ? new PythonRepl() : new NodeVmRepl();
 	const sessionAc = new AbortController();
 
 	const dashboard = new ThreadDashboard();
@@ -981,7 +982,7 @@ export async function runInteractiveSwarm(rawArgs: string[]): Promise<void> {
 
 	// Build system prompt
 	const agentDesc = await describeAvailableAgents();
-	let systemPrompt = buildSwarmSystemPrompt(config, agentDesc);
+	let systemPrompt = buildSwarmSystemPrompt(config, agentDesc, repl.getLanguage());
 
 	// Add episodic memory hints for general context
 	if (episodicMemory && episodicMemory.size > 0) {

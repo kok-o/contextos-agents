@@ -32,20 +32,9 @@ import {
 } from "../session.js";
 import { recordThreadState } from "../state.js";
 
-const ALLOWED_VERIFY_TOOLS = new Set([
-	"npm",
-	"npx",
-	"pnpm",
-	"yarn",
-	"pytest",
-	"python",
-	"python3",
-	"cargo",
-	"go",
-	"vitest",
-	"jest",
-	"node",
-]);
+const ALLOWED_VERIFY_TOOLS = new Set(["npm", "npx", "pnpm", "yarn", "pytest", "cargo", "go", "vitest", "jest"]);
+
+const FORBIDDEN_VERIFY_ARGS = new Set(["-e", "-c", "--eval", "--print", "-p", "--input-type"]);
 
 const STRICT_ENV_ALLOWLIST = new Set([
 	"PATH",
@@ -115,6 +104,16 @@ async function runWorktreeVerification(
 			verified: false,
 			output: `Security error: Command "${rawTool}" is not in the allowed verification tools whitelist (${Array.from(ALLOWED_VERIFY_TOOLS).join(", ")})`,
 		};
+	}
+
+	const args = parts.slice(1);
+	for (const arg of args) {
+		if (FORBIDDEN_VERIFY_ARGS.has(arg.toLowerCase())) {
+			return {
+				verified: false,
+				output: `Security error: Argument "${arg}" is not permitted in verify_command`,
+			};
+		}
 	}
 
 	const exePath = await resolveExecutablePath(rawTool);

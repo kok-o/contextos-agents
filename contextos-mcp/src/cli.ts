@@ -18,7 +18,7 @@ import * as fs from "node:fs";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 const { getModels, getProviders } = await import("@mariozechner/pi-ai");
-const { PythonRepl } = await import("./core/repl.js");
+const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 
 import type { Api, Model } from "@mariozechner/pi-ai";
@@ -268,8 +268,9 @@ async function main(): Promise<void> {
 	console.error(`Query: ${args.query}`);
 	console.error("---");
 
-	// Start REPL
-	const repl = new PythonRepl();
+	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
+	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
+	const repl = usePython ? new PythonRepl() : new NodeVmRepl();
 	const ac = new AbortController();
 
 	const abortAndExit = () => {

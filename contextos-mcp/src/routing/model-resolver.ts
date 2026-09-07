@@ -93,8 +93,8 @@ function createOpenRouterModel(modelId: string): Model<"openai-completions"> {
 		maxTokens: 4096,
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
-			"HTTP-Referer": "https://github.com/kingjulio8238/swarm-code",
-			"X-Title": "swarm-code",
+			"HTTP-Referer": "https://github.com/kok-o/contextos-agents",
+			"X-Title": "contextos-agents",
 		},
 		compat: {
 			supportsStore: false,

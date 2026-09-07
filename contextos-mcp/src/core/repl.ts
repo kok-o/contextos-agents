@@ -38,30 +38,10 @@ function ensurePython(cmd: string): void {
 	}
 }
 
-// ── Types ───────────────────────────────────────────────────────────────────
+import type { ExecResult, LlmQueryHandler, MergeHandler, Repl, ThreadHandler } from "./repl-interface.js";
 
-/** Result of executing a code snippet in the REPL. */
-export interface ExecResult {
-	stdout: string;
-	stderr: string;
-	hasFinal: boolean;
-	finalValue: string | null;
-}
-
-/** Callback the host provides to handle llm_query() calls from Python. */
-export type LlmQueryHandler = (subContext: string, instruction: string) => Promise<string>;
-
-/** Callback the host provides to handle thread() calls from Python. */
-export type ThreadHandler = (
-	task: string,
-	context: string,
-	agentBackend: string,
-	model: string,
-	files: string[],
-) => Promise<{ result: string; success: boolean; filesChanged: string[]; durationMs: number }>;
-
-/** Callback the host provides to handle merge_threads() calls from Python. */
-export type MergeHandler = () => Promise<{ result: string; success: boolean }>;
+export { NodeVmRepl } from "./node-repl.js";
+export * from "./repl-interface.js";
 
 // ── Inbound message types from Python ───────────────────────────────────────
 
@@ -118,7 +98,7 @@ type InboundMessage =
 
 // ── REPL class ──────────────────────────────────────────────────────────────
 
-export class PythonRepl {
+export class PythonRepl implements Repl {
 	private proc: ChildProcess | null = null;
 	private rl: readline.Interface | null = null;
 	private llmQueryHandler: LlmQueryHandler | null = null;
@@ -135,6 +115,10 @@ export class PythonRepl {
 	/** Whether the REPL subprocess is alive. */
 	get isAlive(): boolean {
 		return this.proc !== null && this.proc.exitCode === null;
+	}
+
+	getLanguage(): "javascript" | "python" {
+		return "python";
 	}
 
 	/**

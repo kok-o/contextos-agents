@@ -22,7 +22,7 @@ import {
 	type UserMessage,
 } from "@mariozechner/pi-ai";
 import { loadConfig } from "../config.js";
-import type { ExecResult, MergeHandler, PythonRepl, ThreadHandler } from "./repl.js";
+import type { ExecResult, MergeHandler, Repl, ThreadHandler } from "./repl.js";
 
 // ── Load config ─────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ export interface RlmOptions {
 	context: string;
 	query: string;
 	model: Model<Api>;
-	repl: PythonRepl;
+	repl: Repl;
 	signal?: AbortSignal;
 	onProgress?: (info: RlmProgress) => void;
 	onSubQueryStart?: (info: SubQueryStartInfo) => void;
@@ -84,7 +84,41 @@ export interface RlmResult {
 
 // ── Default system prompt (RLM text-processing mode) ────────────────────────
 
-function buildDefaultSystemPrompt(): string {
+// ── Default system prompt (RLM text-processing mode) ────────────────────────
+
+function buildDefaultSystemPrompt(language: "javascript" | "python" = "javascript"): string {
+	if (language === "javascript") {
+		return `You are a Recursive Language Model (RLM) agent. You process large contexts by writing JavaScript code that runs in a persistent V8 REPL.
+
+## Available in the REPL
+
+1. A \`context\` variable containing the full input text (string). Check \`context.length\` to understand what you are working with.
+
+2. An \`await llm_query(subContext, instruction)\` function that sends a sub-piece of the context to an LLM with an instruction and returns the response. Use this for summarization, extraction, classification, etc. on chunks. For parallel queries, use \`await Promise.all([...])\`.
+
+3. Functions to return your answer:
+   - \`FINAL("your answer")\` — provide the answer as a string
+   - \`FINAL_VAR(variable)\` — return a variable you built up in the REPL
+
+## Rules
+
+1. Write valid modern JavaScript. You have access to built-in objects (JSON, Math, Array, Map, Set, Promise, etc.).
+2. Use \`print()\` or \`console.log()\` to output intermediate results visible in the next iteration.
+3. Use \`context.length\` and string slicing to inspect context size before processing.
+4. For large contexts, split into chunks and use \`await llm_query()\` on each chunk, then aggregate.
+5. Call \`FINAL("answer")\` only when you have a complete answer.
+6. Print output will be truncated to last ${config.truncate_len} characters. Keep printed output concise.
+
+## Output format
+
+Respond with ONLY a JavaScript code block. No explanation before or after.
+
+\`\`\`javascript
+// Your working JavaScript code
+print(\`Context length: \${context.length} chars\`);
+\`\`\``;
+	}
+
 	return `You are a Recursive Language Model (RLM) agent. You process large contexts by writing Python code that runs in a persistent REPL.
 
 ## Available in the REPL
@@ -208,16 +242,21 @@ function extractCodeFromResponse(response: AssistantMessage): string | null {
 		if (block.type !== "text") continue;
 		const text = (block as TextContent).text;
 
-		// Try ```python or ```repl blocks
-		const fenceMatch = text.match(/```(?:python|repl)?\s*\n([\s\S]*?)```/);
+		// Try ```javascript, ```js, ```typescript, ```ts, ```python, or ```repl blocks
+		const fenceMatch = text.match(/```(?:javascript|js|typescript|ts|python|repl)?\s*\n([\s\S]*?)```/);
 		if (fenceMatch) return fenceMatch[1].trim();
 
-		// Fallback: if the response looks like raw Python code (require Python-specific patterns)
+		// Fallback: if the response looks like raw code
 		const trimmed = text.trim();
 		if (
 			trimmed &&
 			!trimmed.startsWith("#") &&
 			(trimmed.includes("print(") ||
+				trimmed.includes("console.log(") ||
+				trimmed.includes("const ") ||
+				trimmed.includes("let ") ||
+				trimmed.includes("var ") ||
+				trimmed.includes("await ") ||
 				trimmed.includes("import ") ||
 				(trimmed.includes("for ") && trimmed.includes(":")) ||
 				(trimmed.includes("def ") && trimmed.includes(":")) ||
@@ -326,7 +365,8 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 
 	await initRepl();
 
-	const activeSystemPrompt = systemPrompt || buildDefaultSystemPrompt();
+	const replLang = typeof repl.getLanguage === "function" ? repl.getLanguage() : "javascript";
+	const activeSystemPrompt = systemPrompt || buildDefaultSystemPrompt(replLang);
 
 	const metadata = buildContextMetadata(context);
 	const conversationHistory: Message[] = [

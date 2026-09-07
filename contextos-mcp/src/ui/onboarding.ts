@@ -18,6 +18,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as readline from "node:readline";
 import { fileURLToPath } from "node:url";
+import { commandExists } from "../utils/command-exists.js";
 import { getLogLevel, isJsonMode } from "./log.js";
 import { bold, coral, cyan, dim, green, isTTY, red, stripAnsi, symbols, termWidth, yellow } from "./theme.js";
 
@@ -100,13 +101,7 @@ interface CheckResult {
 	detail: string;
 }
 
-async function commandExists(cmd: string): Promise<boolean> {
-	return new Promise((resolve) => {
-		const proc = spawn("which", [cmd], { stdio: "pipe" });
-		proc.on("close", (code) => resolve(code === 0));
-		proc.on("error", () => resolve(false));
-	});
-}
+// commandExists imported from ../utils/command-exists.js (cross-platform: uses where.exe on Windows)
 
 async function gitVersion(): Promise<string | null> {
 	return new Promise((resolve) => {
@@ -495,7 +490,7 @@ export async function runOnboarding(): Promise<void> {
 	if (!isTTY) {
 		process.stderr.write(`  Welcome to swarm, ${username}!\n\n`);
 		process.stderr.write(`  Usage: swarm --dir ./project "your task"\n`);
-		process.stderr.write(`  Docs:  https://github.com/kingjulio8238/swarm-code\n\n`);
+		process.stderr.write(`  Docs:  https://github.com/kok-o/contextos-agents\n\n`);
 		markInitialized();
 		return;
 	}

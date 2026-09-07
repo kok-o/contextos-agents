@@ -38,6 +38,8 @@ _FORBIDDEN_ATTRIBUTES = {
     '__globals__', '__code__', '__builtins__', '__import__',
     '__getattr__', '__setattr__', '__delattr__',
     '__reduce__', '__reduce_ex__',  # pickle-based escapes
+    'create_subprocess_shell', 'create_subprocess_exec',
+    'open_connection', 'start_server', 'connect_read_pipe', 'connect_write_pipe',
 }
 
 def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
@@ -340,6 +342,20 @@ def merge_threads() -> str:
         return raw
 
 
+class _SafeAsyncio:
+    gather = staticmethod(asyncio.gather)
+    sleep = staticmethod(asyncio.sleep)
+    wait = staticmethod(asyncio.wait)
+    Event = asyncio.Event
+    Queue = asyncio.Queue
+    Lock = asyncio.Lock
+    Semaphore = asyncio.Semaphore
+    TimeoutError = asyncio.TimeoutError
+    as_completed = staticmethod(asyncio.as_completed)
+
+_safe_asyncio = _SafeAsyncio()
+
+
 def _runtime_symbols() -> dict:
     """Return the dict of runtime symbols injected into the user namespace."""
     return {
@@ -352,7 +368,7 @@ def _runtime_symbols() -> dict:
         'merge_threads': merge_threads,
         'FINAL': FINAL,
         'FINAL_VAR': FINAL_VAR,
-        'asyncio': asyncio,
+        'asyncio': _safe_asyncio,
         'json': json,
     }
 

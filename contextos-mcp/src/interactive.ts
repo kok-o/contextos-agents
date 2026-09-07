@@ -28,11 +28,12 @@ process.on("unhandledRejection", (err: any) => {
 });
 
 const { getModels, getProviders } = await import("@mariozechner/pi-ai");
-const { PythonRepl } = await import("./core/repl.js");
+const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
 import type { Api, Model } from "@mariozechner/pi-ai";
+import type { Repl } from "./core/repl.js";
 import type { RlmProgress, SubQueryInfo, SubQueryStartInfo } from "./core/rlm.js";
 
 const config = loadConfig();
@@ -114,7 +115,7 @@ let isRunning = false;
 
 // Exposed so the readline SIGINT handler can abort the running query
 let activeAc: AbortController | null = null;
-let activeRepl: InstanceType<typeof PythonRepl> | null = null;
+let activeRepl: Repl | null = null;
 let activeSpinner: Spinner | null = null;
 
 // ── Resolve model ───────────────────────────────────────────────────────────
@@ -1408,7 +1409,8 @@ async function runQuery(query: string): Promise<void> {
 	let currentStep: any = null;
 	let iterStart = Date.now();
 
-	const repl = new PythonRepl();
+	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
+	const repl = usePython ? new PythonRepl() : new NodeVmRepl();
 	const ac = new AbortController();
 
 	// Expose to the readline SIGINT handler

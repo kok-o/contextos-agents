@@ -17,7 +17,7 @@ import * as path from "node:path";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 await import("@mariozechner/pi-ai");
-const { PythonRepl } = await import("./core/repl.js");
+const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
@@ -68,6 +68,7 @@ interface SwarmArgs {
 	quiet: boolean;
 	json: boolean;
 	autoRoute: boolean;
+	replBackend?: "node" | "python";
 	query: string;
 }
 
@@ -81,6 +82,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 	let quiet = false;
 	let json = false;
 	let autoRoute = false;
+	let replBackend: "node" | "python" = "node";
 	const positional: string[] = [];
 
 	for (let i = 0; i < args.length; i++) {
@@ -91,6 +93,8 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 			process.stderr.write(`  --dir <path>           Target repository directory\n`);
 			process.stderr.write(`  --orchestrator <model> Orchestrator LLM model\n`);
 			process.stderr.write(`  --agent <backend>      Agent backend (opencode, claude, codex, aider)\n`);
+			process.stderr.write(`  --repl <node|python>   REPL execution engine (default: node)\n`);
+			process.stderr.write(`  --python-repl          Use legacy Python runtime.py subprocess\n`);
 			process.stderr.write(`  --dry-run              Plan only, don't spawn threads\n`);
 			process.stderr.write(`  --max-budget <usd>     Maximum session budget\n`);
 			process.stderr.write(`  --auto-route           Enable automatic model selection\n`);
@@ -104,6 +108,11 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 			orchestratorModel = args[++i];
 		} else if (arg === "--agent" && i + 1 < args.length) {
 			agent = args[++i];
+		} else if (arg === "--repl" && i + 1 < args.length) {
+			const val = args[++i].toLowerCase();
+			replBackend = val === "python" ? "python" : "node";
+		} else if (arg === "--python-repl") {
+			replBackend = "python";
 		} else if (arg === "--dry-run") {
 			dryRun = true;
 		} else if (arg === "--max-budget" && i + 1 < args.length) {
@@ -143,6 +152,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 		dir: path.resolve(dir),
 		orchestratorModel: orchestratorModel || process.env.RLM_MODEL || "claude-sonnet-4-6",
 		agent: agent || "",
+		replBackend,
 		dryRun,
 		maxBudget,
 		autoRoute,
@@ -324,8 +334,8 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	spinner.stop();
 	logSuccess(`Scanned codebase — ${(context.length / 1024).toFixed(1)}KB context`);
 
-	// Start REPL
-	const repl = new PythonRepl();
+	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
+	const repl = args.replBackend === "python" ? new PythonRepl() : new NodeVmRepl();
 	const ac = new AbortController();
 
 	// Thread dashboard and streaming feed for live status
@@ -398,7 +408,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 
 		// Build system prompt
 		const agentDesc = await describeAvailableAgents();
-		let systemPrompt = buildSwarmSystemPrompt(config, agentDesc);
+		let systemPrompt = buildSwarmSystemPrompt(config, agentDesc, repl.getLanguage());
 		if (args.dryRun) {
 			systemPrompt +=
 				"\n\n## DRY RUN MODE\nDo NOT call thread() or async_thread(). Instead, describe what threads you WOULD spawn (task, files, model). Call FINAL() with your execution plan.";
