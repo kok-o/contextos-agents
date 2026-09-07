@@ -1,6 +1,6 @@
 {
   "name": "contextos-agents",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Install a .agents folder into your project to teach AI assistants best practices: UI/UX, architecture, security, and engineering workflow skills.",
   "bin": {
     "contextos": "./bin/index.js",
