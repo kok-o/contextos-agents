@@ -3,6 +3,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 const resolver = require('../.agents/resolver.js');
 
 describe('resolver.js — Dynamic Skill Resolver & Progressive Index', () => {
@@ -108,4 +110,57 @@ describe('resolver.js — Dynamic Skill Resolver & Progressive Index', () => {
     // Context window cap: total skills should be minimal and focused (<= 5)
     assert.ok(res.skills.length <= 5, `Expected <= 5 skills, got ${res.skills.length}: ${res.skills.join(', ')}`);
   });
+
+  test('analyzeImportGraph detects dependencies from package.json and config files', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'resolver-ast-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'package.json'),
+        JSON.stringify({
+          dependencies: {
+            prisma: '^5.0.0',
+            '@prisma/client': '^5.0.0',
+            next: '^14.0.0',
+          },
+          devDependencies: {
+            vitest: '^1.0.0',
+          },
+        })
+      );
+      fs.writeFileSync(path.join(tmpDir, 'Dockerfile'), 'FROM node:20\n');
+
+      const signals = resolver.analyzeImportGraph(tmpDir);
+      assert.ok(signals.has('database'), 'Should detect prisma as database skill');
+      assert.ok(signals.has('nextjs'), 'Should detect next as nextjs skill');
+      assert.ok(signals.has('testing'), 'Should detect vitest as testing skill');
+      assert.ok(signals.has('docker'), 'Should detect Dockerfile as docker skill');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  test('resolveSkills integrates AST signals for empty or generic prompts', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'resolver-hybrid-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'package.json'),
+        JSON.stringify({
+          dependencies: {
+            prisma: '^5.0.0',
+          },
+        })
+      );
+
+      const res = resolver.resolveSkills({
+        prompt: 'do some work',
+        projectDir: tmpDir,
+      });
+
+      assert.ok(res.skills.includes('database'), 'Should activate database via project AST signals');
+      assert.ok(res.skills.includes('system-design'), 'Should activate system-design via synergy rule');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
+

@@ -1,0 +1,68 @@
+name: 'ContextOS Quality Gate'
+description: 'Validates skill integrity, prevents adapter drift, scans for secrets, and runs test suites.'
+author: 'kok-o'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  working-directory:
+    description: 'Target repository working directory'
+    required: false
+    default: '.'
+  skip-secrets:
+    description: 'Skip credential and secret scanning step'
+    required: false
+    default: 'false'
+
+outputs:
+  status:
+    description: 'Final gate result status (pass / fail)'
+    value: ${{ steps.run-gate.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Run ContextOS Quality Gate
+      id: run-gate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -e
+
+        echo "::group::ContextOS Gate — Dependencies"
+        npm ci --ignore-scripts
+        echo "::endgroup::"
+
+        if [ "${{ inputs.skip-secrets }}" != "true" ]; then
+          echo "::group::ContextOS Gate — Secret Scanning"
+          if [ -f scripts/check-secrets.js ]; then
+            node scripts/check-secrets.js --all
+          fi
+          echo "::endgroup::"
+        fi
+
+        echo "::group::ContextOS Gate — Skill Integrity Validation"
+        node .agents/ctx.js validate
+        echo "::endgroup::"
+
+        echo "::group::ContextOS Gate — Adapter Drift Detection"
+        node .agents/ctx.js export all
+        git diff --exit-code .agents/generated/ .cursorrules .cursor/rules/ .github/copilot-instructions.md .aider.conf.yml CONVENTIONS.md .zed/ || {
+          echo "::error::Adapter drift detected! Generated AI configs do not match source skills. Run 'node .agents/ctx.js export all' and commit the changes."
+          exit 1
+        }
+        echo "::endgroup::"
+
+        echo "::group::ContextOS Gate — Unit & Integration Tests"
+        npm test
+        echo "::endgroup::"
+
+        echo "status=pass" >> $GITHUB_OUTPUT
+        echo "ContextOS Gate passed successfully."

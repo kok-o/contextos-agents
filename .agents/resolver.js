@@ -226,12 +226,114 @@ function buildSkillIndex(projectDir = process.cwd()) {
 }
 
 /**
+ * Phase 2: AST & Project Dependency Graph Analysis.
+ * Scans project manifests and configs to detect active technologies
+ * that keyword or regex matching in prompts might omit.
+ *
+ * @param {string} [projectDir=process.cwd()] - Project root directory
+ * @returns {Map<string, number>} Map of skill name to score weight
+ */
+function analyzeImportGraph(projectDir = process.cwd()) {
+  const techSignals = new Map();
+  if (!projectDir || !fs.existsSync(projectDir)) return techSignals;
+
+  const addSignal = (skill, weight) => {
+    techSignals.set(skill, (techSignals.get(skill) || 0) + weight);
+  };
+
+  // 1. Scan package.json dependencies and devDependencies
+  const pkgPath = path.join(projectDir, 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      const allDeps = {
+        ...(pkg.dependencies || {}),
+        ...(pkg.devDependencies || {}),
+        ...(pkg.peerDependencies || {}),
+      };
+
+      const DEP_SKILL_MAP = {
+        'react': 'react',
+        'react-dom': 'react',
+        'next': 'nextjs',
+        'prisma': 'database',
+        '@prisma/client': 'database',
+        'drizzle-orm': 'database',
+        'drizzle-kit': 'database',
+        'typeorm': 'database',
+        'mongoose': 'database',
+        'pg': 'database',
+        'mysql2': 'database',
+        'vitest': 'testing',
+        'jest': 'testing',
+        'playwright': 'testing',
+        '@playwright/test': 'testing',
+        'cypress': 'testing',
+        'express': 'node',
+        'fastify': 'node',
+        'hono': 'node',
+        '@nestjs/core': 'nestjs',
+        'typescript': 'typescript',
+        'zod': 'typescript',
+        'tailwindcss': 'ui-ux-pro',
+        'lucide-react': 'ui-ux-pro',
+        '@radix-ui/react-dialog': 'web-accessibility',
+        'framer-motion': 'impeccable-design',
+        'dockerode': 'docker',
+        'ioredis': 'system-design',
+        'kafkajs': 'microservices',
+        'amqplib': 'microservices',
+      };
+
+      for (const [dep, skill] of Object.entries(DEP_SKILL_MAP)) {
+        if (allDeps[dep]) {
+          addSignal(skill, 15);
+        }
+      }
+    } catch {
+      // ignore malformed package.json
+    }
+  }
+
+  // 2. Scan framework & tooling configuration files
+  const CONFIG_FILE_MAP = [
+    { file: 'tsconfig.json', skill: 'typescript', weight: 10 },
+    { file: 'next.config.js', skill: 'nextjs', weight: 15 },
+    { file: 'next.config.mjs', skill: 'nextjs', weight: 15 },
+    { file: 'next.config.ts', skill: 'nextjs', weight: 15 },
+    { file: 'tailwind.config.js', skill: 'ui-ux-pro', weight: 10 },
+    { file: 'tailwind.config.ts', skill: 'ui-ux-pro', weight: 10 },
+    { file: 'nest-cli.json', skill: 'nestjs', weight: 15 },
+    { file: 'prisma/schema.prisma', skill: 'database', weight: 15 },
+    { file: 'drizzle.config.ts', skill: 'database', weight: 15 },
+    { file: 'drizzle.config.js', skill: 'database', weight: 15 },
+    { file: 'Dockerfile', skill: 'docker', weight: 15 },
+    { file: 'docker-compose.yml', skill: 'docker', weight: 15 },
+    { file: 'docker-compose.yaml', skill: 'docker', weight: 15 },
+    { file: 'requirements.txt', skill: 'fastapi', weight: 15 },
+    { file: 'pyproject.toml', skill: 'fastapi', weight: 15 },
+    { file: 'vitest.config.ts', skill: 'testing', weight: 15 },
+    { file: 'vitest.config.js', skill: 'testing', weight: 15 },
+    { file: 'playwright.config.ts', skill: 'testing', weight: 15 },
+    { file: 'playwright.config.js', skill: 'testing', weight: 15 },
+  ];
+
+  for (const { file, skill, weight } of CONFIG_FILE_MAP) {
+    if (fs.existsSync(path.join(projectDir, file))) {
+      addSignal(skill, weight);
+    }
+  }
+
+  return techSignals;
+}
+
+/**
  * Resolves the minimal set of skills for a given prompt, file list, and phase.
  *
  * @param {ResolveSkillsOptions} [options={}] - Task context options
  * @returns {ResolvedSkillsResult} Resolved domain, role, and activated skill names
  */
-function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' } = {}) {
+function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', projectDir = process.cwd() } = {}) {
   const promptText = (prompt || '').toLowerCase();
   const scores = new Map();
 
@@ -264,6 +366,14 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '' }
     // Minimum score threshold for domain skill activation
     if (score >= 5) {
       scores.set(rule.skill, score);
+    }
+  }
+
+  // Phase 2: Merge AST & Project Dependency Graph Signals
+  if (projectDir) {
+    const astSignals = analyzeImportGraph(projectDir);
+    for (const [skill, astScore] of astSignals) {
+      scores.set(skill, (scores.get(skill) || 0) + astScore);
     }
   }
 
@@ -332,5 +442,6 @@ function formatDeclaration(resolution) {
 module.exports = {
   buildSkillIndex,
   resolveSkills,
+  analyzeImportGraph,
   formatDeclaration,
 };
