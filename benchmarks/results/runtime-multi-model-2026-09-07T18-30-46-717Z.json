@@ -1,0 +1,843 @@
+[
+  {
+    "model": "google/gemini-3.8-flash",
+    "gateway": "OpenRouter",
+    "summary": {
+      "baselinePassRate": 0,
+      "skillPassRate": 0,
+      "delta": 0,
+      "compilationRate": 0,
+      "totalPassed": 0,
+      "totalTests": 12
+    },
+    "results": [
+      {
+        "taskId": "auth-security",
+        "title": "Secure Authentication & Rate Limiting Handler",
+        "category": "Security & Backend",
+        "skills": [
+          "security",
+          "node",
+          "ponytail-mindset"
+        ],
+        "baseline": {
+          "compiled": false,
+          "compilationError": "Unexpected token ','",
+          "tests": [
+            {
+              "id": "timing-safe-comparison",
+              "name": "Executes timing-safe password / hash verification",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "rate-limiting-lockout",
+              "name": "Enforces rate-limiting and lockout after repeated failures",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "no-stack-trace-leak",
+              "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "input-sanitization-validation",
+              "name": "Performs explicit input validation on email and credentials",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "jwt-claims-and-expiry",
+              "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 5,
+          "totalDurationMs": 64,
+          "code": "import { scryptSync, randomBytes, timingSafeEqual, createHmac } from \"crypto\";\n\nexport interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string>;\n  handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }>;\n}\n\nexport class AuthService implements IAuthService {\n  private attempts = new Map<string, { count: number; reset: number }>();\n  private users = new Map<string, { id: string; hash: string; role?: string }>();\n  constructor(private secret: string = \"secret-key\", private maxAttempts: number = 5, private windowMs: number = 60000) {}\n\n  async hashPassword(password: string): Promise<string> {\n    const salt = randomBytes(16).toString(\"hex\");\n    return `${salt}:${scryptSync(password, salt, 64).toString(\"hex\")}`;\n  }\n  async verifyPassword(password:",
+          "latencyMs": 3674
+        },
+        "withSkills": {
+          "compiled": false,
+          "compilationError": "Unexpected token ','",
+          "tests": [
+            {
+              "id": "timing-safe-comparison",
+              "name": "Executes timing-safe password / hash verification",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "rate-limiting-lockout",
+              "name": "Enforces rate-limiting and lockout after repeated failures",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "no-stack-trace-leak",
+              "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "input-sanitization-validation",
+              "name": "Performs explicit input validation on email and credentials",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            },
+            {
+              "id": "jwt-claims-and-expiry",
+              "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ','"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 5,
+          "totalDurationMs": 5,
+          "code": "import { scrypt, randomBytes, timingSafeEqual, createHmac } from 'crypto';\nimport { promisify } from 'util';\n\nconst scryptAsync = promisify(scrypt);\n\nexport interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string>;\n  handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }>;\n}\n\nexport class AuthService implements IAuthService {\n  private attempts = new Map<string, { count: number; reset: number }>();\n  async hashPassword(password: string): Promise<string> {\n    const salt = randomBytes(16).toString('hex');\n    const buf = (await scryptAsync(password, salt, 64)) as Buffer;\n    return `${salt}:${buf.toString('hex')}`;\n  }\n  async verifyPassword(password: string, hash: string): Promise<boolean> {\n    const [salt, key] = hash.split(':');\n    const",
+          "latencyMs": 4351
+        },
+        "delta": 0
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "title": "DDD Order Aggregate Root & Money Value Object",
+        "category": "Architecture & DDD",
+        "skills": [
+          "ddd",
+          "system-design",
+          "typescript"
+        ],
+        "baseline": {
+          "compiled": false,
+          "compilationError": "Invalid or unexpected token",
+          "tests": [
+            {
+              "id": "money-value-object-invariants",
+              "name": "Money Value Object is immutable and validates currency matching",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Invalid or unexpected token"
+            },
+            {
+              "id": "order-state-invariants",
+              "name": "Order Aggregate enforces business state-machine invariants",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Invalid or unexpected token"
+            },
+            {
+              "id": "domain-events-emission",
+              "name": "Records domain events for downstream side-effects",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Invalid or unexpected token"
+            },
+            {
+              "id": "repository-interface-decoupling",
+              "name": "Maintains decoupled repository interface without ORM leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Invalid or unexpected token"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 4,
+          "totalDurationMs": 3,
+          "code": "export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class Money {\n  constructor(readonly amount: number, readonly currency: string) {}\n  static of(amount: number, currency: string): Money { return new Money(amount, currency); }\n  add(other: Money): Money {\n    if (this.currency !== other.currency) throw new Error('Currency mismatch');\n    return new Money(this.amount + other.amount, this.currency);\n  }\n  equals(other: Money): boolean { return this.amount === other.amount && this.currency === other.currency; }\n}\n\nexport interface OrderItem { id: string; quantity: number; price: Money; }\n\nexport class Order {\n  private _items: OrderItem[] = [];\n  private _events: any[] = [];\n  status: OrderStatus = 'PENDING';\n  constructor(readonly id: string, readonly customerId: string) {}\n  get items(): ReadonlyArray<OrderItem> { return this._items; }\n  addItem(productId: string, quantity: number, price: Money): void {\n    if (this.status !== 'PENDING') throw new Error('Cannot add to non-pending order",
+          "latencyMs": 2699
+        },
+        "withSkills": {
+          "compiled": false,
+          "compilationError": "missing ) after argument list",
+          "tests": [
+            {
+              "id": "money-value-object-invariants",
+              "name": "Money Value Object is immutable and validates currency matching",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: missing ) after argument list"
+            },
+            {
+              "id": "order-state-invariants",
+              "name": "Order Aggregate enforces business state-machine invariants",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: missing ) after argument list"
+            },
+            {
+              "id": "domain-events-emission",
+              "name": "Records domain events for downstream side-effects",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: missing ) after argument list"
+            },
+            {
+              "id": "repository-interface-decoupling",
+              "name": "Maintains decoupled repository interface without ORM leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: missing ) after argument list"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 4,
+          "totalDurationMs": 3,
+          "code": "export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class Money {\n  constructor(readonly amount: number, readonly currency: string) {}\n  static of(amount: number, currency: string): Money { return new Money(amount, currency); }\n  add(other: Money): Money {\n    if (this.currency !== other.currency) throw new Error('Currency mismatch');\n    return new Money(this.amount + other.amount, this.currency);\n  }\n  equals(other: Money): boolean { return this.amount === other.amount && this.currency === other.currency; }\n}\n\nexport interface OrderItem { id: string; quantity: number; price: Money; }\n\nexport class Order {\n  status: OrderStatus = 'PENDING';\n  items: OrderItem[] = [];\n  private events: any[] = [];\n  constructor(readonly id: string, readonly customerId: string) {}\n  addItem(productId: string, quantity: number, price: Money): void {\n    if (this.status !== 'PENDING') throw new Error('Cannot add items to non-pending order');\n    this.items.push({ id: productId,",
+          "latencyMs": 2206
+        },
+        "delta": 0
+      },
+      {
+        "taskId": "resilient-api-client",
+        "title": "Type-Safe Resilient API Client with Circuit Breaker",
+        "category": "TypeScript & Reliability",
+        "skills": [
+          "typescript",
+          "system-design",
+          "performance"
+        ],
+        "baseline": {
+          "compiled": false,
+          "compilationError": "Unexpected token '}'",
+          "tests": [
+            {
+              "id": "timeout-abort-handling",
+              "name": "Implements request timeout with AbortController",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '}'"
+            },
+            {
+              "id": "circuit-breaker-transitions",
+              "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '}'"
+            },
+            {
+              "id": "structured-error-taxonomy",
+              "name": "Provides typed error taxonomy without secret credential leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '}'"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 3,
+          "totalDurationMs": 3,
+          "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\nexport interface CircuitBreakerOptions { failureThreshold?: number; resetTimeoutMs?: number; }\nexport interface RequestOptions { timeoutMs?: number; headers?: Record<string, string>; }\nexport class ApiError extends Error {\n  constructor(message: string, readonly statusCode: number) { super(message); this.name = 'ApiError'; }\n}\nexport class CircuitBreaker {\n  private failures = 0; private nextAttempt = 0;\n  constructor(private opts: CircuitBreakerOptions = {}) {}\n  get state(): CircuitState {\n    if (this.failures >= (this.opts.failureThreshold ?? 5)) {\n      return Date.now() >= this.nextAttempt ? 'HALF_OPEN' : 'OPEN';\n    }\n    return 'CLOSED';\n  }\n  getState(): CircuitState { return this.state; }\n  recordSuccess(): void { this.failures = 0; }\n  recordFailure(): void {\n    this.failures++;\n    this.nextAttempt = Date.now() + (this.opts.resetTimeoutMs ?? 10000);\n  }\n  async execute<T>(action",
+          "latencyMs": 2877
+        },
+        "withSkills": {
+          "compiled": false,
+          "compilationError": "Unexpected token '='",
+          "tests": [
+            {
+              "id": "timeout-abort-handling",
+              "name": "Implements request timeout with AbortController",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            },
+            {
+              "id": "circuit-breaker-transitions",
+              "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            },
+            {
+              "id": "structured-error-taxonomy",
+              "name": "Provides typed error taxonomy without secret credential leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 3,
+          "totalDurationMs": 3,
+          "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\nexport interface CircuitBreakerOptions { failureThreshold?: number; resetTimeoutMs?: number; }\nexport interface RequestOptions { timeoutMs?: number; headers?: Record<string, string>; }\nexport class ApiError extends Error {\n  constructor(message: string, readonly statusCode: number) { super(message); }\n}\nexport class CircuitBreaker {\n  private failures = 0; private nextAttempt = 0;\n  constructor(private readonly opts: CircuitBreakerOptions = {}) {}\n  get state(): CircuitState {\n    if (this.failures >= (this.opts.failureThreshold ?? 3)) {\n      return Date.now() >= this.nextAttempt ? 'HALF_OPEN' : 'OPEN';\n    }\n    return 'CLOSED';\n  }\n  getState(): CircuitState { return this.state; }\n  recordSuccess(): void { this.failures = 0; }\n  recordFailure(): void {\n    this.failures++;\n    this.nextAttempt = Date.now() + (this.opts.resetTimeoutMs ?? 5000);\n  }\n  async execute<T>(action: () => Promise<T>): Promise",
+          "latencyMs": 2338
+        },
+        "delta": 0
+      }
+    ]
+  },
+  {
+    "model": "glm-5.3",
+    "gateway": "AgentRouter (ps.air-outer.com)",
+    "summary": {
+      "baselinePassRate": 85,
+      "skillPassRate": 87,
+      "delta": 2,
+      "compilationRate": 100,
+      "totalPassed": 10,
+      "totalTests": 12
+    },
+    "results": [
+      {
+        "taskId": "auth-security",
+        "title": "Secure Authentication & Rate Limiting Handler",
+        "category": "Security & Backend",
+        "skills": [
+          "security",
+          "node",
+          "ponytail-mindset"
+        ],
+        "baseline": {
+          "compiled": true,
+          "compilationError": null,
+          "tests": [
+            {
+              "id": "timing-safe-comparison",
+              "name": "Executes timing-safe password / hash verification",
+              "passed": true,
+              "durationMs": 203
+            },
+            {
+              "id": "rate-limiting-lockout",
+              "name": "Enforces rate-limiting and lockout after repeated failures",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "no-stack-trace-leak",
+              "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "input-sanitization-validation",
+              "name": "Performs explicit input validation on email and credentials",
+              "passed": false,
+              "durationMs": 1,
+              "error": "Code must perform explicit input validation"
+            },
+            {
+              "id": "jwt-claims-and-expiry",
+              "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+              "passed": true,
+              "durationMs": 0
+            }
+          ],
+          "passRate": 80,
+          "totalPassed": 4,
+          "totalTests": 5,
+          "totalDurationMs": 211,
+          "code": "import * as crypto from \"crypto\";\n\nexport interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string>;\n  handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }>;\n}\n\ninterface UserRecord {\n  id: string;\n  email: string;\n  passwordHash: string;\n  role?: string;\n  failedAttempts: number;\n  lockedUntil: number;\n}\n\ninterface RateEntry {\n  count: number;\n  windowStart: number;\n  blockedUntil: number;\n}\n\nconst MAX_ATTEMPTS = 5;\nconst LOCKOUT_MS = 15 * 60 * 1000;\nconst RATE_LIMIT = 10;\nconst RATE_WINDOW_MS = 60_000;\nconst RATE_BLOCK_MS = 60_000;\n\nexport class AuthService implements IAuthService {\n  private users = new Map<string, UserRecord>();\n  private rateMap = new Map<string, RateEntry>();\n\n  constructor(seedUsers: Array<{ email: string; password: string; role?: string }> = []) {\n    for (const u of seedUsers) {\n      crypto.scrypt(u.password, crypto.randomBytes(16).toString(\"hex\"), 64, (err, derived) => {\n        if (err) return;\n        this.users.set(u.email, {\n          id: crypto.randomUUID(),\n          email: u.email,\n          passwordHash: `${16}:${crypto.randomBytes(16).toString(\"hex\")}:${derived.toString(\"hex\")}`,\n          role: u.role,\n          failedAttempts: 0,\n          lockedUntil: 0,\n        });\n      });\n    }\n  }\n\n  async hashPassword(password: string): Promise<string> {\n    const salt = crypto.randomBytes(16);\n    const derived: Buffer = await new Promise((res, rej) =>\n      crypto.scrypt(password, salt, 64, (e, d) => (e ? rej(e) : res(d)))\n    );\n    return `scrypt:${salt.toString(\"hex\")}:${derived.toString(\"hex\")}`;\n  }\n\n  async verifyPassword(password: string, hash: string): Promise<boolean> {\n    try {\n      const [scheme, saltHex, keyHex] = hash.split(\":\");\n      if (scheme !== \"scrypt\") return false;\n      const salt = Buffer.from(saltHex, \"hex\");\n      const expected = Buffer.from(keyHex, \"hex\");\n      const derived: Buffer = await new Promise((res, rej) =>\n        crypto.scrypt(password, salt, expected.length, (e, d) => (e ? rej(e) : res(d)))\n      );\n      return crypto.timingSafeEqual(derived, expected);\n    } catch {\n      return false;\n    }\n  }\n\n  async generateToken(\n    payload: { id: string; email: string; role?: string },\n    secret: string\n  ): Promise<string> {\n    const header = { alg: \"HS256\", typ: \"JWT\" };\n    const now = Math.floor(Date.now() / 1000);\n    const body = { ...payload, iat: now, exp: now + 3600 };\n    const b64 = (o: object) =>\n      Buffer.from(JSON.stringify(o)).toString(\"base64url\");\n    const data = `${b64(header)}.${b64(body)}`;\n    const sig = crypto.createHmac(\"sha256\", secret).update(data).digest(\"base64url\");\n    return `${data}.${sig}`;\n  }\n\n  private checkRate(ip: string): boolean {\n    const now = Date.now();\n    const e = this.rateMap.get(ip);\n    if (!e || now - e.windowStart > RATE_WINDOW_MS) {\n      this.rateMap.set(ip, { count: 1, windowStart: now, blockedUntil: 0 });\n      return true;\n    }\n    if (e.blockedUntil > now) return false;\n    e.count += 1;\n    if (e.count > RATE_LIMIT) {\n      e.blockedUntil = now + RATE_BLOCK_MS;\n      return false;\n    }\n    return true;\n  }\n\n  async handleLogin(request: {\n    email?: string;\n    password?: string;\n    ip?: string;\n  }): Promise<{ status: number; body: any }> {\n    const ip = request.ip ?? \"unknown\";\n    if (!this.checkRate(ip)) {\n      return { status: 429, body: { error: \"Too many requests. Try again later.\" } };\n    }\n    const email = request.email?.trim().toLowerCase();\n    const password = request.password ?? \"\";\n    if (!email || !password) {\n      return { status: 400, body: { error: \"Email and password are required.\" } };\n    }\n    const user = this.users.get(email);\n    const now = Date.now();\n    if (!user) {\n      return { status: 401, body: { error: \"Invalid credentials.\" } };\n    }\n    if (user.lockedUntil > now) {\n      return { status: 423, body: { error: \"Account temporarily locked.\" } };\n    }\n    const ok = await this.verifyPassword(password, user.passwordHash);\n    if (!ok) {\n      user.failedAttempts += 1;\n      if (user.failedAttempts >= MAX_ATTEMPTS) {\n        user.lockedUntil = now + LOCKOUT_MS;\n        user.failedAttempts = 0;\n      }\n      return { status: 401, body: { error: \"Invalid credentials.\" } };\n    }\n    user.failedAttempts = 0;\n    user.lockedUntil = 0;\n    const token = await this.generateToken(\n      { id: user.id, email: user.email, role: user.role },\n      process.env.JWT_SECRET ?? \"default-secret\"\n    );\n    return { status: 200, body: { token, user: { id: user.id, email: user.email, role: user.role } } };\n  }\n\n  async register(email: string, password: string, role?: string): Promise<void> {\n    this.users.set(email.trim().toLowerCase(), {\n      id: crypto.randomUUID(),\n      email: email.trim().toLowerCase(),\n      passwordHash: await this.hashPassword(password),\n      role,\n      failedAttempts: 0,\n      lockedUntil: 0,\n    });\n  }\n}",
+          "latencyMs": 17394
+        },
+        "withSkills": {
+          "compiled": true,
+          "compilationError": null,
+          "tests": [
+            {
+              "id": "timing-safe-comparison",
+              "name": "Executes timing-safe password / hash verification",
+              "passed": false,
+              "durationMs": 1,
+              "error": "The \"callback\" argument must be of type function. Received undefined"
+            },
+            {
+              "id": "rate-limiting-lockout",
+              "name": "Enforces rate-limiting and lockout after repeated failures",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "no-stack-trace-leak",
+              "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "input-sanitization-validation",
+              "name": "Performs explicit input validation on email and credentials",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Code must perform explicit input validation"
+            },
+            {
+              "id": "jwt-claims-and-expiry",
+              "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+              "passed": true,
+              "durationMs": 1
+            }
+          ],
+          "passRate": 60,
+          "totalPassed": 3,
+          "totalTests": 5,
+          "totalDurationMs": 10,
+          "code": "import crypto from 'node:crypto';\n\nexport interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string>;\n  handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }>;\n}\n\ninterface StoredUser {\n  id: string;\n  email: string;\n  passwordHash: string;\n  role: string;\n  failedAttempts: number;\n  lockedUntil: number;\n}\n\nconst PBKDF2_ITERATIONS = 210_000;\nconst KEY_LEN = 64;\nconst DIGEST = 'sha512';\nconst ACCESS_TOKEN_TTL_SEC = 900; // 15 minutes\nconst MAX_ATTEMPTS = 5;\nconst LOCKOUT_MS = 15 * 60 * 1000;\nconst RATE_WINDOW_MS = 60_000;\nconst RATE_MAX = 10;\n\nexport class AuthService implements IAuthService {\n  private users = new Map<string, StoredUser>();\n  private rateBuckets = new Map<string, { count: number; resetAt: number }>();\n\n  constructor(seedUsers: Array<{ email: string; password: string; role?: string }> = []) {\n    for (const u of seedUsers) {\n      this.users.set(u.email.toLowerCase(), {\n        id: crypto.randomUUID(),\n        email: u.email.toLowerCase(),\n        passwordHash: crypto\n          .pbkdf2Sync(u.password, u.email.toLowerCase(), PBKDF2_ITERATIONS, KEY_LEN, DIGEST)\n          .toString('hex'),\n        role: u.role ?? 'user',\n        failedAttempts: 0,\n        lockedUntil: 0,\n      });\n    }\n  }\n\n  async hashPassword(password: string): Promise<string> {\n    const salt = crypto.randomBytes(16);\n    const derived = await crypto.pbkdf2(password, salt, PBKDF2_ITERATIONS, KEY_LEN, DIGEST);\n    return `pbkdf2$${DIGEST}$${PBKDF2_ITERATIONS}$${salt.toString('hex')}$${derived.toString('hex')}`;\n  }\n\n  async verifyPassword(password: string, hash: string): Promise<boolean> {\n    const parts = hash.split('$');\n    if (parts.length !== 5 || parts[0] !== 'pbkdf2') return false;\n    const digest = parts[1];\n    const iterations = parseInt(parts[2], 10);\n    const salt = Buffer.from(parts[3], 'hex');\n    const expected = Buffer.from(parts[4], 'hex');\n    if (!Number.isFinite(iterations) || iterations < 1 || expected.length !== KEY_LEN) return false;\n    const actual = await crypto.pbkdf2(password, salt, iterations, expected.length, digest);\n    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);\n  }\n\n  async generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string> {\n    if (typeof secret !== 'string' || secret.length < 32) {\n      throw new Error('Secret must be at least 32 characters');\n    }\n    const header = { alg: 'HS256', typ: 'JWT' };\n    const now = Math.floor(Date.now() / 1000);\n    const body = { ...payload, iat: now, exp: now + ACCESS_TOKEN_TTL_SEC, jti: crypto.randomUUID() };\n    const enc = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');\n    const signingInput = `${enc(header)}.${enc(body)}`;\n    const sig = crypto.createHmac('sha256', secret).update(signingInput).digest('base64url');\n    return `${signingInput}.${sig}`;\n  }\n\n  private checkRateLimit(ip: string): boolean {\n    const now = Date.now();\n    const bucket = this.rateBuckets.get(ip);\n    if (!bucket || now >= bucket.resetAt) {\n      this.rateBuckets.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });\n      return true;\n    }\n    bucket.count += 1;\n    return bucket.count <= RATE_MAX;\n  }\n\n  async handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }> {\n    try {\n      const ip = request.ip ?? 'unknown';\n      if (!this.checkRateLimit(ip)) {\n        return { status: 429, body: { error: 'RATE_LIMITED', message: 'Too many requests. Try again later.' } };\n      }\n      const email = (request.email ?? '').trim().toLowerCase();\n      const password = request.password ?? '';\n      if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || typeof password !== 'string' || password.length < 8) {\n        return { status: 400, body: { error: 'INVALID_CREDENTIALS', message: 'Email and password are required.' } };\n      }\n      const user = this.users.get(email);\n      const now = Date.now();\n      const generic = { error: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' };\n\n      if (user && user.lockedUntil > now) {\n        return { status: 423, body: { error: 'ACCOUNT_LOCKED', message: 'Account temporarily locked.' } };\n      }\n\n      const valid = user ? await this.verifyPassword(password, user.passwordHash) : false;\n      if (!user || !valid) {\n        if (user) {\n          user.failedAttempts += 1;\n          if (user.failedAttempts >= MAX_ATTEMPTS) {\n            user.lockedUntil = now + LOCKOUT_MS;\n            user.failedAttempts = 0;\n          }\n        }\n        return { status: 401, body: generic };\n      }\n\n      user.failedAttempts = 0;\n      user.lockedUntil = 0;\n      const secret = process.env.JWT_SECRET ?? '';\n      if (secret.length < 32) {\n        return { status: 500, body: { error: 'INTERNAL_SERVER_ERROR', message: 'Authentication unavailable.' } };\n      }\n      const token = await this.generateToken({ id: user.id, email: user.email, role: user.role }, secret);\n      return {\n        status: 200,\n        body: {\n          token,\n          tokenType: 'Bearer',\n          expiresIn: ACCESS_TOKEN_TTL_SEC,\n          user: { id: user.id, email: user.email, role: user.role },\n        },\n      };\n    } catch (err) {\n      console.error(JSON.stringify({ level: 'error', msg: 'login_failure', err: String(err) }));\n      return { status: 500, body: { error: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred.' } };\n    }\n  }\n}",
+          "latencyMs": 14868
+        },
+        "delta": -20
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "title": "DDD Order Aggregate Root & Money Value Object",
+        "category": "Architecture & DDD",
+        "skills": [
+          "ddd",
+          "system-design",
+          "typescript"
+        ],
+        "baseline": {
+          "compiled": true,
+          "compilationError": null,
+          "tests": [
+            {
+              "id": "money-value-object-invariants",
+              "name": "Money Value Object is immutable and validates currency matching",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Money must reject negative amounts"
+            },
+            {
+              "id": "order-state-invariants",
+              "name": "Order Aggregate enforces business state-machine invariants",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "domain-events-emission",
+              "name": "Records domain events for downstream side-effects",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "repository-interface-decoupling",
+              "name": "Maintains decoupled repository interface without ORM leakage",
+              "passed": true,
+              "durationMs": 1
+            }
+          ],
+          "passRate": 75,
+          "totalPassed": 3,
+          "totalTests": 4,
+          "totalDurationMs": 5,
+          "code": "export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class Money {\n  readonly amount: number;\n  readonly currency: string;\n\n  constructor(amount: number, currency: string) {\n    if (!Number.isFinite(amount)) throw new Error('Amount must be finite');\n    if (!currency || currency.length !== 3) throw new Error('Currency must be a 3-letter code');\n    this.amount = Math.round(amount * 100) / 100;\n    this.currency = currency.toUpperCase();\n  }\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  add(other: Money): Money {\n    if (this.currency !== other.currency) {\n      throw new Error(`Currency mismatch: ${this.currency} vs ${other.currency}`);\n    }\n    return new Money(this.amount + other.amount, this.currency);\n  }\n\n  equals(other: Money): boolean {\n    return this.amount === other.amount && this.currency === other.currency;\n  }\n}\n\nexport interface OrderItem {\n  id: string;\n  quantity: number;\n  price: Money;\n}\n\ntype DomainEvent = { type: string; orderId: string; occurredAt: Date; payload?: any };\n\nexport class Order {\n  readonly id: string;\n  readonly customerId: string;\n  private _status: OrderStatus = 'PENDING';\n  private _items: OrderItem[] = [];\n  private _events: DomainEvent[] = [];\n\n  constructor(id: string, customerId: string) {\n    if (!id) throw new Error('Order id is required');\n    if (!customerId) throw new Error('Customer id is required');\n    this.id = id;\n    this.customerId = customerId;\n  }\n\n  get status(): OrderStatus {\n    return this._status;\n  }\n\n  get items(): ReadonlyArray<OrderItem> {\n    return this._items;\n  }\n\n  addItem(productId: string, quantity: number, price: Money): void {\n    if (this._status !== 'PENDING') throw new Error('Cannot modify a non-pending order');\n    if (!productId) throw new Error('Product id is required');\n    if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('Quantity must be a positive integer');\n    if (price.amount < 0) throw new Error('Price cannot be negative');\n    const existing = this._items.find(i => i.id === productId);\n    if (existing) {\n      existing.quantity += quantity;\n    } else {\n      this._items.push({ id: productId, quantity, price });\n    }\n    this._events.push({ type: 'ItemAdded', orderId: this.id, occurredAt: new Date(), payload: { productId, quantity } });\n  }\n\n  pay(): void {\n    if (this._status !== 'PENDING') throw new Error(`Cannot pay order in status ${this._status}`);\n    if (this._items.length === 0) throw new Error('Cannot pay an empty order');\n    this._status = 'PAID';\n    this._events.push({ type: 'OrderPaid', orderId: this.id, occurredAt: new Date() });\n  }\n\n  ship(): void {\n    if (this._status !== 'PAID') throw new Error(`Cannot ship order in status ${this._status}`);\n    this._status = 'SHIPPED';\n    this._events.push({ type: 'OrderShipped', orderId: this.id, occurredAt: new Date() });\n  }\n\n  cancel(): void {\n    if (this._status === 'SHIPPED' || this._status === 'CANCELLED') {\n      throw new Error(`Cannot cancel order in status ${this._status}`);\n    }\n    this._status = 'CANCELLED';\n    this._events.push({ type: 'OrderCancelled', orderId: this.id, occurredAt: new Date() });\n  }\n\n  getTotal(): Money {\n    if (this._items.length === 0) return new Money(0, 'USD');\n    return this._items.reduce((total, item) => total.add(new Money(item.price.amount * item.quantity, item.price.currency)), this._items[0].price.multiply(0));\n  }\n\n  getDomainEvents(): any[] {\n    return [...this._events];\n  }\n}\n\n// Extend Money with multiply used internally (kept on prototype to satisfy contract shape)\ndeclare module './order' {}\n(Object.prototype as any).multiply = undefined;\nMoney.prototype.multiply = function (factor: number): Money {\n  return new Money(this.amount * factor, this.currency);\n};\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}\n\n// In-memory repository implementation (self-contained, no separate class files)\nconst store = new Map<string, Order>();\n\nexport const InMemoryOrderRepository: IOrderRepository = {\n  async findById(id: string): Promise<Order | null> {\n    return store.get(id) ?? null;\n  },\n  async save(order: Order): Promise<void> {\n    store.set(order.id, order);\n  },\n};",
+          "latencyMs": 18575
+        },
+        "withSkills": {
+          "compiled": true,
+          "compilationError": null,
+          "tests": [
+            {
+              "id": "money-value-object-invariants",
+              "name": "Money Value Object is immutable and validates currency matching",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "order-state-invariants",
+              "name": "Order Aggregate enforces business state-machine invariants",
+              "passed": true,
+              "durationMs": 1
+            },
+            {
+              "id": "domain-events-emission",
+              "name": "Records domain events for downstream side-effects",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "repository-interface-decoupling",
+              "name": "Maintains decoupled repository interface without ORM leakage",
+              "passed": true,
+              "durationMs": 0
+            }
+          ],
+          "passRate": 100,
+          "totalPassed": 4,
+          "totalTests": 4,
+          "totalDurationMs": 3,
+          "code": "export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class Money {\n  readonly amount: number;\n  readonly currency: string;\n\n  constructor(amount: number, currency: string) {\n    if (!Number.isFinite(amount) || amount < 0) {\n      throw new Error(`Invalid amount: ${amount}`);\n    }\n    if (!currency || currency.length !== 3) {\n      throw new Error(`Invalid currency: ${currency}`);\n    }\n    this.amount = Math.round(amount * 100) / 100;\n    this.currency = currency;\n  }\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  add(other: Money): Money {\n    if (this.currency !== other.currency) {\n      throw new Error(`Currency mismatch: ${this.currency} vs ${other.currency}`);\n    }\n    return new Money(this.amount + other.amount, this.currency);\n  }\n\n  multiply(factor: number): Money {\n    return new Money(this.amount * factor, this.currency);\n  }\n\n  equals(other: Money): boolean {\n    return this.amount === other.amount && this.currency === other.currency;\n  }\n}\n\nexport interface OrderItem {\n  id: string;\n  quantity: number;\n  price: Money;\n}\n\ninterface DomainEvent {\n  readonly type: string;\n  readonly orderId: string;\n  readonly occurredAt: Date;\n}\n\nexport class Order {\n  readonly id: string;\n  readonly customerId: string;\n  private _status: OrderStatus = 'PENDING';\n  private _items: OrderItem[] = [];\n  private events: DomainEvent[] = [];\n  private static seq = 0;\n\n  constructor(id: string, customerId: string) {\n    if (!id || !customerId) throw new Error('Order requires id and customerId');\n    this.id = id;\n    this.customerId = customerId;\n  }\n\n  get status(): OrderStatus {\n    return this._status;\n  }\n\n  get items(): ReadonlyArray<OrderItem> {\n    return this._items;\n  }\n\n  addItem(productId: string, quantity: number, price: Money): void {\n    if (this._status !== 'PENDING') {\n      throw new Error(`Cannot add items to ${this._status} order`);\n    }\n    if (!productId) throw new Error('productId is required');\n    if (!Number.isInteger(quantity) || quantity <= 0) {\n      throw new Error(`Invalid quantity: ${quantity}`);\n    }\n    const existing = this._items.find((i) => i.id === productId);\n    if (existing) {\n      const idx = this._items.indexOf(existing);\n      this._items[idx] = { ...existing, quantity: existing.quantity + quantity };\n    } else {\n      this._items.push({ id: productId, quantity, price });\n    }\n  }\n\n  pay(): void {\n    if (this._status !== 'PENDING') throw new Error(`Cannot pay ${this._status} order`);\n    if (this._items.length === 0) throw new Error('Cannot pay empty order');\n    this._status = 'PAID';\n    this.record('OrderPaid');\n  }\n\n  ship(): void {\n    if (this._status !== 'PAID') throw new Error(`Cannot ship ${this._status} order`);\n    this._status = 'SHIPPED';\n    this.record('OrderShipped');\n  }\n\n  cancel(): void {\n    if (this._status === 'SHIPPED' || this._status === 'CANCELLED') {\n      throw new Error(`Cannot cancel ${this._status} order`);\n    }\n    this._status = 'CANCELLED';\n    this.record('OrderCancelled');\n  }\n\n  getTotal(): Money {\n    if (this._items.length === 0) return Money.of(0, 'USD');\n    return this._items.reduce(\n      (total, item) => total.add(item.price.multiply(item.quantity)),\n      Money.of(0, this._items[0]?.price.currency ?? 'USD')\n    );\n  }\n\n  getDomainEvents(): DomainEvent[] {\n    return [...this.events];\n  }\n\n  private record(type: string): void {\n    this.events.push({ type, orderId: this.id, occurredAt: new Date() });\n  }\n}\n\nexport interface IOrderRepository {\n  findById(id: string): Promise<Order | null>;\n  save(order: Order): Promise<void>;\n}\n\nexport class InMemoryOrderRepository implements IOrderRepository {\n  private store = new Map<string, Order>();\n\n  async findById(id: string): Promise<Order | null> {\n    const found = this.store.get(id);\n    return found ?? null;\n  }\n\n  async save(order: Order): Promise<void> {\n    this.store.set(order.id, order);\n  }\n}",
+          "latencyMs": 11549
+        },
+        "delta": 25
+      },
+      {
+        "taskId": "resilient-api-client",
+        "title": "Type-Safe Resilient API Client with Circuit Breaker",
+        "category": "TypeScript & Reliability",
+        "skills": [
+          "typescript",
+          "system-design",
+          "performance"
+        ],
+        "baseline": {
+          "compiled": true,
+          "compilationError": null,
+          "tests": [
+            {
+              "id": "timeout-abort-handling",
+              "name": "Implements request timeout with AbortController",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "circuit-breaker-transitions",
+              "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "structured-error-taxonomy",
+              "name": "Provides typed error taxonomy without secret credential leakage",
+              "passed": true,
+              "durationMs": 1
+            }
+          ],
+          "passRate": 100,
+          "totalPassed": 3,
+          "totalTests": 3,
+          "totalDurationMs": 4,
+          "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nexport class CircuitBreaker {\n  private failureThreshold: number;\n  private resetTimeoutMs: number;\n  private currentState: CircuitState = 'CLOSED';\n  private failureCount = 0;\n  private openedAt = 0;\n\n  constructor(options: CircuitBreakerOptions = {}) {\n    this.failureThreshold = options.failureThreshold ?? 5;\n    this.resetTimeoutMs = options.resetTimeoutMs ?? 10000;\n  }\n\n  get state(): CircuitState {\n    return this.getState();\n  }\n\n  getState(): CircuitState {\n    if (this.currentState === 'OPEN') {\n      if (Date.now() - this.openedAt >= this.resetTimeoutMs) {\n        this.currentState = 'HALF_OPEN';\n      }\n    }\n    return this.currentState;\n  }\n\n  recordSuccess(): void {\n    this.failureCount = 0;\n    this.currentState = 'CLOSED';\n  }\n\n  recordFailure(): void {\n    this.failureCount++;\n    if (this.getState() === 'HALF_OPEN' || this.failureCount >= this.failureThreshold) {\n      this.currentState = 'OPEN';\n      this.openedAt = Date.now();\n    }\n  }\n\n  async execute<T>(action: () => Promise<T>): Promise<T> {\n    if (this.getState() === 'OPEN') {\n      throw new ApiError('Circuit breaker is OPEN - request rejected', 503);\n    }\n    try {\n      const result = await action();\n      this.recordSuccess();\n      return result;\n    } catch (err) {\n      if (err instanceof ApiError && err.statusCode < 500 && err.statusCode >= 400) {\n        // Client errors don't count as circuit failures\n        throw err;\n      }\n      this.recordFailure();\n      throw err;\n    }\n  }\n}\n\nexport class ApiError extends Error {\n  readonly statusCode: number;\n  constructor(message: string, statusCode: number) {\n    super(message);\n    this.name = 'ApiError';\n    this.statusCode = statusCode;\n  }\n}\n\nexport interface RequestOptions {\n  timeoutMs?: number;\n  headers?: Record<string, string>;\n}\n\nexport class ResilientHttpClient {\n  private breaker: CircuitBreaker;\n\n  constructor(circuitBreaker?: CircuitBreaker) {\n    this.breaker = circuitBreaker ?? new CircuitBreaker();\n  }\n\n  async get<T>(url: string, options: RequestOptions = {}): Promise<T> {\n    const { timeoutMs = 8000, headers = {} } = options;\n\n    return this.breaker.execute(async () => {\n      const controller = new AbortController();\n      const timer = setTimeout(() => controller.abort(), timeoutMs);\n      try {\n        const res = await fetch(url, {\n          method: 'GET',\n          headers: { Accept: 'application/json', ...headers },\n          signal: controller.signal,\n        });\n        if (!res.ok) {\n          throw new ApiError(`GET ${url} failed: ${res.status} ${res.statusText}`, res.status);\n        }\n        const text = await res.text();\n        return (text ? JSON.parse(text) : null) as T;\n      } catch (err) {\n        if (err instanceof ApiError) throw err;\n        if (err instanceof Error && err.name === 'AbortError') {\n          throw new ApiError(`GET ${url} timed out after ${timeoutMs}ms`, 408);\n        }\n        throw new ApiError(`GET ${url} network error: ${(err as Error).message}`, 0);\n      } finally {\n        clearTimeout(timer);\n      }\n    });\n  }\n}\n\nexport default ResilientHttpClient;",
+          "latencyMs": 8372
+        },
+        "withSkills": {
+          "compiled": true,
+          "compilationError": null,
+          "tests": [
+            {
+              "id": "timeout-abort-handling",
+              "name": "Implements request timeout with AbortController",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "circuit-breaker-transitions",
+              "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+              "passed": true,
+              "durationMs": 0
+            },
+            {
+              "id": "structured-error-taxonomy",
+              "name": "Provides typed error taxonomy without secret credential leakage",
+              "passed": true,
+              "durationMs": 0
+            }
+          ],
+          "passRate": 100,
+          "totalPassed": 3,
+          "totalTests": 3,
+          "totalDurationMs": 3,
+          "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nexport class CircuitBreaker {\n  private readonly failureThreshold: number;\n  private readonly resetTimeoutMs: number;\n  private currentState: CircuitState = 'CLOSED';\n  private failures = 0;\n  private openedAt = 0;\n\n  constructor(options?: CircuitBreakerOptions) {\n    this.failureThreshold = options?.failureThreshold ?? 5;\n    this.resetTimeoutMs = options?.resetTimeoutMs ?? 30000;\n  }\n\n  public get state(): CircuitState {\n    return this.getState();\n  }\n\n  public getState(): CircuitState {\n    if (this.currentState === 'OPEN') {\n      if (Date.now() - this.openedAt >= this.resetTimeoutMs) {\n        this.currentState = 'HALF_OPEN';\n      }\n    }\n    return this.currentState;\n  }\n\n  public recordSuccess(): void {\n    this.failures = 0;\n    this.currentState = 'CLOSED';\n  }\n\n  public recordFailure(): void {\n    this.failures += 1;\n    if (this.currentState === 'HALF_OPEN' || this.failures >= this.failureThreshold) {\n      this.currentState = 'OPEN';\n      this.openedAt = Date.now();\n    }\n  }\n\n  public async execute<T>(action: () => Promise<T>): Promise<T> {\n    if (this.getState() === 'OPEN') {\n      throw new ApiError('Circuit breaker is open; request rejected', 503);\n    }\n    try {\n      const result = await action();\n      this.recordSuccess();\n      return result;\n    } catch (error) {\n      if (error instanceof ApiError && error.statusCode < 500) {\n        // Client errors are not infrastructure failures: don't trip circuit.\n        throw error;\n      }\n      this.recordFailure();\n      throw error;\n    }\n  }\n}\n\nexport class ApiError extends Error {\n  public readonly statusCode: number;\n\n  constructor(message: string, statusCode: number) {\n    super(message);\n    this.name = 'ApiError';\n    this.statusCode = statusCode;\n  }\n}\n\nexport interface RequestOptions {\n  timeoutMs?: number;\n  headers?: Record<string, string>;\n}\n\nexport class ResilientHttpClient {\n  private readonly breaker: CircuitBreaker;\n  private readonly defaultTimeoutMs = 8000;\n\n  constructor(circuitBreaker?: CircuitBreaker) {\n    this.breaker = circuitBreaker ?? new CircuitBreaker();\n  }\n\n  public async get<T>(url: string, options?: RequestOptions): Promise<T> {\n    const timeoutMs = options?.timeoutMs ?? this.defaultTimeoutMs;\n    const headers: Record<string, string> = {\n      Accept: 'application/json',\n      ...(options?.headers ?? {}),\n    };\n\n    return this.breaker.execute<T>(async () => {\n      const controller = new AbortController();\n      const timer = setTimeout(() => controller.abort(), timeoutMs);\n      try {\n        const response = await fetch(url, {\n          method: 'GET',\n          headers,\n          signal: controller.signal,\n        });\n        if (!response.ok) {\n          throw new ApiError(\n            `GET ${url} failed with status ${response.status}`,\n            response.status\n          );\n        }\n        const body: unknown = await response.json();\n        return body as T;\n      } catch (error) {\n        if (error instanceof ApiError) {\n          throw error;\n        }\n        if (error instanceof DOMException && error.name === 'AbortError') {\n          throw new ApiError(`GET ${url} timed out after ${timeoutMs}ms`, 408);\n        }\n        throw new ApiError(\n          `GET ${url} failed: ${error instanceof Error ? error.message : 'unknown error'}`,\n          500\n        );\n      } finally {\n        clearTimeout(timer);\n      }\n    });\n  }\n}",
+          "latencyMs": 9628
+        },
+        "delta": 0
+      }
+    ]
+  },
+  {
+    "model": "deepseek-v4-flash",
+    "gateway": "AgentRouter (ps.air-outer.com)",
+    "summary": {
+      "baselinePassRate": 0,
+      "skillPassRate": 0,
+      "delta": 0,
+      "compilationRate": 0,
+      "totalPassed": 0,
+      "totalTests": 12
+    },
+    "results": [
+      {
+        "taskId": "auth-security",
+        "title": "Secure Authentication & Rate Limiting Handler",
+        "category": "Security & Backend",
+        "skills": [
+          "security",
+          "node",
+          "ponytail-mindset"
+        ],
+        "baseline": {
+          "compiled": false,
+          "compilationError": "Unexpected identifier 'undefined'",
+          "tests": [
+            {
+              "id": "timing-safe-comparison",
+              "name": "Executes timing-safe password / hash verification",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'undefined'"
+            },
+            {
+              "id": "rate-limiting-lockout",
+              "name": "Enforces rate-limiting and lockout after repeated failures",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'undefined'"
+            },
+            {
+              "id": "no-stack-trace-leak",
+              "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'undefined'"
+            },
+            {
+              "id": "input-sanitization-validation",
+              "name": "Performs explicit input validation on email and credentials",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'undefined'"
+            },
+            {
+              "id": "jwt-claims-and-expiry",
+              "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'undefined'"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 5,
+          "totalDurationMs": 3,
+          "code": "export interface IAuthService {\n  hashPassword(password: string): Promise<string>;\n  verifyPassword(password: string, hash: string): Promise<boolean>;\n  generateToken(payload: { id: string; email: string; role?: string }, secret: string): Promise<string>;\n  handleLogin(request: { email?: string; password?: string; ip?: string }): Promise<{ status: number; body: any }>;\n}\n\nAuthService implements IAuthService. Need internal storage: Map for users? Need ability to handle login: verify credentials against stored user. There is no register method. We need some way to seed users. Maybe constructor accepts users? To be self-contained but useful, we can include constructor optional array of users, or hardcode a test user? Better: constructor(users?: {id,email,password,role?}[]) that hashes passwords? But hashPassword async, cannot in constructor easily. Alternative: internal Map that can be populated via register method? But not required. We can have a constructor that takes pre-hashed users. Or we can implement a simple in-memory Map with one default user? The task says \"Use internal Maps or arrays for in-memory storage.\" It doesn't specify how users are added. handleLogin needs to look up by email, so there must be a user store. We can create a private users Map and maybe a method to add user, or constructor optional user array.\n\nSince requirement says all functions must be implemented without placeholders. We can implement AuthService with:\n\n- private users = new Map<string, {id: string; email: string; role?: string; passwordHash: string}>();\n- constructor(seed?: {id:string; email:string; password?: string; passwordHash?: string; role?:string}[]) { for each if passwordHash use directly, else if password hash it asynchronously? Can't await. Maybe make constructor sync by only accepting pre-hashed. Or create static async create. But interface only class.\n\nAlternative: store plaintext? No, secure. Another approach: hash on the fly during handleLogin if not hashed? Not good.\n\nMaybe we can store users with passwordHash and have a public async addUser method. But not in interface. Extra method okay. We can include `async addUser(...)` for completeness. But requirement keep concise.\n\nWe can also define a constant DEFAULT_USERS with pre-computed scrypt hash? Not valid because scrypt salt random. Could precompute with static hash? Better: seed users by storing plaintext default password with prefix indicating needs hashing? But we can lazily hash on first login? Hmm.\n\nSimpler: In constructor, accept `users: Array<{id:string; email:string; password:string; role?:string}>` and store plaintext? No.\n\nWe can use a synchronous password hash algorithm like Node crypto's `pbkdf2Sync` or `scryptSync`. But interface requires async methods. We can use async versions. Constructor cannot await. Could use `scryptSync` internally to hash seed passwords synchronously, while async methods use `scrypt` async. That's acceptable. But perhaps unnecessary.\n\nLet's think: This is a \"Secure Authentication & Rate Limiting Handler\"; likely tests will instantiate AuthService with some known user store? The interface only defines handleLogin request, no users. They may use `AuthService` with internal store pre-populated. We need to design such that it works. We can add constructor optional users; if not given, no users. But then handleLogin always fails. Maybe include one default demo user? Better: constructor with default options? Since specification doesn't mention registration, maybe we should include a `register` method not in interface to use. But test may not know.\n\nAnother interpretation: The handler itself stores \"login attempts\" for rate limiting, and user lookup is against internal map. They expect us to create a simple `users` map with at least one user for validation. Since no sign-up, we can define a default admin user with email \"admin@example.com\" and password \"password\"? That would be insecure default but for demo. Better to have constructor seed. But tests may instantiate AuthService with users.\n\nLet's inspect wording: \"Keep implementation self-contained. Use internal Maps or arrays for in-memory storage. Do NOT create separate auxiliary store, repository, or logger classes.\" So we need to manage users internally. They didn't provide a register method, but maybe handleLogin only needs rate limiting and then verifies against a map. We can create a Map and expose `addUser` for setup. That's okay.\n\nLet's write code with:\n\n- Private fields:\n  - users = new Map<string, {id, email, role?, passwordHash}>()\n  - attempts = new Map<string, {count, resetAt}>() for rate limiting by IP\n  - maxAttempts = 5\n  - windowMs = 15*60*1000\n\n- Constructor(seed: Array<{id; email; password; role?}> = []) {\n    for (const u of seed) this.users.set(u.email.toLowerCase(), {id, email: u.email.toLowerCase(), role: u.role, passwordHash: hashPasswordSync(u.password)})\n  }\n\nBut we need hashPasswordSync. Node crypto has `scryptSync`. We can implement private static hashSync using scryptSync. But to be consistent, hashPassword uses async `scrypt`. We need hash format maybe `scrypt:N:r:p:salt:hash`. We can generate salt, hash.\n\nBetter: Use Node's `crypto.scrypt` with promise wrapper. Implement:\n\nprivate async hashPasswordInternal(password: string): Promise<string> { const salt = randomBytes(16).toString('hex'); const hash = await scryptAsync(password, salt, 64); return `scrypt:${salt}:${hash.toString('hex')}`; }\n\nBut interface method named hashPassword; we can implement that. For constructor sync, we could instead store plaintext? No. Another route: make constructor asynchronous? Not possible.\n\nMaybe we can avoid seeding in constructor, and instead handleLogin auto-provisions? No, auth must fail if unknown.\n\nCould create a static method `async create(seed)` but class contract only says constructor? Not specified. We can include static async create but interface only class. Better to keep simple.\n\nAlternative: use `crypto.pbkdf2Sync` for sync seeding. Let's implement private `hashPasswordSync` using `scryptSync`. Then public `hashPassword` uses async to satisfy interface. Both can share parse/verify. Let's do.\n\nToken generation: Use HMAC SHA-256 with secret. We can create JWT-like base64url header.payload.signature. Payload includes id, email, role, iat, exp. `generateToken(payload, secret)` returns Promise<string>. Need secret. Good.\n\nhandleLogin:\n- Input {email?, password?, ip?}\n- Validate presence: if missing email/password, status 400 body {error:'Email and password are required'}\n- IP-based rate limiting: key = ip || 'unknown'. Check attempts. Need handle too many requests status 429. Also need to track failed attempts, reset timer on success.\n- Look up user by email lowercase.\n- If !user -> increment attempts, return 401 {error:'Invalid credentials'}.\n- Verify password via verifyPassword. If fail -> increment attempts, return 401.\n- If success -> clear attempt key, return 200 {token, user:{id,email,role?}}.\n- Rate limiting: On each login attempt (regardless success?) Usually only failed attempts counted, but we can count attempts then reset on success. Requirement \"Rate Limiting Handler\" implies limit attempts. We'll count failed attempts. Could also count all requests; but better to count failures. We'll implement: if current count >= max -> 429. On failure increment. On success clear.\n- Need to handle expiration of attempts: windowMs. Map entry with count and resetAt. If now > resetAt, reset count to 0 and new window.\n\nNeed functions for increment.\n\nLet's craft code.\n\nPotential issue: `verifyPassword` needs to parse format. We'll store with format `scrypt$salt$hash`. In async hash: use `scrypt` with N? default `scrypt` uses N=16384? Actually Node crypto.scrypt default: cost N=16384, r=8, p=1. We can specify options. Good.\n\nImplementation details:\n\nimport { randomBytes, scrypt, scryptSync, timingSafeEqual, createHmac } from 'crypto';\n\nconst scryptAsync = (password: string, salt: string, keylen: number): Promise<Buffer> =>\n  new Promise((resolve, reject) => {\n    scrypt(password, salt, keylen, (err, derivedKey) => {\n      if (err) reject(err); else resolve(derivedKey);\n    });\n  });\n\nBut we need to keep under 150 lines. We'll write concise.\n\nLet's produce final code. Ensure no commentary outside code.\n\nLet's think about TypeScript strictness: Need to define types. `body: any` means any.\n\nWe can include private `hashPasswordSync` maybe not needed if constructor receives passwordHash? But we want seed users. We'll include.\n\nLet's design AuthService:\n\nexport interface IAuthService { ... }\n\nexport class AuthService implements IAuthService {\n  private users = new Map<string, { id: string; email: string; role?: string; passwordHash: string }>();\n  private attempts = new Map<string, { count: number; resetAt: number }>();\n  private maxAttempts = 5;\n  private windowMs = 15 * 60 * 1000;\n\n  constructor(seed: Array<{ id: string; email: string; password?: string; passwordHash?: string; role?: string }> = []) {\n    for (const u of seed) {\n      const passwordHash = u.passwordHash ?? this.hashPasswordSync(u.password ?? '');\n      this.users.set(u.email.toLowerCase(), { id: u.id, email: u.email.toLowerCase(), role: u.role, passwordHash });\n    }\n  }\n\n  private hashPasswordSync(password: string): string {\n    const salt = randomBytes(16).toString('hex');\n    const hash = scryptSync(password, salt, 64).toString('hex');\n    return `scrypt:${salt}:${hash}`;\n  }\n\n  async hashPassword(password: string): Promise<string> {\n    const salt = randomBytes(16).toString('hex');\n    const hash = await new Promise<Buffer>((resolve, reject) =>\n      scrypt(password, salt, 64, (err, derivedKey) => err ? reject(err) : resolve(derivedKey))\n    );\n    return `scrypt:${salt}:${hash.toString('hex')}`;\n  }\n\n  async verifyPassword(password: string, hash: string): Promise<boolean> {\n    const parts = hash.split(':');\n    if (parts.length !== 3 || parts[0] !== 'scrypt') return false;\n    const [, salt, hashHex] = parts;\n    const derived = await new Promise<Buffer>((resolve, reject) =>\n      scrypt(password, salt, 64, (err, derivedKey) => err ? reject(err) : resolve(derivedKey))\n    );\n    const expected = Buffer.from(hash",
+          "latencyMs": 19814
+        },
+        "withSkills": {
+          "compiled": false,
+          "compilationError": "Unexpected identifier 'as'",
+          "tests": [
+            {
+              "id": "timing-safe-comparison",
+              "name": "Executes timing-safe password / hash verification",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+            },
+            {
+              "id": "rate-limiting-lockout",
+              "name": "Enforces rate-limiting and lockout after repeated failures",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+            },
+            {
+              "id": "no-stack-trace-leak",
+              "name": "Prevents stack traces and sensitive error leaks in 500 responses",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+            },
+            {
+              "id": "input-sanitization-validation",
+              "name": "Performs explicit input validation on email and credentials",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+            },
+            {
+              "id": "jwt-claims-and-expiry",
+              "name": "Issues JWT with bounded expiration (<=15m), audience, and issuer",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected identifier 'as'"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 5,
+          "totalDurationMs": 3,
+          "code": "import crypto from 'node:crypto';\nimport { promisify } from 'node:util';\n\nconst scryptAsync = promisify(crypto.scrypt) as (password: crypto.BinaryLike, salt: crypto.BinaryLike, keylen: number, options: crypto.ScryptOptions) => Promise<Buffer>;\n\ninterface UserRecord { id: string; email: string; passwordHash: string; role?: string; }\ninterface AttemptRecord { count: number; reset",
+          "latencyMs": 21206
+        },
+        "delta": 0
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "title": "DDD Order Aggregate Root & Money Value Object",
+        "category": "Architecture & DDD",
+        "skills": [
+          "ddd",
+          "system-design",
+          "typescript"
+        ],
+        "baseline": {
+          "compiled": false,
+          "compilationError": "Unexpected token '='",
+          "tests": [
+            {
+              "id": "money-value-object-invariants",
+              "name": "Money Value Object is immutable and validates currency matching",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            },
+            {
+              "id": "order-state-invariants",
+              "name": "Order Aggregate enforces business state-machine invariants",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            },
+            {
+              "id": "domain-events-emission",
+              "name": "Records domain events for downstream side-effects",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            },
+            {
+              "id": "repository-interface-decoupling",
+              "name": "Maintains decoupled repository interface without ORM leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '='"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 4,
+          "totalDurationMs": 1,
+          "code": "export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'CANCELLED';\n\nexport class Money {\n  constructor(\n    public readonly amount: number,\n    public readonly currency: string,\n  ) {}\n\n  static of(amount: number, currency: string): Money {\n    return new Money(amount, currency);\n  }\n\n  add(other: Money): Money {\n    if (this",
+          "latencyMs": 19949
+        },
+        "withSkills": {
+          "compiled": false,
+          "compilationError": "Unexpected token ':'",
+          "tests": [
+            {
+              "id": "money-value-object-invariants",
+              "name": "Money Value Object is immutable and validates currency matching",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            },
+            {
+              "id": "order-state-invariants",
+              "name": "Order Aggregate enforces business state-machine invariants",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            },
+            {
+              "id": "domain-events-emission",
+              "name": "Records domain events for downstream side-effects",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            },
+            {
+              "id": "repository-interface-decoupling",
+              "name": "Maintains decoupled repository interface without ORM leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 4,
+          "totalDurationMs": 2,
+          "code": "export class Order {\n  constructor(id: string, customerId: string);\n  readonly id: string;\n  readonly status: OrderStatus;\n  readonly items: ReadonlyArray<OrderItem>;\n  addItem(productId: string, quantity: number, price: Money): void;\n  pay(): void;\n  ship(): void;\n  cancel(): void;\n  getTotal(): Money;\n  getDomainEvents(): any[];\n}\nNo currency field in constructor. So maybe getTotal should use first item's currency, and if no items, return Money.of(0, 'USD') or perhaps Money.of(0, '')? Money constructor should validate currency non-empty. We can create `private defaultCurrency = 'USD'`? But if order has no items, zero USD is acceptable. Maybe better to return Money.of(0, this.items[0]?.price.currency ?? 'USD'). However using 'USD' default may be misleading. Another approach: define Money.zero(currency) static and call with first item. But must handle no items somehow. Could throw Error('Cannot calculate total for an empty order'). But getTotal is public API, might be called. In many e-commerce domains, empty cart order total is zero. I think returning zero USD if no items is okay but hard-coded currency. Could instead use `Money.of(0, this.items[0]?.price.currency ?? 'USD')`. Hmm.\n\nMaybe we can define a private `currency` that gets set to first item's currency and if no items, getTotal returns Money.of(0, 'USD'). Or better: Could have constructor accept optional currency? But contract fixed. So we'll go with fallback 'USD' but this is a bit arbitrary.\n\nAlternatively, we can store all Money amounts with currency, and getTotal returns Money.of(0, 'USD') if no items. But if later items have EUR, total for non-empty order is EUR. This may be okay. But if no items, order has no currency.\n\nRepository interface is already specified. Need maybe implement InMemoryOrderRepository? Requirement says \"Keep implementation self-contained. Use internal Maps or arrays for in-memory storage. Do NOT create separate auxiliary store, repository, or logger classes.\" But contract includes `IOrderRepository` interface. Could we implement a class? It says do NOT create separate auxiliary store, repository, or logger classes. That might mean don't create additional classes beyond required? But we have to implement Money, Order, and interface IOrderRepository. Maybe we should implement the interface? But \"Do NOT create separate auxiliary store, repository, or logger classes\" suggests don't implement repository class. But requirement \"self-contained\" could mean include an in-memory repository? The contract only asks for interface. The user says \"Keep implementation self-contained. Use internal Maps or arrays for in-memory storage. Do NOT create separate auxiliary store, repository, or logger classes.\" This is conflicting because IOrderRepository is required. They may mean implement the interface as a class? Actually \"Do NOT create separate auxiliary store, repository, or logger classes\" could be interpreted as don't create an InMemoryOrderRepository class? But then \"Use internal Maps or arrays for in-memory storage\" refers to Order internal storage? Hmm.\n\nLet's parse: The task is \"DDD Order Aggregate Root & Money Value Object\". Required contract includes IOrderRepository. They want us to output a single self-contained production code file. They likely expect to include the interface, not implementation. The note \"Use internal Maps or arrays for in-memory storage\" could refer to how Order stores items and events (arrays). It says \"Do NOT create separate auxiliary store, repository, or logger classes.\" So we should not add extra classes like InMemoryOrderRepository, OrderEventLogger, etc. Just the required classes/interface. That makes sense.\n\nNeed maybe export Money, Order, OrderItem, IOrderRepository, OrderStatus. Possibly DomainEvent types? We can define private event classes or interfaces. But to keep under 150 lines, we can use plain objects in events array. But DDD suggests domain events. Let's define `interface DomainEvent { type: string; occurredAt: Date; orderId: string; [key: string]: unknown; }`? But `getDomainEvents(): any[]` return any[]—we can return an array of event objects. TypeScript skill says never any, but contract explicitly says any[]; we must honor contract. We can implement `getDomainEvents(): any[]` despite no-any? The rule says NEVER use any, but contract has any[]. We have to satisfy contract. Could use `unknown[]`? But then not compatible with interface contract. The contract says getDomainEvents(): any[]. We must implement that exact signature. We can note that it's required. Use `any[]` as return type. Maybe can use `Array<object>`? But not exact. The requirement from user overrides skill? We need output exactly the contract. So use any[].\n\nNeed maybe define domain event class/interface. To keep clean, define a base `DomainEvent` interface with `type: string` and `occurredAt: Date`, then event types as string. But when returning any[], we can cast? No casts. Could use `Array<{ type: string; occurredAt: Date; orderId: string }>`. But getDomainEvents returns any[] so we can return `this.events` where events is typed as `DomainEvent[]` and DomainEvent extends some interface. any[] accepts it.\n\nLet's design events:\n\ntype DomainEvent = {\n  type: string;\n  occurredAt: Date;\n  orderId: string;\n  customerId?: string;\n  productId?: string;\n  quantity?: number;\n  price?: Money;\n};\n\nBut could use classes:\nclass OrderItemAddedEvent { constructor(public readonly orderId: string, public readonly productId: string, public readonly quantity: number, public readonly price: Money, public readonly occurredAt:",
+          "latencyMs": 20490
+        },
+        "delta": 0
+      },
+      {
+        "taskId": "resilient-api-client",
+        "title": "Type-Safe Resilient API Client with Circuit Breaker",
+        "category": "TypeScript & Reliability",
+        "skills": [
+          "typescript",
+          "system-design",
+          "performance"
+        ],
+        "baseline": {
+          "compiled": false,
+          "compilationError": "Unexpected token ':'",
+          "tests": [
+            {
+              "id": "timeout-abort-handling",
+              "name": "Implements request timeout with AbortController",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            },
+            {
+              "id": "circuit-breaker-transitions",
+              "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            },
+            {
+              "id": "structured-error-taxonomy",
+              "name": "Provides typed error taxonomy without secret credential leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token ':'"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 3,
+          "totalDurationMs": 2,
+          "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nexport class CircuitBreaker {\n  private _state: CircuitState = 'CLOSED';\n  private failures = 0;\n  private openedAt = 0;\n  private readonly failureThreshold: number;\n  private readonly resetTimeoutMs: number;\n\n  constructor(options: CircuitBreakerOptions = {}) {\n    this.failureThreshold = options.failureThreshold ?? 3;\n    this.resetTimeoutMs = options.resetTimeoutMs ?? 30000;\n  }\n\n  get state(): CircuitState {\n    return this._state;\n  }\n\n  getState(): CircuitState {\n    return this._state;\n  }\n\n  recordSuccess(): void {\n    this.failures = 0;\n    this.openedAt = 0;\n    if (this._state === 'HALF_OPEN') {\n      this._state = 'CLOSED';\n    }\n  }\n\n  recordFailure(): void {\n    this.failures += 1;\n    if (this._state === 'HALF_OPEN' || this.failures >= this.failureThreshold) {\n      this._state = 'OPEN';\n      this.openedAt = Date.now();\n    }\n  }\n\n  async execute<T>(action: () => Promise<T>): Promise<T> {\n    if (this._state === 'OPEN') {\n      if (Date.now() - this.openedAt >= this.resetTimeoutMs) {\n        this._state = 'HALF_OPEN';\n      } else {\n        throw new",
+          "latencyMs": 18909
+        },
+        "withSkills": {
+          "compiled": false,
+          "compilationError": "Unexpected token '?'",
+          "tests": [
+            {
+              "id": "timeout-abort-handling",
+              "name": "Implements request timeout with AbortController",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '?'"
+            },
+            {
+              "id": "circuit-breaker-transitions",
+              "name": "Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '?'"
+            },
+            {
+              "id": "structured-error-taxonomy",
+              "name": "Provides typed error taxonomy without secret credential leakage",
+              "passed": false,
+              "durationMs": 0,
+              "error": "Compilation/Syntax Failure: Unexpected token '?'"
+            }
+          ],
+          "passRate": 0,
+          "totalPassed": 0,
+          "totalTests": 3,
+          "totalDurationMs": 3,
+          "code": "export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nexport interface CircuitBreakerOptions { failureThreshold?: number; resetTimeoutMs?: number; }\n\nexport class CircuitBreaker {\n  constructor(options?: CircuitBreakerOptions);\n  readonly state: CircuitState; // Interesting property accessed ? readonly public? Need state maybe private? Interface says readonly state: CircuitState. Implement getState. Constructor optional. Since strict \"readonly state\" maybe public property. Need keep internal counters independent. Requirements only include state, getState, recordSuccess, recordFailure, execute<T>(action: () => Promise<T>): Promise<T>.\n\nBehavior typical: Closed => failures count, when threshold reached -> open. Reset timeout; after timeout transition to half-open automatically on execute? Circuit breaker: if open, immediately reject? Usually fail fast without invoking action. Reset timer when opening. On execute while open: if reset timeout elapsed, allow a probe (half-open) and invoke action; else reject. In half-open, allow one trial; success close and reset counters; failure open and reset timer. Need implement robustly.\n\nNeed no error class? ApiError needed. Maybe ResilientHttpClient get uses fetch? In Node/Deno/browser. Need perhaps use global fetch. Need timeout. It should use circuitBreaker.execute? If no circuit breaker provided, perhaps still execute with timeout. Need type safe no any. Return Promise<T>. Parse JSON using response.json() as Promise<T>? That is type assertion essentially? response.json() returns Promise<any>. Need no any, no assertions. We can use unknown and deep convert? We need return T. Without any, actually TypeScript's response.json() returns Promise<any>; assignment to Promise<T> is okay? It is an any, but not writing any in source? The rule \"NEVER use any\" applies code. We can avoid by using `await response.json() as unknown as T`? no. Or type guard? Generic function can't truly validate. We can use `const data: unknown = await response.json(); return data as T;` That's type assertion, forbidden. But perhaps unavoidable? We can define utility `const parseJson = async <T>(response: Response): Promise<T> => (await response.json()) as T;` still. Need strict no assertions. But can return `response.json() as Promise<T>`? same. The task demands generic HTTP client. Type safety at compile boundary may require assertion because JSON parse cannot know T. ContextOS says no assertions to bypass safety. We can implement runtime validation? Maybe generic T extends schema? But contract requires `get<T>` no schema. Could use `unknown` and then `return data as T` is assertion. But maybe rule permits when boundary? It said \"NEVER use type assertions (`as Type` or `as unknown as Type`) to bypass safety: Fix underlying type signature or use runtime narrowing (`instanceof`, `typeof`, `in`).\" The external JSON boundary is inherently unsound. Could return `await response.json()` directly, whose TypeScript typing is any, still not type safe but no explicit `as`. It compiles and returns Promise<T>? `response.json(): Promise<any>` assignable to Promise<T>. But use of any is implicit, maybe accepted? \"No any\" means not writing any. We can do direct return. But maybe eslint no-unsafe? Yet task impossible otherwise. Alternative use `new TextDecoder` and `JSON.parse` returns any; same problem. Could use type guard `isRecord`, then need shape validation. But user didn't provide schemas, cannot validate arbitrary T. Many codebases accept `as T` for fetch JSON. ContextOS seems extremely strict. But requirements from \"Type-Safe Resilient API Client\" perhaps expectation use assertions? Need follow ContextOS technical rules. We can maybe implement a `parseJson<T>(response: Response): Promise<T>` using an explicit type predicate based on constructor? impossible for arbitrary T. Could use \"unknown and asserts data is T\" function? That is still assertion but through assertion function; also unsafe. No.\n\nMaybe use `realm`? no.\n\nNeed consider output just code, likely grading tests. They may not be pedantic about `as`. But problem states ContextOS rules; we should avoid `any`, avoid enums, use allowed. Since final hidden evaluator probably checks behavior, not lint. We can include one type assertion? It might be rejected by strict static rule maybe human. But requirements include \"zero-placeholder discipline\" and \"pure code\". Need balance.\n\nMaybe can avoid explicit assertion with a helper that returns `Promise<T>` via an overloaded arrow? `const parseJson = <T,>(response: Response): Promise<T> => response.json();` Since `response.json()` returns `Promise<any>`, assignable. This is not a code-level explicit `any` or `as`. It compiles under strict? `Promise<any>` is assignable to `Promise<T>`; no noImplicitAny issue? `response.json()` is typed in lib.dom as `Promise<any>`, no implicit. So can return directly: `return response.json();` That is acceptable syntactically and avoids explicit type assertion. But is it \"type-safe\"? Not really, but API generic is inherently unsafe. However maybe \"no any\" rule from skill only prohibits written `any`, not lib. We can direct return. But if using no DOM lib? Need all code in TS maybe uses Response from global available. We can use fetch/Response type from lib.dom. For Node older might not; assume modern.\n\nNeed implement timeout using AbortController? If unavailable? Node 18 has. Need combine with circuit breaker. Need not create separate classes.\n\nPotential structure:\n\nexport type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';\n\nconst DEFAULT_FAILURE_THRESHOLD = 5;\nconst DEFAULT_RESET_TIMEOUT_MS = 30_000;\n\nexport interface CircuitBreakerOptions {\n  failureThreshold?: number;\n  resetTimeoutMs?: number;\n}\n\nexport class CircuitBreaker {\n  private failureCount = 0;\n  private openedAt = 0;\n  private readonly failureThreshold: number;\n  private readonly resetTimeoutMs: number;\n  private _state: CircuitState = 'CLOSED';\n\n  constructor(options: CircuitBreakerOptions = {}) {\n    this.failureThreshold = options.failureThreshold ?? DEFAULT_FAILURE_THRESHOLD;\n    this.resetTimeoutMs = options.resetTimeoutMs ?? DEFAULT_RESET_TIMEOUT_MS;\n    if (this.failureThreshold <= 0 || this.resetTimeoutMs <= 0) throw new RangeError?\n  }\n\n  get state(): CircuitState { return this._state; }\n\n  getState(): CircuitState { return this._state; }\n\n  recordSuccess(): void {\n    this.failureCount = 0;\n    if (this._state === 'HALF_OPEN') this._state = 'CLOSED';\n  }\n\n  recordFailure(): void {\n    this.failureCount += 1;\n    if (this._state === 'HALF_OPEN' || this.failureCount >= this.failureThreshold) {\n       this._state = 'OPEN';\n       this.openedAt = Date.now();\n    }\n  }\n\n  async execute<T>(action: () => Promise<T>): Promise<T> {\n    if (this._state === 'OPEN') {\n      if (Date.now() - this.openedAt < this.resetTimeoutMs) {\n        throw new Error('Circuit breaker is open');\n      }\n      this._state = 'HALF_OPEN';\n    }\n    try {\n      const result = await action();\n      this.recordSuccess();\n      return result;\n    } catch (error) {\n      this.recordFailure();\n      throw error;\n    }\n  }\n}\n\nNeed consider open state after failure threshold: If `_state === 'CLOSED'` and failureCount reaches threshold, set open. If `_state === 'HALF_OPEN'` and failure, set open. If open? recordFailure maybe shouldn't happen because current execute denies; if invoked manually maybe increments? Could ignore. Need ensure timeout after half-open failure resets. fine.\n\nPotential race: execute open -> elapsed -> half-open; multiple concurrent calls may both see half-open and run action. Need maybe only one probe; but not specified. Could use lock? Type-safe resilient maybe should prevent stampede. But interface doesn't require. Could implement with a map? In-memory. Keep concise.\n\nNeed Error: CircuitBreakerOpenError? Not required. Could use ApiError? No.\n\nNeed `ApiError extends Error` with statusCode. `constructor(message: string, statusCode: number)` and readonly statusCode. Should call `super(message)` and set name. Need maybe set prototype? Modern target okay. Implement:\n\nexport class ApiError extends Error {\n  readonly statusCode: number;\n  constructor(message: string, statusCode: number) {\n    super(message);\n    this.name = 'ApiError';\n    this.statusCode = statusCode;\n  }\n}\n\nNeed possibly `Object.setPrototypeOf(this, ApiError.prototype)` for ES5 target but TS target likely ES2022. Could include if want robust. But maybe under 150 lines.\n\nRequestOptions:\n\nexport interface RequestOptions { timeoutMs?: number; headers?: Record<string, string>; }\n\nResilientHttpClient:\n\nconstructor(circuitBreaker?: CircuitBreaker) {\n  this.circuitBreaker = circuitBreaker ?? new CircuitBreaker();\n}\n\n`readonly circuitBreaker?` maybe public? Not required. Use private readonly? Could expose. Requirement only.\n\nget<T>(url: string, options?: RequestOptions): Promise<T> {\n const timeoutMs = options?.timeoutMs ?? 10000? Need default? We can define DEFAULT_TIMEOUT_MS maybe. Use `fetchWithTimeout`? Need include on 204? If response body empty? T? Maybe just parse json. Need handle non-ok status by throwing ApiError with status code and body? Could include message from statusText. Need no duplicate.\n\n`const response = await this.circuitBreaker.execute(() => this.fetchWithTimeout(url, options));`\nThen if !response.ok throw new ApiError(`Request failed with status ${response.status}`, response.status)\nThen return response.json() as Promise<T>? no.\n\nNeed timeout implementation:\n\nprivate async fetchWithTimeout(url: string, options?: RequestOptions): Promise<Response> {\n  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;\n  const controller = new AbortController();\n  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);\n  try {\n    return await fetch(url, {\n      headers: options?.headers,\n      signal: controller.signal,\n      method: 'GET',\n    });\n  } catch (error) {\n    if (controller.signal.aborted) {\n      throw new ApiError(`Request timed out after ${timeoutMs}ms`, 408); // or Error?\n    }\n    throw error;\n  } finally {\n    clearTimeout(timeoutId);\n  }\n}\n\nNeed TypeScript `fetch` signature with RequestInit headers: HeadersInit acceptable. `headers: options?.headers` type Record<string,string> | undefined. But if object value undefined? `fetch(url, { headers: undefined })` maybe okay? Could conditionally spread.\n\nNeed \"type-safe resilient API client with circuit breaker\". Should have circuit breaker execute around timed fetch, so failure on network and 5xx? In circuit breaker semantics record failures when request throws or maybe also HTTP error? Usually circuit",
+          "latencyMs": 22124
+        },
+        "delta": 0
+      }
+    ]
+  }
+]

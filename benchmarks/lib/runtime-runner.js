@@ -41,11 +41,28 @@ function stripTypeScript(code) {
 
   let js = code;
 
-  // 1. Pre-clean parameters and stubs that cause parser failures
+  // 1. Transform ESM imports BEFORE stripping anything with "as" keyword (casts)
+  js = js.replace(/import\s+\*\s+as\s+([\w$]+)\s+from\s+['"]([^'"]+)['"];?/g, 'const $1 = require(\'$2\');');
+
+  js = js.replace(/import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"];?/g, (match, imports, pkg) => {
+    const seen = new Set();
+    const transformed = imports.split(',').map(item => {
+      const parts = item.trim().split(/\s+as\s+/);
+      const name = (parts[1] || parts[0] || '').trim();
+      if (!name || seen.has(name)) return null;
+      seen.add(name);
+      return parts.length === 2 ? `${parts[0].trim()}: ${parts[1].trim()}` : parts[0].trim();
+    }).filter(Boolean).join(', ');
+    return `const { ${transformed} } = require('${pkg}');`;
+  });
+
+  js = js.replace(/import\s+([\w$]+)\s+from\s+['"]([^'"]+)['"];?/g, 'const $1 = require(\'$2\');');
+
+  // 2. Pre-clean stubs and ellipses so native parser doesn't choke
   js = js.replace(/throw\s+new\s+Error\s*\.\.\./g, "throw new Error('Validation error')");
   js = js.replace(/throw\s+\.\.\.;?/g, "throw new Error('Operation failed');");
   js = js.replace(/if\s*\(([^)]+)\)\s*\.\.\./g, "if ($1) { throw new Error('Validation error'); }");
-  js = js.replace(/\{\s*\.\.\.\s*\}/g, '{ /* stub */ }');
+  js = js.replace(/\{\s*\.\.\.\s*\}/g, '{ return null; }');
   js = js.replace(/=\s*\.\.\.;?/g, '= null;');
   js = js.replace(/^\s*\.\.\.\s*$/gm, '/* stub */');
 
@@ -53,45 +70,7 @@ function stripTypeScript(code) {
   js = js.replace(/,\s*[\w$]+\?\s*(?=,|\})/g, '');
   js = js.replace(/[\w$]+\?\s*,/g, '');
 
-  // 2. Remove type-only imports and declare statements
-  js = js.replace(/import\s+type\s+[^;]+;/g, '');
-  js = js.replace(/declare\s+[\s\S]*?;/g, '');
-
-  // 3. Remove interfaces (handling nested braces)
-  let interfaceMatch;
-  while ((interfaceMatch = js.match(/\b(?:export\s+)?interface\s+[\w$]+[^{]*\{/))) {
-    const startIdx = interfaceMatch.index;
-    const openBraceIdx = startIdx + interfaceMatch[0].length - 1;
-    let depth = 1;
-    let i = openBraceIdx + 1;
-    while (i < js.length && depth > 0) {
-      if (js[i] === '{') depth++;
-      else if (js[i] === '}') depth--;
-      i++;
-    }
-    js = js.slice(0, startIdx) + js.slice(i);
-  }
-
-  // 4. Remove type aliases: type Foo<T> = ...; (handling nested braces)
-  let typeMatch;
-  while ((typeMatch = js.match(/\b(?:export\s+)?type\s+[\w$]+(?:<[^>]*>)?\s*=/))) {
-    const startIdx = typeMatch.index;
-    let i = startIdx + typeMatch[0].length;
-    let braceDepth = 0;
-    while (i < js.length) {
-      if (js[i] === '{') braceDepth++;
-      else if (js[i] === '}') braceDepth--;
-      else if (js[i] === ';' && braceDepth <= 0) {
-        i++;
-        break;
-      }
-      i++;
-    }
-    js = js.slice(0, startIdx) + js.slice(i);
-  }
-
-  // 5. Handle constructor parameter properties (public/private/protected/readonly in constructor)
-  // e.g. constructor(public amount: number, public currency: string = 'USD')
+  // 3. Handle constructor parameter properties (e.g. constructor(public amount: number))
   js = js.replace(/constructor\s*\(([^)]*)\)\s*\{/g, (match, params) => {
     const assignments = [];
     const cleanedParams = params.split(',').map(param => {
@@ -109,72 +88,96 @@ function stripTypeScript(code) {
     return match;
   });
 
-  // 6. Remove access modifiers everywhere
+  // 4. Try Node native TypeScript stripper if available (Node 22+)
+  let nativeStripped = false;
+  if (typeof stripTypeScriptTypesNative === 'function') {
+    try {
+      js = stripTypeScriptTypesNative(js);
+      nativeStripped = true;
+    } catch (_) {
+      // fallback to regex pipeline
+    }
+  }
+
+  if (!nativeStripped) {
+    // 5. Remove type-only imports and declare statements
+    js = js.replace(/import\s+type\s+[^;]+;/g, '');
+    js = js.replace(/declare\s+[\s\S]*?;/g, '');
+
+    // 6. Remove interfaces (handling nested braces)
+    let interfaceMatch;
+    while ((interfaceMatch = js.match(/\b(?:export\s+)?interface\s+[\w$]+[^{]*\{/))) {
+      const startIdx = interfaceMatch.index;
+      const openBraceIdx = startIdx + interfaceMatch[0].length - 1;
+      let depth = 1;
+      let i = openBraceIdx + 1;
+      while (i < js.length && depth > 0) {
+        if (js[i] === '{') depth++;
+        else if (js[i] === '}') depth--;
+        i++;
+      }
+      js = js.slice(0, startIdx) + js.slice(i);
+    }
+
+    // 7. Remove type aliases: type Foo<T> = ...; (handling nested braces)
+    let typeMatch;
+    while ((typeMatch = js.match(/\b(?:export\s+)?type\s+[\w$]+(?:<[^>]*>)?\s*=/))) {
+      const startIdx = typeMatch.index;
+      let i = startIdx + typeMatch[0].length;
+      let braceDepth = 0;
+      while (i < js.length) {
+        if (js[i] === '{') braceDepth++;
+        else if (js[i] === '}') braceDepth--;
+        else if (js[i] === ';' && braceDepth <= 0) {
+          i++;
+          break;
+        }
+        i++;
+      }
+      js = js.slice(0, startIdx) + js.slice(i);
+    }
+
+    // 8. Clean parameters in functions, methods, and constructors
+    js = js.replace(
+      /(\b(?:async\s+)?function\*?\s+[\w$]*\s*(?:<[^>]*>)?\s*\()([^)]*)\)(\s*(?::\s*[^={;]+)?\s*\{)/g,
+      (fullMatch, prefix, params, suffix) => `${prefix}${cleanParamTypes(params)}) ${suffix}`
+    );
+
+    js = js.replace(
+      /(^|\n)\s*(?:(?:public|private|protected|static|async)\s+)*([#\w$]+)\s*\(([^)]*)\)\s*(?::\s*[^={;]+)?\s*\{/g,
+      (fullMatch, lead, name, params) => `${lead}  ${name}(${cleanParamTypes(params)}) {`
+    );
+
+    js = js.replace(
+      /constructor\s*\(([^)]*)\)\s*\{/g,
+      (match, params) => `constructor(${cleanParamTypes(params)}) {`
+    );
+  }
+
+  // 9. Remove access modifiers everywhere
   js = js.replace(/\b(public|private|protected|readonly|override)\s+/g, '');
 
-  // 7. Remove 'implements Foo, Bar' on classes
+  // 10. Remove 'implements Foo, Bar' on classes
   js = js.replace(/\s+implements\s+[\w$,\s<>]+(?=\s*\{)/g, '');
 
-  // 8. Transform function/constructor/method declarations and arrow functions
-  // Matches: [modifiers] [name](params): [ReturnType] { OR =>
-  js = js.replace(
-    /((?:\b(?:async\s+)?function\*?\s+[\w$]*|\bconstructor|\b(?:get|set|async)\s+[\w$]+|\b[\w$]+)\s*(?:<[^>]*>)?\s*\()([^)]*)\)(\s*(?::\s*[^={;]+)?\s*(\{|=>))/g,
-    (fullMatch, prefix, params, suffix, bodyOpener) => {
-      let cleanedParams = params;
-      if (cleanedParams.trim()) {
-        cleanedParams = cleanedParams.replace(/:\s*\{[^{}]*\}\s*/g, '');
-        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+(=[^,]+)/g, '$1 $2');
-        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+/g, '$1');
-      }
-      return `${prefix}${cleanedParams}) ${bodyOpener}`;
-    }
-  );
-
-  // Arrow functions without leading keyword: (a: string, b: number): ReturnType =>
-  js = js.replace(
-    /(\(([^)]*)\)\s*(?::\s*[^={;]+)?\s*=>)/g,
-    (fullMatch, _, params) => {
-      let cleanedParams = params;
-      if (cleanedParams.trim()) {
-        cleanedParams = cleanedParams.replace(/:\s*\{[^{}]*\}\s*/g, '');
-        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+(=[^,]+)/g, '$1 $2');
-        cleanedParams = cleanedParams.replace(/([\w$]+)\s*\??\s*:\s*[^=,]+/g, '$1');
-      }
-      return `(${cleanedParams}) =>`;
-    }
-  );
-
-  // 9. Clean class field declarations: `foo: type = val;` -> `foo = val;`, `foo: type;` -> `foo;`
+  // 11. Clean class field declarations: `foo: type = val;` -> `foo = val;`, `foo: type;` -> `foo;`
   js = js.replace(/^\s*([#\w$]+)\s*:\s*[^=;\n]+(=|;)/gm, '$1 $2');
 
-  // 10. Clean variable declarations: `const foo: type = val;`
-  js = js.replace(/\b(const|let|var)\s+([\w$]+)\s*:\s*[^=;\n]+(=|;)/g, '$1 $2 $3');
-
-  // 11. Remove generic invocations and casts: `<T>(`, `as Type`
+  // 12. Remove generic invocations and casts: `<T>(`, `as Type`
   js = js.replace(/<[\w$,\s<>\[\]|&]+>(?=\s*\()/g, '');
+  js = js.replace(/\)\s*:\s*(?:Promise<[^>]+>|[\w$<>[\]|&]+|\([^)]*\)\s*=>\s*[^;{]+)\s*(\{|=>>?)/g, ') $1');
   js = js.replace(/\s+as\s+const\b/g, '');
-  js = js.replace(/\s+as\s+(?:any|string|number|boolean|unknown|(?:\([^)]*\)\s*=>\s*[^;,)\n]+)|[\w$<>\[\]|&]+)\b/g, '');
+  js = js.replace(/\s+as\s+(?:any|string|number|boolean|unknown|Buffer|[\w$<>\[\]|&]+)\b/g, '');
 
-  // 12. Auto-close missing braces if model was cut off near EOF
+  // 13. Auto-close missing braces if model was cut off near EOF
   const openBraces = (js.match(/\{/g) || []).length;
   const closeBraces = (js.match(/\}/g) || []).length;
   if (openBraces > closeBraces) {
     js += '\n' + '}'.repeat(openBraces - closeBraces);
   }
 
-  // 13. Track and transform exports and imports
+  // 14. Track and transform exports
   const exportedNames = new Set();
-
-  js = js.replace(/import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"];?/g, (match, imports, pkg) => {
-    const transformed = imports.split(',').map(item => {
-      const parts = item.trim().split(/\s+as\s+/);
-      return parts.length === 2 ? `${parts[0].trim()}: ${parts[1].trim()}` : parts[0].trim();
-    }).filter(Boolean).join(', ');
-    return `const { ${transformed} } = require('${pkg}');`;
-  });
-
-  js = js.replace(/import\s+\*\s+as\s+([\w$]+)\s+from\s+['"]([^'"]+)['"];?/g, 'const $1 = require(\'$2\');');
-  js = js.replace(/import\s+([\w$]+)\s+from\s+['"]([^'"]+)['"];?/g, 'const $1 = require(\'$2\');');
   js = js.replace(/export\s+default\s+/g, 'module.exports.default = module.exports = ');
 
   js = js.replace(/export\s+(class|function\*?|async\s+function\*?)\s+([\w$]+)/g, (m, kind, name) => {
@@ -279,8 +282,15 @@ function createSandboxedRequire(customMocks = {}) {
     }
     if (cleanMod === 'bcrypt' || cleanMod === 'bcryptjs') {
       return {
+        genSalt: async (rounds) => 'salt',
+        genSaltSync: (rounds) => 'salt',
         hash: async (pwd, rounds) => crypto.createHash('sha256').update(pwd).digest('hex'),
+        hashSync: (pwd, rounds) => crypto.createHash('sha256').update(pwd).digest('hex'),
         compare: async (pwd, hash) => {
+          const computed = crypto.createHash('sha256').update(pwd).digest('hex');
+          return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hash));
+        },
+        compareSync: (pwd, hash) => {
           const computed = crypto.createHash('sha256').update(pwd).digest('hex');
           return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hash));
         }

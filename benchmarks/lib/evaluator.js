@@ -29,13 +29,15 @@ function extractCodeBlocks(text) {
     return blocks[0];
   }
   if (blocks.length > 1) {
-    // If one block is the primary module containing the target class, prioritize it
-    const primaryBlock = blocks.find(b => b.length > 400 && /export\s+class\s+(?:AuthService|Order|ResilientHttpClient|CircuitBreaker)/.test(b)) ||
-                         blocks.find(b => b.length > 400 && /class\s+(?:AuthService|Order|ResilientHttpClient|CircuitBreaker)/.test(b));
+    // If multiple blocks exist (e.g. model drafted scratchpad snippets), pick the primary implementation
+    const candidateBlocks = blocks.filter(b => /class\s+(?:AuthService|Order|ResilientHttpClient|CircuitBreaker|Money)\b/.test(b));
+    const primaryBlock = candidateBlocks.length > 0
+      ? candidateBlocks.sort((a, b) => b.length - a.length)[0]
+      : blocks.slice().sort((a, b) => b.length - a.length)[0];
 
     if (primaryBlock) {
-      // Prepend any companion blocks that define interfaces, types, or imports
-      const companionBlocks = blocks.filter(b => b !== primaryBlock && /^\s*(?:import|export\s+(?:interface|type)|interface|type)\b/m.test(b));
+      // Prepend companion blocks that define valid interfaces, types, or imports
+      const companionBlocks = blocks.filter(b => b !== primaryBlock && /^\s*(?:import\b|export\s+(?:interface|type)|(?:interface|type)\s+[\w$]+)/m.test(b) && !b.includes('? //') && b.length > 30);
       if (companionBlocks.length > 0) {
         return companionBlocks.join('\n\n') + '\n\n' + primaryBlock;
       }
@@ -49,8 +51,9 @@ function extractCodeBlocks(text) {
     return blocks.join('\n\n');
   }
   // Only fall back to raw text if it actually looks like code
-  if (/^\s*(?:import|export|const|let|var|function|class)\b/m.test(text)) {
-    return text.trim();
+  const declMatch = text.match(/^\s*(?:import|export|const|let|var|function|class|interface|type)\b/m);
+  if (declMatch) {
+    return text.slice(declMatch.index).trim();
   }
   return '';
 }

@@ -1,0 +1,79 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# benchmark-runtime.yml
+# Manual workflow dispatch for execution-backed runtime benchmarks.
+# Requires live LLM API keys (Gemini, OpenRouter, AgentRouter).
+# Generates runtime report and uploads it as a workflow artifact.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Runtime Sandbox Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Target model or "all" to benchmark the full configured matrix'
+        required: true
+        default: 'all'
+        type: string
+      task:
+        description: 'Specific benchmark scenario (all, auth-security, ddd-order-invariants, resilient-api-client)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - auth-security
+          - ddd-order-invariants
+          - resilient-api-client
+
+concurrency:
+  group: benchmark-runtime-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: Run Sandbox Runtime Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (v22 for native TypeScript stripping & V8 sandbox)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run Runtime Benchmark Matrix
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          AGENTROUTER_API_KEY: ${{ secrets.AGENTROUTER_API_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.task }}" = "all" ] && [ "${{ github.event.inputs.model }}" = "all" ]; then
+            node benchmarks/run-multi-runtime.cjs
+          else
+            TASK_ARG=""
+            if [ "${{ github.event.inputs.task }}" != "all" ]; then
+              TASK_ARG="--task ${{ github.event.inputs.task }}"
+            fi
+            MODEL_ARG=""
+            if [ "${{ github.event.inputs.model }}" != "all" ]; then
+              MODEL_ARG="--model ${{ github.event.inputs.model }}"
+            fi
+            node benchmarks/run-runtime-benchmark.js $TASK_ARG $MODEL_ARG
+          fi
+
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-benchmark-results
+          path: |
+            benchmarks/results/*.md
+            benchmarks/results/*.html
+            benchmarks/results/*.json
+          retention-days: 30

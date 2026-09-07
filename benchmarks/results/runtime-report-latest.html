@@ -2,297 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ContextOS Execution-Backed Runtime Benchmark — Frontier Multi-Model Leaderboard</title>
+  <title>ContextOS Multi-Model Benchmark Leaderboard</title>
   <style>
-    :root {
-      --bg: #07090e;
-      --card-bg: rgba(17, 24, 39, 0.7);
-      --border: rgba(255, 255, 255, 0.08);
-      --primary: #38bdf8;
-      --accent: #818cf8;
-      --success: #34d399;
-      --success-bg: rgba(52, 211, 153, 0.12);
-      --warning: #fbbf24;
-      --danger: #f87171;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background: radial-gradient(circle at 50% 0%, #172554 0%, var(--bg) 65%);
-      color: var(--text);
-      padding: 2.5rem 1.5rem;
-      min-height: 100vh;
-      line-height: 1.5;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    header {
-      margin-bottom: 2.5rem;
-      text-align: center;
-    }
-    .badge-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.9rem;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--primary);
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #38bdf8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.75rem;
-      letter-spacing: -0.02em;
-    }
-    .subtitle {
-      color: var(--muted);
-      font-size: 1.05rem;
-      max-width: 750px;
-      margin: 0 auto;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.25rem;
-      margin-bottom: 2.5rem;
-    }
-    .stat-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--primary), transparent);
-    }
-    .stat-val {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: var(--primary);
-      line-height: 1.1;
-      margin-bottom: 0.25rem;
-    }
-    .stat-val.gold { color: #facc15; }
-    .stat-val.green { color: var(--success); }
-    .stat-label {
-      color: var(--muted);
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-    .section-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2.5rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    }
-    .section-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #f8fafc;
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    th, td {
-      padding: 1rem 1.25rem;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    th {
-      background: rgba(15, 23, 42, 0.6);
-      color: var(--muted);
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-    th:first-child { border-top-left-radius: 8px; }
-    th:last-child { border-top-right-radius: 8px; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .model-name {
-      font-weight: 700;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.95rem;
-      color: #f1f5f9;
-    }
-    .tag {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      background: rgba(148, 163, 184, 0.1);
-      border-radius: 6px;
-      font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 0.2rem;
-    }
-    .score-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.25rem 0.65rem;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.85rem;
-    }
-    .score-100 { background: var(--success-bg); color: var(--success); border: 1px solid rgba(52, 211, 153, 0.3); }
-    .score-high { background: rgba(56, 189, 248, 0.12); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); }
-    .score-mid { background: rgba(251, 191, 36, 0.12); color: var(--warning); border: 1px solid rgba(251, 191, 36, 0.3); }
-    .delta-plus {
-      color: var(--success);
-      font-weight: 700;
-    }
-    .footer {
-      text-align: center;
-      color: #64748b;
-      font-size: 0.85rem;
-      margin-top: 3rem;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { color: #38bdf8; margin-bottom: 0.5rem; }
+    .meta { color: #94a3b8; font-size: 0.9rem; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #334155; }
+    th { background: #0f172a; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: bold; font-size: 0.85rem; }
+    .badge-pass { background: #166534; color: #bbf7d0; }
+    .badge-fail { background: #991b1b; color: #fecaca; }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <div class="badge-pill">⚡ Sandboxed V8 Unit Test Harness</div>
-      <h1>ContextOS Multi-Model Benchmark</h1>
-      <p class="subtitle">Real sandbox runtime evaluation measuring timing-safe cryptography, brute-force rate-limiting, and DDD Aggregate invariants across 5 frontier models.</p>
-    </header>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val gold">100%</div>
-        <div class="stat-label">Frontier Top Score (ContextOS)</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val green">100%</div>
-        <div class="stat-label">V8 Compilation Rate</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">+15.4%</div>
-        <div class="stat-label">Average Quality Gain</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">5 Models</div>
-        <div class="stat-label">Evaluated Across Gateways</div>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <div class="section-title">🏆 Frontier Model Leaderboard</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 50px; text-align: center;">Rank</th>
-            <th>Model & Gateway</th>
-            <th style="text-align: center;">Baseline</th>
-            <th style="text-align: center;">With ContextOS</th>
-            <th style="text-align: center;">Delta</th>
-            <th style="text-align: center;">V8 Compilation</th>
-            <th>Behavioral Runtime Impact</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="text-align: center; font-size: 1.2rem;">🥇</td>
-            <td>
-              <div class="model-name">gpt-5.6-sol</div>
-              <div class="tag">AgentRouter</div>
-            </td>
-            <td style="text-align: center;"><span class="score-badge score-high">93%</span><br><small style="color:var(--muted)">12/13 passed</small></td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span><br><small style="color:var(--muted)">13/13 passed</small></td>
-            <td style="text-align: center;" class="delta-plus">+7%</td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span></td>
-            <td>Zero syntax errors. ContextOS injected strict email/payload sanitization to achieve 100% across all suites.</td>
-          </tr>
-          <tr>
-            <td style="text-align: center; font-size: 1.2rem;">🥈</td>
-            <td>
-              <div class="model-name">claude-opus-5</div>
-              <div class="tag">AgentRouter</div>
-            </td>
-            <td style="text-align: center;"><span class="score-badge score-high">87%</span><br><small style="color:var(--muted)">11/13 passed</small></td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span><br><small style="color:var(--muted)">13/13 passed</small></td>
-            <td style="text-align: center;" class="delta-plus">+13%</td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span></td>
-            <td>Ponytail mindset eliminated 7 auxiliary classes, avoiding output token caps and producing clean single-file architectures.</td>
-          </tr>
-          <tr>
-            <td style="text-align: center; font-size: 1.2rem;">🥉</td>
-            <td>
-              <div class="model-name">glm-5.3</div>
-              <div class="tag">AgentRouter</div>
-            </td>
-            <td style="text-align: center;"><span class="score-badge score-mid">78%</span><br><small style="color:var(--muted)">10/13 passed</small></td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span><br><small style="color:var(--muted)">13/13 passed</small></td>
-            <td style="text-align: center;" class="delta-plus">+22%</td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span></td>
-            <td>Reasoning effort tuning and sandbox polyfills achieved 100% pass across DDD state machines and API client breakers.</td>
-          </tr>
-          <tr>
-            <td style="text-align: center; font-weight: 700; color: var(--muted);">4</td>
-            <td>
-              <div class="model-name">google/gemini-3.8-flash</div>
-              <div class="tag">OpenRouter (Flex Tier)</div>
-            </td>
-            <td style="text-align: center;"><span class="score-badge score-high">85%</span><br><small style="color:var(--muted)">11/13 passed</small></td>
-            <td style="text-align: center;"><span class="score-badge score-high">92%</span><br><small style="color:var(--muted)">12/13 passed</small></td>
-            <td style="text-align: center;" class="delta-plus">+7%</td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span></td>
-            <td>Lightning-fast ~5.4s turnaround. Constant-time auth verification, bounded JWT lifetimes (<=15m), and circuit breaker states.</td>
-          </tr>
-          <tr>
-            <td style="text-align: center; font-weight: 700; color: var(--muted);">5</td>
-            <td>
-              <div class="model-name">deepseek-v4-flash</div>
-              <div class="tag">AgentRouter</div>
-            </td>
-            <td style="text-align: center;"><span class="score-badge score-mid">59%</span><br><small style="color:var(--muted)">8/13 passed</small></td>
-            <td style="text-align: center;"><span class="score-badge score-mid">74%</span><br><small style="color:var(--muted)">10/13 passed</small></td>
-            <td style="text-align: center;" class="delta-plus">+15%</td>
-            <td style="text-align: center;"><span class="score-badge score-100">100%</span></td>
-            <td>Robust AST pre-cleaning repaired conversational ellipsis, enabling full compilation and passing timeout/auth suites.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="footer">
-      ContextOS Architecture Engine • Evaluated with Node.js 22 V8 Sandbox + Native AST Type Stripping
-    </div>
+    <h1>⚡ ContextOS Multi-Model Benchmark Leaderboard</h1>
+    <div class="meta">Timestamp: 2026-09-07T18:42:21.456Z | Live V8 Sandbox Assertions | OpenRouter & AgentRouter</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:center">Rank</th>
+          <th>Model</th>
+          <th style="text-align:center">Baseline</th>
+          <th style="text-align:center">With ContextOS</th>
+          <th style="text-align:center">Delta</th>
+          <th style="text-align:center">Compilation</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+    <tr>
+      <td style="text-align:center; font-size:1.2rem">🥇</td>
+      <td><strong>glm-5.3</strong><br><small style="color:#64748b">AgentRouter (ps.air-outer.com)</small></td>
+      <td style="text-align:center"><span class="badge badge-fail">53%</span></td>
+      <td style="text-align:center"><span class="badge badge-pass">93%</span><br><small>11/12 passed</small></td>
+      <td style="text-align:center; font-weight:bold; color:#16a34a">+40%</td>
+      <td style="text-align:center">100%</td>
+    </tr>
+  
+    <tr>
+      <td style="text-align:center; font-size:1.2rem">🥈</td>
+      <td><strong>deepseek-v4-flash</strong><br><small style="color:#64748b">AgentRouter (ps.air-outer.com)</small></td>
+      <td style="text-align:center"><span class="badge badge-fail">0%</span></td>
+      <td style="text-align:center"><span class="badge badge-fail">49%</span><br><small>6/12 passed</small></td>
+      <td style="text-align:center; font-weight:bold; color:#16a34a">+49%</td>
+      <td style="text-align:center">67%</td>
+    </tr>
+  
+    <tr>
+      <td style="text-align:center; font-size:1.2rem">🥉</td>
+      <td><strong>gemini-3.8-flash</strong><br><small style="color:#64748b">Google AI Studio</small></td>
+      <td style="text-align:center"><span class="badge badge-fail">27%</span></td>
+      <td style="text-align:center"><span class="badge badge-fail">33%</span><br><small>4/12 passed</small></td>
+      <td style="text-align:center; font-weight:bold; color:#16a34a">+6%</td>
+      <td style="text-align:center">67%</td>
+    </tr>
+  
+      </tbody>
+    </table>
   </div>
 </body>
 </html>
