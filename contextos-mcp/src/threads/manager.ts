@@ -373,7 +373,11 @@ export class ThreadManager {
 		const commitSha = await this.getCurrentCommitSha();
 		const cacheAgent = threadConfig.agent.backend || this.config.default_agent;
 		const cacheModel = threadConfig.agent.model || this.config.default_model;
-		const cacheFiles = threadConfig.files || [];
+		const cacheFiles = threadConfig.taskBrief?.writeScope
+			? [...threadConfig.taskBrief.writeScope]
+			: threadConfig.files?.length
+				? threadConfig.files
+				: ["."];
 		const cached = this.threadCache.get(
 			threadConfig.task,
 			cacheFiles,
@@ -428,15 +432,30 @@ export class ThreadManager {
 
 		const threadId = threadConfig.id || randomBytes(6).toString("hex");
 		const maxAttempts = this.config.thread_retries + 1;
+		const taskBrief = Object.freeze({
+			taskId: threadId,
+			baseSha: commitSha,
+			objective: threadConfig.taskBrief?.objective || threadConfig.task,
+			writeScope: Object.freeze([
+				...(threadConfig.taskBrief?.writeScope || (threadConfig.files?.length ? threadConfig.files : ["."])),
+			]),
+			testCommand: threadConfig.taskBrief?.testCommand || "",
+			expectedResult: threadConfig.taskBrief?.expectedResult || "Task completes successfully",
+			maxAttempts: threadConfig.taskBrief?.maxAttempts || maxAttempts,
+		});
+		const normalizedConfig: ThreadConfig = { ...threadConfig, id: threadId, files: [...taskBrief.writeScope], taskBrief };
 		const state: ThreadState = {
 			id: threadId,
-			config: threadConfig,
+			config: normalizedConfig,
 			status: "pending",
 			phase: "queued",
 			startedAt: Date.now(),
 			attempt: 0,
 			maxAttempts,
 			estimatedCostUsd: 0,
+			taskBrief,
+			verification: taskBrief.testCommand ? "PENDING" : "PASS",
+			scopeViolation: false,
 		};
 		this.threads.set(threadId, state);
 		this.totalSpawned++;
@@ -455,7 +474,7 @@ export class ThreadManager {
 
 		// Retry loop with exponential backoff and agent re-routing
 		let lastResult: CompressedResult | undefined;
-		let currentConfig = threadConfig;
+		let currentConfig = normalizedConfig;
 
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			state.attempt = attempt;
@@ -625,6 +644,16 @@ export class ThreadManager {
 			const diff = await this.worktreeManager.getDiff(threadId);
 			const diffStats = await this.worktreeManager.getDiffStats(threadId);
 			const filesChanged = await this.worktreeManager.getChangedFiles(threadId);
+			try {
+				await this.worktreeManager.assertWriteScope(
+					threadId,
+					state.taskBrief!.baseSha,
+					state.taskBrief!.writeScope,
+				);
+			} catch (error) {
+				if (error instanceof Error && error.name === "ScopeViolationError") state.scopeViolation = true;
+				throw error;
+			}
 
 			if (filesChanged.length > 0) {
 				await this.worktreeManager.commit(threadId, `swarm: ${threadConfig.task.slice(0, 72)}`);

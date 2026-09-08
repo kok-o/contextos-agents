@@ -60,6 +60,9 @@ export interface ThreadSpawnParams {
 	agent?: string;
 	model?: string;
 	context?: string;
+	testCommand?: string;
+	expectedResult?: string;
+	maxAttempts?: number;
 }
 
 // ── Session Manager ────────────────────────────────────────────────────────
@@ -207,6 +210,18 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 			model: params.model || session.config.default_model,
 		},
 		files: params.files || [],
+		taskBrief:
+			params.testCommand || params.expectedResult || params.maxAttempts
+				? {
+						taskId: threadId,
+						baseSha: "",
+						objective: params.task,
+						writeScope: params.files?.length ? params.files : ["."],
+						testCommand: params.testCommand || "",
+						expectedResult: params.expectedResult || "Task completes successfully",
+						maxAttempts: params.maxAttempts || session.config.thread_retries + 1,
+					}
+				: undefined,
 	};
 
 	const resultPromise = session.threadManager.spawnThread(threadConfig);

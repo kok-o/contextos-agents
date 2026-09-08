@@ -298,6 +298,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 							agent: backend,
 							model: model,
 							context: contextPrompt,
+							testCommand: args.verify_command,
 						});
 
 						const threads = getThreads(session);
