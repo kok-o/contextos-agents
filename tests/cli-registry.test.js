@@ -8,6 +8,7 @@
 
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { COMMAND_REGISTRY, getCommand, isKnownCommand, getStatus } = require('../bin/commands.js');
@@ -58,7 +59,8 @@ describe('bin/commands.js — CLI Command Registry & Status', () => {
     assert.equal(status.initialized, true);
     assert.ok(typeof status.skillsCount === 'number');
     assert.ok(status.skillsCount >= 24);
-    assert.equal(status.mcpInstalled, true);
+    assert.equal(typeof status.mcpInstalled, 'boolean');
+    assert.equal(status.mcpInstalled, fs.existsSync(path.join(ROOT_DIR, '.agents', 'mcp', 'server.mjs')));
     assert.ok(Array.isArray(status.compiledAdapters));
   });
 
@@ -94,7 +96,8 @@ describe('bin/index.js — CLI dispatch & flags', () => {
     assert.equal(parsed.package, 'contextos-agents');
     assert.equal(parsed.initialized, true);
     assert.ok(parsed.skillsCount >= 24);
-    assert.equal(parsed.mcpInstalled, true);
+    assert.equal(typeof parsed.mcpInstalled, 'boolean');
+    assert.equal(parsed.mcpInstalled, fs.existsSync(path.join(ROOT_DIR, '.agents', 'mcp', 'server.mjs')));
   });
 
   test('contextos detect --json outputs structured detection result', () => {
