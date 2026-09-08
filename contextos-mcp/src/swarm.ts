@@ -70,6 +70,7 @@ interface SwarmArgs {
 	quiet: boolean;
 	json: boolean;
 	autoRoute: boolean;
+	allowHooks?: boolean;
 	replBackend?: "node" | "python";
 	query: string;
 }
@@ -84,6 +85,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 	let quiet = false;
 	let json = false;
 	let autoRoute = false;
+	let allowHooks = false;
 	let replBackend: "node" | "python" = "node";
 	const positional: string[] = [];
 
@@ -97,6 +99,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 			process.stderr.write(`  --agent <backend>      Agent backend (opencode, claude, codex, aider)\n`);
 			process.stderr.write(`  --repl <node|python>   REPL execution engine (default: node)\n`);
 			process.stderr.write(`  --python-repl          Use legacy Python runtime.py subprocess\n`);
+			process.stderr.write(`  --allow-hooks          Enable lifecycle hooks execution (default: disabled)\n`);
 			process.stderr.write(`  --dry-run              Plan only, don't spawn threads\n`);
 			process.stderr.write(`  --max-budget <usd>     Maximum session budget\n`);
 			process.stderr.write(`  --auto-route           Enable automatic model selection\n`);
@@ -110,6 +113,8 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 			orchestratorModel = args[++i];
 		} else if (arg === "--agent" && i + 1 < args.length) {
 			agent = args[++i];
+		} else if (arg === "--allow-hooks") {
+			allowHooks = true;
 		} else if (arg === "--repl" && i + 1 < args.length) {
 			const val = args[++i].toLowerCase();
 			replBackend = val === "python" ? "python" : "node";
@@ -158,6 +163,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 		dryRun,
 		maxBudget,
 		autoRoute,
+		allowHooks,
 		verbose,
 		quiet,
 		json,
@@ -275,8 +281,9 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 
 export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	const args = parseSwarmArgs(rawArgs);
-	const config = loadConfig();
-	const hooks = loadHooks(args.dir);
+	const config = loadConfig(args.dir || undefined);
+	const allowHooks = Boolean(args.allowHooks || config.allow_hooks);
+	const hooks = loadHooks(args.dir, allowHooks);
 
 	// Configure UI
 	if (args.json) setJsonMode(true);
@@ -501,7 +508,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 				try {
 					const worktreePath = path.join(args.dir, config.worktree_base_dir, `wt-${threadId}`);
 					if (fs.existsSync(worktreePath)) {
-						runHooks(hooks.post_thread, worktreePath, "post_thread");
+						runHooks(hooks.post_thread, worktreePath, "post_thread", allowHooks);
 					}
 				} catch (hookErr: any) {
 					logWarn(`Post-thread hook failed: ${hookErr.message}`);
@@ -561,7 +568,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			// Run post-merge hooks (tests, etc.) — success is silent
 			if (merged > 0 && hooks.post_merge.length > 0) {
 				try {
-					const hookResults = runHooks(hooks.post_merge, args.dir, "post_merge");
+					const hookResults = runHooks(hooks.post_merge, args.dir, "post_merge", allowHooks);
 					const hookFailures = hookResults.filter((r) => !r.success);
 					if (hookFailures.length > 0) {
 						const hookOutput = hookFailures.map((r) => r.output).join("\n");

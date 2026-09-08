@@ -38,6 +38,7 @@ OPTIONS
   --file <path>    Read context from a file
   --url <url>      Fetch context from a URL
   --stdin          Read context from stdin (pipe data in)
+  --allow-hooks    Enable lifecycle hooks execution (default: disabled)
   --verbose        Show iteration progress
 
 EXAMPLES
@@ -54,6 +55,7 @@ interface CliArgs {
 	file?: string;
 	url?: string;
 	useStdin: boolean;
+	allowHooks: boolean;
 	verbose: boolean;
 	query: string;
 }
@@ -64,6 +66,7 @@ function parseArgs(): CliArgs {
 	let file: string | undefined;
 	let url: string | undefined;
 	let useStdin = false;
+	let allowHooks = false;
 	let verbose = false;
 	const positional: string[] = [];
 
@@ -77,6 +80,8 @@ function parseArgs(): CliArgs {
 			url = args[++i];
 		} else if (arg === "--stdin") {
 			useStdin = true;
+		} else if (arg === "--allow-hooks") {
+			allowHooks = true;
 		} else if (arg === "--verbose") {
 			verbose = true;
 		} else if (arg === "--help" || arg === "-h") {
@@ -105,7 +110,7 @@ function parseArgs(): CliArgs {
 		usage();
 	}
 
-	return { modelId, file, url, useStdin, verbose, query };
+	return { modelId, file, url, useStdin, allowHooks, verbose, query };
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
