@@ -28,7 +28,7 @@ process.on("unhandledRejection", (err: any) => {
 });
 
 const { getModels, getProviders } = await import("@mariozechner/pi-ai");
-const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
+const { PythonRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
@@ -1410,7 +1410,10 @@ async function runQuery(query: string): Promise<void> {
 	let iterStart = Date.now();
 
 	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
-	const repl = usePython ? new PythonRepl() : new NodeVmRepl();
+	if (!usePython) {
+		throw new Error("NodeVmRepl has been removed. In-process JavaScript execution is disabled.");
+	}
+	const repl = new PythonRepl();
 	const ac = new AbortController();
 
 	// Expose to the readline SIGINT handler

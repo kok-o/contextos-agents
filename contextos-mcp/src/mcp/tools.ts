@@ -16,6 +16,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { assertWithinRepository } from "../security/repository-boundary.js";
+import { redactSecrets } from "../security/secret-filter.js";
 import {
 	cancelThreads,
 	cleanupSession,
@@ -29,15 +31,15 @@ import {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function _textResult(text: string) {
-	return { content: [{ type: "text" as const, text }] };
+	return { content: [{ type: "text" as const, text: redactSecrets(text) }] };
 }
 
 function errorResult(text: string) {
-	return { content: [{ type: "text" as const, text }], isError: true as const };
+	return { content: [{ type: "text" as const, text: redactSecrets(text) }], isError: true as const };
 }
 
 function jsonResult(data: unknown) {
-	return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+	return { content: [{ type: "text" as const, text: redactSecrets(JSON.stringify(data, null, 2)) }] };
 }
 
 /** Track active subprocesses so they can be killed on shutdown. */
@@ -64,7 +66,15 @@ export function registerTools(server: McpServer, defaultDir?: string): void {
 		if (!resolved) return null;
 		const abs = resolve(resolved);
 		if (!existsSync(abs)) return null;
-		return abs;
+		try {
+			if (defaultDir) {
+				const realDefault = assertWithinRepository(defaultDir, defaultDir);
+				return assertWithinRepository(abs, realDefault);
+			}
+			return assertWithinRepository(abs, abs);
+		} catch {
+			return null;
+		}
 	}
 
 	// ── swarm_run ──────────────────────────────────────────────────────────
@@ -154,6 +164,11 @@ export function registerTools(server: McpServer, defaultDir?: string): void {
 
 			try {
 				const session = await getSession(dir);
+				if (args.files) {
+					for (const file of args.files) {
+						assertWithinRepository(resolve(session.dir, file), session.dir);
+					}
+				}
 				const result = await spawnThread(session, {
 					task: args.task,
 					files: args.files,

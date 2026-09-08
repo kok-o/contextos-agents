@@ -20,6 +20,7 @@ const CORE_SKILLS_DIR = path.join(AGENTS_DIR, 'core', 'skills');
 const SKILL_RULES = [
   {
     skill: 'nextjs',
+    category: 'stack',
     strong: [/\bnext(?:\.js)?\b/i, /\bapp\s*router\b/i, /\bserver\s*actions?\b/i, /\brsc\b/i, /некст/i],
     medium: [/\bpage\.tsx\b/i, /\blayout\.tsx\b/i],
     weak: [],
@@ -27,6 +28,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'react',
+    category: 'stack',
     strong: [/\breact\b/i, /\buseOptimistic\b/i, /компонент/i, /хук/i],
     medium: [/\bcomponent\b/i, /\bhooks?\b/i, /\buseState\b/i, /\buseEffect\b/i, /\buseMemo\b/i, /\bprops\b/i, /модал\w*/i],
     weak: [],
@@ -34,6 +36,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'typescript',
+    category: 'stack',
     strong: [/\btypescript\b/i, /\btype-?safe\b/i, /\bgenerics?\b/i, /\binterface\b/i, /\btsconfig\b/i, /тайпскрипт/i, /типизац/i],
     medium: [],
     weak: [/\btypes?\b/i],
@@ -41,6 +44,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'ui-ux-pro',
+    category: 'ui',
     strong: [/\bui\b/i, /\bux\b/i, /\btailwind\b/i, /\bstyling\b/i, /дизайн/i, /верстк/i, /макет/i, /интерфейс/i],
     medium: [/\bcss\b/i, /\btheme\b/i, /\bmodal\b/i, /\bbutton\b/i, /модал\w*/i, /кнопк/i],
     weak: [/\bdesign\b/i],
@@ -48,6 +52,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'web-accessibility',
+    category: 'ui',
     strong: [/\baccessib\w*\b/i, /\ba11y\b/i, /\baria\b/i, /\bfocus\s*trap\b/i, /\bkeyboard\s*nav/i, /\bwcag\b/i, /\bscreen\s*reader\b/i, /доступност/i, /скринридер/i],
     medium: [],
     weak: [],
@@ -55,6 +60,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'impeccable-design',
+    category: 'ui',
     strong: [/\bvisual\s*qa\b/i, /\bmicro-?animation\b/i, /\bglassmorphism\b/i, /\btypography\b/i, /анимац/i, /полировк/i],
     medium: [/\bpolish\b/i],
     weak: [],
@@ -62,6 +68,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'database',
+    category: 'intent',
     strong: [/\bdatabase\b/i, /\bsql\b/i, /\bpostgres(?:ql)?\b/i, /\bprisma\b/i, /\bdrizzle\b/i, /\bmigration\b/i, /\borm\b/i, /баз.*данн/i, /миграц/i, /таблиц/i],
     medium: [/\bschema\b/i],
     weak: [/\bquery\b/i, /\bindex(?:ing)?\b/i],
@@ -69,6 +76,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'security',
+    category: 'intent',
     strong: [/\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /авториз/i, /аутентифик/i, /парол/i, /безопасност/i],
     medium: [/\bpermission\b/i, /\bsession\b/i, /\btoken\b/i, /токен/i],
     weak: [],
@@ -76,6 +84,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'performance',
+    category: 'intent',
     strong: [/\bperformance\b/i, /\blatency\b/i, /\blcp\b/i, /\bcls\b/i, /\binp\b/i, /\bcore\s*web\s*vitals\b/i, /\bwaterfall\b/i, /\bbundle\s*size\b/i, /производительн/i, /ускор/i],
     medium: [/\boptimize\b/i, /\bslow\b/i, /оптимиз/i, /медленн/i],
     weak: [],
@@ -83,6 +92,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'testing',
+    category: 'intent',
     strong: [/\bvitest\b/i, /\bjest\b/i, /\bplaywright\b/i, /\btdd\b/i, /\bbdd\b/i, /\be2e\b/i, /тестирован/i, /покрыти/i, /юнит/i],
     medium: [/\btest(?:s|ing)?\b/i, /\bmock\b/i, /тест/i],
     weak: [],
@@ -90,6 +100,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'docker',
+    category: 'intent',
     strong: [/\bdocker\b/i, /\bdockerfile\b/i, /\bcompose\b/i, /\bkubernetes\b/i, /\bk8s\b/i, /докер/i],
     medium: [],
     weak: [/\bcontainer\b/i, /контейнер/i],
@@ -97,6 +108,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'fastapi',
+    category: 'stack',
     strong: [/\bfastapi\b/i, /\bpydantic\b/i, /\buvicorn\b/i, /\bpytest\b/i, /питон/i],
     medium: [/\bpython\b/i],
     weak: [],
@@ -104,6 +116,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'nestjs',
+    category: 'stack',
     strong: [/\bnestjs\b/i, /\b@nestjs\b/i, /нест/i],
     medium: [],
     weak: [/\bmodule\b/i, /\bcontroller\b/i, /\binjectable\b/i],
@@ -111,6 +124,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'node',
+    category: 'stack',
     strong: [/\bnode(?:\.js)?\b/i, /\bexpress\b/i, /\bfastify\b/i],
     medium: [/\bbackend\b/i, /\bapi\s*route\b/i, /бэкенд/i, /эндпоинт/i],
     weak: [],
@@ -118,6 +132,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'ddd',
+    category: 'intent',
     strong: [/\bddd\b/i, /\bdomain-?driven\b/i, /\baggregate\b/i, /\bvalue\s*object\b/i, /\bbounded\s*context\b/i],
     medium: [/\bentity\b/i, /домен/i, /агрегат/i],
     weak: [],
@@ -125,6 +140,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'microservices',
+    category: 'intent',
     strong: [/\bmicroservices?\b/i, /\bevent-?driven\b/i, /\brabbitmq\b/i, /\bkafka\b/i, /\bgrpc\b/i, /микросервис/i],
     medium: [/\bpub\/?sub\b/i, /очеред/i],
     weak: [],
@@ -132,6 +148,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'system-design',
+    category: 'intent',
     strong: [/\bsystem\s*design\b/i, /\bhigh\s*concurrency\b/i, /\bcircuit\s*breaker\b/i, /масштабируем/i],
     medium: [/\barchitecture\b/i, /\bscalab(?:le|ility)\b/i, /архитектур/i],
     weak: [],
@@ -139,6 +156,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'graphify',
+    category: 'intent',
     strong: [/\bgraphify\b/i, /\bknowledge\s*graph\b/i, /\bcodebase\s*graph\b/i, /\bproject\s*graph\b/i, /\bblast\s*radius\b/i, /\bmap\s*(?:the\s*)?codebase\b/i, /граф\s*проект/i, /граф\s*зависимост/i],
     medium: [],
     weak: [],
@@ -146,6 +164,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'architecture-diagrams',
+    category: 'intent',
     strong: [/\bflowchart\b/i, /\bsequence\s*diagram\b/i],
     medium: [/\bdiagrams?\b/i, /диаграмм/i, /схем/i, /нарисуй/i],
     weak: [],
@@ -153,6 +172,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'subagent-orchestrator',
+    category: 'intent',
     strong: [/\bsubagent\b/i, /\bparallel\s*tasks\b/i, /субагент/i, /распараллел/i],
     medium: [/\bdelegate\b/i, /делегируй/i],
     weak: [],
@@ -160,6 +180,7 @@ const SKILL_RULES = [
   },
   {
     skill: 'interview-me',
+    category: 'intent',
     strong: [/\binterview\b/i, /интервью/i, /расспроси/i],
     medium: [/\bclarify\b/i, /\bquestions\b/i, /уточни\b/i],
     weak: [],
@@ -335,71 +356,133 @@ function analyzeImportGraph(projectDir = process.cwd()) {
  */
 function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', projectDir = process.cwd() } = {}) {
   const promptText = (prompt || '').toLowerCase();
-  const scores = new Map();
+  const ruleMap = new Map();
+  const promptScores = new Map();
+  const fileScores = new Map();
 
   for (const rule of SKILL_RULES) {
-    let score = 0;
+    ruleMap.set(rule.skill, rule);
+    let pScore = 0;
+    let fScore = 0;
 
     // Strong triggers (10 points each match)
     for (const pat of rule.strong || []) {
-      if (pat.test(promptText)) score += 10;
+      if (pat.test(promptText)) pScore += 10;
     }
 
     // Medium triggers (5 points each match)
     for (const pat of rule.medium || []) {
-      if (pat.test(promptText)) score += 5;
+      if (pat.test(promptText)) pScore += 5;
     }
 
     // Weak triggers (2 points each match)
     for (const pat of rule.weak || []) {
-      if (pat.test(promptText)) score += 2;
+      if (pat.test(promptText)) pScore += 2;
     }
 
     // File matches (10 points per matching file)
     for (const file of files) {
       const normalized = file.replace(/\\/g, '/');
       for (const pat of rule.fileGlobs || []) {
-        if (pat.test(normalized)) score += 10;
+        if (pat.test(normalized)) fScore += 10;
       }
     }
 
-    // Minimum score threshold for domain skill activation
-    if (score >= 5) {
-      scores.set(rule.skill, score);
-    }
+    if (pScore > 0) promptScores.set(rule.skill, pScore);
+    if (fScore > 0) fileScores.set(rule.skill, fScore);
   }
 
   // Phase 2: Merge AST & Project Dependency Graph Signals
-  if (projectDir) {
-    const astSignals = analyzeImportGraph(projectDir);
-    for (const [skill, astScore] of astSignals) {
-      scores.set(skill, (scores.get(skill) || 0) + astScore);
+  const astSignals = projectDir ? analyzeImportGraph(projectDir) : new Map();
+
+  const MAX_DOMAIN_SKILLS = 4;
+  const selectedSkills = [];
+
+  // 1. INTENT SLOTS & INTENT PRECEDENCE (Immunity against eviction)
+  // Direct user intent in prompt MUST NOT be evicted by ambient stack/file signals.
+  // We identify candidate intent skills:
+  // - Category 'intent' with promptScore >= 5 (or fileScore for direct intent files like Dockerfile / schema.prisma)
+  // - Any skill with promptScore >= 10 (explicit direct mention)
+  const candidateIntents = [];
+  for (const rule of SKILL_RULES) {
+    const s = rule.skill;
+    const p = promptScores.get(s) || 0;
+    const f = fileScores.get(s) || 0;
+    if (rule.category === 'intent' && (p >= 5 || (p > 0 && f >= 10))) {
+      candidateIntents.push({ skill: s, score: p * 2 + f, priority: 2 });
+    } else if (p >= 10) {
+      candidateIntents.push({ skill: s, score: p, priority: 1 });
     }
   }
 
-  // Sort matched domain skills by score descending
-  const sortedDomainSkills = Array.from(scores.entries())
+  candidateIntents.sort((a, b) => b.priority - a.priority || b.score - a.score);
+
+  // Reserve up to 2 guaranteed intent slots for directly requested capabilities
+  for (const item of candidateIntents) {
+    if (selectedSkills.length < 2 && !selectedSkills.includes(item.skill)) {
+      selectedSkills.push(item.skill);
+    }
+  }
+
+  // 2. CONTEXT SUPPRESSION
+  // If task is purely infrastructure (e.g. docker) or pure backend/architecture,
+  // suppress ambient UI skills from AST to avoid polluting non-UI tasks.
+  const hasPureInfraIntent = selectedSkills.includes('docker');
+  const hasBackendOnlyIntent = selectedSkills.some(s => ['database', 'fastapi', 'nestjs', 'ddd'].includes(s)) &&
+    !files.some(f => /\.(tsx|jsx|css|scss|html)$/.test(f)) &&
+    !/\b(ui|react|css|tailwind|frontend|макет|дизайн|кнопк|стил|компонент)/i.test(promptText);
+
+  const suppressAmbientUI = hasPureInfraIntent || hasBackendOnlyIntent;
+
+  // 3. REMAINING SLOTS: Rank candidate skills with user-intent weighting
+  const candidateScores = new Map();
+  for (const rule of SKILL_RULES) {
+    const s = rule.skill;
+    if (selectedSkills.includes(s)) continue;
+
+    const p = promptScores.get(s) || 0;
+    const f = fileScores.get(s) || 0;
+    const a = astSignals.get(s) || 0;
+
+    // If ambient UI is suppressed, skip UI skills unless explicitly requested in prompt
+    if (suppressAmbientUI && (rule.category === 'ui' || s === 'react') && p < 5 && f === 0) {
+      continue;
+    }
+
+    // Require minimum unweighted threshold of 5 points to filter casual weak mentions,
+    // then apply multiplier for strong/medium prompt matches to prioritize user intent over ambient signals.
+    const rawSum = p + f + a;
+    if (rawSum >= 5) {
+      const weightedScore = (p >= 5 ? p * 3 : p) + f + a;
+      candidateScores.set(s, weightedScore);
+    }
+  }
+
+  const remainingSorted = Array.from(candidateScores.entries())
     .sort((a, b) => b[1] - a[1])
     .map(([skill]) => skill);
 
-  // Cap domain skills to top 4 max to prevent context bloat
-  const MAX_DOMAIN_SKILLS = 4;
-  const topDomainSkills = sortedDomainSkills.slice(0, MAX_DOMAIN_SKILLS);
+  for (const s of remainingSorted) {
+    if (selectedSkills.length >= MAX_DOMAIN_SKILLS) break;
+    if (!selectedSkills.includes(s)) {
+      selectedSkills.push(s);
+    }
+  }
 
-  // Synergy rules (from AGENTS.md matrix)
-  const hasSynergyPrereq = topDomainSkills.includes('database') ||
-    topDomainSkills.includes('microservices') ||
-    topDomainSkills.includes('ddd') ||
-    topDomainSkills.includes('graphify');
+  // 4. Synergy rules (from AGENTS.md matrix)
+  const hasSynergyPrereq = selectedSkills.includes('database') ||
+    selectedSkills.includes('microservices') ||
+    selectedSkills.includes('ddd') ||
+    selectedSkills.includes('graphify');
 
-  if (hasSynergyPrereq && !topDomainSkills.includes('system-design')) {
-    if (topDomainSkills.length < MAX_DOMAIN_SKILLS + 1) {
-      topDomainSkills.push('system-design');
+  if (hasSynergyPrereq && !selectedSkills.includes('system-design')) {
+    if (selectedSkills.length < MAX_DOMAIN_SKILLS + 1) {
+      selectedSkills.push('system-design');
     }
   }
 
   // Foundational skills (always active)
-  const allSkills = ['ponytail-mindset', 'engineering-workflow', ...topDomainSkills];
+  const allSkills = ['ponytail-mindset', 'engineering-workflow', ...selectedSkills];
   const finalSkills = Array.from(new Set(allSkills));
 
   // Infer Domain if not specified

@@ -8,14 +8,14 @@
   },
   "main": "dist/index.js",
   "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts",
+    "dist",
     "bin"
   ],
   "scripts": {
     "dev": "tsx src/main.ts",
-    "build": "tsc && node -e \"require('fs').mkdirSync('dist/core', {recursive: true}); require('fs').copyFileSync('src/core/runtime.py', 'dist/core/runtime.py')\"",
-    "build:bundle": "esbuild src/mcp/server.ts --bundle --platform=node --target=node20 --format=esm --outfile=../.agents/mcp/server.mjs && node -e \"require('fs').copyFileSync('src/core/runtime.py', '../.agents/mcp/runtime.py')\"",
+    "build": "tsc && npm run build:bundle && node -e \"require('fs').mkdirSync('dist/core', {recursive: true}); require('fs').copyFileSync('src/core/runtime.py', 'dist/core/runtime.py')\"",
+    "build:bundle": "esbuild src/mcp/server.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/mcp/server.js",
+    "build:root-sync": "node -e \"require('fs').mkdirSync('../.agents/mcp', {recursive: true}); require('fs').copyFileSync('dist/mcp/server.js', '../.agents/mcp/server.mjs'); require('fs').copyFileSync('src/core/runtime.py', '../.agents/mcp/runtime.py')\"",
     "start": "node dist/main.js",
     "cli": "tsx src/cli.ts",
     "swarm": "tsx src/main.ts",
@@ -25,7 +25,7 @@
     "test:watch": "vitest",
     "lint": "biome check src/ tests/",
     "lint:fix": "biome check --fix src/ tests/",
-    "prepublishOnly": "npm run build:bundle"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "swarm",

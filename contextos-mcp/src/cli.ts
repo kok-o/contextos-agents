@@ -18,7 +18,7 @@ import * as fs from "node:fs";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 const { getModels, getProviders } = await import("@mariozechner/pi-ai");
-const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
+const { PythonRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 
 import type { Api, Model } from "@mariozechner/pi-ai";
@@ -38,6 +38,7 @@ OPTIONS
   --file <path>    Read context from a file
   --url <url>      Fetch context from a URL
   --stdin          Read context from stdin (pipe data in)
+  --allow-hooks    Enable lifecycle hooks execution (default: disabled)
   --verbose        Show iteration progress
 
 EXAMPLES
@@ -54,6 +55,7 @@ interface CliArgs {
 	file?: string;
 	url?: string;
 	useStdin: boolean;
+	allowHooks: boolean;
 	verbose: boolean;
 	query: string;
 }
@@ -64,6 +66,7 @@ function parseArgs(): CliArgs {
 	let file: string | undefined;
 	let url: string | undefined;
 	let useStdin = false;
+	let allowHooks = false;
 	let verbose = false;
 	const positional: string[] = [];
 
@@ -77,6 +80,8 @@ function parseArgs(): CliArgs {
 			url = args[++i];
 		} else if (arg === "--stdin") {
 			useStdin = true;
+		} else if (arg === "--allow-hooks") {
+			allowHooks = true;
 		} else if (arg === "--verbose") {
 			verbose = true;
 		} else if (arg === "--help" || arg === "-h") {
@@ -105,7 +110,7 @@ function parseArgs(): CliArgs {
 		usage();
 	}
 
-	return { modelId, file, url, useStdin, verbose, query };
+	return { modelId, file, url, useStdin, allowHooks, verbose, query };
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -268,9 +273,15 @@ async function main(): Promise<void> {
 	console.error(`Query: ${args.query}`);
 	console.error("---");
 
-	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
+	// Start REPL: PythonRepl if explicitly specified; NodeVmRepl is deprecated/disabled
 	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
-	const repl = usePython ? new PythonRepl() : new NodeVmRepl();
+	if (!usePython) {
+		console.error(
+			"Error: In-process JavaScript execution has been permanently deprecated for security. Pass --python-repl for Python text processing.",
+		);
+		process.exit(1);
+	}
+	const repl = new PythonRepl();
 	const ac = new AbortController();
 
 	const abortAndExit = () => {

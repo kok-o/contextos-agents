@@ -25,7 +25,7 @@ import { readTextInput } from "./ui/text-input.js";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 await import("@mariozechner/pi-ai");
-const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
+const { PythonRepl } = await import("./core/repl.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
@@ -921,9 +921,12 @@ export async function runInteractiveSwarm(rawArgs: string[]): Promise<void> {
 	spinner.stop();
 	logSuccess(`Scanned codebase — ${(context.length / 1024).toFixed(1)}KB context`);
 
-	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
+	// Start REPL: PythonRepl if explicitly specified; NodeVmRepl is deprecated/removed
 	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
-	const repl = usePython ? new PythonRepl() : new NodeVmRepl();
+	if (!usePython) {
+		throw new Error("NodeVmRepl has been removed. In-process JavaScript execution is disabled.");
+	}
+	const repl = new PythonRepl();
 	const sessionAc = new AbortController();
 
 	const dashboard = new ThreadDashboard();

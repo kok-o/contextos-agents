@@ -118,6 +118,26 @@ describe("WorktreeManager", () => {
 			expect(fs.existsSync(info1.path)).toBe(true);
 			expect(fs.existsSync(info2.path)).toBe(true);
 		});
+
+		it("writes .contextos-session ownership marker in worktree", async () => {
+			const repoDir = createTempRepo();
+			tempDirs.push(repoDir);
+
+			const mgr = new WorktreeManager(repoDir);
+			await mgr.init();
+
+			const info = await mgr.create("thread-marker-test");
+			const markerPath = path.join(info.path, ".contextos-session");
+			expect(fs.existsSync(markerPath)).toBe(true);
+
+			const marker = JSON.parse(fs.readFileSync(markerPath, "utf-8"));
+			expect(marker.schemaVersion).toBe(1);
+			expect(marker.sessionId).toBe(mgr.getSessionId());
+			expect(marker.repositoryFingerprint).toBe(mgr.getRepositoryFingerprint());
+			expect(marker.worktreePath).toBe(info.path);
+			expect(marker.branchName).toBe(info.branch);
+			expect(typeof marker.createdAt).toBe("number");
+		});
 	});
 
 	describe("getDiff() + getChangedFiles()", () => {

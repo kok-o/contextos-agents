@@ -1,5 +1,5 @@
 /**
- * Tests for buildSwarmSystemPrompt — orchestrator system prompt generation.
+ * Tests for buildSwarmSystemPrompt — declarative action orchestrator prompt generation (Task 0.2d).
  */
 
 import { describe, expect, it } from "vitest";
@@ -46,103 +46,32 @@ function makeConfig(overrides: Partial<SwarmConfig> = {}): SwarmConfig {
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
-describe("buildSwarmSystemPrompt", () => {
-	describe("contains all primitives", () => {
-		it("includes llm_query", () => {
+describe("buildSwarmSystemPrompt (Task 0.2d)", () => {
+	describe("contains declarative actions", () => {
+		it("includes spawn, wait, inspect_diff, review, merge, finish", () => {
 			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("llm_query");
+			expect(prompt).toContain('"action": "spawn"');
+			expect(prompt).toContain('"action": "wait"');
+			expect(prompt).toContain('"action": "inspect_diff"');
+			expect(prompt).toContain('"action": "review"');
+			expect(prompt).toContain('"action": "merge"');
+			expect(prompt).toContain('"action": "finish"');
 		});
 
-		it("includes thread", () => {
+		it("contains zero references to FINAL() or print() or executable code in orchestration prompt", () => {
 			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("thread(");
-		});
-
-		it("includes async_thread", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("async_thread");
-		});
-
-		it("includes merge_threads", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("merge_threads");
-		});
-
-		it("includes FINAL", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("FINAL(");
+			expect(prompt).not.toContain("FINAL(");
+			expect(prompt).not.toContain("print(");
+			expect(prompt).not.toContain("```javascript");
+			expect(prompt).not.toContain("```python");
 		});
 	});
 
 	describe("contains config values", () => {
-		it("includes default_agent", () => {
-			const config = makeConfig({ default_agent: "test-agent-xyz" });
-			const prompt = buildSwarmSystemPrompt(config);
-			expect(prompt).toContain("test-agent-xyz");
-		});
-
-		it("includes default_model", () => {
+		it("includes default_model in template", () => {
 			const config = makeConfig({ default_model: "my-custom/model-99" });
 			const prompt = buildSwarmSystemPrompt(config);
 			expect(prompt).toContain("my-custom/model-99");
-		});
-
-		it("includes max_threads in context", () => {
-			const config = makeConfig({ max_threads: 7 });
-			const prompt = buildSwarmSystemPrompt(config);
-			expect(prompt).toContain("7 concurrent");
-		});
-
-		it("includes max_total_threads in context", () => {
-			const config = makeConfig({ max_total_threads: 42 });
-			const prompt = buildSwarmSystemPrompt(config);
-			expect(prompt).toContain("42 total");
-		});
-
-		it("includes thread_timeout_ms as seconds", () => {
-			const config = makeConfig({ thread_timeout_ms: 180000 });
-			const prompt = buildSwarmSystemPrompt(config);
-			// 180000ms / 1000 = 180s — appears as "180s per thread"
-			expect(prompt).toContain("180s");
-		});
-	});
-
-	describe("strategy section", () => {
-		it("contains 'Analyze first'", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Analyze first");
-		});
-
-		it("contains 'Decompose'", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Decompose");
-		});
-
-		it("contains 'Extract context'", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Extract context");
-		});
-
-		it("contains 'Spawn threads'", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Spawn threads");
-		});
-	});
-
-	describe("examples section", () => {
-		it("contains 'Single thread' example", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Single thread");
-		});
-
-		it("contains 'Parallel threads' example", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Parallel threads");
-		});
-
-		it("contains asyncio.gather usage", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("asyncio.gather");
 		});
 	});
 
@@ -158,7 +87,6 @@ describe("buildSwarmSystemPrompt", () => {
 
 		it("omits Available Agents heading when descriptions not provided", () => {
 			const prompt = buildSwarmSystemPrompt(makeConfig());
-			// The "## Available Agents" heading should not appear, though text may reference agents
 			expect(prompt).not.toContain("## Available Agents");
 		});
 
@@ -169,24 +97,19 @@ describe("buildSwarmSystemPrompt", () => {
 	});
 
 	describe("rules section", () => {
-		it("contains Rules heading", () => {
+		it("contains Orchestration Rules heading", () => {
 			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("## Rules");
+			expect(prompt).toContain("## Orchestration Rules");
 		});
 
-		it("contains Python code block instruction", () => {
+		it("contains writeScope rule", () => {
 			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Python 3");
+			expect(prompt).toContain("writeScope");
 		});
 
-		it("contains the 'be specific in thread tasks' rule", () => {
+		it("contains JSON code block instruction", () => {
 			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("Be specific in thread tasks");
-		});
-
-		it("contains the REPL persistence rule", () => {
-			const prompt = buildSwarmSystemPrompt(makeConfig());
-			expect(prompt).toContain("REPL persists state");
+			expect(prompt).toContain("```json");
 		});
 	});
 });

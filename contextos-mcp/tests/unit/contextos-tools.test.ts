@@ -172,6 +172,19 @@ describe("registerContextosTools", () => {
 			expect(parsed.agents[0].status).toBe("completed");
 		});
 
+		it("blocks file paths that escape repository boundary", async () => {
+			const handler = registeredTools.get("contextos_delegate")!;
+			const res = await handler({
+				dir: process.cwd(),
+				task: "Test task",
+				agents: [{ provider: "openai", model: "gpt-4o" }],
+				files: ["../../../../etc/passwd"],
+			});
+
+			expect(res.isError).toBe(true);
+			expect(res.content[0].text).toContain("escapes repository");
+		});
+
 		it("delegates asynchronously (wait: false) and returns immediately", async () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({

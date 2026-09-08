@@ -17,7 +17,8 @@ import * as path from "node:path";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 await import("@mariozechner/pi-ai");
-const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
+const { PythonRepl } = await import("./core/repl.js");
+const { ActionDispatcher } = await import("./core/action-dispatcher.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
@@ -35,6 +36,8 @@ import { EpisodicMemory } from "./memory/episodic.js";
 import { buildSwarmSystemPrompt } from "./prompts/orchestrator.js";
 import { resolveModel } from "./routing/model-resolver.js";
 import { classifyTaskComplexity, describeAvailableAgents, FailureTracker, routeTask } from "./routing/model-router.js";
+import { assertWithinRepository } from "./security/repository-boundary.js";
+import { containsSecrets, isBlockedPath, redactSecrets } from "./security/secret-filter.js";
 import { ThreadManager, type ThreadProgressCallback } from "./threads/manager.js";
 import { renderBanner } from "./ui/banner.js";
 import { ThreadDashboard } from "./ui/dashboard.js";
@@ -68,6 +71,7 @@ interface SwarmArgs {
 	quiet: boolean;
 	json: boolean;
 	autoRoute: boolean;
+	allowHooks?: boolean;
 	replBackend?: "node" | "python";
 	query: string;
 }
@@ -82,6 +86,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 	let quiet = false;
 	let json = false;
 	let autoRoute = false;
+	let allowHooks = false;
 	let replBackend: "node" | "python" = "node";
 	const positional: string[] = [];
 
@@ -95,6 +100,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 			process.stderr.write(`  --agent <backend>      Agent backend (opencode, claude, codex, aider)\n`);
 			process.stderr.write(`  --repl <node|python>   REPL execution engine (default: node)\n`);
 			process.stderr.write(`  --python-repl          Use legacy Python runtime.py subprocess\n`);
+			process.stderr.write(`  --allow-hooks          Enable lifecycle hooks execution (default: disabled)\n`);
 			process.stderr.write(`  --dry-run              Plan only, don't spawn threads\n`);
 			process.stderr.write(`  --max-budget <usd>     Maximum session budget\n`);
 			process.stderr.write(`  --auto-route           Enable automatic model selection\n`);
@@ -108,6 +114,8 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 			orchestratorModel = args[++i];
 		} else if (arg === "--agent" && i + 1 < args.length) {
 			agent = args[++i];
+		} else if (arg === "--allow-hooks") {
+			allowHooks = true;
 		} else if (arg === "--repl" && i + 1 < args.length) {
 			const val = args[++i].toLowerCase();
 			replBackend = val === "python" ? "python" : "node";
@@ -156,6 +164,7 @@ function parseSwarmArgs(args: string[]): SwarmArgs {
 		dryRun,
 		maxBudget,
 		autoRoute,
+		allowHooks,
 		verbose,
 		quiet,
 		json,
@@ -202,6 +211,7 @@ const SKIP_EXTENSIONS = new Set([
 ]);
 
 function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number = 2 * 1024 * 1024): string {
+	const canonicalDir = assertWithinRepository(dir, dir);
 	const files: { relPath: string; content: string }[] = [];
 	let totalSize = 0;
 
@@ -221,34 +231,46 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 			if (files.length >= maxFiles || totalSize >= maxTotalSize) return;
 
 			if (entry.isDirectory()) {
-				if (!SKIP_DIRS.has(entry.name) && !entry.name.startsWith(".")) {
-					walk(path.join(currentDir, entry.name), depth + 1);
+				if (isBlockedPath(entry.name) || SKIP_DIRS.has(entry.name) || entry.name.startsWith(".")) {
+					continue;
+				}
+				const nextDir = path.join(currentDir, entry.name);
+				try {
+					assertWithinRepository(nextDir, canonicalDir);
+					if (isBlockedPath(nextDir)) continue;
+					walk(nextDir, depth + 1);
+				} catch {
+					// Skip symlink or directory escaping repository boundary
 				}
 			} else if (entry.isFile()) {
+				if (isBlockedPath(entry.name)) continue;
 				const ext = path.extname(entry.name).toLowerCase();
 				if (SKIP_EXTENSIONS.has(ext)) continue;
 
 				const fullPath = path.join(currentDir, entry.name);
 				try {
+					assertWithinRepository(fullPath, canonicalDir);
+					if (isBlockedPath(fullPath)) continue;
 					const stat = fs.statSync(fullPath);
 					if (stat.size > 100 * 1024) continue;
 					if (stat.size === 0) continue;
 
 					const content = fs.readFileSync(fullPath, "utf-8");
 					if (content.includes("\0")) continue;
+					if (containsSecrets(content)) continue; // Sensitive content default-deny
 
-					const relPath = path.relative(dir, fullPath);
-					files.push({ relPath, content });
+					const relPath = path.relative(canonicalDir, fullPath);
+					files.push({ relPath, content: redactSecrets(content) });
 					totalSize += content.length;
 				} catch {}
 			}
 		}
 	}
 
-	walk(dir, 0);
+	walk(canonicalDir, 0);
 
 	const parts: string[] = [];
-	parts.push(`Codebase: ${path.basename(dir)}`);
+	parts.push(`Codebase: ${path.basename(canonicalDir)}`);
 	parts.push(`Files: ${files.length}`);
 	parts.push(`Total size: ${(totalSize / 1024).toFixed(1)}KB`);
 	parts.push("---");
@@ -258,15 +280,16 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 		parts.push(file.content);
 	}
 
-	return parts.join("\n");
+	return redactSecrets(parts.join("\n"));
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
 export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	const args = parseSwarmArgs(rawArgs);
-	const config = loadConfig();
-	const hooks = loadHooks(args.dir);
+	const config = loadConfig(args.dir || undefined);
+	const allowHooks = Boolean(args.allowHooks || config.allow_hooks);
+	const hooks = loadHooks(args.dir, allowHooks);
 
 	// Configure UI
 	if (args.json) setJsonMode(true);
@@ -276,6 +299,12 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	// Verify target directory before anything else
 	if (!fs.existsSync(args.dir)) {
 		logError(`Directory "${args.dir}" does not exist`);
+		process.exit(1);
+	}
+	try {
+		args.dir = assertWithinRepository(args.dir, args.dir);
+	} catch (err: unknown) {
+		logError(`Security boundary violation: ${err instanceof Error ? err.message : String(err)}`);
 		process.exit(1);
 	}
 
@@ -334,8 +363,8 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	spinner.stop();
 	logSuccess(`Scanned codebase — ${(context.length / 1024).toFixed(1)}KB context`);
 
-	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
-	const repl = args.replBackend === "python" ? new PythonRepl() : new NodeVmRepl();
+	// Start REPL: PythonRepl if explicitly specified; default is declarative ActionDispatcher
+	const repl = args.replBackend === "python" ? new PythonRepl() : undefined;
 	const ac = new AbortController();
 
 	// Thread dashboard and streaming feed for live status
@@ -382,7 +411,9 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	process.on("SIGTERM", abortAndExit);
 
 	try {
-		await repl.start(ac.signal);
+		if (repl) {
+			await repl.start(ac.signal);
+		}
 
 		// Register LLM summarizer for llm-summary compression strategy
 		if (config.compression_strategy === "llm-summary") {
@@ -408,7 +439,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 
 		// Build system prompt
 		const agentDesc = await describeAvailableAgents();
-		let systemPrompt = buildSwarmSystemPrompt(config, agentDesc, repl.getLanguage());
+		let systemPrompt = buildSwarmSystemPrompt(config, agentDesc, repl ? repl.getLanguage() : undefined);
 		if (args.dryRun) {
 			systemPrompt +=
 				"\n\n## DRY RUN MODE\nDo NOT call thread() or async_thread(). Instead, describe what threads you WOULD spawn (task, files, model). Call FINAL() with your execution plan.";
@@ -483,7 +514,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 				try {
 					const worktreePath = path.join(args.dir, config.worktree_base_dir, `wt-${threadId}`);
 					if (fs.existsSync(worktreePath)) {
-						runHooks(hooks.post_thread, worktreePath, "post_thread");
+						runHooks(hooks.post_thread, worktreePath, "post_thread", allowHooks);
 					}
 				} catch (hookErr: any) {
 					logWarn(`Post-thread hook failed: ${hookErr.message}`);
@@ -543,7 +574,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			// Run post-merge hooks (tests, etc.) — success is silent
 			if (merged > 0 && hooks.post_merge.length > 0) {
 				try {
-					const hookResults = runHooks(hooks.post_merge, args.dir, "post_merge");
+					const hookResults = runHooks(hooks.post_merge, args.dir, "post_merge", allowHooks);
 					const hookFailures = hookResults.filter((r) => !r.success);
 					if (hookFailures.length > 0) {
 						const hookOutput = hookFailures.map((r) => r.output).join("\n");
@@ -566,15 +597,52 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			};
 		};
 
+		// Wire declarative ActionDispatcher for production orchestration
+		const dispatcher = new ActionDispatcher({
+			async spawn(action) {
+				return threadHandler(
+					action.task,
+					"",
+					config.default_agent,
+					action.model || config.default_model,
+					action.writeScope,
+				);
+			},
+			async wait(action) {
+				const threads = threadManager.getThreads();
+				return {
+					threads: threads.filter((t) => action.threadIds.includes(t.id)).map((t) => ({ id: t.id, status: t.status })),
+				};
+			},
+			async inspectDiff(action) {
+				const threads = threadManager.getThreads();
+				const thread = threads.find((t) => t.id === action.threadId);
+				if (!thread) return { error: `Thread ${action.threadId} not found` };
+				const wm = threadManager.getWorktreeManager();
+				const diff = await wm.getDiff(action.threadId);
+				return { threadId: action.threadId, diff: redactSecrets(diff) };
+			},
+			async review(action) {
+				return { threadId: action.threadId, status: "reviewed" };
+			},
+			async merge(_action) {
+				return mergeHandler();
+			},
+			async finish(action) {
+				return { finished: true, summary: action.summary };
+			},
+		});
+
 		// Run the orchestrator
 		spinner.start();
 		const startTime = Date.now();
 
 		const result = await runRlmLoop({
-			context,
-			query: args.query,
+			context: redactSecrets(context),
+			query: redactSecrets(args.query),
 			model: resolved.model,
 			repl,
+			dispatcher,
 			signal: ac.signal,
 			systemPrompt,
 			threadHandler: args.dryRun ? undefined : threadHandler,
@@ -624,7 +692,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 		streamingFeed.clear();
 		process.removeListener("SIGINT", abortAndExit);
 		process.removeListener("SIGTERM", abortAndExit);
-		repl.shutdown();
+		repl?.shutdown();
 		await threadManager.cleanup();
 		// Shut down any managed OpenCode server instances
 		await opencodeMod.disableServerMode();

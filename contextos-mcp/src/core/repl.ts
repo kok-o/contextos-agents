@@ -40,7 +40,6 @@ function ensurePython(cmd: string): void {
 
 import type { ExecResult, LlmQueryHandler, MergeHandler, Repl, ThreadHandler } from "./repl-interface.js";
 
-export { NodeVmRepl } from "./node-repl.js";
 export * from "./repl-interface.js";
 
 // ── Inbound message types from Python ───────────────────────────────────────

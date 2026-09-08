@@ -8,7 +8,9 @@
  */
 
 import { execFile } from "node:child_process";
+import * as path from "node:path";
 import type { MergeResult, ThreadState } from "../core/types.js";
+import { assertWithinRepository, SecurityBoundaryException } from "../security/repository-boundary.js";
 
 function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
@@ -39,8 +41,16 @@ async function abortMergeSafe(repoRoot: string): Promise<void> {
  * On conflict, captures the conflicted file list and diff hunks before aborting.
  */
 export async function mergeThreadBranch(repoRoot: string, branchName: string, threadId: string): Promise<MergeResult> {
+	const canonicalRepoRoot = assertWithinRepository(repoRoot, repoRoot);
+	if (!branchName || branchName.startsWith("-") || branchName.includes("..") || path.isAbsolute(branchName)) {
+		throw new SecurityBoundaryException(`Invalid branch name: ${branchName}`);
+	}
+	assertWithinRepository(path.resolve(canonicalRepoRoot, ".git", "refs", "heads", branchName), canonicalRepoRoot);
 	try {
-		const { stdout } = await git(["merge", "--no-ff", "-m", `swarm: merge thread ${threadId}`, branchName], repoRoot);
+		const { stdout } = await git(
+			["merge", "--no-ff", "-m", `swarm: merge thread ${threadId}`, branchName],
+			canonicalRepoRoot,
+		);
 
 		return {
 			success: true,
@@ -119,6 +129,7 @@ export async function mergeAllThreads(
 	threads: ThreadState[],
 	options: MergeAllOptions = {},
 ): Promise<MergeResult[]> {
+	const canonicalRepoRoot = assertWithinRepository(repoRoot, repoRoot);
 	const { order, continueOnConflict = true } = options;
 	const results: MergeResult[] = [];
 
@@ -140,7 +151,7 @@ export async function mergeAllThreads(
 	}
 
 	for (const thread of ordered) {
-		const result = await mergeThreadBranch(repoRoot, thread.branchName!, thread.id);
+		const result = await mergeThreadBranch(canonicalRepoRoot, thread.branchName!, thread.id);
 		results.push(result);
 
 		if (!result.success && !continueOnConflict) {

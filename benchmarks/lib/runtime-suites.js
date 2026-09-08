@@ -132,9 +132,15 @@ export class AuthService implements IAuthService {
               } else if (instance.isBlocked) {
                 if (await instance.isBlocked(key)) { blocked = true; break; }
                 if (instance.recordFailure) await instance.recordFailure(key);
+              } else if (instance.check) {
+                const res = await instance.check(key);
+                if (res && (res.allowed === false || res.blocked === true)) { blocked = true; break; }
+              } else if (instance.tryAcquire) {
+                const res = await instance.tryAcquire(key);
+                if (res === false) { blocked = true; break; }
               }
             }
-            assert.ok(blocked || typeof instance === 'object', 'Rate limiter must enforce attempt limits');
+            assert.ok(blocked, 'Rate limiter must enforce attempt limits and block excessive requests');
           } else if (handleLogin || AuthService) {
             assert.ok(/limit|max|windowMs|too_many_requests|429/i.test(execResult.rawJs), 'Must configure rate-limiting thresholds or 429 response');
           }

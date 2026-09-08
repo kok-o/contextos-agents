@@ -7,11 +7,13 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ThreadState } from "../../src/core/types.js";
 import {
+	acquireStateLock,
 	clearPersistedState,
 	getPersistedThreads,
 	loadPersistedState,
 	purgeOrphans,
 	recordThreadState,
+	savePersistedState,
 	scanOrphanWorktrees,
 } from "../../src/mcp/state.js";
 
@@ -131,5 +133,93 @@ describe("MCP Session Persistence & Orphan Management", () => {
 		const result = await purgeOrphans(TEST_DIR);
 		expect(result.prunedWorktrees).toBeGreaterThanOrEqual(1);
 		expect(fs.existsSync(wtDir)).toBe(false);
+	});
+
+	it("recovers running thread to interrupted after process crash and preserves cost", () => {
+		const thread: ThreadState = {
+			id: "crashed-thread-1",
+			config: {
+				id: "crashed-thread-1",
+				task: "Work on crash recovery",
+				context: "",
+				agent: { backend: "direct-llm", model: "gpt-4o" },
+			},
+			status: "running",
+			phase: "agent_running",
+			attempt: 1,
+			maxAttempts: 1,
+			estimatedCostUsd: 0.125,
+			startedAt: Date.now() - 10000,
+		};
+
+		savePersistedState(TEST_DIR, {
+			dir: TEST_DIR,
+			ownerPid: 99999999,
+			sessionId: "session-crashed",
+			createdAt: Date.now() - 20000,
+			lastUpdatedAt: Date.now() - 10000,
+			threads: { "crashed-thread-1": thread },
+			asyncTasks: {
+				"task-1": {
+					taskId: "task-1",
+					agentCount: 1,
+					startedAt: Date.now() - 10000,
+					status: "running",
+				},
+			},
+		});
+
+		const loaded = loadPersistedState(TEST_DIR);
+		expect(loaded).not.toBeNull();
+		const recoveredThread = loaded?.threads["crashed-thread-1"];
+		expect(recoveredThread?.status).toBe("interrupted");
+		expect(recoveredThread?.phase).toBe("interrupted");
+		expect(recoveredThread?.error).toContain("interrupted by process restart or crash");
+		expect(recoveredThread?.estimatedCostUsd).toBe(0.125);
+		expect(loaded?.asyncTasks?.["task-1"].status).toBe("unknown_after_restart");
+	});
+
+	it("acquires state lock, rejects concurrent holder, and recovers stale lock", () => {
+		const release1 = acquireStateLock(TEST_DIR, "session-1");
+		expect(release1).not.toBeNull();
+
+		release1?.();
+
+		const lockPath = path.join(TEST_DIR, ".swarm-worktrees", "session-state.lock");
+		fs.writeFileSync(
+			lockPath,
+			JSON.stringify({
+				pid: 99999999,
+				sessionId: "dead-session",
+				lockedAt: Date.now() - 60000,
+			}),
+		);
+
+		const release2 = acquireStateLock(TEST_DIR, "session-2");
+		expect(release2).not.toBeNull();
+		release2?.();
+		expect(fs.existsSync(lockPath)).toBe(false);
+	});
+
+	it("skips orphan worktree if .contextos-session belongs to a different repository", async () => {
+		const wtDir = path.join(TEST_DIR, ".swarm-worktrees", "alien-worktree");
+		fs.mkdirSync(wtDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(wtDir, ".contextos-session"),
+			JSON.stringify({
+				schemaVersion: 1,
+				sessionId: "alien-session",
+				repositoryFingerprint: "alien_fingerprint_000",
+				worktreePath: wtDir,
+				branchName: "swarm/alien",
+				createdAt: Date.now(),
+			}),
+		);
+
+		const report = await scanOrphanWorktrees(TEST_DIR);
+		expect(report.worktreeDirs).not.toContain(wtDir);
+
+		await purgeOrphans(TEST_DIR);
+		expect(fs.existsSync(wtDir)).toBe(true);
 	});
 });

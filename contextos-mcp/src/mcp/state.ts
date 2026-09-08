@@ -10,6 +10,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ThreadState } from "../core/types.js";
+import { assertWithinRepository } from "../security/repository-boundary.js";
+import { createRepositoryFingerprint } from "../worktree/manager.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -22,6 +24,8 @@ export interface AsyncTaskRecord {
 
 export interface PersistedSessionState {
 	dir: string;
+	sessionId?: string;
+	ownerPid?: number;
 	createdAt: number;
 	lastUpdatedAt: number;
 	threads: Record<string, ThreadState>;
@@ -34,11 +38,97 @@ export interface OrphanReport {
 }
 
 const STATE_FILE_NAME = "session-state.json";
+const STATE_LOCK_NAME = "session-state.lock";
 const DEFAULT_WORKTREE_BASE_DIR = ".swarm-worktrees";
+const LOCK_TIMEOUT_MS = 30_000;
+
+export interface StateLockData {
+	pid: number;
+	sessionId?: string;
+	lockedAt: number;
+}
+
+export function isProcessAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (err: any) {
+		return err.code === "EPERM";
+	}
+}
 
 function getStatePath(dir: string, worktreeBaseDir?: string): string {
-	const baseDir = path.join(dir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
-	return path.join(baseDir, STATE_FILE_NAME);
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
+		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
+	const statePath = path.join(canonicalBaseDir, STATE_FILE_NAME);
+	return assertWithinRepository(statePath, canonicalDir);
+}
+
+export function getStateLockPath(dir: string, worktreeBaseDir?: string): string {
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
+		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
+	const lockPath = path.join(canonicalBaseDir, STATE_LOCK_NAME);
+	return assertWithinRepository(lockPath, canonicalDir);
+}
+
+/**
+ * Attempts to acquire an advisory state lock with stale lock timeout & dead-owner recovery.
+ */
+export function acquireStateLock(dir: string, sessionId?: string, worktreeBaseDir?: string): (() => void) | null {
+	const lockPath = getStateLockPath(dir, worktreeBaseDir);
+	const lockDir = path.dirname(lockPath);
+	if (!fs.existsSync(lockDir)) {
+		fs.mkdirSync(lockDir, { recursive: true });
+	}
+
+	if (fs.existsSync(lockPath)) {
+		try {
+			const raw = fs.readFileSync(lockPath, "utf-8");
+			const lock: StateLockData = JSON.parse(raw);
+			const isExpired = Date.now() - lock.lockedAt > LOCK_TIMEOUT_MS;
+			const isOwnerDead = !isProcessAlive(lock.pid);
+			if (isExpired || isOwnerDead) {
+				try {
+					fs.unlinkSync(lockPath);
+				} catch {}
+			} else if (lock.pid !== process.pid) {
+				return null;
+			}
+		} catch {
+			try {
+				fs.unlinkSync(lockPath);
+			} catch {}
+		}
+	}
+
+	const lockData: StateLockData = {
+		pid: process.pid,
+		sessionId,
+		lockedAt: Date.now(),
+	};
+
+	try {
+		fs.writeFileSync(lockPath, JSON.stringify(lockData, null, 2), { flag: "wx" });
+	} catch {
+		return null;
+	}
+
+	let released = false;
+	return () => {
+		if (released) return;
+		released = true;
+		try {
+			if (fs.existsSync(lockPath)) {
+				fs.unlinkSync(lockPath);
+			}
+		} catch {}
+	};
 }
 
 /**
@@ -73,7 +163,7 @@ function atomicWriteJson(filePath: string, data: unknown): void {
 }
 
 /**
- * Loads persisted session state from disk.
+ * Loads persisted session state from disk with crash/restart recovery.
  */
 export function loadPersistedState(dir: string, worktreeBaseDir?: string): PersistedSessionState | null {
 	const statePath = getStatePath(dir, worktreeBaseDir);
@@ -85,6 +175,26 @@ export function loadPersistedState(dir: string, worktreeBaseDir?: string): Persi
 		const raw = fs.readFileSync(statePath, "utf-8");
 		const parsed = JSON.parse(raw) as PersistedSessionState;
 		if (parsed && typeof parsed.threads === "object") {
+			// Crash/Restart recovery: if state was owned by a dead process or previous process instance
+			const isRecoveredSession =
+				parsed.ownerPid && (parsed.ownerPid !== process.pid || !isProcessAlive(parsed.ownerPid));
+			if (isRecoveredSession) {
+				for (const thread of Object.values(parsed.threads)) {
+					if (thread.status === "running" || thread.phase === "agent_running") {
+						thread.status = "interrupted";
+						thread.phase = "interrupted";
+						thread.error = thread.error || "Thread interrupted by process restart or crash";
+						// Conservative cost retention: do not reset estimatedCostUsd
+					}
+				}
+				if (parsed.asyncTasks) {
+					for (const task of Object.values(parsed.asyncTasks)) {
+						if (task.status === "running") {
+							task.status = "unknown_after_restart";
+						}
+					}
+				}
+			}
 			return parsed;
 		}
 	} catch {
@@ -98,6 +208,7 @@ export function loadPersistedState(dir: string, worktreeBaseDir?: string): Persi
  */
 export function savePersistedState(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
 	state.lastUpdatedAt = Date.now();
+	state.ownerPid = state.ownerPid || process.pid;
 	atomicWriteJson(getStatePath(dir, worktreeBaseDir), state);
 }
 
@@ -178,7 +289,11 @@ export function clearPersistedState(dir: string, worktreeBaseDir?: string): void
  * Scans for orphan worktrees and git branches created by dead or terminated threads.
  */
 export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: string): Promise<OrphanReport> {
-	const baseDir = path.join(repoRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
+		: path.join(canonicalRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const baseDir = assertWithinRepository(targetBase, canonicalRoot);
 	const worktreeDirs: string[] = [];
 	const swarmBranches: string[] = [];
 
@@ -187,7 +302,21 @@ export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: st
 			const entries = fs.readdirSync(baseDir, { withFileTypes: true });
 			for (const entry of entries) {
 				if (entry.isDirectory() && entry.name !== "." && entry.name !== "..") {
-					worktreeDirs.push(path.join(baseDir, entry.name));
+					const entryPath = path.join(baseDir, entry.name);
+					const canonicalEntry = assertWithinRepository(entryPath, canonicalRoot);
+					const sessionMarkerPath = path.join(canonicalEntry, ".contextos-session");
+					if (fs.existsSync(sessionMarkerPath)) {
+						try {
+							const marker = JSON.parse(fs.readFileSync(sessionMarkerPath, "utf-8"));
+							const expectedFingerprint = createRepositoryFingerprint(canonicalRoot);
+							if (marker.repositoryFingerprint && marker.repositoryFingerprint !== expectedFingerprint) {
+								continue;
+							}
+						} catch {
+							// Corrupt marker
+						}
+					}
+					worktreeDirs.push(canonicalEntry);
 				}
 			}
 		} catch {
@@ -196,7 +325,7 @@ export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: st
 	}
 
 	try {
-		const { stdout } = await execFileAsync("git", ["branch", "--list", "swarm/*"], { cwd: repoRoot });
+		const { stdout } = await execFileAsync("git", ["branch", "--list", "swarm/*"], { cwd: canonicalRoot });
 		const branches = stdout
 			.split("\n")
 			.map((b) => b.replace(/^[*+]\s+/, "").trim())
@@ -219,6 +348,7 @@ export async function purgeOrphans(
 	dryRun = false,
 	worktreeBaseDir?: string,
 ): Promise<{ prunedWorktrees: number; deletedBranches: number; report: string[] }> {
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
 	let prunedWorktrees = 0;
 	let deletedBranches = 0;
 	const report: string[] = [];
@@ -226,16 +356,29 @@ export async function purgeOrphans(
 	// 1. Tell git to prune worktrees first
 	if (!dryRun) {
 		try {
-			await execFileAsync("git", ["worktree", "prune"], { cwd: repoRoot });
+			await execFileAsync("git", ["worktree", "prune"], { cwd: canonicalRoot });
 		} catch {
 			// Ignore
 		}
 	}
 
-	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(repoRoot, worktreeBaseDir);
+	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(canonicalRoot, worktreeBaseDir);
 
 	// 2. Remove lingering directories
 	for (const wtDir of worktreeDirs) {
+		assertWithinRepository(wtDir, canonicalRoot);
+		const sessionMarkerPath = path.join(wtDir, ".contextos-session");
+		if (fs.existsSync(sessionMarkerPath)) {
+			try {
+				const marker = JSON.parse(fs.readFileSync(sessionMarkerPath, "utf-8"));
+				const expectedFingerprint = createRepositoryFingerprint(canonicalRoot);
+				if (marker.repositoryFingerprint && marker.repositoryFingerprint !== expectedFingerprint) {
+					report.push(`[SKIP] Mismatched repository fingerprint: ${wtDir}`);
+					continue;
+				}
+			} catch {}
+		}
+
 		if (dryRun) {
 			report.push(`[DRY RUN] Would remove worktree: ${wtDir}`);
 			prunedWorktrees++;
@@ -243,7 +386,7 @@ export async function purgeOrphans(
 		}
 		try {
 			// Try git worktree remove first
-			await execFileAsync("git", ["worktree", "remove", "--force", wtDir], { cwd: repoRoot });
+			await execFileAsync("git", ["worktree", "remove", "--force", wtDir], { cwd: canonicalRoot });
 			prunedWorktrees++;
 			report.push(`Removed worktree: ${wtDir}`);
 		} catch {
@@ -268,7 +411,7 @@ export async function purgeOrphans(
 			continue;
 		}
 		try {
-			await execFileAsync("git", ["branch", "-D", branch], { cwd: repoRoot });
+			await execFileAsync("git", ["branch", "-D", branch], { cwd: canonicalRoot });
 			deletedBranches++;
 			report.push(`Deleted branch: ${branch}`);
 		} catch {

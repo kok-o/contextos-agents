@@ -47,6 +47,7 @@ export interface SwarmConfig {
 	thread_cache_dir: string;
 	thread_cache_ttl_hours: number;
 	opencode_server_mode: boolean;
+	allow_hooks: boolean;
 }
 
 // Also export as RlmConfig for backwards compat with forked modules
@@ -86,6 +87,7 @@ const DEFAULTS: SwarmConfig = {
 	thread_cache_dir: path.join(os.homedir(), ".swarm", "cache"),
 	thread_cache_ttl_hours: 24,
 	opencode_server_mode: true,
+	allow_hooks: false,
 };
 
 function parseYaml(text: string): Record<string, unknown> {
@@ -206,6 +208,7 @@ export function loadConfig(cwd?: string): SwarmConfig {
 					thread_cache_dir: str(parsed.thread_cache_dir, DEFAULTS.thread_cache_dir),
 					thread_cache_ttl_hours: clamp(parsed.thread_cache_ttl_hours, 1, 720, DEFAULTS.thread_cache_ttl_hours),
 					opencode_server_mode: bool(parsed.opencode_server_mode, DEFAULTS.opencode_server_mode),
+					allow_hooks: bool(parsed.allow_hooks, DEFAULTS.allow_hooks),
 				};
 			} catch {
 				// Fall through to defaults

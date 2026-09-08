@@ -37,19 +37,107 @@ const DEFAULT_HOOKS: HooksConfig = {
 	post_session: [],
 };
 
-/**
- * Load hooks from swarm_config.yaml hooks section, or from .swarm/hooks.yaml.
- */
-export function loadHooks(projectDir: string): HooksConfig {
-	const hooksFile = path.join(projectDir, ".swarm", "hooks.yaml");
-	if (!fs.existsSync(hooksFile)) return { ...DEFAULT_HOOKS };
+export interface LoadHooksOptions {
+	allow_hooks?: boolean;
+}
 
-	try {
-		const raw = fs.readFileSync(hooksFile, "utf-8");
-		return parseHooksYaml(raw);
-	} catch {
+export interface RunHooksOptions {
+	allow_hooks?: boolean;
+}
+
+/**
+ * Load hooks from .swarm/hooks.yaml or .agents/hooks.json.
+ * If hook files exist and allow_hooks is false (default), execution is blocked
+ * and a structured warning is emitted.
+ */
+export function loadHooks(projectDir: string, allowHooksOrOptions: boolean | LoadHooksOptions = false): HooksConfig {
+	const allowHooks =
+		typeof allowHooksOrOptions === "boolean" ? allowHooksOrOptions : Boolean(allowHooksOrOptions?.allow_hooks);
+
+	const swarmHooksFile = path.join(projectDir, ".swarm", "hooks.yaml");
+	const agentsHooksFile = path.join(projectDir, ".agents", "hooks.json");
+
+	const hasSwarmHooks = fs.existsSync(swarmHooksFile);
+	const hasAgentsHooks = fs.existsSync(agentsHooksFile);
+
+	if (!hasSwarmHooks && !hasAgentsHooks) {
 		return { ...DEFAULT_HOOKS };
 	}
+
+	if (!allowHooks) {
+		console.warn(
+			"[hooks] Hooks execution is disabled by default. Pass --allow-hooks or set allow_hooks: true in config to enable.",
+		);
+		return { ...DEFAULT_HOOKS };
+	}
+
+	const hooks: HooksConfig = { post_thread: [], post_merge: [], post_session: [] };
+
+	if (hasSwarmHooks) {
+		try {
+			const raw = fs.readFileSync(swarmHooksFile, "utf-8");
+			const parsed = parseHooksYaml(raw);
+			hooks.post_thread.push(...parsed.post_thread);
+			hooks.post_merge.push(...parsed.post_merge);
+			hooks.post_session.push(...parsed.post_session);
+		} catch {
+			// ignore malformed file
+		}
+	}
+
+	if (hasAgentsHooks) {
+		try {
+			const raw = fs.readFileSync(agentsHooksFile, "utf-8");
+			const parsed = parseHooksJson(raw);
+			hooks.post_thread.push(...parsed.post_thread);
+			hooks.post_merge.push(...parsed.post_merge);
+			hooks.post_session.push(...parsed.post_session);
+		} catch {
+			// ignore malformed file
+		}
+	}
+
+	return hooks;
+}
+
+function parseHooksJson(raw: string): HooksConfig {
+	const hooks: HooksConfig = { post_thread: [], post_merge: [], post_session: [] };
+	try {
+		const parsed = JSON.parse(raw);
+		const target = parsed?.hooks && typeof parsed.hooks === "object" ? parsed.hooks : parsed;
+
+		const sections: Array<keyof HooksConfig> = ["post_thread", "post_merge", "post_session"];
+		for (const section of sections) {
+			const list = target[section];
+			if (!Array.isArray(list)) continue;
+			for (const item of list) {
+				if (typeof item === "string" && item.trim()) {
+					hooks[section].push({ command: item.trim(), on_failure: "warn" });
+				} else if (item && typeof item === "object" && typeof item.command === "string") {
+					hooks[section].push({
+						command: item.command.trim(),
+						on_failure: item.on_failure === "block" ? "block" : "warn",
+					});
+				}
+			}
+		}
+
+		if (Array.isArray(target)) {
+			for (const item of target) {
+				if (item && typeof item === "object" && typeof item.command === "string" && typeof item.event === "string") {
+					if (item.event === "post_thread" || item.event === "post_merge" || item.event === "post_session") {
+						hooks[item.event as keyof HooksConfig].push({
+							command: item.command.trim(),
+							on_failure: item.on_failure === "block" ? "block" : "warn",
+						});
+					}
+				}
+			}
+		}
+	} catch {
+		// return empty on invalid JSON
+	}
+	return hooks;
 }
 
 function parseHooksYaml(raw: string): HooksConfig {
@@ -66,10 +154,10 @@ function parseHooksYaml(raw: string): HooksConfig {
 		}
 
 		if (currentSection && trimmed.startsWith("- command:")) {
-			const command = trimmed
-				.replace("- command:", "")
-				.trim()
-				.replace(/^["']|["']$/g, "");
+			let command = trimmed.replace("- command:", "").trim();
+			if ((command.startsWith('"') && command.endsWith('"')) || (command.startsWith("'") && command.endsWith("'"))) {
+				command = command.slice(1, -1);
+			}
 			if (command) {
 				hooks[currentSection].push({ command, on_failure: "warn" });
 			}
@@ -92,7 +180,24 @@ function parseHooksYaml(raw: string): HooksConfig {
  * Returns results for each hook. On "block" failure, throws.
  * Success output is swallowed — only errors are surfaced.
  */
-export function runHooks(hooks: HookConfig[], cwd: string, label: string): HookResult[] {
+export function runHooks(
+	hooks: HookConfig[],
+	cwd: string,
+	label: string,
+	allowHooksOrOptions: boolean | RunHooksOptions = true,
+): HookResult[] {
+	if (!hooks || hooks.length === 0) {
+		return [];
+	}
+
+	const allowHooks =
+		typeof allowHooksOrOptions === "boolean" ? allowHooksOrOptions : (allowHooksOrOptions?.allow_hooks ?? true);
+
+	if (!allowHooks) {
+		console.warn(`[hooks] Hooks execution is disabled. Skipping ${label} hooks.`);
+		return [];
+	}
+
 	const results: HookResult[] = [];
 
 	for (const hook of hooks) {

@@ -39,7 +39,15 @@ export interface AgentProvider {
 
 // ── Thread types ────────────────────────────────────────────────────────────
 
-export type ThreadStatus = "pending" | "running" | "completed" | "failed" | "cancelled" | "verification_failed";
+export type ThreadStatus =
+	| "pending"
+	| "running"
+	| "completed"
+	| "failed"
+	| "cancelled"
+	| "verification_failed"
+	| "interrupted"
+	| "needs_recovery";
 
 export type ThreadProgressPhase =
 	| "queued"
@@ -52,7 +60,18 @@ export type ThreadProgressPhase =
 	| "failed"
 	| "verification_failed"
 	| "cancelled"
-	| "retrying";
+	| "retrying"
+	| "interrupted"
+	| "needs_recovery";
+
+export interface WorktreeSessionMarker {
+	schemaVersion: 1;
+	sessionId: string;
+	repositoryFingerprint: string;
+	worktreePath: string;
+	branchName: string;
+	createdAt: number;
+}
 
 export interface ThreadConfig {
 	id: string;
