@@ -2,62 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ContextOS Multi-Model Benchmark Leaderboard</title>
+  <title>ContextOS Runtime Benchmark — gemini-3.8-flash</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
-    .container { max-width: 1100px; margin: 0 auto; }
-    h1 { color: #38bdf8; margin-bottom: 0.5rem; }
-    .meta { color: #94a3b8; font-size: 0.9rem; margin-bottom: 2rem; }
-    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #334155; }
-    th { background: #0f172a; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b0f19; color: #f1f5f9; padding: 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; background: #131b2e; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #1e293b; }
+    h1 { color: #38bdf8; margin-top: 0; font-size: 1.8rem; }
+    .meta { color: #94a3b8; font-size: 0.95rem; margin-bottom: 2rem; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .card { background: #1e293b; padding: 1.25rem; border-radius: 8px; border: 1px solid #334155; }
+    .card .val { font-size: 2rem; font-weight: bold; color: #38bdf8; }
+    .card .label { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; margin-top: 0.25rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #1e293b; }
+    th { background: #0f172a; color: #94a3b8; text-transform: uppercase; font-size: 0.8rem; }
     .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: bold; font-size: 0.85rem; }
-    .badge-pass { background: #166534; color: #bbf7d0; }
-    .badge-fail { background: #991b1b; color: #fecaca; }
+    .badge-pass { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+    .badge-fail { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>⚡ ContextOS Multi-Model Benchmark Leaderboard</h1>
-    <div class="meta">Timestamp: 2026-09-07T18:42:21.456Z | Live V8 Sandbox Assertions | OpenRouter & AgentRouter</div>
+    <h1>🚀 ContextOS Execution-Backed Runtime Benchmark</h1>
+    <div class="meta">Model: <strong>gemini-3.8-flash</strong> | Provider: <strong>GOOGLE</strong> | Date: <strong>2026-09-08T20:25:53.445Z</strong></div>
+    <div class="metrics">
+      <div class="card"><div class="val">17%</div><div class="label">Baseline Pass Rate</div></div>
+      <div class="card"><div class="val" style="color:#4ade80">100%</div><div class="label">ContextOS Pass Rate</div></div>
+      <div class="card"><div class="val" style="color:#38bdf8">+83%</div><div class="label">Net Improvement</div></div>
+      <div class="card"><div class="val">100%</div><div class="label">Syntax & Compilation</div></div>
+    </div>
     <table>
       <thead>
         <tr>
-          <th style="text-align:center">Rank</th>
-          <th>Model</th>
+          <th>Scenario</th>
           <th style="text-align:center">Baseline</th>
           <th style="text-align:center">With ContextOS</th>
           <th style="text-align:center">Delta</th>
-          <th style="text-align:center">Compilation</th>
+          <th>Behavioral Assertions</th>
         </tr>
       </thead>
       <tbody>
         
     <tr>
-      <td style="text-align:center; font-size:1.2rem">🥇</td>
-      <td><strong>glm-5.3</strong><br><small style="color:#64748b">AgentRouter (ps.air-outer.com)</small></td>
-      <td style="text-align:center"><span class="badge badge-fail">53%</span></td>
-      <td style="text-align:center"><span class="badge badge-pass">93%</span><br><small>11/12 passed</small></td>
-      <td style="text-align:center; font-weight:bold; color:#16a34a">+40%</td>
-      <td style="text-align:center">100%</td>
+      <td><strong>Secure Authentication & Rate Limiting Handler</strong><br><small style="color:#64748b">Security & Backend</small></td>
+      <td style="text-align:center"><span class="badge badge-fail">40%</span><br><small>2/5 passed</small></td>
+      <td style="text-align:center"><span class="badge badge-pass">100%</span><br><small>5/5 passed</small></td>
+      <td style="text-align:center; font-weight:bold; color:#16a34a">+60%</td>
+      <td>
+        <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem">
+          <li style="color:#15803d">✓ Executes timing-safe password / hash verification</li><li style="color:#15803d">✓ Enforces rate-limiting and lockout after repeated failures</li><li style="color:#15803d">✓ Prevents stack traces and sensitive error leaks in 500 responses</li><li style="color:#15803d">✓ Performs explicit input validation on email and credentials</li><li style="color:#15803d">✓ Issues JWT with bounded expiration (<=15m), audience, and issuer</li>
+        </ul>
+      </td>
     </tr>
   
     <tr>
-      <td style="text-align:center; font-size:1.2rem">🥈</td>
-      <td><strong>deepseek-v4-flash</strong><br><small style="color:#64748b">AgentRouter (ps.air-outer.com)</small></td>
-      <td style="text-align:center"><span class="badge badge-fail">0%</span></td>
-      <td style="text-align:center"><span class="badge badge-fail">49%</span><br><small>6/12 passed</small></td>
-      <td style="text-align:center; font-weight:bold; color:#16a34a">+49%</td>
-      <td style="text-align:center">67%</td>
+      <td><strong>DDD Order Aggregate Root & Money Value Object</strong><br><small style="color:#64748b">Architecture & DDD</small></td>
+      <td style="text-align:center"><span class="badge badge-fail">0%</span><br><small>0/4 passed</small></td>
+      <td style="text-align:center"><span class="badge badge-pass">100%</span><br><small>4/4 passed</small></td>
+      <td style="text-align:center; font-weight:bold; color:#16a34a">+100%</td>
+      <td>
+        <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem">
+          <li style="color:#15803d">✓ Money Value Object is immutable and validates currency matching</li><li style="color:#15803d">✓ Order Aggregate enforces business state-machine invariants</li><li style="color:#15803d">✓ Records domain events for downstream side-effects</li><li style="color:#15803d">✓ Maintains decoupled repository interface without ORM leakage</li>
+        </ul>
+      </td>
     </tr>
   
     <tr>
-      <td style="text-align:center; font-size:1.2rem">🥉</td>
-      <td><strong>gemini-3.8-flash</strong><br><small style="color:#64748b">Google AI Studio</small></td>
-      <td style="text-align:center"><span class="badge badge-fail">27%</span></td>
-      <td style="text-align:center"><span class="badge badge-fail">33%</span><br><small>4/12 passed</small></td>
-      <td style="text-align:center; font-weight:bold; color:#16a34a">+6%</td>
-      <td style="text-align:center">67%</td>
+      <td><strong>Type-Safe Resilient API Client with Circuit Breaker</strong><br><small style="color:#64748b">TypeScript & Reliability</small></td>
+      <td style="text-align:center"><span class="badge badge-fail">0%</span><br><small>0/3 passed</small></td>
+      <td style="text-align:center"><span class="badge badge-pass">100%</span><br><small>3/3 passed</small></td>
+      <td style="text-align:center; font-weight:bold; color:#16a34a">+100%</td>
+      <td>
+        <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem">
+          <li style="color:#15803d">✓ Implements request timeout with AbortController</li><li style="color:#15803d">✓ Circuit breaker transitions CLOSED -> OPEN -> HALF-OPEN</li><li style="color:#15803d">✓ Provides typed error taxonomy without secret credential leakage</li>
+        </ul>
+      </td>
     </tr>
   
       </tbody>
