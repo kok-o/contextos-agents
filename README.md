@@ -300,6 +300,14 @@ Or install a new project with MCP enabled from the start:
 npx contextos-agents --with-mcp
 ```
 
+> [!IMPORTANT]
+> **Git requirement for subagents:** ContextOS MCP delegates tasks using isolated Git worktrees (`git worktree add -b swarm/<id> <path> HEAD`). If initializing in a brand-new empty directory, ensure Git is initialized with at least one commit before dispatching subagents:
+>
+> ```bash
+> git init && git commit --allow-empty -m "Initial commit"
+> ```
+
+
 ### MCP Server Configuration
 
 Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):

@@ -89,6 +89,16 @@ npx contextos-agents setup-mcp
 npx contextos-agents --with-mcp
 ```
 
+> [!IMPORTANT]
+> **Обязательное требование Git для работы с субагентами:**
+> Субагенты ContextOS MCP работают в параллельных изолированных ветках Git (`git worktree add ... HEAD`).
+> Если вы создаете проект в новой пустой папке, обязательно инициализируйте Git и сделайте хотя бы один коммит перед запуском субагентов:
+> ```bash
+> git init
+> git commit --allow-empty -m "Initial commit"
+> ```
+
+
 ---
 
 ## 3. Шесть фаз разработки (Workflow Pipeline)
