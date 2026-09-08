@@ -546,21 +546,28 @@ async function search(query) {
  * both core (builtin) and plugins.
  * Adapters call this instead of reading CORE_SKILLS directly.
  */
-function collectAllSkillDirs() {
+function collectAllSkillDirs(targetRoot) {
+  const root = targetRoot || process.cwd();
+  const agentsDir = path.join(root, '.agents');
+  const localCore = path.join(agentsDir, 'core', 'skills');
+  const localPlugins = path.join(agentsDir, 'plugins');
+
+  const coreDir = fs.existsSync(localCore) ? localCore : CORE_SKILLS;
+  const pluginsDir = fs.existsSync(localPlugins) ? localPlugins : PLUGINS_DIR;
   const dirs = [];
 
   // Core skills
-  if (fs.existsSync(CORE_SKILLS)) {
-    for (const name of fs.readdirSync(CORE_SKILLS)) {
-      const d = path.join(CORE_SKILLS, name);
+  if (fs.existsSync(coreDir)) {
+    for (const name of fs.readdirSync(coreDir)) {
+      const d = path.join(coreDir, name);
       if (fs.statSync(d).isDirectory()) dirs.push(d);
     }
   }
 
   // Plugin skills
-  if (fs.existsSync(PLUGINS_DIR)) {
-    for (const name of fs.readdirSync(PLUGINS_DIR)) {
-      const d = path.join(PLUGINS_DIR, name);
+  if (fs.existsSync(pluginsDir)) {
+    for (const name of fs.readdirSync(pluginsDir)) {
+      const d = path.join(pluginsDir, name);
       if (fs.statSync(d).isDirectory()) dirs.push(d);
     }
   }

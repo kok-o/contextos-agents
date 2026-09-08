@@ -42,6 +42,7 @@ ContextOS uses on-demand progressive disclosure. Read the relevant `SKILL.md` fi
 | `- architecture - adr - decisions - documentation` | **decisions** | `.agents/core/skills/decisions/SKILL.md` |
 | `docker` | **docker** | `.agents/core/skills/docker/SKILL.md` |
 | `- workflow - engineering - tdd - planning - review` | **engineering-workflow** | `.agents/core/skills/engineering-workflow/SKILL.md` |
+| `export-test-plugin` | **export-test-plugin** | `.agents/core/skills/export-test-plugin/SKILL.md` |
 | `backend, python, api, async, pydantic` | **fastapi** | `.agents/core/skills/fastapi/SKILL.md` |
 | `- gemini - precision - quality - workflow - antigravity` | **gemini-precision** | `.agents/core/skills/gemini-precision/SKILL.md` |
 | `- documentation - generators - architecture - templates` | **generators** | `.agents/core/skills/generators/SKILL.md` |
@@ -113,6 +114,10 @@ ContextOS uses on-demand progressive disclosure. Read the relevant `SKILL.md` fi
 ### engineering-workflow
 > Senior engineering workflow skill inspired by Addy Osmani's agent-skills. Enforces the full development lifecycle: spec → plan → build → test → review → ship. AI must never write code before a spec and plan are approved.
 *Source: `.agents/skills/engineering-workflow/SKILL.md` (Read on demand)*
+
+### export-test-plugin
+> Plugin instructions unique-marker-export-test.
+*Source: `.agents/skills/export-test-plugin/SKILL.md` (Read on demand)*
 
 ### FastAPI
 > High-performance Python backend engineering using FastAPI, Pydantic v2, and async SQLAlchemy/Tortoise ORM. Enforces type-driven request validation, OpenAPI contracts, and async non-blocking endpoints.
