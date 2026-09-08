@@ -1,7 +1,7 @@
 {
   "name": "contextos-agents",
-  "version": "1.6.1",
-  "description": "Install a .agents folder into your project to teach AI assistants best practices: UI/UX, architecture, security, and engineering workflow skills.",
+  "version": "1.7.0",
+  "description": "ContextOS — Deterministic context compiler, MCP runtime, and high-precision agent skills for pair-programming.",
   "bin": {
     "contextos": "./bin/index.js",
     "contextos-agents": "./bin/index.js",
@@ -25,8 +25,7 @@
     ".agents/adapters",
     ".agents/core",
     ".agents/generated",
-    ".agents/mcp",
-    "benchmarks/gemini-issues.js"
+    ".agents/plugins/contextos"
   ],
   "scripts": {
     "build": "node .agents/ctx.js export all",
@@ -39,7 +38,7 @@
     "check:secrets": "node scripts/check-secrets.js --all",
     "setup:hooks": "node scripts/install-hooks.js",
     "watch": "node .agents/watch.js",
-    "test": "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js",
+    "test": "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js",
     "prepublishOnly": "cd contextos-mcp && npm install && npm run build && npm run build:root-sync && cd .. && npm run validate && npm run build"
   },
   "keywords": [

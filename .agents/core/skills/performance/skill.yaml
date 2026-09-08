@@ -1,10 +1,17 @@
 id: performance
 name: Web Performance
 category: frontend
+type: instruction-only
 tags: [frontend, performance, core-web-vitals, optimization]
 requires: []
 optional: [react, nextjs]
 conflicts: []
 weight: 6
 documents:
+  - performance.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - performance.md

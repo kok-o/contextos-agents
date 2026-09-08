@@ -45,6 +45,22 @@ Before delegating any subagent task:
 
 ### 3. Context Hand-off Specification
 
+Every subagent dispatch must be backed by an immutable `TaskBrief`:
+
+```ts
+type TaskBrief = Readonly<{
+  taskId: string;
+  baseSha: string;
+  objective: string;
+  writeScope: readonly string[];
+  testCommand: string;
+  expectedResult: string;
+  maxAttempts: number;
+}>;
+```
+
+Create the brief once before dispatch. Agents and retry loops must reuse it without
+changing the base commit, scope, verification command, or acceptance result.
 Every subagent dispatch prompt must contain:
 
 1. **Target Objective**: Single, verifiable deliverable.
@@ -80,6 +96,7 @@ Every subagent dispatch prompt must contain:
 ## Validation Checklist
 
 - [ ] All delegated tasks have disjoint, non-overlapping file sets.
+- [ ] Every worker received an immutable `TaskBrief` tied to the original `baseSha`.
 - [ ] Every subagent prompt has explicit read vs write boundaries.
 - [ ] Subagent results verified individually before merging.
 - [ ] Global regression suite executed across the entire repository after all subagents finish.

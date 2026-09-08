@@ -27,9 +27,12 @@ import type {
 	ThreadConfig,
 	ThreadProgressPhase,
 	ThreadState,
+	VerificationVerdict,
 } from "../core/types.js";
 import { MODEL_PRICING as PRICING } from "../core/types.js";
 import type { EpisodicMemory } from "../memory/episodic.js";
+import { evaluateReviewerGate } from "../orchestration/reviewer-gate.js";
+import { runWorktreeVerification } from "../orchestration/verification-runner.js";
 import { AGENT_CAPABILITIES } from "../routing/model-router.js";
 import { WorktreeManager } from "../worktree/manager.js";
 import { ThreadCache, type ThreadCacheStats } from "./cache.js";
@@ -84,7 +87,9 @@ export class AsyncSemaphore {
 
 class BudgetTracker {
 	private totalSpent: number = 0;
+	private totalReserved: number = 0;
 	private threadCosts: Map<string, number> = new Map();
+	private reservations: Map<string, number> = new Map();
 	private sessionLimit: number;
 	private perThreadLimit: number;
 	private totalInputTokens: number = 0;
@@ -125,10 +130,10 @@ class BudgetTracker {
 	canAfford(model: string): { allowed: boolean; reason?: string } {
 		const estimate = this.estimateThreadCost(model);
 
-		if (this.totalSpent + estimate > this.sessionLimit) {
+		if (this.totalSpent + this.totalReserved + estimate > this.sessionLimit) {
 			return {
 				allowed: false,
-				reason: `Session budget exceeded: $${this.totalSpent.toFixed(4)} spent of $${this.sessionLimit.toFixed(2)} limit (next thread ~$${estimate.toFixed(4)})`,
+				reason: `Session budget exceeded: $${this.totalSpent.toFixed(4)} spent and $${this.totalReserved.toFixed(4)} reserved of $${this.sessionLimit.toFixed(2)} limit (next thread ~$${estimate.toFixed(4)})`,
 			};
 		}
 
@@ -142,6 +147,24 @@ class BudgetTracker {
 		return { allowed: true };
 	}
 
+	/** Atomically reserve the expected cost before dispatching a thread attempt. */
+	reserve(threadId: string, model: string): { allowed: boolean; reason?: string } {
+		if (this.reservations.has(threadId)) return { allowed: true };
+		const check = this.canAfford(model);
+		if (!check.allowed) return check;
+		const estimate = this.estimateThreadCost(model);
+		this.reservations.set(threadId, estimate);
+		this.totalReserved += estimate;
+		return { allowed: true };
+	}
+
+	releaseReservation(threadId: string): void {
+		const reserved = this.reservations.get(threadId);
+		if (reserved === undefined) return;
+		this.totalReserved = Math.max(0, this.totalReserved - reserved);
+		this.reservations.delete(threadId);
+	}
+
 	/**
 	 * Record cost for a completed thread.
 	 * Uses actual usage when available, falls back to estimate.
@@ -151,6 +174,7 @@ class BudgetTracker {
 		model: string,
 		usage?: { inputTokens: number; outputTokens: number },
 	): { cost: number; isEstimate: boolean } {
+		this.releaseReservation(threadId);
 		let cost: number;
 		let isEstimate: boolean;
 
@@ -176,7 +200,7 @@ class BudgetTracker {
 			this.estimatedCostCount++;
 		}
 
-		this.threadCosts.set(threadId, cost);
+		this.threadCosts.set(threadId, (this.threadCosts.get(threadId) || 0) + cost);
 		this.totalSpent += cost;
 		return { cost, isEstimate };
 	}
@@ -188,6 +212,7 @@ class BudgetTracker {
 	getState(): BudgetState {
 		return {
 			totalSpentUsd: this.totalSpent,
+			totalReservedUsd: this.totalReserved,
 			threadCosts: new Map(this.threadCosts),
 			sessionLimitUsd: this.sessionLimit,
 			perThreadLimitUsd: this.perThreadLimit,
@@ -373,7 +398,11 @@ export class ThreadManager {
 		const commitSha = await this.getCurrentCommitSha();
 		const cacheAgent = threadConfig.agent.backend || this.config.default_agent;
 		const cacheModel = threadConfig.agent.model || this.config.default_model;
-		const cacheFiles = threadConfig.files || [];
+		const cacheFiles = threadConfig.taskBrief?.writeScope
+			? [...threadConfig.taskBrief.writeScope]
+			: threadConfig.files?.length
+				? threadConfig.files
+				: ["."];
 		const cached = this.threadCache.get(
 			threadConfig.task,
 			cacheFiles,
@@ -400,20 +429,6 @@ export class ThreadManager {
 			};
 		}
 
-		// Preliminary budget check (definitive check happens inside semaphore)
-		const model = threadConfig.agent.model || this.config.default_model;
-		const budgetCheck = this.budget.canAfford(model);
-		if (!budgetCheck.allowed) {
-			return {
-				success: false,
-				summary: `Budget exceeded: ${budgetCheck.reason}`,
-				filesChanged: [],
-				diffStats: "",
-				durationMs: 0,
-				estimatedCostUsd: 0,
-			};
-		}
-
 		// Check session abort
 		if (this.sessionAbort?.aborted) {
 			return {
@@ -428,15 +443,35 @@ export class ThreadManager {
 
 		const threadId = threadConfig.id || randomBytes(6).toString("hex");
 		const maxAttempts = this.config.thread_retries + 1;
+		const taskBrief = Object.freeze({
+			taskId: threadId,
+			baseSha: commitSha,
+			objective: threadConfig.taskBrief?.objective || threadConfig.task,
+			writeScope: Object.freeze([
+				...(threadConfig.taskBrief?.writeScope || (threadConfig.files?.length ? threadConfig.files : ["."])),
+			]),
+			testCommand: threadConfig.taskBrief?.testCommand || "",
+			expectedResult: threadConfig.taskBrief?.expectedResult || "Task completes successfully",
+			maxAttempts: threadConfig.taskBrief?.maxAttempts || maxAttempts,
+		});
+		const normalizedConfig: ThreadConfig = {
+			...threadConfig,
+			id: threadId,
+			files: [...taskBrief.writeScope],
+			taskBrief,
+		};
 		const state: ThreadState = {
 			id: threadId,
-			config: threadConfig,
+			config: normalizedConfig,
 			status: "pending",
 			phase: "queued",
 			startedAt: Date.now(),
 			attempt: 0,
 			maxAttempts,
 			estimatedCostUsd: 0,
+			taskBrief,
+			verification: taskBrief.testCommand ? "PENDING" : "PASS",
+			scopeViolation: false,
 		};
 		this.threads.set(threadId, state);
 		this.totalSpawned++;
@@ -455,7 +490,7 @@ export class ThreadManager {
 
 		// Retry loop with exponential backoff and agent re-routing
 		let lastResult: CompressedResult | undefined;
-		let currentConfig = threadConfig;
+		let currentConfig = normalizedConfig;
 
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			state.attempt = attempt;
@@ -488,6 +523,17 @@ export class ThreadManager {
 				if (threadAc.signal.aborted) break;
 			}
 
+			const attemptModel = currentConfig.agent.model || this.config.default_model;
+			const reservation = this.budget.reserve(threadId, attemptModel);
+			if (!reservation.allowed) {
+				state.status = "failed";
+				state.phase = "failed";
+				state.error = `Budget exceeded: ${reservation.reason}`;
+				state.completedAt = Date.now();
+				lastResult = this.failResult(state, state.error);
+				break;
+			}
+
 			lastResult = await this.executeThread(threadId, currentConfig, state, threadAc.signal);
 
 			if (lastResult.success || threadAc.signal.aborted) {
@@ -510,11 +556,19 @@ export class ThreadManager {
 				const currentModel = currentConfig.agent.model || this.config.default_model;
 				const alt = pickAlternativeAgent(currentAgent, currentModel, this.config, attempt);
 
+				const reviewFeedback = state.review?.summary
+					? `\n\nPrevious attempt was rejected by reviewer:\n${state.review.summary}\nPlease fix these issues and stay strictly within declared writeScope.`
+					: state.error
+						? `\n\nPrevious attempt error: ${state.error}`
+						: "";
+
+				currentConfig = {
+					...currentConfig,
+					context: `${currentConfig.context || ""}${reviewFeedback}`.trim(),
+					agent: alt ? { backend: alt.agent, model: alt.model } : currentConfig.agent,
+				};
+
 				if (alt) {
-					currentConfig = {
-						...currentConfig,
-						agent: { backend: alt.agent, model: alt.model },
-					};
 					this.onThreadProgress?.(threadId, "retrying", `re-routing: ${currentAgent} → ${alt.agent}`);
 				}
 			}
@@ -522,7 +576,8 @@ export class ThreadManager {
 
 		this.sessionAbort?.removeEventListener("abort", onSessionAbort);
 		this.threadAbortControllers.delete(threadId);
-		return lastResult!;
+		this.budget.releaseReservation(threadId);
+		return lastResult || this.failResult(state, "Thread cancelled");
 	}
 
 	/**
@@ -547,27 +602,11 @@ export class ThreadManager {
 
 		try {
 			if (signal.aborted) {
+				this.budget.releaseReservation(threadId);
 				state.status = "cancelled";
 				state.phase = "cancelled";
 				state.completedAt = Date.now();
 				return this.failResult(state, "Thread cancelled before start");
-			}
-
-			// Definitive budget check inside semaphore (prevents race condition)
-			const threadModel = threadConfig.agent.model || this.config.default_model;
-			const budgetCheck = this.budget.canAfford(threadModel);
-			if (!budgetCheck.allowed) {
-				state.status = "failed";
-				state.phase = "failed";
-				state.completedAt = Date.now();
-				return {
-					success: false,
-					summary: `Budget exceeded: ${budgetCheck.reason}`,
-					filesChanged: [],
-					diffStats: "",
-					durationMs: 0,
-					estimatedCostUsd: 0,
-				};
 			}
 
 			state.status = "running";
@@ -612,6 +651,7 @@ export class ThreadManager {
 			}
 
 			if (signal.aborted) {
+				this.budget.releaseReservation(threadId);
 				state.status = "cancelled";
 				state.phase = "cancelled";
 				state.completedAt = Date.now();
@@ -625,9 +665,57 @@ export class ThreadManager {
 			const diff = await this.worktreeManager.getDiff(threadId);
 			const diffStats = await this.worktreeManager.getDiffStats(threadId);
 			const filesChanged = await this.worktreeManager.getChangedFiles(threadId);
+			try {
+				await this.worktreeManager.assertWriteScope(threadId, state.taskBrief!.baseSha, state.taskBrief!.writeScope);
+			} catch (error) {
+				if (error instanceof Error && error.name === "ScopeViolationError") state.scopeViolation = true;
+				throw error;
+			}
 
 			if (filesChanged.length > 0) {
 				await this.worktreeManager.commit(threadId, `swarm: ${threadConfig.task.slice(0, 72)}`);
+			}
+
+			// Automated test verification (if taskBrief specifies testCommand)
+			let verificationVerdict: VerificationVerdict = "PASS";
+			let verificationOutput = "";
+			if (state.taskBrief?.testCommand) {
+				state.phase = "verifying";
+				this.onThreadProgress?.(threadId, "verifying", state.taskBrief.testCommand);
+				const verifyRes = await runWorktreeVerification(wtInfo.path, state.taskBrief.testCommand);
+				verificationOutput = verifyRes.output;
+				verificationVerdict = verifyRes.verified ? "PASS" : "FAIL";
+				state.verification = verificationVerdict;
+				if (!verifyRes.verified) {
+					state.error = `Verification failed: ${verifyRes.output}`;
+				}
+			} else {
+				state.verification = "PASS";
+			}
+
+			// Independent Reviewer Gate (Dual Verdict)
+			state.phase = "reviewing";
+			this.onThreadProgress?.(threadId, "reviewing");
+			const reviewVerdict = await evaluateReviewerGate({
+				taskBrief: state.taskBrief!,
+				diff,
+				filesChanged,
+				verificationVerdict,
+				testOutput: verificationOutput,
+				implementerAgent: threadConfig.agent.backend || this.config.default_agent,
+				implementerModel: threadConfig.agent.model || this.config.default_model,
+				workDir: wtInfo.path,
+				repoRoot: this.repoRoot,
+			});
+			state.review = reviewVerdict;
+
+			const reviewFailed = reviewVerdict.specCompliance === "FAIL" || reviewVerdict.codeQuality === "FAIL";
+			if (reviewFailed) {
+				const reason = `Review failed [spec=${reviewVerdict.specCompliance}, quality=${reviewVerdict.codeQuality}]: ${reviewVerdict.summary}`;
+				state.error = reason;
+				if (state.attempt < state.maxAttempts) {
+					throw new Error(reason);
+				}
 			}
 
 			// Compress
@@ -657,8 +745,9 @@ export class ThreadManager {
 				? ` (${agentResult.usage.inputTokens}+${agentResult.usage.outputTokens} tokens)`
 				: "";
 
+			const overallSuccess = agentResult.success && !reviewFailed && verificationVerdict === "PASS";
 			const result: CompressedResult = {
-				success: agentResult.success,
+				success: overallSuccess,
 				summary: compressed,
 				filesChanged,
 				diffStats,
@@ -668,11 +757,22 @@ export class ThreadManager {
 				costIsEstimate: isEstimate,
 			};
 
-			state.status = "completed";
-			state.phase = "completed";
+			if (overallSuccess) {
+				state.status = "completed";
+				state.phase = "completed";
+			} else if (verificationVerdict === "FAIL") {
+				state.status = "verification_failed";
+				state.phase = "failed";
+			} else if (reviewFailed) {
+				state.status = "failed";
+				state.phase = "failed";
+			} else {
+				state.status = "completed";
+				state.phase = "completed";
+			}
 			state.result = result;
 			state.completedAt = Date.now();
-			this.onThreadProgress?.(threadId, "completed", `${filesChanged.length} files, ${costLabel}${usageLabel}`);
+			this.onThreadProgress?.(threadId, state.phase, `${filesChanged.length} files, ${costLabel}${usageLabel}`);
 
 			// Cache successful results for subthread reuse
 			if (result.success) {

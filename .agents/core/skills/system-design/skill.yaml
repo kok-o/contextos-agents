@@ -1,4 +1,5 @@
 name: system-design
+type: instruction-only
 description: >
   Architecture and system design skill based on donnemartin's System Design Primer.
   Teaches scalable architecture thinking: load balancers, caching, DB partitioning,
@@ -11,3 +12,9 @@ tags:
   - microservices
 version: 1.0.0
 source: https://github.com/donnemartin/system-design-primer
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
+  - system-design.md

@@ -188,6 +188,30 @@ describe("Budget Tracking with Token Usage", () => {
 		expect(budget.threadCosts.size).toBe(2);
 		expect(budget.actualCostThreads).toBe(2);
 	});
+
+	it("reserves budget before concurrent dispatch and releases reservations", async () => {
+		const config = getTestConfig();
+		config.max_session_budget_usd = 0.08;
+		const tmBudget = new ThreadManager(repoDir, config);
+		await tmBudget.init();
+
+		const results = await Promise.all(
+			["reserve-a", "reserve-b", "reserve-c"].map((id) =>
+				tmBudget.spawnThread({
+					id,
+					task: `concurrent ${id}`,
+					context: "",
+					agent: { backend: "mock", model: "mock-model" },
+				}),
+			),
+		);
+
+		expect(results.filter((result) => result.success)).toHaveLength(1);
+		const budget = tmBudget.getBudgetState();
+		expect(budget.totalSpentUsd).toBeLessThanOrEqual(0.08);
+		expect(budget.totalReservedUsd).toBe(0);
+		await tmBudget.cleanup();
+	});
 });
 
 describe("Budget State in Compressed Result", () => {

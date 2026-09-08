@@ -28,6 +28,7 @@ export interface PersistedSessionState {
 	ownerPid?: number;
 	createdAt: number;
 	lastUpdatedAt: number;
+	sequence?: number;
 	threads: Record<string, ThreadState>;
 	asyncTasks?: Record<string, AsyncTaskRecord>;
 }
@@ -41,6 +42,7 @@ const STATE_FILE_NAME = "session-state.json";
 const STATE_LOCK_NAME = "session-state.lock";
 const DEFAULT_WORKTREE_BASE_DIR = ".swarm-worktrees";
 const LOCK_TIMEOUT_MS = 30_000;
+const LOCK_ACQUIRE_TIMEOUT_MS = 2_000;
 
 export interface StateLockData {
 	pid: number;
@@ -131,6 +133,17 @@ export function acquireStateLock(dir: string, sessionId?: string, worktreeBaseDi
 	};
 }
 
+function acquireStateLockOrThrow(dir: string, sessionId?: string, worktreeBaseDir?: string): () => void {
+	const startedAt = Date.now();
+	const waitBuffer = new Int32Array(new SharedArrayBuffer(4));
+	do {
+		const release = acquireStateLock(dir, sessionId, worktreeBaseDir);
+		if (release) return release;
+		Atomics.wait(waitBuffer, 0, 0, 10);
+	} while (Date.now() - startedAt < LOCK_ACQUIRE_TIMEOUT_MS);
+	throw new Error(`Timed out acquiring session state lock after ${LOCK_ACQUIRE_TIMEOUT_MS}ms`);
+}
+
 /**
  * Safely writes JSON content atomically using a temporary file.
  */
@@ -204,53 +217,146 @@ export function loadPersistedState(dir: string, worktreeBaseDir?: string): Persi
 }
 
 /**
+ * Task 2.5d: Reconciles persisted session state with active git worktrees on session startup.
+ * Discovers worktrees via `git worktree list --porcelain` and aligns interrupted/running threads.
+ */
+export async function reconcileSessionStateWithGit(
+	repoRoot: string,
+	worktreeBaseDir?: string,
+): Promise<PersistedSessionState | null> {
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
+	const state = loadPersistedState(canonicalRoot, worktreeBaseDir);
+	if (!state) return null;
+
+	const gitWorktrees: Map<string, { branch?: string; bare?: boolean }> = new Map();
+	try {
+		const { stdout } = await execFileAsync("git", ["worktree", "list", "--porcelain"], {
+			cwd: canonicalRoot,
+			maxBuffer: 10 * 1024 * 1024,
+		});
+		const entries = stdout.trim().split("\n\n").filter(Boolean);
+		for (const entry of entries) {
+			const lines = entry.split("\n");
+			let worktreePath = "";
+			let branch = "";
+			let bare = false;
+			for (const line of lines) {
+				if (line.startsWith("worktree ")) {
+					worktreePath = path.normalize(line.slice("worktree ".length).trim());
+				} else if (line.startsWith("branch refs/heads/")) {
+					branch = line.slice("branch refs/heads/".length).trim();
+				} else if (line === "bare") {
+					bare = true;
+				}
+			}
+			if (worktreePath) {
+				gitWorktrees.set(worktreePath.toLowerCase(), { branch, bare });
+			}
+		}
+	} catch {
+		// Non-fatal if git is unavailable
+	}
+
+	let stateModified = false;
+
+	for (const thread of Object.values(state.threads)) {
+		if (thread.status === "running" || thread.status === "pending") {
+			thread.status = "interrupted";
+			thread.phase = "interrupted";
+			thread.error = thread.error || "Thread interrupted by process restart or crash";
+			stateModified = true;
+		}
+
+		if (thread.worktreePath) {
+			const normWt = path.normalize(thread.worktreePath).toLowerCase();
+			const registered = gitWorktrees.get(normWt);
+			const existsOnDisk = fs.existsSync(thread.worktreePath);
+
+			if (!existsOnDisk || !registered) {
+				if (thread.status === "interrupted") {
+					thread.status = "needs_recovery";
+					thread.phase = "needs_recovery";
+					thread.error = "Worktree directory or git registration missing after restart";
+					stateModified = true;
+				}
+			} else {
+				if (registered.branch && !thread.branchName) {
+					thread.branchName = registered.branch;
+					stateModified = true;
+				}
+			}
+		}
+	}
+
+	if (stateModified) {
+		try {
+			savePersistedState(canonicalRoot, state, worktreeBaseDir);
+		} catch {
+			// Lock or save error during recovery non-fatal
+		}
+	}
+
+	return state;
+}
+
+/**
  * Saves or updates entire persisted session state.
  */
-export function savePersistedState(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
+function writePersistedStateUnlocked(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
 	state.lastUpdatedAt = Date.now();
 	state.ownerPid = state.ownerPid || process.pid;
+	state.sequence = (state.sequence || 0) + 1;
 	atomicWriteJson(getStatePath(dir, worktreeBaseDir), state);
+}
+
+export function savePersistedState(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
+	const release = acquireStateLockOrThrow(dir, state.sessionId, worktreeBaseDir);
+	try {
+		writePersistedStateUnlocked(dir, state, worktreeBaseDir);
+	} finally {
+		release();
+	}
 }
 
 /**
  * Records or updates an individual thread state in the persisted storage.
  */
 export function recordThreadState(dir: string, thread: ThreadState, worktreeBaseDir?: string): void {
-	let state = loadPersistedState(dir, worktreeBaseDir);
-	if (!state) {
-		state = {
+	const release = acquireStateLockOrThrow(dir, undefined, worktreeBaseDir);
+	try {
+		const state = loadPersistedState(dir, worktreeBaseDir) || {
 			dir,
 			createdAt: Date.now(),
 			lastUpdatedAt: Date.now(),
+			sequence: 0,
 			threads: {},
 		};
+		state.threads[thread.id] = thread;
+		writePersistedStateUnlocked(dir, state, worktreeBaseDir);
+	} finally {
+		release();
 	}
-
-	state.threads[thread.id] = thread;
-	state.lastUpdatedAt = Date.now();
-	savePersistedState(dir, state, worktreeBaseDir);
 }
 
 /**
  * Records or updates an async task execution in persisted storage.
  */
 export function recordAsyncTask(dir: string, task: AsyncTaskRecord, worktreeBaseDir?: string): void {
-	let state = loadPersistedState(dir, worktreeBaseDir);
-	if (!state) {
-		state = {
+	const release = acquireStateLockOrThrow(dir, undefined, worktreeBaseDir);
+	try {
+		const state = loadPersistedState(dir, worktreeBaseDir) || {
 			dir,
 			createdAt: Date.now(),
 			lastUpdatedAt: Date.now(),
+			sequence: 0,
 			threads: {},
 		};
+		state.asyncTasks ||= {};
+		state.asyncTasks[task.taskId] = task;
+		writePersistedStateUnlocked(dir, state, worktreeBaseDir);
+	} finally {
+		release();
 	}
-
-	if (!state.asyncTasks) {
-		state.asyncTasks = {};
-	}
-	state.asyncTasks[task.taskId] = task;
-	state.lastUpdatedAt = Date.now();
-	savePersistedState(dir, state, worktreeBaseDir);
 }
 
 /**

@@ -1,10 +1,17 @@
 id: web-accessibility
 name: Web Accessibility
 category: frontend
+type: instruction-only
 tags: [frontend, a11y, wcag, aria, accessibility]
 requires: []
 optional: [react, nextjs]
 conflicts: []
 weight: 7
 documents:
+  - accessibility.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - accessibility.md

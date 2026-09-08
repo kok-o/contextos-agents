@@ -490,7 +490,7 @@ The following specialist skills guide architecture and implementation:
 *Prompt template: `.zed/prompts/generators.md` (Use via /generators)*
 
 ### Skill: graphify
-> Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius.
+> Codebase knowledge graph generator and architecture mapping guide. Instructs agents on AST dependency extraction and blast radius analysis.
 *Prompt template: `.zed/prompts/graphify.md` (Use via /graphify)*
 
 ### Skill: gstack-roles

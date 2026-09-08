@@ -2,6 +2,7 @@ name: state-management
 description: Client and server state management standards using Zustand and TanStack Query. Enforces minimal global state, optimistic updates, and clean query invalidation.
 version: 1.0.0
 category: frontend
+type: instruction-only
 requires:
   - react
   - typescript
@@ -20,3 +21,8 @@ triggers:
     - "optimistic"
     - "mutation"
     - "cache"
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json

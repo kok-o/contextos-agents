@@ -12,16 +12,16 @@
  * IMPORTANT: Never use console.log() — stdout is the MCP protocol stream.
  */
 
-import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { existsSync, lstatSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
+import { runWorktreeVerification } from "../../orchestration/verification-runner.js";
 import { assertWithinRepository } from "../../security/repository-boundary.js";
 import { redactSecrets } from "../../security/secret-filter.js";
-import { resolveExecutablePath } from "../../utils/command-exists.js";
-import { mergeThreadBranch } from "../../worktree/merge.js";
+import { isEligibleForMerge, mergeThreadBranch } from "../../worktree/merge.js";
 import {
 	cleanupSession,
 	getAsyncJobs,
@@ -33,33 +33,7 @@ import {
 } from "../session.js";
 import { recordThreadState } from "../state.js";
 
-const ALLOWED_VERIFY_TOOLS = new Set(["npm", "npx", "pnpm", "yarn", "pytest", "cargo", "go", "vitest", "jest"]);
-
-const FORBIDDEN_VERIFY_ARGS = new Set(["-e", "-c", "--eval", "--print", "-p", "--input-type"]);
-
-const STRICT_ENV_ALLOWLIST = new Set([
-	"PATH",
-	"HOME",
-	"USERPROFILE",
-	"SYSTEMROOT",
-	"WINDIR",
-	"TEMP",
-	"TMP",
-	"NODE_ENV",
-	"LANG",
-	"LC_ALL",
-	"CI",
-]);
-
-function getSanitizedEnv(): NodeJS.ProcessEnv {
-	const sanitized: NodeJS.ProcessEnv = { CI: "true" };
-	for (const key of STRICT_ENV_ALLOWLIST) {
-		if (process.env[key] !== undefined) {
-			sanitized[key] = process.env[key];
-		}
-	}
-	return sanitized;
-}
+export { runWorktreeVerification };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -77,89 +51,6 @@ function jsonResult(data: unknown) {
 
 function log(msg: string): void {
 	process.stderr.write(`[contextos-mcp] ${msg}\n`);
-}
-
-async function runWorktreeVerification(
-	worktreePath: string,
-	command: string,
-): Promise<{ verified: boolean; output: string }> {
-	const trimmed = command.trim();
-	if (!trimmed) {
-		return { verified: false, output: "Empty verification command" };
-	}
-
-	// Reject shell metacharacters and command chaining
-	if (/[&|;`$><%]/.test(trimmed)) {
-		return {
-			verified: false,
-			output: "Security error: Shell metacharacters and command chaining are not permitted in verify_command",
-		};
-	}
-
-	const parts = trimmed.split(/\s+/);
-	const rawTool = parts[0];
-	const baseTool = rawTool.toLowerCase().replace(/\.(cmd|bat|exe)$/i, "");
-
-	if (!ALLOWED_VERIFY_TOOLS.has(baseTool)) {
-		return {
-			verified: false,
-			output: `Security error: Command "${rawTool}" is not in the allowed verification tools whitelist (${Array.from(ALLOWED_VERIFY_TOOLS).join(", ")})`,
-		};
-	}
-
-	const args = parts.slice(1);
-	for (const arg of args) {
-		if (FORBIDDEN_VERIFY_ARGS.has(arg.toLowerCase())) {
-			return {
-				verified: false,
-				output: `Security error: Argument "${arg}" is not permitted in verify_command`,
-			};
-		}
-	}
-
-	const exePath = await resolveExecutablePath(rawTool);
-	const targetExecutable = exePath || rawTool;
-
-	return new Promise((resolveResult) => {
-		try {
-			const child = spawn(targetExecutable, parts.slice(1), {
-				cwd: worktreePath,
-				timeout: 60000,
-				env: getSanitizedEnv(),
-				shell: false,
-				stdio: ["ignore", "pipe", "pipe"],
-			});
-
-			let stdout = "";
-			let stderr = "";
-			child.stdout?.on("data", (d) => {
-				if (stdout.length < 10000) stdout += d.toString();
-			});
-			child.stderr?.on("data", (d) => {
-				if (stderr.length < 10000) stderr += d.toString();
-			});
-
-			child.on("close", (code) => {
-				const output = `${stdout}\n${stderr}`.trim().slice(0, 1500);
-				resolveResult({
-					verified: code === 0,
-					output,
-				});
-			});
-
-			child.on("error", (err) => {
-				resolveResult({
-					verified: false,
-					output: `Verification execution failed: ${err.message}`,
-				});
-			});
-		} catch (err: unknown) {
-			resolveResult({
-				verified: false,
-				output: err instanceof Error ? err.message : String(err),
-			});
-		}
-	});
 }
 
 // ── Tool Registration ──────────────────────────────────────────────────────
@@ -282,13 +173,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				log(`ContextOS prompt: ${contextPrompt.length} chars`);
 
 				const session = await getSession(resolvedDir);
-				const taskId = `ctx_${Date.now().toString(36)}`;
+				const taskId = `ctx_${randomUUID()}`;
+				const threadIds = args.agents.map(
+					(agentConfig, index) => `${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}`,
+				);
 
 				const executeAgent = async (agentConfig: (typeof args.agents)[number], index: number) => {
 					const model = agentConfig.model || getDefaultModel(agentConfig.provider);
 					const backend = agentConfig.backend || "direct-llm";
 					// Enforce unique, safe thread ID without collisions
-					const threadId = `${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}_${Math.random().toString(36).slice(2, 7)}`;
+					const threadId = threadIds[index];
 
 					try {
 						const result = await spawnThread(session, {
@@ -298,6 +192,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 							agent: backend,
 							model: model,
 							context: contextPrompt,
+							testCommand: args.verify_command,
 						});
 
 						const threads = getThreads(session);
@@ -370,7 +265,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 						contextos_rules_loaded: contextPrompt.length > 0,
 						mode: args.mode || "parallel",
 						agents: args.agents.map((a, i) => ({
-							thread_id: `${taskId}_${a.provider}_${i}`,
+							thread_id: threadIds[i],
 							provider: a.provider,
 							model: a.model || getDefaultModel(a.provider),
 							backend: a.backend || "direct-llm",
@@ -637,11 +532,12 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					return errorResult(`Thread ${args.thread_id} has no branch (status: ${thread.status})`);
 				}
 
-				if (thread.status !== "completed") {
-					return errorResult(`Thread ${args.thread_id} is ${thread.status}, not completed`);
+				const eligibility = isEligibleForMerge(thread);
+				if (!eligibility.eligible) {
+					return errorResult(`Thread ${args.thread_id} cannot be merged: ${eligibility.reason}`);
 				}
 
-				const result = await mergeThreadBranch(session.dir, thread.branchName, thread.id);
+				const result = await mergeThreadBranch(session.dir, thread.branchName, thread.id, thread);
 
 				return jsonResult({
 					merged: result.success,

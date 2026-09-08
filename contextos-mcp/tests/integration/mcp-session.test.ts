@@ -148,7 +148,7 @@ describe("MCP Session: spawnThread", () => {
 			agent: "mock",
 			model: "custom-model",
 			context: "extra context",
-			files: ["src/utils.ts"],
+			files: ["hello.ts"],
 		});
 
 		expect(result.success).toBe(true);

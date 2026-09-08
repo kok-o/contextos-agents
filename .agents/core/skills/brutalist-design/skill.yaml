@@ -1,4 +1,5 @@
 name: brutalist-design
+type: instruction-only
 description: Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics.
 tags:
   - ui
@@ -6,3 +7,6 @@ tags:
   - brutalist
   - typography
 version: 1.0.0
+resources:
+  - SKILL.md
+  - VALIDATION.json

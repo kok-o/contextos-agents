@@ -1,4 +1,5 @@
 name: minimalist-design
+type: instruction-only
 description: Clean editorial-style interfaces with warm monochrome palettes and flat bento grids.
 tags:
   - ui
@@ -6,3 +7,6 @@ tags:
   - minimalist
   - editorial
 version: 1.0.0
+resources:
+  - SKILL.md
+  - VALIDATION.json

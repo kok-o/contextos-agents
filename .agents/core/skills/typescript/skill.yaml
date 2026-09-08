@@ -1,10 +1,17 @@
 id: typescript
 name: TypeScript
 category: frontend
+type: instruction-only
 tags: [frontend, backend, types, static-analysis]
 requires: []
 optional: [zod, prisma]
 conflicts: []
 weight: 9
 documents:
+  - typescript.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - typescript.md

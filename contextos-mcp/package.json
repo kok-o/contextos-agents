@@ -1,6 +1,6 @@
 {
   "name": "contextos-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "ContextOS Execution Layer and MCP Server",
   "type": "module",
   "bin": {
@@ -50,13 +50,13 @@
   "dependencies": {
     "@mariozechner/pi-ai": "^0.55.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "typescript": "^5.7.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
     "esbuild": "^0.27.3",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
     "vitest": "^4.1.0"
   },
   "engines": {

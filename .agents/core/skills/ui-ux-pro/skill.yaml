@@ -1,4 +1,5 @@
 name: ui-ux-pro
+type: instruction-only
 description: >
   Professional UI/UX design skill with strict anti-pattern enforcement.
   Prevents AI slop design, enforces accessibility standards, semantic
@@ -11,3 +12,8 @@ tags:
   - frontend
 version: 1.0.0
 source: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json

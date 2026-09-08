@@ -1,4 +1,5 @@
 name: react-best-practices
+type: instruction-only
 description: React and Next.js performance optimization guidelines from Vercel Engineering.
 tags:
   - react
@@ -8,3 +9,6 @@ tags:
 version: 1.0.0
 requires:
   - react
+resources:
+  - SKILL.md
+  - VALIDATION.json

@@ -54,6 +54,7 @@ export type ThreadProgressPhase =
 	| "creating_worktree"
 	| "agent_running"
 	| "verifying"
+	| "reviewing"
 	| "capturing_diff"
 	| "compressing"
 	| "completed"
@@ -82,6 +83,29 @@ export interface ThreadConfig {
 		model: string;
 	};
 	files?: string[];
+	taskBrief?: TaskBrief;
+}
+
+/** Immutable execution contract supplied to every subagent. */
+export interface TaskBrief {
+	readonly taskId: string;
+	readonly baseSha: string;
+	readonly objective: string;
+	readonly writeScope: readonly string[];
+	readonly testCommand: string;
+	readonly expectedResult: string;
+	readonly maxAttempts: number;
+}
+
+export type VerificationVerdict = "PENDING" | "PASS" | "FAIL";
+export type ReviewVerdictValue = "PASS" | "FAIL";
+
+export interface ReviewVerdict {
+	readonly reviewerId: string;
+	readonly specCompliance: ReviewVerdictValue;
+	readonly codeQuality: ReviewVerdictValue;
+	readonly summary: string;
+	readonly reviewedAt: number;
 }
 
 export interface ThreadState {
@@ -98,6 +122,10 @@ export interface ThreadState {
 	attempt: number;
 	maxAttempts: number;
 	estimatedCostUsd: number;
+	taskBrief?: TaskBrief;
+	verification?: VerificationVerdict;
+	review?: ReviewVerdict;
+	scopeViolation?: boolean;
 }
 
 export interface CompressedResult {
@@ -133,6 +161,7 @@ export interface MergeResult {
 
 export interface BudgetState {
 	totalSpentUsd: number;
+	totalReservedUsd?: number;
 	threadCosts: Map<string, number>;
 	sessionLimitUsd: number;
 	perThreadLimitUsd: number;

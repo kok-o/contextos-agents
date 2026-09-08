@@ -112,6 +112,100 @@ function checkCompiledAdapters(projectDir) {
   return compiled;
 }
 
+function checkLockfileIntegrity(projectDir) {
+  const lockPath = path.join(projectDir, '.agents', 'contextos.lock.json');
+  if (!fs.existsSync(lockPath)) {
+    return { ok: true, exists: false, isError: false, message: 'none (not generated yet)' };
+  }
+  try {
+    const raw = fs.readFileSync(lockPath, 'utf8');
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') {
+      return { ok: false, exists: true, isError: true, error: 'Lockfile JSON root is not an object' };
+    }
+    if (!data.schemaVersion || typeof data.schemaVersion !== 'number') {
+      return { ok: false, exists: true, isError: true, error: 'Lockfile missing valid schemaVersion' };
+    }
+    if (!data.managedFiles || typeof data.managedFiles !== 'object') {
+      return { ok: false, exists: true, isError: true, error: 'Lockfile missing managedFiles map' };
+    }
+    const count = Object.keys(data.managedFiles).length;
+    return { ok: true, exists: true, isError: false, message: `valid (v${data.schemaVersion}, ${count} managed files)` };
+  } catch (err) {
+    return { ok: false, exists: true, isError: true, error: `Lockfile is corrupted JSON: ${err.message}` };
+  }
+}
+
+function checkAdapterIntegrity(projectDir) {
+  const errors = [];
+  const filesToCheck = [
+    path.join(projectDir, '.cursorrules'),
+    path.join(projectDir, '.github', 'copilot-instructions.md'),
+    path.join(projectDir, '.aider.conf.yml'),
+    path.join(projectDir, '.zed', 'rules.md'),
+  ];
+  for (const f of filesToCheck) {
+    if (fs.existsSync(f)) {
+      try {
+        const stat = fs.statSync(f);
+        if (stat.size === 0) {
+          errors.push(`Adapter file ${path.relative(projectDir, f).replace(/\\/g, '/')} is empty (0 bytes)`);
+        }
+      } catch {
+        errors.push(`Adapter file ${path.relative(projectDir, f).replace(/\\/g, '/')} is unreadable`);
+      }
+    }
+  }
+
+  const cursorRulesDir = path.join(projectDir, '.cursor', 'rules');
+  if (fs.existsSync(cursorRulesDir)) {
+    try {
+      const files = fs.readdirSync(cursorRulesDir);
+      for (const file of files) {
+        const full = path.join(cursorRulesDir, file);
+        if (fs.statSync(full).size === 0) {
+          errors.push(`Cursor rule ${file} is empty (0 bytes)`);
+        }
+      }
+    } catch {}
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
+function checkSymlinks(projectDir) {
+  const errors = [];
+  const targetDir = path.join(projectDir, '.agents');
+  if (!fs.existsSync(targetDir)) return { ok: true, errors: [] };
+
+  function scan(current) {
+    let entries;
+    try {
+      entries = fs.readdirSync(current);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      const full = path.join(current, name);
+      try {
+        const lstat = fs.lstatSync(full);
+        if (lstat.isSymbolicLink()) {
+          if (!fs.existsSync(full)) {
+            errors.push(`Broken symlink: ${path.relative(projectDir, full).replace(/\\/g, '/')}`);
+          }
+        } else if (lstat.isDirectory()) {
+          scan(full);
+        }
+      } catch {
+        errors.push(`Cannot stat file: ${path.relative(projectDir, full).replace(/\\/g, '/')}`);
+      }
+    }
+  }
+
+  scan(targetDir);
+  return { ok: errors.length === 0, errors };
+}
+
 function inspectSkills(projectDir, activeProfile) {
   const skillsDir = path.join(projectDir, '.agents', 'core', 'skills');
   if (!fs.existsSync(skillsDir)) return { total: 0, active: 0, excluded: 0, byDomain: { frontend: [], backend: [], cross: [] } };
@@ -139,18 +233,47 @@ function inspectSkills(projectDir, activeProfile) {
   };
 }
 
-function runDoctor(projectDir = process.cwd()) {
+function runDoctor(projectDir = process.cwd(), options = {}) {
   const version = (() => {
     try {
       return require('../package.json').version;
     } catch {
-      return '1.5.0';
+      return '1.7.0';
     }
   })();
 
+  const isJson = Boolean(options.json);
+  const errors = [];
+  const warnings = [];
+
   const agentsDir = path.join(projectDir, '.agents');
   const hasAgents = fs.existsSync(agentsDir);
+  if (!hasAgents) {
+    errors.push('.agents/ directory missing (run: npx contextos-agents init)');
+  }
+
   const nodeCheck = checkNodeVersion();
+  if (!nodeCheck.ok) {
+    errors.push(nodeCheck.message);
+  }
+
+  const lockfileCheck = checkLockfileIntegrity(projectDir);
+  if (!lockfileCheck.ok) {
+    errors.push(lockfileCheck.error);
+  } else if (!lockfileCheck.exists && hasAgents) {
+    warnings.push('Lockfile missing (.agents/contextos.lock.json)');
+  }
+
+  const adapterCheck = checkAdapterIntegrity(projectDir);
+  if (!adapterCheck.ok) {
+    errors.push(...adapterCheck.errors);
+  }
+
+  const symlinkCheck = checkSymlinks(projectDir);
+  if (!symlinkCheck.ok) {
+    errors.push(...symlinkCheck.errors);
+  }
+
   const activeProfile = hasAgents ? profiles.getActiveProfile(projectDir) : null;
   const skillsInfo = inspectSkills(projectDir, activeProfile);
   const compiledAdapters = checkCompiledAdapters(projectDir);
@@ -161,6 +284,34 @@ function runDoctor(projectDir = process.cwd()) {
   const hookCheck = checkPreCommitHook(projectDir);
   const secretCheck = checkSecretScanner(projectDir);
   const stack = profiles.detectStack(projectDir);
+
+  const ok = errors.length === 0;
+
+  if (isJson) {
+    const report = {
+      ok,
+      version,
+      errors,
+      warnings,
+      hasAgents,
+      nodeOk: nodeCheck.ok,
+      activeProfile,
+      skillsInfo,
+      compiledAdapters,
+      hasMcp,
+      hookCheck,
+      secretCheck,
+      lockfileCheck,
+      adapterCheck,
+      symlinkCheck,
+      stack,
+    };
+    console.log(JSON.stringify(report, null, 2));
+    if (options.exitOnError !== false && !ok && require.main === module) {
+      process.exit(1);
+    }
+    return report;
+  }
 
   console.log('\n┌─────────────────────────────────────────────────────────────┐');
   console.log(`│  ContextOS Doctor — Project Health Check  v${version.padEnd(16)}│`);
@@ -177,6 +328,15 @@ function runDoctor(projectDir = process.cwd()) {
   // Node version
   const nodeIcon = nodeCheck.ok ? '✓' : '✗';
   console.log(`│  ${nodeIcon} ${nodeCheck.message.padEnd(58)}│`);
+
+  // Lockfile
+  if (lockfileCheck.exists) {
+    const lockIcon = lockfileCheck.ok ? '✓' : '✗';
+    const lockStr = `Lockfile: ${lockfileCheck.ok ? lockfileCheck.message : lockfileCheck.error}`;
+    console.log(`│  ${lockIcon} ${lockStr.slice(0, 58).padEnd(58)}│`);
+  } else {
+    console.log('│  • Lockfile: not present (optional for dev repository)      │');
+  }
 
   // Active profile
   if (activeProfile) {
@@ -198,6 +358,11 @@ function runDoctor(projectDir = process.cwd()) {
   } else {
     console.log('│  • Adapters compiled: none (run: contextos export gemini)   │');
   }
+
+  // Symlinks
+  const symIcon = symlinkCheck.ok ? '✓' : '✗';
+  const symStr = symlinkCheck.ok ? 'Symlinks: verified (0 broken)' : `Broken symlinks: ${symlinkCheck.errors.length}`;
+  console.log(`│  ${symIcon} ${symStr.padEnd(58)}│`);
 
   // MCP
   if (hasMcp) {
@@ -242,7 +407,18 @@ function runDoctor(projectDir = process.cwd()) {
   console.log('│                                                             │');
   console.log('└─────────────────────────────────────────────────────────────┘\n');
 
-  return {
+  if (errors.length > 0) {
+    console.error(`[ERROR] Diagnostic check failed with ${errors.length} error(s):`);
+    for (const err of errors) {
+      console.error(`  - ${err}`);
+    }
+    console.error('');
+  }
+
+  const result = {
+    ok,
+    errors,
+    warnings,
     hasAgents,
     nodeOk: nodeCheck.ok,
     activeProfile,
@@ -251,12 +427,22 @@ function runDoctor(projectDir = process.cwd()) {
     hasMcp,
     hookCheck,
     secretCheck,
+    lockfileCheck,
+    adapterCheck,
+    symlinkCheck,
     stack,
   };
+
+  if (options.exitOnError !== false && !ok && require.main === module) {
+    process.exit(1);
+  }
+
+  return result;
 }
 
 if (require.main === module) {
-  runDoctor();
+  const res = runDoctor();
+  if (!res.ok) process.exit(1);
 }
 
 module.exports = {
@@ -265,5 +451,8 @@ module.exports = {
   checkPreCommitHook,
   checkSecretScanner,
   checkCompiledAdapters,
+  checkLockfileIntegrity,
+  checkAdapterIntegrity,
+  checkSymlinks,
   inspectSkills,
 };

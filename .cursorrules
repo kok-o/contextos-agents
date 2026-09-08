@@ -81,7 +81,7 @@ The following specialist skills are configured as `.cursor/rules/<skill>.mdc`:
 
 
 ## Skill: graphify
-> Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius.
+> Codebase knowledge graph generator and architecture mapping guide. Instructs agents on AST dependency extraction and blast radius analysis.
 *Rule file: `.cursor/rules/graphify.mdc` (load on demand)*
 
 

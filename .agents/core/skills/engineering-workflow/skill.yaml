@@ -1,4 +1,5 @@
 name: engineering-workflow
+type: instruction-only
 description: >
   Senior engineering workflow skill inspired by Addy Osmani's agent-skills.
   Enforces the full development lifecycle: spec → plan → build → test → review → ship.
@@ -11,3 +12,8 @@ tags:
   - review
 version: 1.0.0
 source: https://github.com/addyosmani/agent-skills
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json

@@ -12,7 +12,9 @@
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/ponytail-mindset",
-      "builtin": true
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
     },
     {
       "id": "koko-o/gstack-roles",
@@ -23,7 +25,9 @@
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/gstack-roles",
-      "builtin": true
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
     },
     {
       "id": "koko-o/impeccable-design",
@@ -34,18 +38,22 @@
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/impeccable-design",
-      "builtin": true
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
     },
     {
       "id": "koko-o/graphify",
       "name": "graphify",
-      "description": "Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing.",
+      "description": "Codebase knowledge graph generator and architecture mapping guide. Instructs agents on AST dependency extraction and blast radius analysis.",
       "author": "koko-o",
       "tags": ["knowledge-graph", "ast", "tree-sitter", "dependencies", "architecture"],
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/graphify",
-      "builtin": true
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": ["EXAMPLES.md", "SKILL.md", "VALIDATION.json"]
     }
   ],
   "contributing": "https://github.com/kok-o/contextos-agents/blob/main/CONTRIBUTING.md#publishing-a-skill-as-a-plugin",

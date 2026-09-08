@@ -1,5 +1,6 @@
 name: graphify
-description: Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius.
+type: instruction-only
+description: Codebase knowledge graph generator and architecture mapping guide. Instructs agents on AST dependency extraction and blast radius analysis.
 tags:
   - knowledge-graph
   - ast
@@ -11,3 +12,7 @@ version: 1.0.0
 optional:
   - context-manager
   - system-design
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - VALIDATION.json

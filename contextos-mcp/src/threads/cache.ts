@@ -22,6 +22,8 @@ export interface ThreadCacheEntry {
 	result: CompressedResult;
 	cachedAt: number;
 	hitCount: number;
+	fileHashes?: Record<string, string>;
+	commitSha?: string;
 }
 
 /** On-disk format for persistent cache entries. */
@@ -29,6 +31,29 @@ interface DiskCacheEntry {
 	key: string;
 	result: CompressedResult;
 	cachedAt: number;
+	fileHashes?: Record<string, string>;
+	commitSha?: string;
+}
+
+/** Compute SHA-256 hash of a file on disk. Returns empty string if file does not exist. */
+export function computeFileHash(filePath: string): string {
+	try {
+		if (!fs.existsSync(filePath)) return "";
+		const buffer = fs.readFileSync(filePath);
+		return createHash("sha256").update(buffer).digest("hex");
+	} catch {
+		return "";
+	}
+}
+
+/** Compute file hashes for a list of context files inside repoRoot. */
+export function computeContextHashes(repoRoot: string, files: string[]): Record<string, string> {
+	const hashes: Record<string, string> = {};
+	for (const file of files) {
+		const absPath = path.isAbsolute(file) ? file : path.join(repoRoot, file);
+		hashes[file] = computeFileHash(absPath);
+	}
+	return hashes;
 }
 
 export interface ThreadCacheStats {
@@ -116,6 +141,8 @@ export class ThreadCache {
 					result: entry.result,
 					cachedAt: entry.cachedAt,
 					hitCount: 0,
+					fileHashes: entry.fileHashes,
+					commitSha: entry.commitSha,
 				});
 				this.persistedKeys.add(entry.key);
 			} catch {
@@ -135,7 +162,7 @@ export class ThreadCache {
 
 	/**
 	 * Look up a cached result for the given thread parameters.
-	 * Returns undefined on cache miss.
+	 * Returns undefined on cache miss or if context files drifted.
 	 */
 	get(
 		task: string,
@@ -165,6 +192,22 @@ export class ThreadCache {
 		if (!entry.result.success) {
 			this.misses++;
 			return undefined;
+		}
+
+		// Task 2.5e: Context hash verification
+		// If context files were recorded, verify that their contents on disk have not drifted
+		if (repoRoot && entry.fileHashes && Object.keys(entry.fileHashes).length > 0) {
+			for (const [file, recordedHash] of Object.entries(entry.fileHashes)) {
+				const absPath = path.isAbsolute(file) ? file : path.join(repoRoot, file);
+				const currentHash = computeFileHash(absPath);
+				if (currentHash !== recordedHash) {
+					// Stale cache hit with drifted context files -> invalidate and miss
+					this.cache.delete(key);
+					this.deleteDiskEntry(key);
+					this.misses++;
+					return undefined;
+				}
+			}
 		}
 
 		this.hits++;
@@ -202,15 +245,18 @@ export class ThreadCache {
 
 		const key = computeCacheKey(task, files, agent, model, repoRoot, commitSha);
 		const now = Date.now();
+		const fileHashes = repoRoot && files.length > 0 ? computeContextHashes(repoRoot, files) : undefined;
 
 		this.cache.set(key, {
 			result,
 			cachedAt: now,
 			hitCount: 0,
+			fileHashes,
+			commitSha,
 		});
 
 		// Persist to disk
-		this.saveDiskEntry(key, result, now);
+		this.saveDiskEntry(key, result, now, fileHashes, commitSha);
 	}
 
 	/** Get cache statistics. */
@@ -237,10 +283,16 @@ export class ThreadCache {
 
 	// ── Disk persistence ──────────────────────────────────────────────────
 
-	private saveDiskEntry(key: string, result: CompressedResult, cachedAt: number): void {
+	private saveDiskEntry(
+		key: string,
+		result: CompressedResult,
+		cachedAt: number,
+		fileHashes?: Record<string, string>,
+		commitSha?: string,
+	): void {
 		if (!this.persistDir) return;
 		try {
-			const entry: DiskCacheEntry = { key, result, cachedAt };
+			const entry: DiskCacheEntry = { key, result, cachedAt, fileHashes, commitSha };
 			const filePath = path.join(this.persistDir, `${key}.json`);
 			fs.writeFileSync(filePath, JSON.stringify(entry), "utf-8");
 			this.persistedKeys.add(key);

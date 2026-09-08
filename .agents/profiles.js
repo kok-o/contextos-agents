@@ -72,10 +72,34 @@ function parseYamlProfile(text) {
       .filter(Boolean);
   }
 
+  function parseMap(field) {
+    const blockRegex = new RegExp(`^${field}:\\s*\\n((?:[ \\t]+[a-zA-Z0-9_-]+:[^\\n]*\\n?)+)`, 'm');
+    const match = text.match(blockRegex);
+    if (!match) return {};
+    const map = {};
+    const lines = match[1].split('\n');
+    for (const line of lines) {
+      const lineClean = line.replace(/#.*$/, '').trim();
+      if (!lineClean) continue;
+      const kv = lineClean.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+      if (kv) {
+        const key = kv[1].trim();
+        let val = kv[2].trim().replace(/^['"]|['"]$/g, '');
+        if (val === 'true') val = true;
+        else if (val === 'false') val = false;
+        else if (/^\d+$/.test(val)) val = parseInt(val, 10);
+        map[key] = val;
+      }
+    }
+    return map;
+  }
+
   result.prefer_skills = parseList('prefer_skills');
   result.exclude_skills = parseList('exclude_skills');
   result.generate_docs = parseList('generate_docs');
   result.skip_docs = parseList('skip_docs');
+  result.enforce = parseMap('enforce');
+  result.defaults = parseMap('defaults');
 
   return result;
 }
@@ -140,6 +164,8 @@ function applyProfile(profileName, projectDir = process.cwd()) {
     description: profile.description,
     exclude_skills: profile.exclude_skills || [],
     prefer_skills: profile.prefer_skills || [],
+    enforce: profile.enforce || {},
+    defaults: profile.defaults || {},
     appliedAt: new Date().toISOString(),
   };
 

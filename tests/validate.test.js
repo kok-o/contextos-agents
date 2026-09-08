@@ -125,6 +125,16 @@ describe('validate — real project', () => {
     const { stdout } = runValidate(ROOT);
     assert.ok(stdout.includes('[sync]') || stdout.includes('[missing]'), 'Should include sync check output');
   });
+
+  test('output lists resources check results', () => {
+    const { stdout } = runValidate(ROOT);
+    assert.ok(stdout.includes('[resources]'), 'Should include resources check output');
+  });
+
+  test('output lists profiles check results', () => {
+    const { stdout } = runValidate(ROOT);
+    assert.ok(stdout.includes('[profiles]'), 'Should include profiles check output');
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

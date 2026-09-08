@@ -59,6 +59,61 @@ class Mutex {
 const WORKTREE_CREATE_RETRIES = 3;
 const WORKTREE_RETRY_DELAY_MS = 500;
 
+export class ScopeViolationError extends Error {
+	readonly files: readonly string[];
+
+	constructor(files: readonly string[]) {
+		super(`scope_violation: changes outside writeScope: ${files.join(", ")}`);
+		this.name = "ScopeViolationError";
+		this.files = files;
+	}
+}
+
+export function normalizeGitPath(file: string): string {
+	return file.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/$/, "");
+}
+
+export function isWithinWriteScope(file: string, writeScope: readonly string[]): boolean {
+	const normalized = normalizeGitPath(file);
+	return writeScope.some((scope) => {
+		const allowed = normalizeGitPath(scope);
+		if (allowed === "." || allowed === "") return true;
+		return normalized === allowed || normalized.startsWith(`${allowed}/`);
+	});
+}
+
+function parseNameStatus(raw: string): string[] {
+	const fields = raw.split("\0").filter(Boolean);
+	const files: string[] = [];
+	for (let index = 0; index < fields.length; ) {
+		const status = fields[index++];
+		const file = fields[index++];
+		if (!file) break;
+		files.push(file);
+		if (status.startsWith("R") || status.startsWith("C")) {
+			const previous = fields[index++];
+			if (previous) files.push(previous);
+		}
+	}
+	return files;
+}
+
+function parsePorcelainV2(raw: string): string[] {
+	const records = raw.split("\0").filter(Boolean);
+	const files: string[] = [];
+	for (let index = 0; index < records.length; index++) {
+		const record = records[index];
+		if (record.startsWith("? ")) files.push(record.slice(2));
+		else if (record.startsWith("1 ")) files.push(record.split(" ").slice(8).join(" "));
+		else if (record.startsWith("2 ")) {
+			files.push(record.split(" ").slice(9).join(" "));
+			const previous = records[++index];
+			if (previous) files.push(previous);
+		} else if (record.startsWith("u ")) files.push(record.split(" ").slice(10).join(" "));
+	}
+	return files;
+}
+
 export function createRepositoryFingerprint(repoRoot: string): string {
 	const canonical = path.resolve(repoRoot).toLowerCase();
 	return createHash("sha256").update(canonical).digest("hex").slice(0, 16);
@@ -319,6 +374,36 @@ export class WorktreeManager {
 			.map((f) => f.trim())
 			.filter(Boolean)
 			.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session" && !isBlockedPath(f));
+	}
+
+	/**
+	 * Detect every worktree change, including untracked, staged, unstaged,
+	 * committed, and both sides of renames, then enforce the immutable scope.
+	 */
+	async assertWriteScope(threadId: string, baseSha: string, writeScope: readonly string[]): Promise<string[]> {
+		const info = this.worktrees.get(threadId);
+		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
+		if (!baseSha || !/^[0-9a-fA-F]{7,64}$/.test(baseSha)) throw new Error("Invalid TaskBrief baseSha");
+		if (writeScope.length === 0) throw new ScopeViolationError(["<empty writeScope>"]);
+
+		const [{ stdout: status }, { stdout: committed }, { stdout: staged }] = await Promise.all([
+			git(["status", "--porcelain=v2", "-z", "--untracked-files=all"], info.path),
+			git(["diff", "--name-status", "-z", `${baseSha}...HEAD`], info.path),
+			git(["diff", "--cached", "--name-status", "-z"], info.path),
+		]);
+
+		const internal = new Set([".contextos-owner", ".contextos-session"]);
+		const touched = [
+			...new Set([...parsePorcelainV2(status), ...parseNameStatus(committed), ...parseNameStatus(staged)]),
+		]
+			.map(normalizeGitPath)
+			.filter((file) => file && !internal.has(file));
+
+		for (const file of touched) assertWithinRepository(path.resolve(info.path, file), info.path);
+		const violations = touched.filter((file) => !isWithinWriteScope(file, writeScope));
+		if (violations.length > 0) throw new ScopeViolationError(violations);
+		return touched;
 	}
 
 	/** Commit all changes in a worktree. */

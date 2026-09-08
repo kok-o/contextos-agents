@@ -1,4 +1,5 @@
 name: decisions
+type: instruction-only
 description: >
   Architecture Decision Records (ADR) management. Creates, tracks, and queries
   architectural decisions so AI assistants understand why choices were made.
@@ -8,3 +9,8 @@ tags:
   - decisions
   - documentation
 version: 1.0.0
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json

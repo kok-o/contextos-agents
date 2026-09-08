@@ -2,6 +2,7 @@ name: docker
 description: Docker containerization, multi-stage builds, non-root security, layer caching optimization, and docker-compose standards.
 version: 1.0.0
 category: devops
+type: instruction-only
 requires:
   - security
 triggers:
@@ -21,3 +22,8 @@ triggers:
     - "image"
     - "kubernetes"
     - "k8s"
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
