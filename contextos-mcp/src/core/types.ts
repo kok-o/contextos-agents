@@ -160,6 +160,7 @@ export interface MergeResult {
 
 export interface BudgetState {
 	totalSpentUsd: number;
+	totalReservedUsd?: number;
 	threadCosts: Map<string, number>;
 	sessionLimitUsd: number;
 	perThreadLimitUsd: number;

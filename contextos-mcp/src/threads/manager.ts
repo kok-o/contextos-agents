@@ -84,7 +84,9 @@ export class AsyncSemaphore {
 
 class BudgetTracker {
 	private totalSpent: number = 0;
+	private totalReserved: number = 0;
 	private threadCosts: Map<string, number> = new Map();
+	private reservations: Map<string, number> = new Map();
 	private sessionLimit: number;
 	private perThreadLimit: number;
 	private totalInputTokens: number = 0;
@@ -125,10 +127,10 @@ class BudgetTracker {
 	canAfford(model: string): { allowed: boolean; reason?: string } {
 		const estimate = this.estimateThreadCost(model);
 
-		if (this.totalSpent + estimate > this.sessionLimit) {
+		if (this.totalSpent + this.totalReserved + estimate > this.sessionLimit) {
 			return {
 				allowed: false,
-				reason: `Session budget exceeded: $${this.totalSpent.toFixed(4)} spent of $${this.sessionLimit.toFixed(2)} limit (next thread ~$${estimate.toFixed(4)})`,
+				reason: `Session budget exceeded: $${this.totalSpent.toFixed(4)} spent and $${this.totalReserved.toFixed(4)} reserved of $${this.sessionLimit.toFixed(2)} limit (next thread ~$${estimate.toFixed(4)})`,
 			};
 		}
 
@@ -142,6 +144,24 @@ class BudgetTracker {
 		return { allowed: true };
 	}
 
+	/** Atomically reserve the expected cost before dispatching a thread attempt. */
+	reserve(threadId: string, model: string): { allowed: boolean; reason?: string } {
+		if (this.reservations.has(threadId)) return { allowed: true };
+		const check = this.canAfford(model);
+		if (!check.allowed) return check;
+		const estimate = this.estimateThreadCost(model);
+		this.reservations.set(threadId, estimate);
+		this.totalReserved += estimate;
+		return { allowed: true };
+	}
+
+	releaseReservation(threadId: string): void {
+		const reserved = this.reservations.get(threadId);
+		if (reserved === undefined) return;
+		this.totalReserved = Math.max(0, this.totalReserved - reserved);
+		this.reservations.delete(threadId);
+	}
+
 	/**
 	 * Record cost for a completed thread.
 	 * Uses actual usage when available, falls back to estimate.
@@ -151,6 +171,7 @@ class BudgetTracker {
 		model: string,
 		usage?: { inputTokens: number; outputTokens: number },
 	): { cost: number; isEstimate: boolean } {
+		this.releaseReservation(threadId);
 		let cost: number;
 		let isEstimate: boolean;
 
@@ -176,7 +197,7 @@ class BudgetTracker {
 			this.estimatedCostCount++;
 		}
 
-		this.threadCosts.set(threadId, cost);
+		this.threadCosts.set(threadId, (this.threadCosts.get(threadId) || 0) + cost);
 		this.totalSpent += cost;
 		return { cost, isEstimate };
 	}
@@ -188,6 +209,7 @@ class BudgetTracker {
 	getState(): BudgetState {
 		return {
 			totalSpentUsd: this.totalSpent,
+			totalReservedUsd: this.totalReserved,
 			threadCosts: new Map(this.threadCosts),
 			sessionLimitUsd: this.sessionLimit,
 			perThreadLimitUsd: this.perThreadLimit,
@@ -404,20 +426,6 @@ export class ThreadManager {
 			};
 		}
 
-		// Preliminary budget check (definitive check happens inside semaphore)
-		const model = threadConfig.agent.model || this.config.default_model;
-		const budgetCheck = this.budget.canAfford(model);
-		if (!budgetCheck.allowed) {
-			return {
-				success: false,
-				summary: `Budget exceeded: ${budgetCheck.reason}`,
-				filesChanged: [],
-				diffStats: "",
-				durationMs: 0,
-				estimatedCostUsd: 0,
-			};
-		}
-
 		// Check session abort
 		if (this.sessionAbort?.aborted) {
 			return {
@@ -507,6 +515,17 @@ export class ThreadManager {
 				if (threadAc.signal.aborted) break;
 			}
 
+			const attemptModel = currentConfig.agent.model || this.config.default_model;
+			const reservation = this.budget.reserve(threadId, attemptModel);
+			if (!reservation.allowed) {
+				state.status = "failed";
+				state.phase = "failed";
+				state.error = `Budget exceeded: ${reservation.reason}`;
+				state.completedAt = Date.now();
+				lastResult = this.failResult(state, state.error);
+				break;
+			}
+
 			lastResult = await this.executeThread(threadId, currentConfig, state, threadAc.signal);
 
 			if (lastResult.success || threadAc.signal.aborted) {
@@ -541,7 +560,8 @@ export class ThreadManager {
 
 		this.sessionAbort?.removeEventListener("abort", onSessionAbort);
 		this.threadAbortControllers.delete(threadId);
-		return lastResult!;
+		this.budget.releaseReservation(threadId);
+		return lastResult || this.failResult(state, "Thread cancelled");
 	}
 
 	/**
@@ -566,27 +586,11 @@ export class ThreadManager {
 
 		try {
 			if (signal.aborted) {
+				this.budget.releaseReservation(threadId);
 				state.status = "cancelled";
 				state.phase = "cancelled";
 				state.completedAt = Date.now();
 				return this.failResult(state, "Thread cancelled before start");
-			}
-
-			// Definitive budget check inside semaphore (prevents race condition)
-			const threadModel = threadConfig.agent.model || this.config.default_model;
-			const budgetCheck = this.budget.canAfford(threadModel);
-			if (!budgetCheck.allowed) {
-				state.status = "failed";
-				state.phase = "failed";
-				state.completedAt = Date.now();
-				return {
-					success: false,
-					summary: `Budget exceeded: ${budgetCheck.reason}`,
-					filesChanged: [],
-					diffStats: "",
-					durationMs: 0,
-					estimatedCostUsd: 0,
-				};
 			}
 
 			state.status = "running";
@@ -631,6 +635,7 @@ export class ThreadManager {
 			}
 
 			if (signal.aborted) {
+				this.budget.releaseReservation(threadId);
 				state.status = "cancelled";
 				state.phase = "cancelled";
 				state.completedAt = Date.now();

@@ -15,6 +15,7 @@
  *   - loadConfig(cwd) avoids process.chdir() race conditions
  */
 
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { SwarmConfig } from "../config.js";
@@ -193,7 +194,7 @@ async function initSession(absDir: string): Promise<SwarmSession> {
  * Spawn a thread in a session.
  */
 export async function spawnThread(session: SwarmSession, params: ThreadSpawnParams): Promise<CompressedResult> {
-	const threadId = params.id || `mcp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+	const threadId = params.id || `mcp-${randomUUID()}`;
 
 	if (params.files) {
 		for (const file of params.files) {
@@ -357,7 +358,7 @@ export async function cleanupAllSessions(): Promise<void> {
 export function createSessionDispatcher(session: SwarmSession): ActionDispatcher {
 	return new ActionDispatcher({
 		async spawn(action: SpawnAction) {
-			const threadId = `mcp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+			const threadId = `mcp-${randomUUID()}`;
 			const result = await spawnThread(session, {
 				id: threadId,
 				task: action.task,

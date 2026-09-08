@@ -13,6 +13,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { existsSync, lstatSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -282,13 +283,17 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				log(`ContextOS prompt: ${contextPrompt.length} chars`);
 
 				const session = await getSession(resolvedDir);
-				const taskId = `ctx_${Date.now().toString(36)}`;
+				const taskId = `ctx_${randomUUID()}`;
+				const threadIds = args.agents.map(
+					(agentConfig, index) =>
+						`${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}`,
+				);
 
 				const executeAgent = async (agentConfig: (typeof args.agents)[number], index: number) => {
 					const model = agentConfig.model || getDefaultModel(agentConfig.provider);
 					const backend = agentConfig.backend || "direct-llm";
 					// Enforce unique, safe thread ID without collisions
-					const threadId = `${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}_${Math.random().toString(36).slice(2, 7)}`;
+					const threadId = threadIds[index];
 
 					try {
 						const result = await spawnThread(session, {
@@ -371,7 +376,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 						contextos_rules_loaded: contextPrompt.length > 0,
 						mode: args.mode || "parallel",
 						agents: args.agents.map((a, i) => ({
-							thread_id: `${taskId}_${a.provider}_${i}`,
+							thread_id: threadIds[i],
 							provider: a.provider,
 							model: a.model || getDefaultModel(a.provider),
 							backend: a.backend || "direct-llm",

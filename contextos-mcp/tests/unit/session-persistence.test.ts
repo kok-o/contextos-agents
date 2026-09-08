@@ -201,6 +201,28 @@ describe("MCP Session Persistence & Orphan Management", () => {
 		expect(fs.existsSync(lockPath)).toBe(false);
 	});
 
+	it("preserves five rapid thread updates with a monotonic sequence", async () => {
+		const threads = Array.from({ length: 5 }, (_, index): ThreadState => ({
+			id: `concurrent-${index}`,
+			config: {
+				id: `concurrent-${index}`,
+				task: `Task ${index}`,
+				context: "",
+				agent: { backend: "direct-llm", model: "gpt-4o" },
+			},
+			status: "completed",
+			phase: "completed",
+			attempt: 1,
+			maxAttempts: 1,
+			estimatedCostUsd: 0,
+		}));
+
+		await Promise.all(threads.map(async (thread) => recordThreadState(TEST_DIR, thread)));
+		const state = loadPersistedState(TEST_DIR);
+		expect(Object.keys(state?.threads || {})).toHaveLength(5);
+		expect(state?.sequence).toBe(5);
+	});
+
 	it("skips orphan worktree if .contextos-session belongs to a different repository", async () => {
 		const wtDir = path.join(TEST_DIR, ".swarm-worktrees", "alien-worktree");
 		fs.mkdirSync(wtDir, { recursive: true });
