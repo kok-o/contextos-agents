@@ -12,8 +12,7 @@ This is an open-source set of skills and behavioral rules for AI assistants. The
 You do not need to clone anything manually. Just open your terminal in the root of your project and run:
 
 ```bash
-npx contextos
-# or: npx contextos-agents
+npx contextos-agents init
 ```
 
 The script will automatically detect your project tech stack, create the `.agents` folder, configure skills, and compile them for your AI agent.
@@ -21,16 +20,16 @@ The script will automatically detect your project tech stack, create the `.agent
 ### Options
 
 ```bash
-npx contextos --help             # Show all options
-npx contextos --version          # Show version
-npx contextos --minimal          # Install only 5 core skills (lightweight footprint)
-npx contextos --profile mvp      # Install with specific profile (mvp, startup, enterprise, frontend, backend)
-npx contextos --auto             # Auto-detect tech stack and apply recommended profile
-npx contextos --with-mcp         # Install with MCP execution server enabled (.agents/mcp/)
-npx contextos setup-mcp          # Add MCP server to an existing .agents/ project
-npx contextos --dry-run          # Preview what will be installed
-npx contextos --force            # Overwrite an existing .agents/ folder
-npx contextos --skip-compile     # Skip auto-compilation step
+npx contextos-agents --help             # Show all options
+npx contextos-agents --version          # Show version
+npx contextos-agents --minimal          # Install only 5 core skills (lightweight footprint)
+npx contextos-agents --profile mvp      # Install with specific profile (mvp, startup, enterprise, frontend, backend)
+npx contextos-agents --auto             # Auto-detect tech stack and apply recommended profile
+npx contextos-agents --with-mcp         # Install with MCP execution server enabled (.agents/mcp/)
+npx contextos-agents setup-mcp          # Add MCP server to an existing .agents/ project
+npx contextos-agents --dry-run          # Preview what will be installed
+npx contextos-agents --force            # Overwrite an existing .agents/ folder
+npx contextos-agents --skip-compile     # Skip auto-compilation step
 ```
 
 ## Why ContextOS?
@@ -151,7 +150,7 @@ ContextOS maps development phases directly to slash commands in your AI chat:
 
 ## Dynamic Skill Resolution & Unified CLI (`contextos` / `ctx.js`)
 
-ContextOS provides a unified CLI (`contextos` or `npx contextos`) and local engine (`.agents/ctx.js`) to resolve minimal skills on the fly, run health diagnostics, and compile exports for AI assistants.
+ContextOS provides a unified CLI (`contextos` or `npx contextos-agents`) and local engine (`.agents/ctx.js`) to resolve minimal skills on the fly, run health diagnostics, and compile exports for AI assistants.
 
 ### Dynamic Skill Resolution (`resolve` & `index`)
 
@@ -188,7 +187,7 @@ Run a comprehensive pre-flight verification across your repository to ensure val
 
 ```bash
 contextos doctor
-# or: npx contextos doctor
+# or: npx contextos-agents doctor
 ```
 
 ### Context Savings Analytics (`contextos stats`)
@@ -271,7 +270,7 @@ You can expand your `.agents` folder with community plugins or validate your own
 ```bash
 # Launch the interactive skill installer to browse and install community skills
 contextos install-skill
-# or: npx contextos install-skill
+# or: npx contextos-agents install-skill
 
 # Or install a specific skill from a GitHub repository automatically
 contextos install-skill --from-repo kok-o/awesome-skill
