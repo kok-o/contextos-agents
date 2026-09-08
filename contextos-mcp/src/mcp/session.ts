@@ -32,13 +32,14 @@ import type {
 import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
 import { ThreadManager } from "../threads/manager.js";
-import { mergeAllThreads, mergeThreadBranch } from "../worktree/merge.js";
+import { isEligibleForMerge, mergeAllThreads, mergeThreadBranch } from "../worktree/merge.js";
 import {
 	type AsyncTaskRecord,
 	clearPersistedState,
 	getPersistedAsyncTasks,
 	getPersistedThreads,
 	purgeOrphans,
+	reconcileSessionStateWithGit,
 	recordAsyncTask,
 	recordThreadState,
 } from "./state.js";
@@ -161,12 +162,13 @@ async function initSession(absDir: string): Promise<SwarmSession> {
 	);
 	await threadManager.init();
 
+	// Task 2.5d: Reconcile persisted state against active git worktrees on startup
+	await reconcileSessionStateWithGit(absDir, config.worktree_base_dir);
+
 	// Rehydrate threads from persisted state (survives server restart)
 	const persisted = getPersistedThreads(absDir, config.worktree_base_dir);
 	for (const thread of persisted) {
-		if (thread.status === "completed" || thread.status === "failed" || thread.status === "verification_failed") {
-			threadManager.restoreThread(thread);
-		}
+		threadManager.restoreThread(thread);
 	}
 
 	// Mark lingering running async tasks as unknown_after_restart
@@ -415,7 +417,8 @@ export function createSessionDispatcher(session: SwarmSession): ActionDispatcher
 			return {
 				threadId: action.threadId,
 				status: thread.status,
-				reviewed: true,
+				reviewed: Boolean(thread.review),
+				verdict: thread.review,
 			};
 		},
 
@@ -428,7 +431,15 @@ export function createSessionDispatcher(session: SwarmSession): ActionDispatcher
 			if (!thread.branchName) {
 				return { error: `Thread ${action.threadId} has no branch` };
 			}
-			const result = await mergeThreadBranch(session.dir, thread.branchName, action.threadId);
+			const eligibility = isEligibleForMerge(thread);
+			if (!eligibility.eligible) {
+				return {
+					threadId: action.threadId,
+					merged: false,
+					error: `Merge blocked by strict merge predicate: ${eligibility.reason}`,
+				};
+			}
+			const result = await mergeThreadBranch(session.dir, thread.branchName, action.threadId, thread);
 			return {
 				threadId: action.threadId,
 				merged: result.success,

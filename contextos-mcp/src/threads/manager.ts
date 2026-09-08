@@ -27,9 +27,12 @@ import type {
 	ThreadConfig,
 	ThreadProgressPhase,
 	ThreadState,
+	VerificationVerdict,
 } from "../core/types.js";
 import { MODEL_PRICING as PRICING } from "../core/types.js";
 import type { EpisodicMemory } from "../memory/episodic.js";
+import { evaluateReviewerGate } from "../orchestration/reviewer-gate.js";
+import { runWorktreeVerification } from "../orchestration/verification-runner.js";
 import { AGENT_CAPABILITIES } from "../routing/model-router.js";
 import { WorktreeManager } from "../worktree/manager.js";
 import { ThreadCache, type ThreadCacheStats } from "./cache.js";
@@ -451,7 +454,12 @@ export class ThreadManager {
 			expectedResult: threadConfig.taskBrief?.expectedResult || "Task completes successfully",
 			maxAttempts: threadConfig.taskBrief?.maxAttempts || maxAttempts,
 		});
-		const normalizedConfig: ThreadConfig = { ...threadConfig, id: threadId, files: [...taskBrief.writeScope], taskBrief };
+		const normalizedConfig: ThreadConfig = {
+			...threadConfig,
+			id: threadId,
+			files: [...taskBrief.writeScope],
+			taskBrief,
+		};
 		const state: ThreadState = {
 			id: threadId,
 			config: normalizedConfig,
@@ -548,11 +556,19 @@ export class ThreadManager {
 				const currentModel = currentConfig.agent.model || this.config.default_model;
 				const alt = pickAlternativeAgent(currentAgent, currentModel, this.config, attempt);
 
+				const reviewFeedback = state.review?.summary
+					? `\n\nPrevious attempt was rejected by reviewer:\n${state.review.summary}\nPlease fix these issues and stay strictly within declared writeScope.`
+					: state.error
+						? `\n\nPrevious attempt error: ${state.error}`
+						: "";
+
+				currentConfig = {
+					...currentConfig,
+					context: `${currentConfig.context || ""}${reviewFeedback}`.trim(),
+					agent: alt ? { backend: alt.agent, model: alt.model } : currentConfig.agent,
+				};
+
 				if (alt) {
-					currentConfig = {
-						...currentConfig,
-						agent: { backend: alt.agent, model: alt.model },
-					};
 					this.onThreadProgress?.(threadId, "retrying", `re-routing: ${currentAgent} → ${alt.agent}`);
 				}
 			}
@@ -650,11 +666,7 @@ export class ThreadManager {
 			const diffStats = await this.worktreeManager.getDiffStats(threadId);
 			const filesChanged = await this.worktreeManager.getChangedFiles(threadId);
 			try {
-				await this.worktreeManager.assertWriteScope(
-					threadId,
-					state.taskBrief!.baseSha,
-					state.taskBrief!.writeScope,
-				);
+				await this.worktreeManager.assertWriteScope(threadId, state.taskBrief!.baseSha, state.taskBrief!.writeScope);
 			} catch (error) {
 				if (error instanceof Error && error.name === "ScopeViolationError") state.scopeViolation = true;
 				throw error;
@@ -662,6 +674,48 @@ export class ThreadManager {
 
 			if (filesChanged.length > 0) {
 				await this.worktreeManager.commit(threadId, `swarm: ${threadConfig.task.slice(0, 72)}`);
+			}
+
+			// Automated test verification (if taskBrief specifies testCommand)
+			let verificationVerdict: VerificationVerdict = "PASS";
+			let verificationOutput = "";
+			if (state.taskBrief?.testCommand) {
+				state.phase = "verifying";
+				this.onThreadProgress?.(threadId, "verifying", state.taskBrief.testCommand);
+				const verifyRes = await runWorktreeVerification(wtInfo.path, state.taskBrief.testCommand);
+				verificationOutput = verifyRes.output;
+				verificationVerdict = verifyRes.verified ? "PASS" : "FAIL";
+				state.verification = verificationVerdict;
+				if (!verifyRes.verified) {
+					state.error = `Verification failed: ${verifyRes.output}`;
+				}
+			} else {
+				state.verification = "PASS";
+			}
+
+			// Independent Reviewer Gate (Dual Verdict)
+			state.phase = "reviewing";
+			this.onThreadProgress?.(threadId, "reviewing");
+			const reviewVerdict = await evaluateReviewerGate({
+				taskBrief: state.taskBrief!,
+				diff,
+				filesChanged,
+				verificationVerdict,
+				testOutput: verificationOutput,
+				implementerAgent: threadConfig.agent.backend || this.config.default_agent,
+				implementerModel: threadConfig.agent.model || this.config.default_model,
+				workDir: wtInfo.path,
+				repoRoot: this.repoRoot,
+			});
+			state.review = reviewVerdict;
+
+			const reviewFailed = reviewVerdict.specCompliance === "FAIL" || reviewVerdict.codeQuality === "FAIL";
+			if (reviewFailed) {
+				const reason = `Review failed [spec=${reviewVerdict.specCompliance}, quality=${reviewVerdict.codeQuality}]: ${reviewVerdict.summary}`;
+				state.error = reason;
+				if (state.attempt < state.maxAttempts) {
+					throw new Error(reason);
+				}
 			}
 
 			// Compress
@@ -691,8 +745,9 @@ export class ThreadManager {
 				? ` (${agentResult.usage.inputTokens}+${agentResult.usage.outputTokens} tokens)`
 				: "";
 
+			const overallSuccess = agentResult.success && !reviewFailed && verificationVerdict === "PASS";
 			const result: CompressedResult = {
-				success: agentResult.success,
+				success: overallSuccess,
 				summary: compressed,
 				filesChanged,
 				diffStats,
@@ -702,11 +757,22 @@ export class ThreadManager {
 				costIsEstimate: isEstimate,
 			};
 
-			state.status = "completed";
-			state.phase = "completed";
+			if (overallSuccess) {
+				state.status = "completed";
+				state.phase = "completed";
+			} else if (verificationVerdict === "FAIL") {
+				state.status = "verification_failed";
+				state.phase = "failed";
+			} else if (reviewFailed) {
+				state.status = "failed";
+				state.phase = "failed";
+			} else {
+				state.status = "completed";
+				state.phase = "completed";
+			}
 			state.result = result;
 			state.completedAt = Date.now();
-			this.onThreadProgress?.(threadId, "completed", `${filesChanged.length} files, ${costLabel}${usageLabel}`);
+			this.onThreadProgress?.(threadId, state.phase, `${filesChanged.length} files, ${costLabel}${usageLabel}`);
 
 			// Cache successful results for subthread reuse
 			if (result.success) {

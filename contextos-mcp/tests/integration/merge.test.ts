@@ -50,6 +50,15 @@ function makeThread(id: string, branchName: string, overrides: Record<string, un
 		attempt: 1,
 		maxAttempts: 1,
 		estimatedCostUsd: 0,
+		verification: "PASS",
+		review: {
+			reviewerId: "reviewer-test",
+			specCompliance: "PASS",
+			codeQuality: "PASS",
+			summary: "Passed mock review",
+			reviewedAt: Date.now(),
+		},
+		scopeViolation: false,
 		...overrides,
 	};
 }

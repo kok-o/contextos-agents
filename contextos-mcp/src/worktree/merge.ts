@@ -36,11 +36,70 @@ async function abortMergeSafe(repoRoot: string): Promise<void> {
 	}
 }
 
+export interface MergeEligibility {
+	eligible: boolean;
+	reason?: string;
+}
+
+/**
+ * Strict merge predicate:
+ * A thread is eligible for merge if and only if:
+ * 1. Status is "completed"
+ * 2. Result exists and success is true
+ * 3. Automated verification passed ("PASS")
+ * 4. Independent review dual-verdict passed ("PASS" for both specCompliance and codeQuality)
+ * 5. Scope violation flag is false/absent
+ */
+export function isEligibleForMerge(thread: ThreadState): MergeEligibility {
+	if (thread.status !== "completed") {
+		return { eligible: false, reason: `Thread status is "${thread.status}", expected "completed"` };
+	}
+	if (!thread.result?.success) {
+		return { eligible: false, reason: "Thread execution result is not successful" };
+	}
+	if (thread.scopeViolation) {
+		return { eligible: false, reason: "Thread touched files outside its assigned writeScope" };
+	}
+	if (thread.verification !== "PASS") {
+		return {
+			eligible: false,
+			reason: `Verification verdict is "${thread.verification || "PENDING"}", expected "PASS"`,
+		};
+	}
+	if (!thread.review) {
+		return { eligible: false, reason: "Thread has not passed independent reviewer gate" };
+	}
+	if (thread.review.specCompliance !== "PASS") {
+		return { eligible: false, reason: `Review specCompliance is "${thread.review.specCompliance}", expected "PASS"` };
+	}
+	if (thread.review.codeQuality !== "PASS") {
+		return { eligible: false, reason: `Review codeQuality is "${thread.review.codeQuality}", expected "PASS"` };
+	}
+	return { eligible: true };
+}
+
 /**
  * Merge a single thread branch into the current branch.
  * On conflict, captures the conflicted file list and diff hunks before aborting.
  */
-export async function mergeThreadBranch(repoRoot: string, branchName: string, threadId: string): Promise<MergeResult> {
+export async function mergeThreadBranch(
+	repoRoot: string,
+	branchName: string,
+	threadId: string,
+	threadState?: ThreadState,
+): Promise<MergeResult> {
+	if (threadState) {
+		const check = isEligibleForMerge(threadState);
+		if (!check.eligible) {
+			return {
+				success: false,
+				branch: branchName,
+				conflicts: [],
+				conflictDiff: "",
+				message: `Merge blocked by strict merge predicate: ${check.reason}`,
+			};
+		}
+	}
 	const canonicalRepoRoot = assertWithinRepository(repoRoot, repoRoot);
 	if (!branchName || branchName.startsWith("-") || branchName.includes("..") || path.isAbsolute(branchName)) {
 		throw new SecurityBoundaryException(`Invalid branch name: ${branchName}`);
@@ -133,8 +192,8 @@ export async function mergeAllThreads(
 	const { order, continueOnConflict = true } = options;
 	const results: MergeResult[] = [];
 
-	// Filter to completed+successful threads with branches
-	const eligible = threads.filter((t) => t.status === "completed" && t.branchName && t.result?.success);
+	// Filter strictly to threads passing isEligibleForMerge with a valid branch
+	const eligible = threads.filter((t) => Boolean(t.branchName) && isEligibleForMerge(t).eligible);
 
 	// Apply ordering if specified
 	let ordered: ThreadState[];
@@ -151,7 +210,7 @@ export async function mergeAllThreads(
 	}
 
 	for (const thread of ordered) {
-		const result = await mergeThreadBranch(canonicalRepoRoot, thread.branchName!, thread.id);
+		const result = await mergeThreadBranch(canonicalRepoRoot, thread.branchName!, thread.id, thread);
 		results.push(result);
 
 		if (!result.success && !continueOnConflict) {

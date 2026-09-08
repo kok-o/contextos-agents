@@ -442,6 +442,15 @@ describe("Merge Pipeline", () => {
 				maxAttempts: 1,
 				estimatedCostUsd: 0,
 				completedAt: 1000,
+				verification: "PASS",
+				review: {
+					reviewerId: "rev-test",
+					specCompliance: "PASS",
+					codeQuality: "PASS",
+					summary: "ok",
+					reviewedAt: 1000,
+				},
+				scopeViolation: false,
 			},
 			{
 				id: "merge-b",
@@ -461,6 +470,15 @@ describe("Merge Pipeline", () => {
 				maxAttempts: 1,
 				estimatedCostUsd: 0,
 				completedAt: 2000,
+				verification: "PASS",
+				review: {
+					reviewerId: "rev-test",
+					specCompliance: "PASS",
+					codeQuality: "PASS",
+					summary: "ok",
+					reviewedAt: 2000,
+				},
+				scopeViolation: false,
 			},
 		];
 

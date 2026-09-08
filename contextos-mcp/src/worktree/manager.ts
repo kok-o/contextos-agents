@@ -69,11 +69,11 @@ export class ScopeViolationError extends Error {
 	}
 }
 
-function normalizeGitPath(file: string): string {
+export function normalizeGitPath(file: string): string {
 	return file.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/$/, "");
 }
 
-function isWithinWriteScope(file: string, writeScope: readonly string[]): boolean {
+export function isWithinWriteScope(file: string, writeScope: readonly string[]): boolean {
 	const normalized = normalizeGitPath(file);
 	return writeScope.some((scope) => {
 		const allowed = normalizeGitPath(scope);
@@ -394,7 +394,9 @@ export class WorktreeManager {
 		]);
 
 		const internal = new Set([".contextos-owner", ".contextos-session"]);
-		const touched = [...new Set([...parsePorcelainV2(status), ...parseNameStatus(committed), ...parseNameStatus(staged)])]
+		const touched = [
+			...new Set([...parsePorcelainV2(status), ...parseNameStatus(committed), ...parseNameStatus(staged)]),
+		]
 			.map(normalizeGitPath)
 			.filter((file) => file && !internal.has(file));
 

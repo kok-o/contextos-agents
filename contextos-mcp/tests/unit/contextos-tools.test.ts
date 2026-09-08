@@ -33,6 +33,15 @@ const mockThreads = [
 			durationMs: 1000,
 			estimatedCostUsd: 0.02,
 		},
+		verification: "PASS",
+		review: {
+			reviewerId: "rev-test-1",
+			specCompliance: "PASS",
+			codeQuality: "PASS",
+			summary: "Passed review",
+			reviewedAt: 2000,
+		},
+		scopeViolation: false,
 	},
 	{
 		id: "ctx_task1_anthropic",
@@ -53,6 +62,15 @@ const mockThreads = [
 			durationMs: 1500,
 			estimatedCostUsd: 0.03,
 		},
+		verification: "PASS",
+		review: {
+			reviewerId: "rev-test-2",
+			specCompliance: "PASS",
+			codeQuality: "PASS",
+			summary: "Passed review",
+			reviewedAt: 2500,
+		},
+		scopeViolation: false,
 	},
 ];
 
@@ -106,6 +124,7 @@ vi.mock("../../src/mcp/session.js", () => ({
 }));
 
 vi.mock("../../src/worktree/merge.js", () => ({
+	isEligibleForMerge: vi.fn(() => ({ eligible: true })),
 	mergeThreadBranch: vi.fn(async () => ({
 		success: true,
 		branch: "swarm/ctx_task1_openai",

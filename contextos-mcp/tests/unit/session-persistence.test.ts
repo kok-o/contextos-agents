@@ -202,20 +202,23 @@ describe("MCP Session Persistence & Orphan Management", () => {
 	});
 
 	it("preserves five rapid thread updates with a monotonic sequence", async () => {
-		const threads = Array.from({ length: 5 }, (_, index): ThreadState => ({
-			id: `concurrent-${index}`,
-			config: {
+		const threads = Array.from(
+			{ length: 5 },
+			(_, index): ThreadState => ({
 				id: `concurrent-${index}`,
-				task: `Task ${index}`,
-				context: "",
-				agent: { backend: "direct-llm", model: "gpt-4o" },
-			},
-			status: "completed",
-			phase: "completed",
-			attempt: 1,
-			maxAttempts: 1,
-			estimatedCostUsd: 0,
-		}));
+				config: {
+					id: `concurrent-${index}`,
+					task: `Task ${index}`,
+					context: "",
+					agent: { backend: "direct-llm", model: "gpt-4o" },
+				},
+				status: "completed",
+				phase: "completed",
+				attempt: 1,
+				maxAttempts: 1,
+				estimatedCostUsd: 0,
+			}),
+		);
 
 		await Promise.all(threads.map(async (thread) => recordThreadState(TEST_DIR, thread)));
 		const state = loadPersistedState(TEST_DIR);

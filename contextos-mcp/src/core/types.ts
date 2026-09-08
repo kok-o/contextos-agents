@@ -54,6 +54,7 @@ export type ThreadProgressPhase =
 	| "creating_worktree"
 	| "agent_running"
 	| "verifying"
+	| "reviewing"
 	| "capturing_diff"
 	| "compressing"
 	| "completed"

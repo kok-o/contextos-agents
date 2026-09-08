@@ -217,6 +217,89 @@ export function loadPersistedState(dir: string, worktreeBaseDir?: string): Persi
 }
 
 /**
+ * Task 2.5d: Reconciles persisted session state with active git worktrees on session startup.
+ * Discovers worktrees via `git worktree list --porcelain` and aligns interrupted/running threads.
+ */
+export async function reconcileSessionStateWithGit(
+	repoRoot: string,
+	worktreeBaseDir?: string,
+): Promise<PersistedSessionState | null> {
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
+	const state = loadPersistedState(canonicalRoot, worktreeBaseDir);
+	if (!state) return null;
+
+	const gitWorktrees: Map<string, { branch?: string; bare?: boolean }> = new Map();
+	try {
+		const { stdout } = await execFileAsync("git", ["worktree", "list", "--porcelain"], {
+			cwd: canonicalRoot,
+			maxBuffer: 10 * 1024 * 1024,
+		});
+		const entries = stdout.trim().split("\n\n").filter(Boolean);
+		for (const entry of entries) {
+			const lines = entry.split("\n");
+			let worktreePath = "";
+			let branch = "";
+			let bare = false;
+			for (const line of lines) {
+				if (line.startsWith("worktree ")) {
+					worktreePath = path.normalize(line.slice("worktree ".length).trim());
+				} else if (line.startsWith("branch refs/heads/")) {
+					branch = line.slice("branch refs/heads/".length).trim();
+				} else if (line === "bare") {
+					bare = true;
+				}
+			}
+			if (worktreePath) {
+				gitWorktrees.set(worktreePath.toLowerCase(), { branch, bare });
+			}
+		}
+	} catch {
+		// Non-fatal if git is unavailable
+	}
+
+	let stateModified = false;
+
+	for (const thread of Object.values(state.threads)) {
+		if (thread.status === "running" || thread.status === "pending") {
+			thread.status = "interrupted";
+			thread.phase = "interrupted";
+			thread.error = thread.error || "Thread interrupted by process restart or crash";
+			stateModified = true;
+		}
+
+		if (thread.worktreePath) {
+			const normWt = path.normalize(thread.worktreePath).toLowerCase();
+			const registered = gitWorktrees.get(normWt);
+			const existsOnDisk = fs.existsSync(thread.worktreePath);
+
+			if (!existsOnDisk || !registered) {
+				if (thread.status === "interrupted") {
+					thread.status = "needs_recovery";
+					thread.phase = "needs_recovery";
+					thread.error = "Worktree directory or git registration missing after restart";
+					stateModified = true;
+				}
+			} else {
+				if (registered.branch && !thread.branchName) {
+					thread.branchName = registered.branch;
+					stateModified = true;
+				}
+			}
+		}
+	}
+
+	if (stateModified) {
+		try {
+			savePersistedState(canonicalRoot, state, worktreeBaseDir);
+		} catch {
+			// Lock or save error during recovery non-fatal
+		}
+	}
+
+	return state;
+}
+
+/**
  * Saves or updates entire persisted session state.
  */
 function writePersistedStateUnlocked(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
