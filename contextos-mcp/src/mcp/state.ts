@@ -10,6 +10,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ThreadState } from "../core/types.js";
+import { assertWithinRepository } from "../security/repository-boundary.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -37,8 +38,13 @@ const STATE_FILE_NAME = "session-state.json";
 const DEFAULT_WORKTREE_BASE_DIR = ".swarm-worktrees";
 
 function getStatePath(dir: string, worktreeBaseDir?: string): string {
-	const baseDir = path.join(dir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
-	return path.join(baseDir, STATE_FILE_NAME);
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? (worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
+	const statePath = path.join(canonicalBaseDir, STATE_FILE_NAME);
+	return assertWithinRepository(statePath, canonicalDir);
 }
 
 /**
@@ -178,7 +184,11 @@ export function clearPersistedState(dir: string, worktreeBaseDir?: string): void
  * Scans for orphan worktrees and git branches created by dead or terminated threads.
  */
 export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: string): Promise<OrphanReport> {
-	const baseDir = path.join(repoRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? (worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		: path.join(canonicalRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const baseDir = assertWithinRepository(targetBase, canonicalRoot);
 	const worktreeDirs: string[] = [];
 	const swarmBranches: string[] = [];
 
@@ -187,7 +197,8 @@ export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: st
 			const entries = fs.readdirSync(baseDir, { withFileTypes: true });
 			for (const entry of entries) {
 				if (entry.isDirectory() && entry.name !== "." && entry.name !== "..") {
-					worktreeDirs.push(path.join(baseDir, entry.name));
+					const entryPath = path.join(baseDir, entry.name);
+					worktreeDirs.push(assertWithinRepository(entryPath, canonicalRoot));
 				}
 			}
 		} catch {
@@ -196,7 +207,7 @@ export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: st
 	}
 
 	try {
-		const { stdout } = await execFileAsync("git", ["branch", "--list", "swarm/*"], { cwd: repoRoot });
+		const { stdout } = await execFileAsync("git", ["branch", "--list", "swarm/*"], { cwd: canonicalRoot });
 		const branches = stdout
 			.split("\n")
 			.map((b) => b.replace(/^[*+]\s+/, "").trim())
@@ -219,6 +230,7 @@ export async function purgeOrphans(
 	dryRun = false,
 	worktreeBaseDir?: string,
 ): Promise<{ prunedWorktrees: number; deletedBranches: number; report: string[] }> {
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
 	let prunedWorktrees = 0;
 	let deletedBranches = 0;
 	const report: string[] = [];
@@ -226,16 +238,17 @@ export async function purgeOrphans(
 	// 1. Tell git to prune worktrees first
 	if (!dryRun) {
 		try {
-			await execFileAsync("git", ["worktree", "prune"], { cwd: repoRoot });
+			await execFileAsync("git", ["worktree", "prune"], { cwd: canonicalRoot });
 		} catch {
 			// Ignore
 		}
 	}
 
-	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(repoRoot, worktreeBaseDir);
+	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(canonicalRoot, worktreeBaseDir);
 
 	// 2. Remove lingering directories
 	for (const wtDir of worktreeDirs) {
+		assertWithinRepository(wtDir, canonicalRoot);
 		if (dryRun) {
 			report.push(`[DRY RUN] Would remove worktree: ${wtDir}`);
 			prunedWorktrees++;
@@ -243,7 +256,7 @@ export async function purgeOrphans(
 		}
 		try {
 			// Try git worktree remove first
-			await execFileAsync("git", ["worktree", "remove", "--force", wtDir], { cwd: repoRoot });
+			await execFileAsync("git", ["worktree", "remove", "--force", wtDir], { cwd: canonicalRoot });
 			prunedWorktrees++;
 			report.push(`Removed worktree: ${wtDir}`);
 		} catch {

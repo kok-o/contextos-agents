@@ -25,6 +25,7 @@ import {
 	mergeThreads,
 	spawnThread,
 } from "./session.js";
+import { assertWithinRepository } from "../security/repository-boundary.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,15 @@ export function registerTools(server: McpServer, defaultDir?: string): void {
 		if (!resolved) return null;
 		const abs = resolve(resolved);
 		if (!existsSync(abs)) return null;
-		return abs;
+		try {
+			if (defaultDir) {
+				const realDefault = assertWithinRepository(defaultDir, defaultDir);
+				return assertWithinRepository(abs, realDefault);
+			}
+			return assertWithinRepository(abs, abs);
+		} catch {
+			return null;
+		}
 	}
 
 	// ── swarm_run ──────────────────────────────────────────────────────────
@@ -154,6 +163,11 @@ export function registerTools(server: McpServer, defaultDir?: string): void {
 
 			try {
 				const session = await getSession(dir);
+				if (args.files) {
+					for (const file of args.files) {
+						assertWithinRepository(resolve(session.dir, file), session.dir);
+					}
+				}
 				const result = await spawnThread(session, {
 					task: args.task,
 					files: args.files,

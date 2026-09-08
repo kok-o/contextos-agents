@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ── Mock session module ─────────────────────────────────────────────────────
 
 const mockSession = {
-	dir: "/tmp/test-repo",
+	dir: process.cwd(),
 	config: { default_agent: "mock", default_model: "mock-model" },
 	threadManager: {
 		getThreads: vi.fn(() => []),
@@ -125,6 +125,17 @@ describe("swarm_thread tool", () => {
 
 		expect(result.isError).toBe(true);
 		expect(result.content[0].text).toContain("dir");
+	});
+
+	it("returns error when files escape repository boundary", async () => {
+		const handler = registeredTools.get("swarm_thread")!;
+		const result = await handler({
+			task: "test",
+			files: ["../../../../etc/passwd"],
+		});
+
+		expect(result.isError).toBe(true);
+		expect(result.content[0].text).toContain("escapes repository");
 	});
 });
 

@@ -36,6 +36,7 @@ import { EpisodicMemory } from "./memory/episodic.js";
 import { buildSwarmSystemPrompt } from "./prompts/orchestrator.js";
 import { resolveModel } from "./routing/model-resolver.js";
 import { classifyTaskComplexity, describeAvailableAgents, FailureTracker, routeTask } from "./routing/model-router.js";
+import { assertWithinRepository } from "./security/repository-boundary.js";
 import { ThreadManager, type ThreadProgressCallback } from "./threads/manager.js";
 import { renderBanner } from "./ui/banner.js";
 import { ThreadDashboard } from "./ui/dashboard.js";
@@ -203,6 +204,7 @@ const SKIP_EXTENSIONS = new Set([
 ]);
 
 function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number = 2 * 1024 * 1024): string {
+	const canonicalDir = assertWithinRepository(dir, dir);
 	const files: { relPath: string; content: string }[] = [];
 	let totalSize = 0;
 
@@ -223,7 +225,13 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 
 			if (entry.isDirectory()) {
 				if (!SKIP_DIRS.has(entry.name) && !entry.name.startsWith(".")) {
-					walk(path.join(currentDir, entry.name), depth + 1);
+					const nextDir = path.join(currentDir, entry.name);
+					try {
+						assertWithinRepository(nextDir, canonicalDir);
+						walk(nextDir, depth + 1);
+					} catch {
+						// Skip symlink or directory escaping repository boundary
+					}
 				}
 			} else if (entry.isFile()) {
 				const ext = path.extname(entry.name).toLowerCase();
@@ -231,6 +239,7 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 
 				const fullPath = path.join(currentDir, entry.name);
 				try {
+					assertWithinRepository(fullPath, canonicalDir);
 					const stat = fs.statSync(fullPath);
 					if (stat.size > 100 * 1024) continue;
 					if (stat.size === 0) continue;
@@ -238,7 +247,7 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 					const content = fs.readFileSync(fullPath, "utf-8");
 					if (content.includes("\0")) continue;
 
-					const relPath = path.relative(dir, fullPath);
+					const relPath = path.relative(canonicalDir, fullPath);
 					files.push({ relPath, content });
 					totalSize += content.length;
 				} catch {}
@@ -246,10 +255,10 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 		}
 	}
 
-	walk(dir, 0);
+	walk(canonicalDir, 0);
 
 	const parts: string[] = [];
-	parts.push(`Codebase: ${path.basename(dir)}`);
+	parts.push(`Codebase: ${path.basename(canonicalDir)}`);
 	parts.push(`Files: ${files.length}`);
 	parts.push(`Total size: ${(totalSize / 1024).toFixed(1)}KB`);
 	parts.push("---");
@@ -277,6 +286,12 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	// Verify target directory before anything else
 	if (!fs.existsSync(args.dir)) {
 		logError(`Directory "${args.dir}" does not exist`);
+		process.exit(1);
+	}
+	try {
+		args.dir = assertWithinRepository(args.dir, args.dir);
+	} catch (err: unknown) {
+		logError(`Security boundary violation: ${err instanceof Error ? err.message : String(err)}`);
 		process.exit(1);
 	}
 

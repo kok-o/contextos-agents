@@ -18,6 +18,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { WorktreeInfo } from "../core/types.js";
 import { isPathAllowed } from "../security/file-policy.js";
+import { assertWithinRepository } from "../security/repository-boundary.js";
 import { isBlockedPath } from "../security/secret-filter.js";
 
 function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
@@ -63,8 +64,9 @@ export class WorktreeManager {
 	private createMutex = new Mutex();
 
 	constructor(repoRoot: string, baseDir: string = ".swarm-worktrees") {
-		this.repoRoot = repoRoot;
-		this.baseDir = path.isAbsolute(baseDir) ? baseDir : path.join(repoRoot, baseDir);
+		this.repoRoot = assertWithinRepository(repoRoot, repoRoot);
+		const targetBase = path.isAbsolute(baseDir) ? baseDir : path.join(this.repoRoot, baseDir);
+		this.baseDir = assertWithinRepository(targetBase, this.repoRoot);
 	}
 
 	/** Ensure we're in a git repo and the base directory exists. */
@@ -117,7 +119,7 @@ export class WorktreeManager {
 			);
 		}
 		const branch = `swarm/${threadId}`;
-		const wtPath = path.resolve(this.baseDir, `wt-${threadId}`);
+		const wtPath = assertWithinRepository(path.resolve(this.baseDir, `wt-${threadId}`), this.repoRoot);
 		const rel = path.relative(path.resolve(this.baseDir), wtPath);
 		if (rel.startsWith("..") || path.isAbsolute(rel)) {
 			throw new Error(`Path traversal detected: worktree path "${wtPath}" escapes base directory "${this.baseDir}"`);
@@ -190,6 +192,7 @@ export class WorktreeManager {
 	async getDiff(threadId: string): Promise<string> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
 
 		// Stage all changes first to include new files in diff
 		try {
@@ -211,6 +214,7 @@ export class WorktreeManager {
 	async getDiffStats(threadId: string): Promise<string> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
 
 		try {
 			await git(["add", "-A"], info.path);
@@ -231,6 +235,7 @@ export class WorktreeManager {
 	async getChangedFiles(threadId: string): Promise<string[]> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
 
 		try {
 			await git(["add", "-A"], info.path);
@@ -255,6 +260,7 @@ export class WorktreeManager {
 	async commit(threadId: string, message: string): Promise<boolean> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
 
 		try {
 			// 1. Check porcelain status to inspect changed & untracked files
@@ -308,6 +314,7 @@ export class WorktreeManager {
 	async destroy(threadId: string, deleteBranch: boolean = false): Promise<void> {
 		const info = this.worktrees.get(threadId);
 		if (!info) return;
+		assertWithinRepository(info.path, this.repoRoot);
 
 		try {
 			await git(["worktree", "remove", "--force", info.path], this.repoRoot);
@@ -342,6 +349,7 @@ export class WorktreeManager {
 
 	/** Cleanup all worktrees. Resilient — continues past individual failures. */
 	async destroyAll(): Promise<void> {
+		assertWithinRepository(this.baseDir, this.repoRoot);
 		for (const [id] of this.worktrees) {
 			try {
 				await this.destroy(id, true);

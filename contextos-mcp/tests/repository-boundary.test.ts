@@ -7,6 +7,9 @@ import {
 	isWithinRepository,
 	SecurityBoundaryException,
 } from "../src/security/repository-boundary.js";
+import { WorktreeManager } from "../src/worktree/manager.js";
+import { mergeThreadBranch } from "../src/worktree/merge.js";
+import { loadPersistedState, scanOrphanWorktrees } from "../src/mcp/state.js";
 
 describe("RepositoryBoundary (Task 0.3a)", () => {
 	let repoDir: string;
@@ -116,5 +119,49 @@ describe("RepositoryBoundary (Task 0.3a)", () => {
 
 		expect(isWithinRepository(lowerDrive, upperDrive)).toBe(true);
 		expect(isWithinRepository(upperDrive, lowerDrive)).toBe(true);
+	});
+});
+
+describe("Universal RepositoryBoundary Wiring (Task 0.3b)", () => {
+	let repoDir: string;
+	let outsideDir: string;
+
+	beforeEach(() => {
+		const tempBase = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-repo-boundary-03b-"));
+		repoDir = path.join(tempBase, "repo");
+		outsideDir = path.join(tempBase, "outside");
+		fs.mkdirSync(repoDir, { recursive: true });
+		fs.mkdirSync(outsideDir, { recursive: true });
+	});
+
+	afterEach(() => {
+		try {
+			const tempBase = path.dirname(repoDir);
+			fs.rmSync(tempBase, { recursive: true, force: true });
+		} catch {}
+	});
+
+	it("WorktreeManager constructor blocks escaping baseDir", () => {
+		expect(() => new WorktreeManager(repoDir, "../outside/worktrees")).toThrow(SecurityBoundaryException);
+		expect(() => new WorktreeManager(repoDir, outsideDir)).toThrow(SecurityBoundaryException);
+	});
+
+	it("mergeThreadBranch blocks branch traversal and flag injection", async () => {
+		await expect(
+			mergeThreadBranch(repoDir, "../../../outside/branch", "test-thread"),
+		).rejects.toThrow(SecurityBoundaryException);
+		await expect(
+			mergeThreadBranch(repoDir, "--upload-pack=evil", "test-thread"),
+		).rejects.toThrow(SecurityBoundaryException);
+	});
+
+	it("state operations block escaping worktreeBaseDir", () => {
+		expect(() => loadPersistedState(repoDir, "../outside/worktrees")).toThrow(SecurityBoundaryException);
+	});
+
+	it("scanOrphanWorktrees blocks escaping worktreeBaseDir", async () => {
+		await expect(scanOrphanWorktrees(repoDir, "../outside/worktrees")).rejects.toThrow(
+			SecurityBoundaryException,
+		);
 	});
 });

@@ -30,6 +30,7 @@ import type {
 	WaitAction,
 } from "../core/action-schema.js";
 import { ThreadManager } from "../threads/manager.js";
+import { assertWithinRepository } from "../security/repository-boundary.js";
 import { mergeAllThreads, mergeThreadBranch } from "../worktree/merge.js";
 import {
 	type AsyncTaskRecord,
@@ -104,22 +105,24 @@ export async function getSession(dir: string): Promise<SwarmSession> {
 		throw new Error(`Directory does not exist: ${absDir}`);
 	}
 
+	const canonicalDir = assertWithinRepository(absDir, absDir);
+
 	// Return existing session
-	const existing = sessions.get(absDir);
+	const existing = sessions.get(canonicalDir);
 	if (existing) return existing;
 
 	// Deduplicate concurrent init for the same dir
-	const pending = pendingSessions.get(absDir);
+	const pending = pendingSessions.get(canonicalDir);
 	if (pending) return pending;
 
-	const initPromise = initSession(absDir);
-	pendingSessions.set(absDir, initPromise);
+	const initPromise = initSession(canonicalDir);
+	pendingSessions.set(canonicalDir, initPromise);
 
 	try {
 		const session = await initPromise;
 		return session;
 	} finally {
-		pendingSessions.delete(absDir);
+		pendingSessions.delete(canonicalDir);
 	}
 }
 
@@ -188,6 +191,12 @@ async function initSession(absDir: string): Promise<SwarmSession> {
  */
 export async function spawnThread(session: SwarmSession, params: ThreadSpawnParams): Promise<CompressedResult> {
 	const threadId = params.id || `mcp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+	if (params.files) {
+		for (const file of params.files) {
+			assertWithinRepository(path.resolve(session.dir, file), session.dir);
+		}
+	}
 
 	const threadConfig: ThreadConfig = {
 		id: threadId,
@@ -287,31 +296,33 @@ export function cancelThreads(session: SwarmSession, threadId?: string): { cance
  */
 export async function cleanupSession(dir: string, purgeAllOrphans = false, dryRun = false): Promise<string> {
 	const absDir = path.resolve(dir);
-	const session = sessions.get(absDir);
+	const canonicalDir = fs.existsSync(absDir) ? assertWithinRepository(absDir, absDir) : absDir;
+	const session = sessions.get(canonicalDir) || sessions.get(absDir);
 	const worktreeBaseDir = session?.config.worktree_base_dir;
 	if (!session && !purgeAllOrphans) {
-		if (!dryRun) clearPersistedState(absDir, worktreeBaseDir);
+		if (!dryRun && fs.existsSync(canonicalDir)) clearPersistedState(canonicalDir, worktreeBaseDir);
 		return "No active session for this directory";
 	}
 
 	if (session && !dryRun) {
 		session.abortController.abort();
 		await session.threadManager.cleanup();
+		sessions.delete(canonicalDir);
 		sessions.delete(absDir);
 	}
 
-	if (!dryRun) {
-		clearPersistedState(absDir, worktreeBaseDir);
+	if (!dryRun && fs.existsSync(canonicalDir)) {
+		clearPersistedState(canonicalDir, worktreeBaseDir);
 	}
 
 	if (purgeAllOrphans) {
-		const { prunedWorktrees, deletedBranches, report } = await purgeOrphans(absDir, dryRun, worktreeBaseDir);
+		const { prunedWorktrees, deletedBranches, report } = await purgeOrphans(canonicalDir, dryRun, worktreeBaseDir);
 		const prefix = dryRun ? "[DRY RUN] " : "";
 		const reportStr = report.length > 0 ? `\n${report.join("\n")}` : "";
-		return `${prefix}Session cleaned up for ${absDir} (purged ${prunedWorktrees} orphan worktree dirs, ${deletedBranches} branches)${reportStr}`;
+		return `${prefix}Session cleaned up for ${canonicalDir} (purged ${prunedWorktrees} orphan worktree dirs, ${deletedBranches} branches)${reportStr}`;
 	}
 
-	return `Session cleaned up for ${absDir}`;
+	return `Session cleaned up for ${canonicalDir}`;
 }
 
 /**

@@ -19,6 +19,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
 import { redactSecrets } from "../../security/secret-filter.js";
+import { assertWithinRepository } from "../../security/repository-boundary.js";
 import { resolveExecutablePath } from "../../utils/command-exists.js";
 import { mergeThreadBranch } from "../../worktree/merge.js";
 import {
@@ -189,10 +190,12 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			const lstat = lstatSync(abs);
 			if (lstat.isSymbolicLink()) return null;
 			// Ensure it's inside a valid git repository
-			if (!findGitRoot(abs)) return null;
-			const real = realpathSync(abs);
+			const gitRoot = findGitRoot(abs);
+			if (!gitRoot) return null;
+			const canonicalRepoRoot = assertWithinRepository(gitRoot, gitRoot);
+			const real = assertWithinRepository(abs, canonicalRepoRoot);
 			if (defaultDir) {
-				const realDefault = realpathSync(resolve(defaultDir));
+				const realDefault = assertWithinRepository(resolve(defaultDir), canonicalRepoRoot);
 				const rel = relative(realDefault, real);
 				if (rel.startsWith("..") || isAbsolute(rel)) {
 					return null;
@@ -261,6 +264,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 				return errorResult(
 					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
 				);
+			}
+
+			if (args.files) {
+				try {
+					for (const file of args.files) {
+						assertWithinRepository(resolve(resolvedDir, file), resolvedDir);
+					}
+				} catch (err) {
+					return errorResult(`File path security violation: ${err instanceof Error ? err.message : String(err)}`);
+				}
 			}
 
 			try {
@@ -407,11 +420,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}),
 		},
 		async (args) => {
-			const dir = args.dir || defaultDir;
-			if (!dir) return errorResult("'dir' is required");
+			const resolvedDir = resolveDir(args.dir);
+			if (!resolvedDir) {
+				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+				return errorResult(
+					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+				);
+			}
 
 			try {
-				const session = await getSession(dir);
+				const session = await getSession(resolvedDir);
 				const threads = getThreads(session);
 				const budget = getBudgetState(session);
 				const asyncTasks = getAsyncJobs(session);
@@ -471,11 +489,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}),
 		},
 		async (args) => {
-			const dir = args.dir || defaultDir;
-			if (!dir) return errorResult("'dir' is required");
+			const resolvedDir = resolveDir(args.dir);
+			if (!resolvedDir) {
+				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+				return errorResult(
+					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+				);
+			}
 
 			try {
-				const session = await getSession(dir);
+				const session = await getSession(resolvedDir);
 				const threads = getThreads(session);
 				const completed = threads.filter((t) => t.status === "completed" && t.result?.success);
 
@@ -537,11 +560,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}),
 		},
 		async (args) => {
-			const dir = args.dir || defaultDir;
-			if (!dir) return errorResult("'dir' is required");
+			const resolvedDir = resolveDir(args.dir);
+			if (!resolvedDir) {
+				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+				return errorResult(
+					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+				);
+			}
 
 			try {
-				const session = await getSession(dir);
+				const session = await getSession(resolvedDir);
 				const threads = getThreads(session);
 				const thread = threads.find((t) => t.id === args.thread_id);
 
@@ -588,11 +616,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}),
 		},
 		async (args) => {
-			const dir = args.dir || defaultDir;
-			if (!dir) return errorResult("'dir' is required");
+			const resolvedDir = resolveDir(args.dir);
+			if (!resolvedDir) {
+				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+				return errorResult(
+					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+				);
+			}
 
 			try {
-				const session = await getSession(dir);
+				const session = await getSession(resolvedDir);
 				const threads = getThreads(session);
 				const thread = threads.find((t) => t.id === args.thread_id);
 
@@ -648,11 +681,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}),
 		},
 		async (args) => {
-			const dir = args.dir || defaultDir;
-			if (!dir) return errorResult("'dir' is required");
+			const resolvedDir = resolveDir(args.dir);
+			if (!resolvedDir) {
+				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+				return errorResult(
+					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+				);
+			}
 
 			try {
-				const message = await cleanupSession(dir, args.purge_orphans, args.dry_run);
+				const message = await cleanupSession(resolvedDir, args.purge_orphans, args.dry_run);
 				return jsonResult({ cleaned_up: !args.dry_run, dry_run: !!args.dry_run, message });
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
