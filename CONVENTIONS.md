@@ -192,7 +192,7 @@ Read the corresponding skill file only when the task matches the trigger:
 
 
 ## Skill: graphify
-> Codebase knowledge graph generator via Tree-sitter AST parsing and semantic indexing. Minimizes token consumption and maps dependency blast radius.
+> Codebase knowledge graph generator and architecture mapping guide. Instructs agents on AST dependency extraction and blast radius analysis.
 *Source: `.agents/skills/graphify/SKILL.md` — Load via `/read .agents/skills/graphify/SKILL.md`*
 
 

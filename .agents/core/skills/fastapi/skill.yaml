@@ -1,10 +1,17 @@
 id: fastapi
 name: FastAPI
 category: backend
+type: instruction-only
 tags: [backend, python, api, async, pydantic]
 requires: []
 optional: [postgres, redis, docker]
 conflicts: [nestjs, express]
 weight: 8
 documents:
+  - fastapi.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - fastapi.md

@@ -25,7 +25,9 @@
         "npm":         { "type": ["string", "null"], "description": "npm package name if published" },
         "github":      { "type": ["string", "null"], "description": "GitHub repo in owner/repo format" },
         "path":        { "type": ["string", "null"], "description": "Path within the GitHub repo to the skill directory" },
-        "builtin":     { "type": "boolean", "description": "true = ships with contextos-agents core" }
+        "builtin":     { "type": "boolean", "description": "true = ships with contextos-agents core" },
+        "type":        { "type": "string", "enum": ["instruction-only", "compiler", "runtime", "experimental"], "description": "Skill capability model" },
+        "resources":   { "type": "array", "items": { "type": "string" }, "description": "Explicit manifest of files bundled with this skill" }
       }
     }
   }

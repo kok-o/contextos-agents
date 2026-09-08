@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Graphify** is a codebase mapping and context optimization engine. Instead of feeding raw directory trees or entire source files into an agent's context window, Graphify leverages local **Tree-sitter** AST parsing to construct a deterministic, queryable knowledge graph (`graph.json`, `GRAPH_REPORT.md`, `graph.html`).
+**Graphify** is an instruction-only codebase mapping and context optimization guide. Instead of feeding raw directory trees or entire source files into an agent's context window, Graphify instructs agents on how to construct a deterministic, queryable knowledge graph (`graph.json`, `GRAPH_REPORT.md`, `graph.html`) using external companion analyzers (such as the TypeScript AST analyzer in `contextos-mcp` or the external `graphifyy` CLI), keeping the core package 100% zero-dependency without bundled native Tree-sitter binaries.
 
 This skill instructs agents how to build, query, and maintain codebase graphs to navigate complex architectures with near-zero token overhead.
 

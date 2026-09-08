@@ -1,4 +1,5 @@
 name: interview-me
+type: instruction-only
 description: Interactive requirements elicitation skill. Interrogates ambiguous, complex, or high-blast-radius tasks one focused question at a time before any plan or code is written.
 tags:
   - workflow
@@ -6,3 +7,6 @@ tags:
   - planning
   - interview
 version: 1.0.0
+resources:
+  - SKILL.md
+  - VALIDATION.json

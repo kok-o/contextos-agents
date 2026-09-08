@@ -1,4 +1,5 @@
 name: ponytail-mindset
+type: instruction-only
 description: >
   Minimalist coding mindset based on DietrichGebert/ponytail.
   Teaches the AI to write only what is strictly necessary.
@@ -12,3 +13,8 @@ tags:
   - refactoring
 version: 1.0.0
 source: https://github.com/DietrichGebert/ponytail
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json

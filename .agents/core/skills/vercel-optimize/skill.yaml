@@ -1,4 +1,5 @@
 name: vercel-optimize
+type: runtime
 description: Observability-first Vercel performance and cost reduction optimization skill.
 tags:
   - vercel
@@ -8,3 +9,10 @@ tags:
 version: 1.2.0
 requires:
   - nextjs
+resources:
+  - SKILL.md
+  - VALIDATION.json
+  - scripts/collect-signals.mjs
+  - scripts/gate-investigations.mjs
+  - scripts/merge-signals.mjs
+  - scripts/scan-codebase.mjs

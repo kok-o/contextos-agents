@@ -1,4 +1,5 @@
 name: impeccable-design
+type: instruction-only
 description: >
   Visual design quality skill based on pbakaus/impeccable.
   46 deterministic anti-pattern rules that prevent AI design slop.
@@ -12,3 +13,8 @@ tags:
   - anti-patterns
 version: 1.0.0
 source: https://github.com/pbakaus/impeccable
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json

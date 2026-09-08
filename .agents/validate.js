@@ -17,14 +17,25 @@ const fs   = require('fs');
 const path = require('path');
 const { collectAllSkillDirs } = require('./plugins.js');
 
-// ── Paths ─────────────────────────────────────────────────────────────────────
 const ROOT        = process.cwd();
 const AGENTS_DIR  = path.join(ROOT, '.agents');
 const CORE_SKILLS = path.join(AGENTS_DIR, 'core', 'skills');
+const CORE_PROFILES = path.join(AGENTS_DIR, 'core', 'profiles');
 const GENERATED   = path.join(AGENTS_DIR, 'generated');
 
 // Adapters that compile to generated/<name>/skills/
 const COMPILED_ADAPTERS = ['gemini', 'claude'];
+
+// Well-known external frameworks/tools valid in conflicts/optional/profiles but not internal ContextOS skills
+const EXTERNAL_NAMES = new Set([
+  'vue', 'angular', 'svelte', 'remix', 'express', 'koa', 'hapi', 'sails',
+  'tailwind', 'prisma', 'drizzle', 'mongoose', 'sequelize', 'typeorm',
+  'next-auth', 'react-query', 'zustand', 'redux', 'mobx', 'jotai', 'valtio',
+  'vitest', 'jest', 'mocha', 'cypress', 'playwright', 'storybook',
+  'graphql', 'trpc', 'apollo', 'relay', 'urql',
+  'sqlite', 'simple-auth', 'kubernetes', 'monitoring', 'cicd', 'cqrs',
+  'redis', 'postgres', 'postgresql', 'jwt', 'auth'
+]);
 
 // ── Tiny ANSI helpers (no deps) ───────────────────────────────────────────────
 const NO_COLOR = process.env.NO_COLOR || !process.stdout.isTTY;
@@ -68,7 +79,7 @@ function yamlList(text, field) {
   const re = new RegExp(`^${field}:\\s*\\[([^\\]]*)]`, 'm');
   const m  = text.match(re);
   if (!m || !m[1].trim()) return [];
-  return m[1].split(',').map(s => s.trim()).filter(Boolean);
+  return m[1].split(',').map(s => s.replace(/\s*#.*$/, '').trim()).filter(Boolean);
 }
 
 /**
@@ -83,7 +94,7 @@ function yamlBlockList(text, field) {
   if (!m) return [];
   return m[1]
     .split('\n')
-    .map(l => l.replace(/^[ \t]+-\s*/, '').trim())
+    .map(l => l.replace(/^[ \t]+-\s*/, '').replace(/\s*#.*$/, '').trim())
     .filter(Boolean);
 }
 
@@ -102,6 +113,8 @@ function parseSkillYaml(yamlText) {
     name:        yamlField(yamlText, 'name'),
     description: yamlField(yamlText, 'description'),
     version:     yamlField(yamlText, 'version'),
+    type:        yamlField(yamlText, 'type'),
+    resources:   yamlList(yamlText, 'resources').concat(yamlBlockList(yamlText, 'resources')),
     requires:    yamlList(yamlText, 'requires').concat(yamlBlockList(yamlText, 'requires')),
     conflicts:   yamlList(yamlText, 'conflicts').concat(yamlBlockList(yamlText, 'conflicts')),
     optional:    yamlList(yamlText, 'optional').concat(yamlBlockList(yamlText, 'optional')),
@@ -204,6 +217,12 @@ function checkSkillYaml(sourceSkills) {
       error(`[yaml] ${name}/skill.yaml — missing 'name:' field`);
       continue;
     }
+    const VALID_TYPES = new Set(['instruction-only', 'compiler', 'runtime', 'experimental']);
+    if (!parsed.type) {
+      error(`[yaml] ${name}/skill.yaml — missing 'type:' field (expected instruction-only | compiler | runtime | experimental)`);
+    } else if (!VALID_TYPES.has(parsed.type)) {
+      error(`[yaml] ${name}/skill.yaml — invalid type '${parsed.type}' (expected instruction-only | compiler | runtime | experimental)`);
+    }
     if (false && !parsed.description) {
       // Some skills use block scalars — allow it, just warn
       warn(`[yaml] ${name}/skill.yaml — 'description:' not found or uses multiline block (check manually)`);
@@ -283,16 +302,6 @@ function checkDependencies(sourceSkills) {
       if (id) knownIds.add(id);
     }
   }
-
-  // externalNames: well-known external frameworks/tools that are valid in
-  // conflicts:/optional: but are NOT ContextOS skills. We never error on these.
-  const EXTERNAL_NAMES = new Set([
-    'vue', 'angular', 'svelte', 'remix', 'express', 'koa', 'hapi', 'sails',
-    'tailwind', 'prisma', 'drizzle', 'mongoose', 'sequelize', 'typeorm',
-    'next-auth', 'react-query', 'zustand', 'redux', 'mobx', 'jotai', 'valtio',
-    'vitest', 'jest', 'mocha', 'cypress', 'playwright', 'storybook',
-    'graphql', 'trpc', 'apollo', 'relay', 'urql',
-  ]);
 
   let depChecked = 0;
 
@@ -467,6 +476,81 @@ function checkMcpBundleSync() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+//  CHECK 10 — Resources Manifest Integrity
+// ═════════════════════════════════════════════════════════════════════════════
+function checkResourcesManifest(sourceSkills) {
+  let totalResources = 0;
+  let skillsWithResources = 0;
+
+  for (const [name, skill] of Object.entries(sourceSkills)) {
+    if (!skill.hasYaml) continue;
+
+    const text   = fs.readFileSync(skill.yamlPath, 'utf8');
+    const parsed = parseSkillYaml(text);
+
+    if (!parsed.resources || parsed.resources.length === 0) {
+      warn(`[resources] ${name}/skill.yaml — no resource files declared in manifest`);
+      continue;
+    }
+
+    skillsWithResources++;
+    for (const res of parsed.resources) {
+      const fullPath = path.join(skill.dir, res);
+      if (!fs.existsSync(fullPath)) {
+        error(`[resources] ${name}/skill.yaml — declared resource not found on disk: '${res}'`);
+      } else {
+        totalResources++;
+      }
+    }
+  }
+
+  info(`[resources] ${totalResources} resource files verified across ${skillsWithResources} skills`);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  CHECK 11 — Profiles Integrity
+// ═════════════════════════════════════════════════════════════════════════════
+function checkProfilesIntegrity(sourceSkills) {
+  if (!fs.existsSync(CORE_PROFILES)) return;
+
+  const knownIds = new Set();
+  for (const [name, skill] of Object.entries(sourceSkills)) {
+    knownIds.add(name);
+    if (skill.hasYaml) {
+      const text = fs.readFileSync(skill.yamlPath, 'utf8');
+      const id   = yamlField(text, 'id');
+      if (id) knownIds.add(id);
+    }
+  }
+
+  let profilesValidated = 0;
+  const files = fs.readdirSync(CORE_PROFILES).filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
+
+  for (const file of files) {
+    const filePath = path.join(CORE_PROFILES, file);
+    const text = fs.readFileSync(filePath, 'utf8');
+
+    const referenced = [
+      ...yamlList(text, 'skills'),
+      ...yamlBlockList(text, 'skills'),
+      ...yamlList(text, 'prefer_skills'),
+      ...yamlBlockList(text, 'prefer_skills'),
+      ...yamlList(text, 'exclude_skills'),
+      ...yamlBlockList(text, 'exclude_skills'),
+    ];
+
+    for (const skillName of referenced) {
+      if (!knownIds.has(skillName) && !EXTERNAL_NAMES.has(skillName)) {
+        error(`[profiles] ${file} — references unknown skill '${skillName}'`);
+      }
+    }
+    profilesValidated++;
+  }
+
+  info(`[profiles] ${profilesValidated} core profiles validated against skill registry`);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 //  REPORT
 // ═════════════════════════════════════════════════════════════════════════════
 function printReport() {
@@ -540,6 +624,8 @@ function run() {
   checkCostarHeaders(sourceSkills);
   checkValidationJson(sourceSkills);
   checkMcpBundleSync();
+  checkResourcesManifest(sourceSkills);
+  checkProfilesIntegrity(sourceSkills);
 
   const passed = printReport();
   process.exit(passed ? 0 : 1);

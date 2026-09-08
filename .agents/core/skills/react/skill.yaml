@@ -1,10 +1,17 @@
 id: react
 name: React
 category: frontend
+type: instruction-only
 tags: [frontend, spa, jsx, components, hooks]
 requires: [typescript]
 optional: [tailwind, react-query, zustand, next-auth]
 conflicts: [vue, angular, svelte]
 weight: 8
 documents:
+  - react.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - react.md

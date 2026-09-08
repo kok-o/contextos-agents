@@ -1,10 +1,17 @@
 id: ui-design
 name: UI Design
 category: design
+type: instruction-only
 tags: [design, ui, components, design-system, visual]
 requires: []
 optional: [react, tailwind, web-accessibility]
 conflicts: []
 weight: 7
 documents:
+  - ui.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - ui.md

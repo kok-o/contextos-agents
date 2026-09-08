@@ -1,10 +1,17 @@
 id: ddd
 name: Domain-Driven Design
 category: architecture
+type: instruction-only
 tags: [architecture, ddd, domain, bounded-context, aggregate]
 requires: []
 optional: [microservices, system-design]
 conflicts: []
 weight: 6
 documents:
+  - ddd.md
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - TROUBLESHOOTING.md
+  - VALIDATION.json
   - ddd.md
