@@ -64,7 +64,7 @@ function getSanitizedEnv(): NodeJS.ProcessEnv {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function _textResult(text: string) {
-	return { content: [{ type: "text" as const, text }] };
+	return { content: [{ type: "text" as const, text: redactSecrets(text) }] };
 }
 
 function errorResult(text: string) {
@@ -72,7 +72,7 @@ function errorResult(text: string) {
 }
 
 function jsonResult(data: unknown) {
-	return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+	return { content: [{ type: "text" as const, text: redactSecrets(JSON.stringify(data, null, 2)) }] };
 }
 
 function log(msg: string): void {

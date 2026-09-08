@@ -20,7 +20,7 @@ import * as path from "node:path";
 import type { WorktreeInfo, WorktreeSessionMarker } from "../core/types.js";
 import { isPathAllowed } from "../security/file-policy.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
-import { isBlockedPath } from "../security/secret-filter.js";
+import { isBlockedPath, redactSecrets } from "../security/secret-filter.js";
 
 function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
@@ -268,7 +268,7 @@ export class WorktreeManager {
 			["diff", "--cached", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
 			info.path,
 		);
-		return fullDiff || "(no changes)";
+		return redactSecrets(fullDiff || "(no changes)");
 	}
 
 	/** Get diff stats (short summary). */
@@ -292,7 +292,7 @@ export class WorktreeManager {
 			["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
 			info.path,
 		);
-		return stdout.trim() || "(no changes)";
+		return redactSecrets(stdout.trim() || "(no changes)");
 	}
 
 	/** Get list of changed files. */
@@ -319,8 +319,9 @@ export class WorktreeManager {
 		return stdout
 			.trim()
 			.split("\n")
+			.map((f) => f.trim())
 			.filter(Boolean)
-			.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session");
+			.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session" && !isBlockedPath(f));
 	}
 
 	/** Commit all changes in a worktree. */

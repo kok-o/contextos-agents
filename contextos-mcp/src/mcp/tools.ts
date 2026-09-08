@@ -26,19 +26,20 @@ import {
 	spawnThread,
 } from "./session.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
+import { redactSecrets } from "../security/secret-filter.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function _textResult(text: string) {
-	return { content: [{ type: "text" as const, text }] };
+	return { content: [{ type: "text" as const, text: redactSecrets(text) }] };
 }
 
 function errorResult(text: string) {
-	return { content: [{ type: "text" as const, text }], isError: true as const };
+	return { content: [{ type: "text" as const, text: redactSecrets(text) }], isError: true as const };
 }
 
 function jsonResult(data: unknown) {
-	return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+	return { content: [{ type: "text" as const, text: redactSecrets(JSON.stringify(data, null, 2)) }] };
 }
 
 /** Track active subprocesses so they can be killed on shutdown. */

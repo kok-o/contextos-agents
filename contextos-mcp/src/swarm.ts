@@ -37,6 +37,7 @@ import { buildSwarmSystemPrompt } from "./prompts/orchestrator.js";
 import { resolveModel } from "./routing/model-resolver.js";
 import { classifyTaskComplexity, describeAvailableAgents, FailureTracker, routeTask } from "./routing/model-router.js";
 import { assertWithinRepository } from "./security/repository-boundary.js";
+import { containsSecrets, isBlockedPath, redactSecrets } from "./security/secret-filter.js";
 import { ThreadManager, type ThreadProgressCallback } from "./threads/manager.js";
 import { renderBanner } from "./ui/banner.js";
 import { ThreadDashboard } from "./ui/dashboard.js";
@@ -230,31 +231,40 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 			if (files.length >= maxFiles || totalSize >= maxTotalSize) return;
 
 			if (entry.isDirectory()) {
-				if (!SKIP_DIRS.has(entry.name) && !entry.name.startsWith(".")) {
-					const nextDir = path.join(currentDir, entry.name);
-					try {
-						assertWithinRepository(nextDir, canonicalDir);
-						walk(nextDir, depth + 1);
-					} catch {
-						// Skip symlink or directory escaping repository boundary
-					}
+				if (
+					isBlockedPath(entry.name) ||
+					SKIP_DIRS.has(entry.name) ||
+					entry.name.startsWith(".")
+				) {
+					continue;
+				}
+				const nextDir = path.join(currentDir, entry.name);
+				try {
+					assertWithinRepository(nextDir, canonicalDir);
+					if (isBlockedPath(nextDir)) continue;
+					walk(nextDir, depth + 1);
+				} catch {
+					// Skip symlink or directory escaping repository boundary
 				}
 			} else if (entry.isFile()) {
+				if (isBlockedPath(entry.name)) continue;
 				const ext = path.extname(entry.name).toLowerCase();
 				if (SKIP_EXTENSIONS.has(ext)) continue;
 
 				const fullPath = path.join(currentDir, entry.name);
 				try {
 					assertWithinRepository(fullPath, canonicalDir);
+					if (isBlockedPath(fullPath)) continue;
 					const stat = fs.statSync(fullPath);
 					if (stat.size > 100 * 1024) continue;
 					if (stat.size === 0) continue;
 
 					const content = fs.readFileSync(fullPath, "utf-8");
 					if (content.includes("\0")) continue;
+					if (containsSecrets(content)) continue; // Sensitive content default-deny
 
 					const relPath = path.relative(canonicalDir, fullPath);
-					files.push({ relPath, content });
+					files.push({ relPath, content: redactSecrets(content) });
 					totalSize += content.length;
 				} catch {}
 			}
@@ -274,7 +284,7 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 		parts.push(file.content);
 	}
 
-	return parts.join("\n");
+	return redactSecrets(parts.join("\n"));
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -616,7 +626,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 				if (!thread) return { error: `Thread ${action.threadId} not found` };
 				const wm = threadManager.getWorktreeManager();
 				const diff = await wm.getDiff(action.threadId);
-				return { threadId: action.threadId, diff };
+				return { threadId: action.threadId, diff: redactSecrets(diff) };
 			},
 			async review(action) {
 				return { threadId: action.threadId, status: "reviewed" };
@@ -634,8 +644,8 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 		const startTime = Date.now();
 
 		const result = await runRlmLoop({
-			context,
-			query: args.query,
+			context: redactSecrets(context),
+			query: redactSecrets(args.query),
 			model: resolved.model,
 			repl,
 			dispatcher,

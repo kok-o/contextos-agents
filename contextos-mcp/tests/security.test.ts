@@ -85,7 +85,7 @@ describe("Security Guardrails", () => {
 			const raw = "export const key = 'sk-1234567890abcdef1234567890abcdef123456';";
 			const redacted = redactSecrets(raw);
 			expect(redacted).not.toContain("sk-1234567890abcdef");
-			expect(redacted).toContain("[REDACTED]");
+			expect(redacted).toContain("[REDACTED:OPENAI_KEY]");
 		});
 	});
 
