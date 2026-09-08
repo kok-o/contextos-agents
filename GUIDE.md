@@ -16,44 +16,64 @@
 
 ---
 
-## 2. Команды терминала (CLI `ctx.js`)
+## 2. Команды терминала (CLI `contextos` / `ctx.js`)
 
-Управление профилями, адаптерами и валидацией осуществляется через CLI утилиту в папке `.agents`:
+Управление профилями, адаптерами, диагностикой и валидацией осуществляется через CLI утилиту `contextos` (или напрямую через `node .agents/ctx.js`). Все команды поддерживают оба формата вызова:
 
 ### Определение стека и профили
 
 ```bash
 # Автоматически определить стек проекта (React, Next.js, FastAPI и т.д.)
-node .agents/ctx.js detect
+contextos detect
+# или: node .agents/ctx.js detect
 
 # Посмотреть список доступных профилей и активный профиль
-node .agents/ctx.js profile list
+contextos profile list
+# или: node .agents/ctx.js profile list
 
 # Переключить профиль проекта (отключает нерелевантные навыки, экономя токены)
-node .agents/ctx.js profile apply mvp        # Для быстрых прототипов (без микросервисов и DDD)
-node .agents/ctx.js profile apply frontend   # Фокус на React, UI/UX, анимациях и верстке
-node .agents/ctx.js profile apply backend    # Фокус на базах данных, архитектуре и API
-node .agents/ctx.js profile apply enterprise # Полный аудит, строгий TDD, безопасность
+contextos profile apply mvp        # Для быстрых прототипов (без микросервисов и DDD)
+contextos profile apply frontend   # Фокус на React, UI/UX, анимациях и верстке
+contextos profile apply backend    # Фокус на базах данных, архитектуре и API
+contextos profile apply enterprise # Полный аудит, строгий TDD, безопасность
 ```
 
 ### Экспорт настроек в редакторы (Адаптеры)
 
 ```bash
 # Скомпилировать правила для всех поддерживаемых IDE (.cursorrules, Zed, Aider и др.)
-node .agents/ctx.js export all
+contextos export all
+# или: node .agents/ctx.js export all
 
 # Скомпилировать правила под конкретного агента
-node .agents/ctx.js export gemini
-node .agents/ctx.js export claude
-node .agents/ctx.js export cursor
-node .agents/ctx.js export zed
+contextos export gemini
+contextos export claude
+contextos export cursor
+contextos export zed
+```
+
+### Диагностика, аналитика токенов и мониторинг
+
+```bash
+# Комплексный чек-ап здоровья проекта (стек, установленные навыки, MCP, секреты)
+contextos doctor
+# или: node .agents/ctx.js doctor
+
+# Отчет об экономии контекстного окна (токенов) LLM
+contextos stats
+# или: node .agents/ctx.js stats
+
+# Фоновый демон непрерывной синхронизации при изменении файлов
+contextos watch
+# или: node .agents/ctx.js watch
 ```
 
 ### Валидация и тестирование
 
 ```bash
-# Проверить целостность и валидность всех навыков и конфигураций
-node .agents/ctx.js validate
+# Проверить целостность и валидность всех навыков, зависимостей и сборки MCP
+contextos validate
+# или: node .agents/ctx.js validate
 
 # Запустить проектные тесты
 npm test

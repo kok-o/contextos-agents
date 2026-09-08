@@ -188,6 +188,25 @@ describe('bin/index.js — installer', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
     assert.equal(pkg.bin.contextos, './bin/index.js', 'package.json must map "contextos" to ./bin/index.js');
   });
+
+  test('direct node .agents/ctx.js doctor runs and outputs diagnostic report', () => {
+    const ctxPath = path.join(__dirname, '..', '.agents', 'ctx.js');
+    const output = execSync(`node "${ctxPath}" doctor`, { cwd: path.join(__dirname, '..') }).toString();
+    assert.ok(output.includes('ContextOS Doctor'), 'Direct ctx.js doctor should print Doctor header');
+    assert.ok(output.includes('Node.js'), 'Direct ctx.js doctor should report Node.js version');
+  });
+
+  test('direct node .agents/ctx.js stats runs and outputs context savings report', () => {
+    const ctxPath = path.join(__dirname, '..', '.agents', 'ctx.js');
+    const output = execSync(`node "${ctxPath}" stats`, { cwd: path.join(__dirname, '..') }).toString();
+    assert.ok(output.includes('Context Savings Report'), 'Direct ctx.js stats should print report header');
+  });
+
+  test('direct node .agents/ctx.js init outputs initialization guide', () => {
+    const ctxPath = path.join(__dirname, '..', '.agents', 'ctx.js');
+    const output = execSync(`node "${ctxPath}" init`, { cwd: path.join(__dirname, '..') }).toString();
+    assert.ok(output.includes('Initialization Guide'), 'Direct ctx.js init should print guide');
+  });
 });
 
 

@@ -126,7 +126,35 @@ function redact(str) {
   return str.slice(0, 4) + '...' + str.slice(-4);
 }
 
-function scanFile(relPath) {
+function findLocalEnvFiles(dir = ROOT_DIR) {
+  const envFiles = [];
+  function walk(currentDir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '.swarm-worktrees') {
+        continue;
+      }
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+      } else if (entry.isFile()) {
+        const lower = entry.name.toLowerCase();
+        if ((lower === '.env' || lower.startsWith('.env.')) && lower !== '.env.example') {
+          envFiles.push(path.relative(ROOT_DIR, fullPath));
+        }
+      }
+    }
+  }
+  walk(dir);
+  return envFiles;
+}
+
+function scanFile(relPath, { isLocalEnvOnly = false } = {}) {
   const fullPath = path.resolve(ROOT_DIR, relPath);
   if (!fs.existsSync(fullPath)) return [];
 
@@ -137,8 +165,8 @@ function scanFile(relPath) {
   const baseName = path.basename(relPath).toLowerCase();
   const extName = path.extname(relPath).toLowerCase();
 
-  // 1. Check blocked filename
-  if (BLOCKED_EXACT_NAMES.has(baseName)) {
+  // 1. Check blocked filename (only for tracked or staged files)
+  if (!isLocalEnvOnly && BLOCKED_EXACT_NAMES.has(baseName)) {
     violations.push({
       file: relPath,
       type: 'Blocked Filename',
@@ -183,7 +211,7 @@ function scanFile(relPath) {
         violations.push({
           file: relPath,
           line: lineNum,
-          type: name,
+          type: isLocalEnvOnly ? `Exposed Secret in Local Environment File (${name})` : name,
           details: `Detected pattern "${name}": ${redact(match[0])}`,
         });
       }
@@ -197,16 +225,28 @@ function main() {
   const mode = process.argv.includes('--staged') ? '--staged' : '--all';
   const files = getFilesToScan(mode);
 
-  if (files.length === 0) {
+  const localEnvFiles = mode !== '--staged' ? findLocalEnvFiles() : [];
+  const scannedSet = new Set(files);
+  const extraEnvFiles = localEnvFiles.filter(f => !scannedSet.has(f));
+
+  const totalFilesCount = files.length + extraEnvFiles.length;
+  if (totalFilesCount === 0) {
     console.log('[check-secrets] No files to scan.');
     process.exit(0);
   }
 
-  console.log(`[check-secrets] Scanning ${files.length} file(s) for secrets and blocked credentials (${mode})...`);
+  console.log(`[check-secrets] Scanning ${totalFilesCount} file(s) for secrets and blocked credentials (${mode})...`);
 
   const allViolations = [];
   for (const file of files) {
     const v = scanFile(file);
+    if (v.length > 0) {
+      allViolations.push(...v);
+    }
+  }
+
+  for (const envFile of extraEnvFiles) {
+    const v = scanFile(envFile, { isLocalEnvOnly: true });
     if (v.length > 0) {
       allViolations.push(...v);
     }

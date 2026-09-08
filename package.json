@@ -71,7 +71,5 @@
   "devDependencies": {
     "markdownlint-cli": "^0.43.0"
   },
-  "dependencies": {
-    "inquirer": "^8.2.7"
-  }
+  "dependencies": {}
 }

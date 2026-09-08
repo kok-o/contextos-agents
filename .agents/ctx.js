@@ -46,6 +46,10 @@ function printHelp() {
   console.log('  audit                           Alias for validate (check skills)');
   console.log('  validate                        Validate skill sources, frontmatter, deps & sync');
   console.log('  clean-worktrees                 Clean up lingering .swarm-worktrees and swarm/* branches');
+  console.log('  doctor                          Run project diagnostic health check');
+  console.log('  stats                           Display token context savings report');
+  console.log('  watch                           Start continuous file watcher and auto-sync daemon');
+  console.log('  init                            Show initialization guide');
   console.log('  install-skill <ref>             Alias for skill add (install a plugin)');
   console.log('  skill add   <ref>               Install a plugin skill (GitHub or npm)');
   console.log('  skill remove <name>             Uninstall a plugin skill');
@@ -362,6 +366,33 @@ if (command === 'export') {
   }
 
   console.log(`✓ Cleaned up ${dirCount} worktree directory(ies) and ${branchCount} swarm branch(es).`);
+
+// ── doctor ────────────────────────────────────────────────────────────────────
+} else if (command === 'doctor') {
+  const doctorModule = require('./doctor.js');
+  doctorModule.runDoctor(process.cwd());
+
+// ── stats ─────────────────────────────────────────────────────────────────────
+} else if (command === 'stats') {
+  const statsModule = require('./stats.js');
+  statsModule.runStats(process.cwd());
+
+// ── watch ─────────────────────────────────────────────────────────────────────
+} else if (command === 'watch') {
+  const watchModule = require('./watch.js');
+  watchModule.runWatch(process.cwd());
+
+// ── init ──────────────────────────────────────────────────────────────────────
+} else if (command === 'init') {
+  console.log('\nContextOS — Project Initialization Guide\n');
+  console.log('To set up ContextOS in your project:');
+  console.log('  npx contextos                    Install .agents/ with auto-detected profile');
+  console.log('  npx contextos --minimal          Install with minimal core skills');
+  console.log('  npx contextos --profile <name>   Install with specific profile (mvp, startup, enterprise, etc.)');
+  console.log('  npx contextos --with-mcp         Install with MCP execution server enabled');
+  console.log('\nAfter setup, verify your installation:');
+  console.log('  node .agents/ctx.js doctor');
+  console.log('  node .agents/ctx.js stats\n');
 
 // ── unknown ───────────────────────────────────────────────────────────────────
 } else {

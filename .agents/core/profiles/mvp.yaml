@@ -25,6 +25,7 @@ prefer_skills:
 exclude_skills:
   - ddd
   - microservices
+  - system-design
   - kubernetes
   - monitoring
   - cicd

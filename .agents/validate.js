@@ -415,6 +415,58 @@ function checkValidationJson(sourceSkills) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+//  CHECK 9 — MCP Bundle Synchronization
+// ═════════════════════════════════════════════════════════════════════════════
+function checkMcpBundleSync() {
+  const mcpSrcDir = path.join(ROOT, 'contextos-mcp', 'src');
+  const bundlePath = path.join(AGENTS_DIR, 'mcp', 'server.mjs');
+
+  if (!fs.existsSync(mcpSrcDir)) {
+    return;
+  }
+
+  if (!fs.existsSync(bundlePath)) {
+    warn(`[mcp-sync] Missing compiled MCP server bundle at .agents/mcp/server.mjs. Run: cd contextos-mcp && npm run build:bundle`);
+    return;
+  }
+
+  const bundleStat = fs.statSync(bundlePath);
+  const bundleMtime = bundleStat.mtimeMs;
+
+  let newestSrcFile = null;
+  let newestSrcMtime = 0;
+
+  function walk(dir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.isFile()) {
+        const stat = fs.statSync(full);
+        if (stat.mtimeMs > newestSrcMtime) {
+          newestSrcMtime = stat.mtimeMs;
+          newestSrcFile = path.relative(ROOT, full);
+        }
+      }
+    }
+  }
+
+  walk(mcpSrcDir);
+
+  if (newestSrcMtime > bundleMtime) {
+    warn(`[mcp-sync] Compiled MCP bundle (.agents/mcp/server.mjs) is older than source file ${newestSrcFile}. Run: cd contextos-mcp && npm run build:bundle`);
+  } else {
+    info(`[mcp-sync] Compiled MCP bundle (.agents/mcp/server.mjs) is up to date with contextos-mcp/src/`);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 //  REPORT
 // ═════════════════════════════════════════════════════════════════════════════
 function printReport() {
@@ -487,6 +539,7 @@ function run() {
   checkContentQuality(sourceSkills);
   checkCostarHeaders(sourceSkills);
   checkValidationJson(sourceSkills);
+  checkMcpBundleSync();
 
   const passed = printReport();
   process.exit(passed ? 0 : 1);

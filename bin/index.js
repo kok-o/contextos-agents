@@ -95,53 +95,16 @@ Examples:
 // ── Top-level Commands & Proxy Routing ────────────────────────────────────────
 const mainCommand = args[0] && !args[0].startsWith('-') ? args[0] : null;
 
-// Doctor diagnostic health check
-if (mainCommand === 'doctor') {
-  let doctorModule;
-  const localDoctor = path.join(process.cwd(), '.agents', 'doctor.js');
-  if (fs.existsSync(localDoctor)) {
-    doctorModule = require(localDoctor);
-  } else {
-    doctorModule = require('../.agents/doctor.js');
-  }
-  doctorModule.runDoctor(process.cwd());
-  process.exit(0);
-}
-
-// Context savings statistics report
-if (mainCommand === 'stats') {
-  let statsModule;
-  const localStats = path.join(process.cwd(), '.agents', 'stats.js');
-  if (fs.existsSync(localStats)) {
-    statsModule = require(localStats);
-  } else {
-    statsModule = require('../.agents/stats.js');
-  }
-  statsModule.runStats(process.cwd());
-  process.exit(0);
-}
-
-// Background auto-sync file watcher daemon
-if (mainCommand === 'watch') {
-  let watchModule;
-  const localWatch = path.join(process.cwd(), '.agents', 'watch.js');
-  if (fs.existsSync(localWatch)) {
-    watchModule = require(localWatch);
-  } else {
-    watchModule = require('../.agents/watch.js');
-  }
-  watchModule.runWatch(process.cwd());
-}
-
 // Proxy commands to .agents/ctx.js when executed in a ContextOS project
-const PROXY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees'];
-if (mainCommand && PROXY_COMMANDS.includes(mainCommand)) {
-  const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
-  if (!fs.existsSync(ctxPath)) {
-    console.error('[ERROR] .agents/ctx.js not found in current directory.');
-    console.error('        Are you in a ContextOS project? Run `contextos` or `npx contextos-agents` first.');
-    process.exit(1);
-  }
+const PROXY_COMMANDS = [
+  'profile', 'export', 'validate', 'resolve', 'skill', 'index',
+  'clean-worktrees', 'doctor', 'stats', 'watch', 'init'
+];
+
+const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
+const hasLocalCtx = fs.existsSync(ctxPath);
+
+if (mainCommand && PROXY_COMMANDS.includes(mainCommand) && hasLocalCtx) {
   const { execFileSync } = require('child_process');
   try {
     execFileSync(process.execPath, [ctxPath, ...args], { stdio: 'inherit' });
@@ -151,9 +114,50 @@ if (mainCommand && PROXY_COMMANDS.includes(mainCommand)) {
   process.exit(0);
 }
 
+// Fallbacks when running outside an initialized .agents/ directory
+if (mainCommand === 'doctor') {
+  const doctorModule = require('../.agents/doctor.js');
+  doctorModule.runDoctor(process.cwd());
+  process.exit(0);
+}
+
+if (mainCommand === 'stats') {
+  const statsModule = require('../.agents/stats.js');
+  statsModule.runStats(process.cwd());
+  process.exit(0);
+}
+
+if (mainCommand === 'watch') {
+  const watchModule = require('../.agents/watch.js');
+  watchModule.runWatch(process.cwd());
+}
+
+if (mainCommand === 'init') {
+  console.log(`
+ContextOS — Project Setup
+
+Usage:
+  npx contextos                    Install .agents/ with auto-detected stack
+  npx contextos --profile <name>   Install with specific profile (mvp, startup, enterprise, frontend, backend)
+  npx contextos --minimal          Install only 5 core skills
+  npx contextos --with-mcp         Install with MCP execution server enabled
+
+Run:
+  contextos doctor                 Verify installation health
+  contextos stats                  Show token savings report
+`);
+  process.exit(0);
+}
+
+const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees'];
+if (mainCommand && PROJECT_ONLY_COMMANDS.includes(mainCommand) && !hasLocalCtx) {
+  console.error('[ERROR] .agents/ctx.js not found in current directory.');
+  console.error('        Are you in a ContextOS project? Run `contextos` or `npx contextos-agents` first.');
+  process.exit(1);
+}
+
 if (mainCommand === 'audit') {
-  const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
-  if (!fs.existsSync(ctxPath)) {
+  if (!hasLocalCtx) {
     console.error('[ERROR] .agents/ctx.js not found. Are you in a ContextOS project?');
     process.exit(1);
   }
@@ -198,10 +202,10 @@ if (mainCommand === 'install-skill') {
     }
     process.exit(0);
   } else {
-    // Interactive menu
+    // Interactive menu using standard library readline
     (async () => {
       try {
-        const inquirer = require('inquirer');
+        const readline = require('readline');
         const https = require('https');
         
         console.log('Fetching community skills from registry...');
@@ -210,33 +214,68 @@ if (mainCommand === 'install-skill') {
           https.get('https://raw.githubusercontent.com/kok-o/contextos-agents/main/registry.json', (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => resolve(JSON.parse(data)));
+            res.on('end', () => {
+              try {
+                resolve(JSON.parse(data));
+              } catch (err) {
+                reject(err);
+              }
+            });
           }).on('error', reject);
         });
         
         const registry = await fetchRegistry();
-        const choices = registry.skills.map(s => ({
-          name: `${s.name} - ${s.description}`,
+        const skillsList = (registry.skills || []).map((s, idx) => ({
+          idx: idx + 1,
+          name: s.name,
+          desc: s.description || '',
           value: s.github ? `${s.github}${s.path ? '/' + s.path : ''}` : s.npm
         }));
-        
-        const answers = await inquirer.prompt([
-          {
-            type: 'checkbox',
-            name: 'selectedSkills',
-            message: 'Select skills to install:',
-            choices
-          }
-        ]);
-        
-        if (!answers.selectedSkills || answers.selectedSkills.length === 0) {
-          console.log('No skills selected.');
+
+        if (skillsList.length === 0) {
+          console.log('No community skills found in registry.');
           process.exit(0);
         }
-        
+
+        console.log('\nAvailable community skills:\n');
+        for (const item of skillsList) {
+          console.log(`  [${item.idx}] ${item.name.padEnd(20)} ${item.desc}`);
+        }
+        console.log('\nEnter skill numbers to install (comma-separated, e.g. 1, 3) or press Enter to cancel:');
+
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        });
+
+        const answer = await new Promise((resolve) => {
+          rl.question('> ', (ans) => {
+            rl.close();
+            resolve(ans.trim());
+          });
+        });
+
+        if (!answer) {
+          console.log('No skills selected. Operation cancelled.');
+          process.exit(0);
+        }
+
+        const selectedIndices = answer
+          .split(/[\s,]+/)
+          .map(n => parseInt(n, 10))
+          .filter(n => !isNaN(n) && n >= 1 && n <= skillsList.length);
+
+        const selectedSkills = selectedIndices.map(n => skillsList[n - 1].value);
+
+        if (selectedSkills.length === 0) {
+          console.log('No valid skill numbers selected.');
+          process.exit(0);
+        }
+
         const { execFileSync } = require('child_process');
-        for (const skillRef of answers.selectedSkills) {
+        for (const skillRef of selectedSkills) {
           try {
+            console.log(`\nInstalling ${skillRef}...`);
             execFileSync(process.execPath, [ctxPath, 'skill', 'add', skillRef], { stdio: 'inherit' });
           } catch (e) {
             console.error(`Failed to install ${skillRef}`);
@@ -244,9 +283,6 @@ if (mainCommand === 'install-skill') {
         }
       } catch (error) {
         console.error('Failed to run interactive installer:', error.message);
-        if (error.code === 'MODULE_NOT_FOUND' && error.message.includes('inquirer')) {
-          console.error('It seems inquirer is not installed. Did you run npm install?');
-        }
         process.exit(1);
       }
     })();
