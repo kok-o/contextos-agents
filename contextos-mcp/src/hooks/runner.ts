@@ -154,10 +154,10 @@ function parseHooksYaml(raw: string): HooksConfig {
 		}
 
 		if (currentSection && trimmed.startsWith("- command:")) {
-			const command = trimmed
-				.replace("- command:", "")
-				.trim()
-				.replace(/^["']|["']$/g, "");
+			let command = trimmed.replace("- command:", "").trim();
+			if ((command.startsWith('"') && command.endsWith('"')) || (command.startsWith("'") && command.endsWith("'"))) {
+				command = command.slice(1, -1);
+			}
 			if (command) {
 				hooks[currentSection].push({ command, on_failure: "warn" });
 			}
