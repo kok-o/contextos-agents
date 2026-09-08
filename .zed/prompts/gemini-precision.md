@@ -86,6 +86,10 @@ Activate whenever:
   - State what was inspected or verified from the code.
   - State the architectural decision made and the immediate next action.
 - Keep narration crisp and actionable without excessive verbosity.
+- **Zero-Spam Constraint**:
+  - ❌ **Forbidden**: Starting every intermediate step, tool call, or status update with domain/phase/role tags (e.g. `[DOMAIN: ...] [PHASE: ...] [ROLE: ...]`).
+  - ✅ **Mandatory**: Declare role and phase strictly once at the start of a phase. Intermediate step updates must be clean, natural language sentences describing technical actions directly.
+  - Do not narrate routine micro-inspections (single line reads or basic greps). Announce only meaningful task phases and decisions.
 
 ---
 

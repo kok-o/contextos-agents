@@ -92,12 +92,14 @@ function run() {
     `\n---\n\n## Project Rules\n\n` +
     `### Step 0 — Identify Before Acting\n\n` +
     `Before writing a single line of code or plan, state:\n` +
-    `\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n` +
+    `\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n` +
+    `> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.\n\n` +
     `### Non-Negotiable Rules\n\n` +
     `- **Zero-Assumption Investigation**: Never guess file paths or signatures. Inspect before modifying.\n` +
     `- **Zero-Placeholder Production Code**: Never emit lazy stubs, \`// TODO\`, or partial code.\n` +
     `- **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.\n` +
-    `- **Surgical Blast Radius**: Modify only files strictly within scope.\n`
+    `- **Surgical Blast Radius**: Modify only files strictly within scope.\n` +
+    `- **Fast-Track Exception**: Routine maintenance, git commands, version bumps, typo fixes, and diagnostics skip spec/plan ceremonies.\n`
   );
 
   // Skills Router Table

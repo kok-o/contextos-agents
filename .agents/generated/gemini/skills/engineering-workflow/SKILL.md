@@ -38,7 +38,7 @@ Inspired by [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills
 ```
 
 **IRON RULE**: In interactive development, no phase can be skipped and no code is written before `/plan` is approved.  
-**Direct Build Exception**: When the prompt/caller explicitly requests a standalone implementation, or declares `[PHASE: Build]`, execute the BUILD phase directly and deliver the complete, self-contained production code without conversational pauses.
+**Direct Build & Fast-Track Exception**: When the prompt/caller explicitly requests a standalone implementation, declares `[PHASE: Build]`, or requests routine operational/maintenance tasks (git operations, version bumps, typo fixes, small config tweaks, diagnostic checks), proceed directly to execution without conversational approval pauses.
 
 ---
 

@@ -30,6 +30,10 @@ State your answers explicitly:
 Skills loaded: react, typescript, ui-ux-pro, ponytail-mindset
 ```
 
+> **Anti-Spam Invariant**:
+> Declare `[DOMAIN: ...] [PHASE: ...] [ROLE: ...]` **strictly once** at the beginning of a user task or when transitioning between major phases (`DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP`).
+> **NEVER** prefix intermediate tool calls, file reads, grep searches, or step updates with this header.
+
 ---
 
 ## Skill Architecture (Context Efficiency)
@@ -380,6 +384,7 @@ These rules apply regardless of which skills are loaded:
 
 ### Engineering
 - No code before spec + plan are approved in interactive development (proceed directly to BUILD when standalone/benchmark code is requested)
+- **Fast-Track Exception**: For routine maintenance, operational tasks (git commands, version bump, lint fix, typo, single-line config tweaks, diagnostics, and direct questions), proceed directly without blocking on full `/spec` and `/plan` approval rituals.
 - Blast radius limited to files in current task's plan
 - One atomic commit per task
 

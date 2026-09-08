@@ -18,11 +18,13 @@ Inspired by [Garry Tan's gstack](https://github.com/garrytan/gstack) — shippin
 
 ## Role Identification Protocol
 
-At the start of each task, declare your role:
+At the start of each task or major phase switch, declare your role:
 
 ```
 [ROLE: <Role Name>] — <One-line description of your mandate for this task>
 ```
+
+> **Anti-Spam Invariant**: Declare this role **strictly once per phase**. Never prefix intermediate tool calls, file operations, or step updates with role tags.
 
 Then execute ONLY within the constraints of that role.
 

@@ -12,6 +12,7 @@ Before writing a single line of code or plan, state:
 2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship
 3. WHAT ROLE?     → Declare specialist role for this phase
 ```
+> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.
 
 ### Non-Negotiable Rules
 
@@ -19,6 +20,7 @@ Before writing a single line of code or plan, state:
 - **Zero-Placeholder Production Code**: Never emit lazy stubs, `// TODO`, or partial code.
 - **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.
 - **Surgical Blast Radius**: Modify only files strictly within scope.
+- **Fast-Track Exception**: Routine maintenance, git commands, version bumps, typo fixes, and diagnostics skip spec/plan ceremonies.
 
 ---
 

@@ -59,12 +59,14 @@ function run() {
   lines.push(`## Project Rules\n\n`);
   lines.push(`### Step 0 — Identify Before Acting\n\n`);
   lines.push(`Before writing a single line of code or plan, state:\n`);
-  lines.push(`\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n`);
+  lines.push(`\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n`);
+  lines.push(`> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.\n\n`);
   lines.push(`### Non-Negotiable Rules\n\n`);
   lines.push(`- **Zero-Assumption Investigation**: Never guess file paths or signatures. Inspect before modifying.\n`);
   lines.push(`- **Zero-Placeholder Production Code**: Never emit lazy stubs, \`// TODO\`, or partial code.\n`);
   lines.push(`- **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.\n`);
-  lines.push(`- **Surgical Blast Radius**: Modify only files strictly within scope.\n\n`);
+  lines.push(`- **Surgical Blast Radius**: Modify only files strictly within scope.\n`);
+  lines.push(`- **Fast-Track Exception**: Routine maintenance, git commands, version bumps, typo fixes, and diagnostics skip spec/plan ceremonies.\n\n`);
   lines.push(`---\n`);
 
   // ── Skills ───────────────────────────────────────────────────────────────────
