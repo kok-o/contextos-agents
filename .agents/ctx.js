@@ -370,7 +370,20 @@ if (command === 'export') {
 // ── doctor ────────────────────────────────────────────────────────────────────
 } else if (command === 'doctor') {
   const doctorModule = require('./doctor.js');
-  doctorModule.runDoctor(process.cwd());
+  const res = doctorModule.runDoctor(process.cwd(), { json: args.includes('--json') });
+  if (res && res.ok === false) {
+    process.exit(1);
+  }
+
+// ── status ────────────────────────────────────────────────────────────────────
+} else if (command === 'status') {
+  const commands = require(path.join(__dirname, '..', 'bin', 'commands.js'));
+  const status = commands.getStatus(process.cwd());
+  if (args.includes('--json')) {
+    console.log(JSON.stringify(status, null, 2));
+  } else {
+    console.log(commands.formatStatusText(status));
+  }
 
 // ── stats ─────────────────────────────────────────────────────────────────────
 } else if (command === 'stats') {

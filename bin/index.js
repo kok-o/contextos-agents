@@ -4,6 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const { version } = require('../package.json');
 const profiles = require('../.agents/profiles.js');
+const { isKnownCommand, getStatus, formatStatusText } = require('./commands.js');
+const { detectProjectAttributes } = require('./lib/detector.js');
+const lockfileLib = require('./lib/lockfile.js');
 
 // ── CLI argument parsing ──────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -15,7 +18,12 @@ const flags = {
   skipCompile: args.includes('--skip-compile'),
   auto:        args.includes('--auto'),
   minimal:     args.includes('--minimal'),
+  json:        args.includes('--json'),
   withMcp:     args.includes('--with-mcp') || args.includes('--mcp'),
+  agent:       (() => {
+    const i = args.indexOf('--agent');
+    return i !== -1 ? args[i + 1] : null;
+  })(),
   profile:     (() => {
     const i = args.indexOf('--profile');
     return i !== -1 ? args[i + 1] : null;
@@ -28,7 +36,11 @@ const flags = {
 
 // ── Help / Version ────────────────────────────────────────────────────────────
 if (flags.ver) {
-  console.log(`contextos-agents v${version}`);
+  if (flags.json) {
+    console.log(JSON.stringify({ package: 'contextos-agents', version }));
+  } else {
+    console.log(`contextos-agents v${version}`);
+  }
   process.exit(0);
 }
 
@@ -38,12 +50,15 @@ contextos / contextos-agents v${version}
 Install AI assistant skills and rules into your project.
 
 Usage:
-  npx contextos [options]
+  npx contextos-agents init [options]
+  npx contextos-agents <command> [args...]
   contextos <command> [args...]
 
 Options:
   --help, -h          Show this help message
   --version, -v       Show version number
+  --json              Output machine-readable JSON format
+  --agent <name>      Target AI agent or IDE (gemini, claude, cursor, auto)
   --dry-run           Preview what will be copied without making changes
   --force             Overwrite an existing .agents/ folder
   --minimal           Install only 5 core skills (lightweight footprint)
@@ -54,6 +69,8 @@ Options:
   --add-skill <ref>   Install a community plugin skill after setup
 
 Commands:
+  init                Install and configure .agents/ in target project
+  status              Display project configuration, active profile, and lockfile status
   update              Safely update skills without overwriting custom changes
   uninstall           Safely uninstall ContextOS files (preserves user custom skills)
   doctor              Run full project diagnostic health check
@@ -64,7 +81,7 @@ Commands:
   resolve <prompt>    Dynamically resolve minimal skills for a prompt or files
   stats               Display token context savings report
   watch               Start continuous file watcher and auto-sync daemon
-  detect              Analyze project and display detected tech stack
+  detect              Analyze project and display detected tech stack & IDE
   install-skill       Interactive skill installer (or pass <ref> / --from-repo)
   setup-mcp           Add MCP execution server to an existing .agents/ project
 
@@ -84,12 +101,12 @@ Plugin ref formats:
   @scope/npm-package               A scoped npm skill package
 
 Examples:
-  npx contextos                                 Install .agents/ into current project
-  npx contextos --minimal                       Install only 5 core essential skills
-  npx contextos --profile startup               Install with startup profile
-  contextos doctor                              Run project health check
-  contextos export gemini                       Compile skills for Gemini
-  contextos profile list                        List available profiles
+  npx contextos-agents init                     Install .agents/ with auto-detected stack
+  npx contextos-agents init --agent auto        Install and configure for detected stack & IDE
+  npx contextos-agents init --minimal           Install only 5 core essential skills
+  npx contextos status                          Show project configuration and lockfile status
+  npx contextos doctor                          Run project health check
+  npx contextos export gemini                   Compile skills for Gemini
 `);
   process.exit(0);
 }
@@ -97,10 +114,55 @@ Examples:
 // ── Top-level Commands & Proxy Routing ────────────────────────────────────────
 const mainCommand = args[0] && !args[0].startsWith('-') ? args[0] : null;
 
+// Unknown command check
+if (mainCommand && mainCommand !== 'init' && !isKnownCommand(mainCommand)) {
+  if (flags.json) {
+    console.error(JSON.stringify({ error: `Unknown command: ${mainCommand}`, code: 1 }));
+  } else {
+    console.error(`[ERROR] Unknown command: ${mainCommand}`);
+    console.error('        Run `npx contextos-agents --help` to view available commands.');
+  }
+  process.exit(1);
+}
+
+// Status command
+if (mainCommand === 'status') {
+  const status = getStatus(process.cwd());
+  if (flags.json) {
+    console.log(JSON.stringify(status, null, 2));
+  } else {
+    console.log(formatStatusText(status));
+  }
+  process.exit(0);
+}
+
+// Detect command
+if (mainCommand === 'detect') {
+  const detection = detectProjectAttributes(process.cwd());
+  if (flags.json) {
+    console.log(JSON.stringify(detection, null, 2));
+  } else {
+    console.log('\nContextOS — Tech Stack & Environment Detection\n');
+    console.log(`  Detected Technologies : ${detection.summary.technologies.join(', ')}`);
+    console.log(`  Detected Environments : ${detection.summary.ides.join(', ')}`);
+    console.log(`  Recommended Profile   : ${detection.summary.recommendedProfile}`);
+    console.log(`  Recommended Agents    : ${detection.summary.recommendedAgents.join(', ')}`);
+    console.log(`  Recommended Skills    : ${detection.summary.recommendedSkills.join(', ')}\n`);
+  }
+  process.exit(0);
+}
+
+// Doctor command
+if (mainCommand === 'doctor') {
+  const doctorModule = require('../.agents/doctor.js');
+  const result = doctorModule.runDoctor(process.cwd(), { json: flags.json });
+  process.exit(result && result.ok === false ? 1 : 0);
+}
+
 // Proxy commands to .agents/ctx.js when executed in a ContextOS project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',
-  'clean-worktrees', 'doctor', 'stats', 'watch', 'init'
+  'clean-worktrees', 'stats', 'watch'
 ];
 
 const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
@@ -135,12 +197,6 @@ if (mainCommand === 'uninstall') {
   process.exit(0);
 }
 
-if (mainCommand === 'doctor') {
-  const doctorModule = require('../.agents/doctor.js');
-  doctorModule.runDoctor(process.cwd());
-  process.exit(0);
-}
-
 if (mainCommand === 'stats') {
   const statsModule = require('../.agents/stats.js');
   statsModule.runStats(process.cwd());
@@ -150,23 +206,6 @@ if (mainCommand === 'stats') {
 if (mainCommand === 'watch') {
   const watchModule = require('../.agents/watch.js');
   watchModule.runWatch(process.cwd());
-}
-
-if (mainCommand === 'init') {
-  console.log(`
-ContextOS — Project Setup
-
-Usage:
-  npx contextos                    Install .agents/ with auto-detected stack
-  npx contextos --profile <name>   Install with specific profile (mvp, startup, enterprise, frontend, backend)
-  npx contextos --minimal          Install only 5 core skills
-  npx contextos --with-mcp         Install with MCP execution server enabled
-
-Run:
-  contextos doctor                 Verify installation health
-  contextos stats                  Show token savings report
-`);
-  process.exit(0);
 }
 
 const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees'];
@@ -187,15 +226,6 @@ if (mainCommand === 'audit') {
   } catch (e) {
     process.exit(1);
   }
-  process.exit(0);
-}
-
-if (mainCommand === 'detect') {
-  const stack = profiles.detectStack(process.cwd());
-  console.log('\nContextOS — Tech Stack Detection\n');
-  console.log(`  Detected Technologies : ${stack.detected.length ? stack.detected.join(', ') : 'Generic JavaScript'}`);
-  console.log(`  Recommended Profile   : ${stack.recommendedProfile}`);
-  console.log(`  Recommended Skills    : ${stack.recommendedSkills.join(', ')}\n`);
   process.exit(0);
 }
 
@@ -424,12 +454,18 @@ function installAtomically(source, target, options = {}) {
   }
 }
 
-// ── Stack detection ───────────────────────────────────────────────────────────
-const stackDetection = profiles.detectStack(process.cwd());
+// ── Stack & IDE detection ───────────────────────────────────────────────────
+const projectAttrs = detectProjectAttributes(process.cwd());
+const stackDetection = projectAttrs.stack;
+const ideDetection = projectAttrs.ide;
+
+const targetProfile = flags.profile || (flags.auto || flags.agent === 'auto' ? stackDetection.recommendedProfile : 'none');
+const targetAgents = (flags.agent === 'auto' || flags.auto)
+  ? ideDetection.recommendedAgents
+  : (flags.agent ? [flags.agent] : ['gemini']);
 
 // ── Dry run ───────────────────────────────────────────────────────────────────
 if (flags.dryRun) {
-  console.log('[DRY-RUN] No files will be written.\n');
   if (!fs.existsSync(sourcePath)) {
     console.error('[ERROR] Source .agents/ folder not found in package.');
     process.exit(1);
@@ -459,14 +495,34 @@ if (flags.dryRun) {
     return count;
   };
   const total = countFiles(sourcePath);
+
+  if (flags.json) {
+    console.log(JSON.stringify({
+      dryRun: true,
+      targetPath,
+      targetProfile,
+      detectedStack: stackDetection.detected,
+      detectedIde: ideDetection.detected,
+      targetAgents,
+      filesCount: total,
+      minimal: flags.minimal,
+      withMcp: flags.withMcp,
+    }, null, 2));
+    process.exit(0);
+  }
+
+  console.log('[DRY-RUN] No files will be written.\n');
   if (fs.existsSync(targetPath)) {
     console.log(`[WARN] .agents/ already exists — would be overwritten with --force.`);
   } else {
     console.log(`[OK] Would create .agents/ in: ${process.cwd()}`);
   }
   console.log(`[INFO] Detected stack: ${stackDetection.detected.length ? stackDetection.detected.join(', ') : 'Generic JavaScript'}`);
-  const targetProfile = flags.profile || (flags.auto ? stackDetection.recommendedProfile : 'none');
+  if (ideDetection.detected.length > 0) {
+    console.log(`[INFO] Detected IDEs: ${ideDetection.detected.join(', ')}`);
+  }
   console.log(`[INFO] Selected profile: ${targetProfile}`);
+  console.log(`[INFO] Target agents for export: ${targetAgents.join(', ')}`);
   if (flags.minimal) {
     console.log(`[INFO] Minimal mode: copying only 5 core essential skills`);
   }
@@ -476,7 +532,9 @@ if (flags.dryRun) {
 }
 
 // ── Main install ──────────────────────────────────────────────────────────────
-console.log('Installing AI assistant skills (.agents/)...');
+if (!flags.json) {
+  console.log('Installing AI assistant skills (.agents/)...');
+}
 
 try {
   if (!fs.existsSync(sourcePath)) {
@@ -497,14 +555,31 @@ try {
 
   installAtomically(sourcePath, targetPath, { withMcp: flags.withMcp, minimal: flags.minimal });
 
-  console.log('[OK] .agents/ successfully installed in your project!');
-  if (flags.minimal) {
-    console.log('[OK] Minimal profile: 5 core skills installed.');
-    console.log('     (engineering-workflow, ponytail-mindset, gstack-roles, gemini-precision, react)');
-    console.log('     Tip: Add more skills anytime with: contextos skill add <name>');
+  // ── Create/update lockfile for provenance & safe lifecycle ─────────────────
+  const selectedProfile = flags.profile || (flags.auto || flags.agent === 'auto' ? stackDetection.recommendedProfile : null);
+  try {
+    lockfileLib.migrateExistingInstallation(process.cwd(), sourcePath, {
+      selectedProfile: selectedProfile || 'none',
+      installedPackage: 'contextos-agents',
+      version,
+    });
+  } catch (err) {
+    if (!flags.json) console.warn(`[WARN] Could not generate lockfile: ${err.message}`);
   }
-  if (stackDetection.detected.length > 0) {
-    console.log(`[OK] Detected project stack: ${stackDetection.detected.join(', ')}`);
+
+  if (!flags.json) {
+    console.log('[OK] .agents/ successfully installed in your project!');
+    if (flags.minimal) {
+      console.log('[OK] Minimal profile: 5 core skills installed.');
+      console.log('     (engineering-workflow, ponytail-mindset, gstack-roles, gemini-precision, react)');
+      console.log('     Tip: Add more skills anytime with: contextos skill add <name>');
+    }
+    if (stackDetection.detected.length > 0) {
+      console.log(`[OK] Detected project stack: ${stackDetection.detected.join(', ')}`);
+    }
+    if (ideDetection.detected.length > 0) {
+      console.log(`[OK] Detected developer environment: ${ideDetection.detected.join(', ')}`);
+    }
   }
 
   // ── Create mcp_config.json only if --with-mcp ────────────────────────────────
@@ -520,41 +595,80 @@ try {
         }
       };
       fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
-      console.log('[OK] Created default MCP configuration (.agents/mcp_config.json)');
+      if (!flags.json) console.log('[OK] Created default MCP configuration (.agents/mcp_config.json)');
     }
   }
 
   // ── Apply profile if requested or auto ──────────────────────────────────────
-  const selectedProfile = flags.profile || (flags.auto ? stackDetection.recommendedProfile : null);
   if (selectedProfile) {
     try {
       const applied = profiles.applyProfile(selectedProfile, process.cwd());
-      console.log(`[OK] Applied profile '${applied.name}' (excluded: ${(applied.exclude_skills || []).join(', ') || 'none'})`);
+      if (!flags.json) console.log(`[OK] Applied profile '${applied.name}' (excluded: ${(applied.exclude_skills || []).join(', ') || 'none'})`);
     } catch (e) {
-      console.warn(`[WARN] Could not apply profile '${selectedProfile}': ${e.message}`);
+      if (!flags.json) console.warn(`[WARN] Could not apply profile '${selectedProfile}': ${e.message}`);
     }
   }
 
-  console.log('[OK] Your AI assistant now has skills and rules configured.\n');
+  if (!flags.json) {
+    console.log('[OK] Your AI assistant now has skills and rules configured.\n');
+  }
 
-  // ── Auto-compile skills ───────────────────────────────────────────────────
+  // ── Auto-compile skills for target agents ──────────────────────────────────
   if (!flags.skipCompile) {
     const ctxPath = path.join(targetPath, 'ctx.js');
     if (fs.existsSync(ctxPath)) {
-      console.log('Compiling skills for Gemini...');
-      try {
-        const { execFileSync } = require('child_process');
-        execFileSync(process.execPath, [ctxPath, 'export', 'gemini'], {
-          cwd: process.cwd(),
-          stdio: 'inherit',
-        });
-      } catch (e) {
-        console.warn('[WARN] Skill compilation failed — run manually:');
-        console.warn('       contextos export gemini');
+      const { execFileSync } = require('child_process');
+      for (const ag of targetAgents) {
+        if (!flags.json) console.log(`Compiling skills for ${ag}...`);
+        try {
+          execFileSync(process.execPath, [ctxPath, 'export', ag], {
+            cwd: process.cwd(),
+            stdio: flags.json ? 'ignore' : 'inherit',
+          });
+        } catch (e) {
+          if (!flags.json) {
+            console.warn(`[WARN] Skill compilation for '${ag}' failed — run manually:`);
+            console.warn(`       contextos export ${ag}`);
+          }
+        }
       }
     }
-  } else {
+  } else if (!flags.json) {
     console.log('Tip: Run `contextos export gemini` to compile skills.');
+  }
+
+  // ── --add-skill flag ────────────────────────────────────────────────────────
+  if (flags.addSkill) {
+    const ctxPath = path.join(targetPath, 'ctx.js');
+    if (fs.existsSync(ctxPath)) {
+      if (!flags.json) console.log(`Installing plugin skill: ${flags.addSkill}`);
+      try {
+        const { execFileSync } = require('child_process');
+        execFileSync(process.execPath, [ctxPath, 'skill', 'add', flags.addSkill], {
+          cwd: process.cwd(),
+          stdio: flags.json ? 'ignore' : 'inherit',
+        });
+      } catch (e) {
+        if (!flags.json) {
+          console.warn(`[WARN] Skill install failed — run manually:`);
+          console.warn(`       node .agents/ctx.js skill add ${flags.addSkill}`);
+        }
+      }
+    }
+  }
+
+  if (flags.json) {
+    console.log(JSON.stringify({
+      success: true,
+      package: 'contextos-agents',
+      version,
+      projectDir: process.cwd(),
+      profile: selectedProfile || 'default',
+      agents: targetAgents,
+      withMcp: flags.withMcp,
+      minimal: flags.minimal,
+    }, null, 2));
+    process.exit(0);
   }
 
   console.log('\n Next steps:');
@@ -578,26 +692,12 @@ try {
   }
   console.log('');
 
-  // ── --add-skill flag ────────────────────────────────────────────────────────
-  if (flags.addSkill) {
-    const ctxPath = path.join(targetPath, 'ctx.js');
-    if (fs.existsSync(ctxPath)) {
-      console.log(`Installing plugin skill: ${flags.addSkill}`);
-      try {
-        const { execFileSync } = require('child_process');
-        execFileSync(process.execPath, [ctxPath, 'skill', 'add', flags.addSkill], {
-          cwd: process.cwd(),
-          stdio: 'inherit',
-        });
-      } catch (e) {
-        console.warn(`[WARN] Skill install failed — run manually:`);
-        console.warn(`       node .agents/ctx.js skill add ${flags.addSkill}`);
-      }
-    }
-  }
-
 } catch (error) {
-  console.error('[ERROR] Installation failed:', error.message);
+  if (flags.json) {
+    console.error(JSON.stringify({ success: false, error: error.message }));
+  } else {
+    console.error('[ERROR] Installation failed:', error.message);
+  }
   process.exit(1);
 }
 

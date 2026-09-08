@@ -395,17 +395,25 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
   // Phase 2: Merge AST & Project Dependency Graph Signals
   const astSignals = projectDir ? analyzeImportGraph(projectDir) : new Map();
 
+  // Active Profile Resolution Enforcement
+  const profiles = require('./profiles.js');
+  const activeProfile = projectDir ? profiles.getActiveProfile(projectDir) : null;
+  const profileExcluded = new Set(activeProfile?.exclude_skills || []);
+  const profilePreferred = new Set(activeProfile?.prefer_skills || []);
+  const profileEnforce = activeProfile?.enforce || {};
+  const profileDefaults = activeProfile?.defaults || {};
+
   const MAX_DOMAIN_SKILLS = 4;
   const selectedSkills = [];
 
   // 1. INTENT SLOTS & INTENT PRECEDENCE (Immunity against eviction)
   // Direct user intent in prompt MUST NOT be evicted by ambient stack/file signals.
-  // We identify candidate intent skills:
-  // - Category 'intent' with promptScore >= 5 (or fileScore for direct intent files like Dockerfile / schema.prisma)
-  // - Any skill with promptScore >= 10 (explicit direct mention)
+  // Profile-excluded skills are strictly omitted from candidate intents.
   const candidateIntents = [];
   for (const rule of SKILL_RULES) {
     const s = rule.skill;
+    if (profileExcluded.has(s)) continue;
+
     const p = promptScores.get(s) || 0;
     const f = fileScores.get(s) || 0;
     if (rule.category === 'intent' && (p >= 5 || (p > 0 && f >= 10))) {
@@ -434,11 +442,11 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
 
   const suppressAmbientUI = hasPureInfraIntent || hasBackendOnlyIntent;
 
-  // 3. REMAINING SLOTS: Rank candidate skills with user-intent weighting
+  // 3. REMAINING SLOTS: Rank candidate skills with user-intent weighting and profile preferences
   const candidateScores = new Map();
   for (const rule of SKILL_RULES) {
     const s = rule.skill;
-    if (selectedSkills.includes(s)) continue;
+    if (selectedSkills.includes(s) || profileExcluded.has(s)) continue;
 
     const p = promptScores.get(s) || 0;
     const f = fileScores.get(s) || 0;
@@ -452,8 +460,11 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
     // Require minimum unweighted threshold of 5 points to filter casual weak mentions,
     // then apply multiplier for strong/medium prompt matches to prioritize user intent over ambient signals.
     const rawSum = p + f + a;
-    if (rawSum >= 5) {
-      const weightedScore = (p >= 5 ? p * 3 : p) + f + a;
+    if (rawSum >= 5 || profilePreferred.has(s)) {
+      let weightedScore = (p >= 5 ? p * 3 : p) + f + a;
+      if (profilePreferred.has(s)) {
+        weightedScore += 20; // Profile prefer boost
+      }
       candidateScores.set(s, weightedScore);
     }
   }
@@ -475,15 +486,41 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
     selectedSkills.includes('ddd') ||
     selectedSkills.includes('graphify');
 
-  if (hasSynergyPrereq && !selectedSkills.includes('system-design')) {
+  if (hasSynergyPrereq && !selectedSkills.includes('system-design') && !profileExcluded.has('system-design')) {
     if (selectedSkills.length < MAX_DOMAIN_SKILLS + 1) {
       selectedSkills.push('system-design');
     }
   }
 
-  // Foundational skills (always active)
+  // 5. Enforce profile invariants (e.g. enterprise or startup compliance)
+  const normPhase = (phase || '').toLowerCase();
+  if (profileEnforce.testing === true && ['build', 'verify', 'test'].includes(normPhase)) {
+    if (!selectedSkills.includes('testing') && !profileExcluded.has('testing')) {
+      selectedSkills.push('testing');
+    }
+  }
+
+  if (profileEnforce.security_audit === true && (selectedSkills.includes('database') || selectedSkills.includes('node') || selectedSkills.includes('fastapi') || selectedSkills.includes('nestjs'))) {
+    if (!selectedSkills.includes('security') && !profileExcluded.has('security')) {
+      selectedSkills.push('security');
+    }
+  }
+
+  if (profileEnforce.adr === true && (normPhase === 'plan' || selectedSkills.includes('system-design') || selectedSkills.includes('microservices'))) {
+    if (!selectedSkills.includes('decisions') && !profileExcluded.has('decisions')) {
+      selectedSkills.push('decisions');
+    }
+  }
+
+  if (profileEnforce.accessibility_audit === true && (selectedSkills.includes('react') || selectedSkills.includes('ui-ux-pro'))) {
+    if (!selectedSkills.includes('web-accessibility') && !profileExcluded.has('web-accessibility')) {
+      selectedSkills.push('web-accessibility');
+    }
+  }
+
+  // Foundational skills (always active unless explicitly excluded)
   const allSkills = ['ponytail-mindset', 'engineering-workflow', ...selectedSkills];
-  const finalSkills = Array.from(new Set(allSkills));
+  const finalSkills = Array.from(new Set(allSkills)).filter(s => !profileExcluded.has(s));
 
   // Infer Domain if not specified
   let inferredDomain = domain;
