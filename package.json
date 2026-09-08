@@ -39,7 +39,7 @@
     "check:secrets": "node scripts/check-secrets.js --all",
     "setup:hooks": "node scripts/install-hooks.js",
     "watch": "node .agents/watch.js",
-    "test": "node --test --test-concurrency=1 tests/install.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js",
+    "test": "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js",
     "prepublishOnly": "cd contextos-mcp && npm install && npm run build && npm run build:root-sync && cd .. && npm run validate && npm run build"
   },
   "keywords": [
