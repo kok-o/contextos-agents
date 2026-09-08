@@ -36,6 +36,17 @@ const REGISTRY_URL   = 'https://raw.githubusercontent.com/kok-o/contextos-agents
 const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024;
 const SAFE_SKILL_NAME = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
+// ── ANSI helpers ──────────────────────────────────────────────────────────────
+const NO_COLOR = process.env.NO_COLOR || !process.stdout.isTTY;
+const c = {
+  green:  (s) => NO_COLOR ? s : `\x1b[32m${s}\x1b[0m`,
+  red:    (s) => NO_COLOR ? s : `\x1b[31m${s}\x1b[0m`,
+  yellow: (s) => NO_COLOR ? s : `\x1b[33m${s}\x1b[0m`,
+  cyan:   (s) => NO_COLOR ? s : `\x1b[36m${s}\x1b[0m`,
+  bold:   (s) => NO_COLOR ? s : `\x1b[1m${s}\x1b[0m`,
+  dim:    (s) => NO_COLOR ? s : `\x1b[2m${s}\x1b[0m`,
+};
+
 // ── Prompt Injection Scanner ──────────────────────────────────────────────────
 const PROMPT_INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?previous\s+instructions/i,
@@ -46,6 +57,18 @@ const PROMPT_INJECTION_PATTERNS = [
   /base64\s*,\s*[A-Za-z0-9+/=]{40,}/i,
   /https?:\/\/[^\s)]+\/(?:exfil|steal|leak|webhook|collect)/i,
   /\b(?:eval|exec|Function)\s*\(/i,
+];
+
+// ── Shell Escapes & Script Injection Scanner ──────────────────────────────────
+const SHELL_ESCAPE_PATTERNS = [
+  /(?:curl|wget)\s+[^|\n\r]+?\|\s*(?:bash|sh|zsh|powershell|pwsh|cmd)/i,
+  /\bpowershell(?:\.exe)?\s+.*-(?:enc|encodedcommand|ep\s+bypass)\b/i,
+  /\b(?:rm\s+-rf\s+[\/~]|del\s+\/[sfq]\s+[c-z]:[\\\/])/i,
+  /\b(?:mkfifo|mknod)\s+.*?;/i,
+  /\b(?:nc|netcat|ncat)\s+-[elp]+/i,
+  /<script\b[^>]*>[\s\S]*?<\/script>/i,
+  /javascript\s*:\s*[^\s'"]+/i,
+  /data:text\/html/i,
 ];
 
 function scanForPromptInjection(content, options = {}) {
@@ -62,16 +85,124 @@ function scanForPromptInjection(content, options = {}) {
   return false;
 }
 
-// ── ANSI helpers ──────────────────────────────────────────────────────────────
-const NO_COLOR = process.env.NO_COLOR || !process.stdout.isTTY;
-const c = {
-  green:  (s) => NO_COLOR ? s : `\x1b[32m${s}\x1b[0m`,
-  red:    (s) => NO_COLOR ? s : `\x1b[31m${s}\x1b[0m`,
-  yellow: (s) => NO_COLOR ? s : `\x1b[33m${s}\x1b[0m`,
-  cyan:   (s) => NO_COLOR ? s : `\x1b[36m${s}\x1b[0m`,
-  bold:   (s) => NO_COLOR ? s : `\x1b[1m${s}\x1b[0m`,
-  dim:    (s) => NO_COLOR ? s : `\x1b[2m${s}\x1b[0m`,
-};
+function scanContentSecurity(content, filePath, options = {}) {
+  if (typeof content !== 'string') return false;
+
+  const injectionMatches = PROMPT_INJECTION_PATTERNS.filter(p => p.test(content));
+  const shellMatches = SHELL_ESCAPE_PATTERNS.filter(p => p.test(content));
+
+  const allMatches = [
+    ...injectionMatches.map(p => `prompt_injection: ${p.source}`),
+    ...shellMatches.map(p => `shell_or_script: ${p.source}`),
+  ];
+
+  if (allMatches.length > 0) {
+    const rel = filePath ? path.basename(filePath) : 'content';
+    console.warn(c.red(`  🚨 Unsafe pattern or injection detected in plugin file '${rel}':`));
+    console.warn(c.yellow(`     Matches: ${allMatches.join('; ')}`));
+    if (options.throwOnMatch) {
+      throw new Error(`Security validation failed: unsafe content or script injection detected in '${rel}' (${allMatches.length} pattern matches). Installation aborted. Pass --force-unsafe-prompts to override.`);
+    }
+    return true;
+  }
+  return false;
+}
+
+function isScannableFile(fileName) {
+  const ext = path.extname(fileName).toLowerCase();
+  const scannableExtensions = new Set([
+    '.md', '.mdc', '.markdown', '.txt',
+    '.yaml', '.yml', '.json',
+    '.sh', '.bash', '.zsh', '.ps1', '.bat', '.cmd',
+    '.js', '.ts', '.mjs', '.cjs', '.py',
+  ]);
+  return scannableExtensions.has(ext) || !ext;
+}
+
+/**
+ * Recursively scan an entire plugin directory tree:
+ * - Rejects any symlinks that traverse outside the plugin directory
+ * - Scans all documentation and code files (EXAMPLES.md, TROUBLESHOOTING.md, references/, etc.)
+ *   for prompt injection, script injection, and dangerous shell escape patterns.
+ */
+function scanPluginDirectory(pluginDir, options = {}) {
+  const throwOnMatch = options.throwOnMatch !== undefined ? options.throwOnMatch : !options.forceUnsafe;
+  if (!fs.existsSync(pluginDir)) return true;
+
+  const realPluginDir = fs.realpathSync(pluginDir);
+
+  function walk(currentDir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(currentDir);
+    } catch {
+      return;
+    }
+
+    for (const name of entries) {
+      const fullPath = path.join(currentDir, name);
+      let lstat;
+      try {
+        lstat = fs.lstatSync(fullPath);
+      } catch {
+        continue;
+      }
+
+      // 1. Check symlink traversal
+      if (lstat.isSymbolicLink()) {
+        let linkTarget;
+        try {
+          linkTarget = fs.readlinkSync(fullPath);
+        } catch (e) {
+          throw new Error(`Security validation failed: Unreadable symlink '${name}'. Installation aborted.`);
+        }
+
+        const resolvedTarget = path.resolve(currentDir, linkTarget);
+        let realTarget;
+        try {
+          realTarget = fs.realpathSync(resolvedTarget);
+        } catch {
+          realTarget = resolvedTarget;
+        }
+
+        const normalizedRealPlugin = realPluginDir.replace(/\\/g, '/').toLowerCase();
+        const normalizedRealTarget = realTarget.replace(/\\/g, '/').toLowerCase();
+
+        if (
+          !normalizedRealTarget.startsWith(normalizedRealPlugin + '/') &&
+          normalizedRealTarget !== normalizedRealPlugin
+        ) {
+          throw new Error(
+            `Security validation failed: Symlink traversal detected in '${name}' pointing outside plugin directory to '${linkTarget}'. Installation aborted.`
+          );
+        }
+      }
+
+      // 2. Walk subdirectories
+      if (lstat.isDirectory()) {
+        if (name === '.git' || name === 'node_modules') continue;
+        walk(fullPath);
+      } else if (lstat.isFile()) {
+        if (name === '.source') continue;
+        if (lstat.size > 2 * 1024 * 1024) continue;
+
+        if (isScannableFile(name)) {
+          try {
+            const content = fs.readFileSync(fullPath, 'utf8');
+            scanContentSecurity(content, fullPath, { throwOnMatch });
+          } catch (err) {
+            if (err.message && err.message.startsWith('Security validation failed')) {
+              throw err;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  walk(pluginDir);
+  return true;
+}
 
 // ── plugins.json lock file ─────────────────────────────────────────────────────
 function readLock() {
@@ -232,6 +363,14 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceU
     fs.writeFileSync(path.join(targetDir, 'skill.yaml'), yamlContent);
   }
 
+  // Deep security scan before writing source marker
+  try {
+    scanPluginDirectory(targetDir, { throwOnMatch: !forceUnsafe, forceUnsafe });
+  } catch (err) {
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    throw err;
+  }
+
   // Write a source marker so we know where to update from
   fs.writeFileSync(path.join(targetDir, '.source'), JSON.stringify({
     type:    'github',
@@ -286,7 +425,8 @@ function installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe = f
     if (checksum && sha256.toLowerCase() !== checksum.toLowerCase()) {
       throw new Error(`Checksum mismatch for ${skillName}: expected ${checksum}, got ${sha256}`);
     }
-    scanForPromptInjection(skillMdContent, { throwOnMatch: !forceUnsafe });
+    // Deep security scan across all plugin files (EXAMPLES.md, TROUBLESHOOTING.md, references/, symlinks)
+    scanPluginDirectory(skillSrc, { throwOnMatch: !forceUnsafe, forceUnsafe });
 
     const targetDir = path.join(PLUGINS_DIR, skillName);
     fs.rmSync(targetDir, { recursive: true, force: true });
@@ -586,6 +726,9 @@ module.exports = {
   deriveSkillName,
   isSafeSkillName,
   scanForPromptInjection,
+  scanContentSecurity,
+  scanPluginDirectory,
   PROMPT_INJECTION_PATTERNS,
+  SHELL_ESCAPE_PATTERNS,
   PLUGINS_DIR,
 };

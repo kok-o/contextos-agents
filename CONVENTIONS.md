@@ -62,8 +62,6 @@ Read the corresponding skill file only when the task matches the trigger:
 
 | `- workflow - engineering - tdd - planning - review` | **engineering-workflow** | `/read .agents/core/skills/engineering-workflow/SKILL.md` |
 
-| `export-test-plugin` | **export-test-plugin** | `/read .agents/core/skills/export-test-plugin/SKILL.md` |
-
 | `backend, python, api, async, pydantic` | **fastapi** | `/read .agents/core/skills/fastapi/SKILL.md` |
 
 | `- gemini - precision - quality - workflow - antigravity` | **gemini-precision** | `/read .agents/core/skills/gemini-precision/SKILL.md` |
@@ -176,11 +174,6 @@ Read the corresponding skill file only when the task matches the trigger:
 ## Skill: engineering-workflow
 > Senior engineering workflow skill inspired by Addy Osmani's agent-skills. Enforces the full development lifecycle: spec → plan → build → test → review → ship. AI must never write code before a spec and plan are approved.
 *Source: `.agents/skills/engineering-workflow/SKILL.md` — Load via `/read .agents/skills/engineering-workflow/SKILL.md`*
-
-
-## Skill: export-test-plugin
-> Plugin instructions unique-marker-export-test.
-*Source: `.agents/skills/export-test-plugin/SKILL.md` — Load via `/read .agents/skills/export-test-plugin/SKILL.md`*
 
 
 ## Skill: FastAPI

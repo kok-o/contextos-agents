@@ -65,11 +65,6 @@ The following specialist skills are configured as `.cursor/rules/<skill>.mdc`:
 *Rule file: `.cursor/rules/engineering-workflow.mdc` (load on demand)*
 
 
-## Skill: export-test-plugin
-> Plugin instructions unique-marker-export-test.
-*Rule file: `.cursor/rules/export-test-plugin.mdc` (load on demand)*
-
-
 ## Skill: FastAPI
 > High-performance Python backend engineering using FastAPI, Pydantic v2, and async SQLAlchemy/Tortoise ORM. Enforces type-driven request validation, OpenAPI contracts, and async non-blocking endpoints.
 *Rule file: `.cursor/rules/fastapi.mdc` (load on demand)*
