@@ -238,7 +238,7 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
     try {
       return require('../package.json').version;
     } catch {
-      return '1.6.1';
+      return '1.7.0';
     }
   })();
 

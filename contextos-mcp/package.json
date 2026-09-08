@@ -1,6 +1,6 @@
 {
   "name": "contextos-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "ContextOS Execution Layer and MCP Server",
   "type": "module",
   "bin": {

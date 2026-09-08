@@ -1,7 +1,7 @@
 {
   "name": "contextos-agents",
-  "version": "1.6.1",
-  "description": "Install a .agents folder into your project to teach AI assistants best practices: UI/UX, architecture, security, and engineering workflow skills.",
+  "version": "1.7.0",
+  "description": "ContextOS — Deterministic context compiler, MCP runtime, and high-precision agent skills for pair-programming.",
   "bin": {
     "contextos": "./bin/index.js",
     "contextos-agents": "./bin/index.js",

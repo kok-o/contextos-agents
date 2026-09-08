@@ -22,7 +22,7 @@ ContextOS provides a validated plugin configuration for Claude Code workspaces:
 {
   "$schema": "https://json.schemastore.org/claude-plugin.json",
   "name": "contextos",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Deterministic AI Project Operating System context compiler, MCP runtime, and high-precision engineering skills for Claude Code.",
   "author": {
     "name": "ContextOS Team",
@@ -62,7 +62,7 @@ ContextOS provides a validated plugin configuration for Claude Code workspaces:
   "mcpServers": {
     "contextos": {
       "command": "npx",
-      "args": ["-y", "contextos-mcp@1.6.1"]
+      "args": ["-y", "contextos-mcp@0.3.0"]
     }
   }
 }
