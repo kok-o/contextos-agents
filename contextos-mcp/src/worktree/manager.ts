@@ -14,9 +14,10 @@
  */
 
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import type { WorktreeInfo } from "../core/types.js";
+import type { WorktreeInfo, WorktreeSessionMarker } from "../core/types.js";
 import { isPathAllowed } from "../security/file-policy.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
 import { isBlockedPath } from "../security/secret-filter.js";
@@ -33,18 +34,19 @@ function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: str
 	});
 }
 
-/** Simple async mutex — only one holder at a time. */
+/** Simple async mutex for serializing worktree creation. */
 class Mutex {
 	private locked = false;
-	private waiters: Array<() => void> = [];
+	private waiters: (() => void)[] = [];
 
 	async acquire(): Promise<void> {
 		if (!this.locked) {
 			this.locked = true;
 			return;
 		}
-		await new Promise<void>((resolve) => this.waiters.push(resolve));
-		this.locked = true;
+		return new Promise<void>((resolve) => {
+			this.waiters.push(resolve);
+		});
 	}
 
 	release(): void {
@@ -57,16 +59,63 @@ class Mutex {
 const WORKTREE_CREATE_RETRIES = 3;
 const WORKTREE_RETRY_DELAY_MS = 500;
 
+export function createRepositoryFingerprint(repoRoot: string): string {
+	const canonical = path.resolve(repoRoot).toLowerCase();
+	return createHash("sha256").update(canonical).digest("hex").slice(0, 16);
+}
+
 export class WorktreeManager {
 	private repoRoot: string;
 	private baseDir: string;
+	private sessionId: string;
+	private repoFingerprint: string;
 	private worktrees: Map<string, WorktreeInfo> = new Map();
 	private createMutex = new Mutex();
 
-	constructor(repoRoot: string, baseDir: string = ".swarm-worktrees") {
+	constructor(repoRoot: string, baseDir: string = ".swarm-worktrees", sessionId?: string) {
 		this.repoRoot = assertWithinRepository(repoRoot, repoRoot);
 		const targetBase = path.isAbsolute(baseDir) ? baseDir : path.join(this.repoRoot, baseDir);
 		this.baseDir = assertWithinRepository(targetBase, this.repoRoot);
+		this.sessionId = sessionId || `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+		this.repoFingerprint = createRepositoryFingerprint(this.repoRoot);
+	}
+
+	getSessionId(): string {
+		return this.sessionId;
+	}
+
+	getRepositoryFingerprint(): string {
+		return this.repoFingerprint;
+	}
+
+	isContextosWorktree(wtPath: string): boolean {
+		const sessionMarkerPath = path.join(wtPath, ".contextos-session");
+		const ownerMarkerPath = path.join(wtPath, ".contextos-owner");
+
+		if (existsSync(sessionMarkerPath)) {
+			try {
+				const raw = readFileSync(sessionMarkerPath, "utf-8");
+				const marker: WorktreeSessionMarker = JSON.parse(raw);
+				return (
+					marker.schemaVersion === 1 &&
+					marker.repositoryFingerprint === this.repoFingerprint
+				);
+			} catch {
+				return false;
+			}
+		}
+
+		if (existsSync(ownerMarkerPath)) {
+			try {
+				const raw = readFileSync(ownerMarkerPath, "utf-8");
+				const owner = JSON.parse(raw);
+				return typeof owner.threadId === "string";
+			} catch {
+				return false;
+			}
+		}
+
+		return false;
 	}
 
 	/** Ensure we're in a git repo and the base directory exists. */
@@ -151,6 +200,15 @@ export class WorktreeManager {
 
 				// Write ownership marker to distinguish ContextOS worktrees from user directories
 				try {
+					const sessionMarker: WorktreeSessionMarker = {
+						schemaVersion: 1,
+						sessionId: this.sessionId,
+						repositoryFingerprint: this.repoFingerprint,
+						worktreePath: wtPath,
+						branchName: branch,
+						createdAt: Date.now(),
+					};
+					writeFileSync(path.join(wtPath, ".contextos-session"), JSON.stringify(sessionMarker, null, 2));
 					writeFileSync(
 						path.join(wtPath, ".contextos-owner"),
 						JSON.stringify(
@@ -198,7 +256,7 @@ export class WorktreeManager {
 		try {
 			await git(["add", "-A"], info.path);
 			try {
-				await git(["reset", "--", ".contextos-owner"], info.path);
+				await git(["reset", "--", ".contextos-owner", ".contextos-session"], info.path);
 			} catch {
 				/* non-fatal */
 			}
@@ -206,7 +264,10 @@ export class WorktreeManager {
 			// Might be empty
 		}
 
-		const { stdout: fullDiff } = await git(["diff", "--cached", "--", ":(exclude).contextos-owner"], info.path);
+		const { stdout: fullDiff } = await git(
+			["diff", "--cached", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+			info.path,
+		);
 		return fullDiff || "(no changes)";
 	}
 
@@ -219,7 +280,7 @@ export class WorktreeManager {
 		try {
 			await git(["add", "-A"], info.path);
 			try {
-				await git(["reset", "--", ".contextos-owner"], info.path);
+				await git(["reset", "--", ".contextos-owner", ".contextos-session"], info.path);
 			} catch {
 				/* non-fatal */
 			}
@@ -227,7 +288,10 @@ export class WorktreeManager {
 			/* empty */
 		}
 
-		const { stdout } = await git(["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner"], info.path);
+		const { stdout } = await git(
+			["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+			info.path,
+		);
 		return stdout.trim() || "(no changes)";
 	}
 
@@ -240,7 +304,7 @@ export class WorktreeManager {
 		try {
 			await git(["add", "-A"], info.path);
 			try {
-				await git(["reset", "--", ".contextos-owner"], info.path);
+				await git(["reset", "--", ".contextos-owner", ".contextos-session"], info.path);
 			} catch {
 				/* non-fatal */
 			}
@@ -248,12 +312,15 @@ export class WorktreeManager {
 			/* empty */
 		}
 
-		const { stdout } = await git(["diff", "--cached", "--name-only", "--", ":(exclude).contextos-owner"], info.path);
+		const { stdout } = await git(
+			["diff", "--cached", "--name-only", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+			info.path,
+		);
 		return stdout
 			.trim()
 			.split("\n")
 			.filter(Boolean)
-			.filter((f) => f !== ".contextos-owner");
+			.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session");
 	}
 
 	/** Commit all changes in a worktree. */
@@ -278,8 +345,8 @@ export class WorktreeManager {
 				const cleanPath = rawPathPart.includes("->") ? rawPathPart.split("->")[1].trim() : rawPathPart;
 				const unquoted = cleanPath.replace(/^"(.*)"$/, "$1");
 
-				if (unquoted === ".contextos-owner") {
-					continue; // Do not commit internal ownership marker
+				if (unquoted === ".contextos-owner" || unquoted === ".contextos-session") {
+					continue; // Do not commit internal ownership markers
 				}
 				if (isBlockedPath(unquoted)) {
 					process.stderr.write(`[worktree-manager] Blocked staging of sensitive path: ${unquoted}\n`);
@@ -315,6 +382,12 @@ export class WorktreeManager {
 		const info = this.worktrees.get(threadId);
 		if (!info) return;
 		assertWithinRepository(info.path, this.repoRoot);
+
+		if (existsSync(info.path) && existsSync(path.join(info.path, ".contextos-session"))) {
+			if (!this.isContextosWorktree(info.path)) {
+				throw new Error(`Refusing to destroy worktree "${info.path}": invalid or mismatched ownership marker`);
+			}
+		}
 
 		try {
 			await git(["worktree", "remove", "--force", info.path], this.repoRoot);
