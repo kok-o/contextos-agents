@@ -54,6 +54,8 @@ Options:
   --add-skill <ref>   Install a community plugin skill after setup
 
 Commands:
+  update              Safely update skills without overwriting custom changes
+  uninstall           Safely uninstall ContextOS files (preserves user custom skills)
   doctor              Run full project diagnostic health check
   audit               Validate local skills (alias for validate)
   validate            Validate local skills, frontmatter, and sync
@@ -115,6 +117,16 @@ if (mainCommand && PROXY_COMMANDS.includes(mainCommand) && hasLocalCtx) {
 }
 
 // Fallbacks when running outside an initialized .agents/ directory
+if (mainCommand === 'update') {
+  const { runUpdate } = require('./commands/update.js');
+  runUpdate(process.cwd(), {
+    dryRun: flags.dryRun,
+    skipCompile: flags.skipCompile,
+    profile: flags.profile,
+  });
+  process.exit(0);
+}
+
 if (mainCommand === 'doctor') {
   const doctorModule = require('../.agents/doctor.js');
   doctorModule.runDoctor(process.cwd());

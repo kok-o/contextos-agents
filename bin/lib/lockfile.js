@@ -190,7 +190,9 @@ function migrateExistingInstallation(projectDir, sourceAgentsDir, options = {}) 
   const lockData = createLockfileData(options);
 
   if (!fs.existsSync(targetAgentsDir)) {
-    saveLockfile(projectDir, lockData);
+    if (!options.inMemory && !options.dryRun) {
+      saveLockfile(projectDir, lockData);
+    }
     return lockData;
   }
 
@@ -227,7 +229,9 @@ function migrateExistingInstallation(projectDir, sourceAgentsDir, options = {}) 
   }
 
   walk(targetAgentsDir);
-  saveLockfile(projectDir, lockData);
+  if (!options.inMemory && !options.dryRun) {
+    saveLockfile(projectDir, lockData);
+  }
   return lockData;
 }
 
