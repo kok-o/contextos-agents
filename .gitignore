@@ -24,7 +24,8 @@ yarn-error.log*
 
 
 # Plugin cache & local installs
-.agents/plugins/
+.agents/plugins/*
+!.agents/plugins/contextos/
 .agents/plugins.json
 
 website/

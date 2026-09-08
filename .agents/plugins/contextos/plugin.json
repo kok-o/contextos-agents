@@ -1,0 +1,19 @@
+{
+  "name": "contextos",
+  "version": "1.6.1",
+  "description": "Deterministic AI Project Operating System context compiler, MCP runtime, and high-precision engineering skills for Antigravity.",
+  "author": {
+    "name": "ContextOS Team",
+    "url": "https://github.com/kok-o/contextos-agents"
+  },
+  "repository": "https://github.com/kok-o/contextos-agents",
+  "license": "MIT",
+  "keywords": [
+    "contextos",
+    "antigravity",
+    "agent-skills",
+    "orchestration",
+    "gemini",
+    "engineering-workflow"
+  ]
+}

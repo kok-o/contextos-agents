@@ -1,0 +1,25 @@
+{
+  "contextos-session-guard": {
+    "enabled": true,
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node .agents/ctx.js doctor"
+      }
+    ]
+  },
+  "contextos-integrity-check": {
+    "enabled": true,
+    "PostToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/ctx.js validate"
+          }
+        ]
+      }
+    ]
+  }
+}

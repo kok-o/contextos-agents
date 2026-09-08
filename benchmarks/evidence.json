@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-09-08T19:23:32.113Z",
+  "benchmark": {
+    "name": "ContextOS Benchmark Suite",
+    "model": "gemini-2.5-flash",
+    "totalTasks": 20,
+    "pairedTasks": 20
+  },
+  "metrics": {
+    "withoutSkills": {
+      "passRate": 0.45,
+      "readyRate": 0.5,
+      "averageScore": 62.5,
+      "averageTurns": 4.25
+    },
+    "withSkills": {
+      "passRate": 0.95,
+      "readyRate": 1,
+      "averageScore": 98.4,
+      "averageTurns": 2.1
+    },
+    "delta": {
+      "passRateImprovement": 0.5,
+      "meanSkillScoreDelta": 35.9,
+      "turnReductionRatio": 0.506
+    }
+  },
+  "provenance": {
+    "repository": "kok-o/contextos-agents",
+    "sha256": "e94d2395f4935adf085a0b76c48ba69ee3951cb7b111c9525c9169b0a7c3c381"
+  }
+}

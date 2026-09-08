@@ -704,11 +704,21 @@ function collectAllSkillDirs(targetRoot) {
     }
   }
 
-  // Plugin skills
+  // Plugin skills (supports both standalone skill dirs and plugin bundles with skills/)
   if (fs.existsSync(pluginsDir)) {
     for (const name of fs.readdirSync(pluginsDir)) {
       const d = path.join(pluginsDir, name);
-      if (fs.statSync(d).isDirectory()) dirs.push(d);
+      if (!fs.statSync(d).isDirectory()) continue;
+
+      const nestedSkills = path.join(d, 'skills');
+      if (fs.existsSync(nestedSkills) && fs.statSync(nestedSkills).isDirectory()) {
+        for (const sub of fs.readdirSync(nestedSkills)) {
+          const subDir = path.join(nestedSkills, sub);
+          if (fs.statSync(subDir).isDirectory()) dirs.push(subDir);
+        }
+      } else if (fs.existsSync(path.join(d, 'SKILL.md')) || fs.existsSync(path.join(d, 'skill.yaml'))) {
+        dirs.push(d);
+      }
     }
   }
 

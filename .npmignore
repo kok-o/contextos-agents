@@ -25,3 +25,9 @@ CONVENTIONS.md
 # Plugin lock file (per-project, not distributed)
 .agents/plugins.json
 .agents/plugins/
+
+# Decoupled packages & development artifacts
+.agents/mcp/
+contextos-mcp/
+website/
+benchmarks/

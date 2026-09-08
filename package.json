@@ -25,8 +25,7 @@
     ".agents/adapters",
     ".agents/core",
     ".agents/generated",
-    ".agents/mcp",
-    "benchmarks/gemini-issues.js"
+    ".agents/plugins/contextos"
   ],
   "scripts": {
     "build": "node .agents/ctx.js export all",
