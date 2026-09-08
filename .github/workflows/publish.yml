@@ -17,6 +17,7 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write   # needed to update package.json version in the release commit
