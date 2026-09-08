@@ -118,12 +118,16 @@ const claudeCodeProvider: AgentProvider = {
 	async run(options: AgentRunOptions): Promise<AgentResult> {
 		const { task, workDir, model, files, signal } = options;
 		const startTime = Date.now();
+		// SECURITY NOTICE & TRUST BOUNDARY:
 		// --dangerously-skip-permissions is REQUIRED for non-interactive/headless Claude Code execution.
-		// This flag is safe in our context because:
-		//   1. Agent runs strictly in an isolated git worktree (not the user's working tree)
-		//   2. Worktree paths are validated against path traversal
-		//   3. Files are security-checked before commit (isBlockedPath + isPathAllowed)
-		//   4. Environment is sanitized (no sensitive credentials leaked to child process)
+		// Trust model & isolation boundaries:
+		//   1. Git Worktree Isolation: Agent runs in a dedicated git worktree branch, preventing concurrent
+		//      edits or corruption in the user's primary working directory.
+		//   2. Pre-Commit Filtering: Changed files are filtered before commit (isBlockedPath, isPathAllowed).
+		//   3. Environment Sanitization: Child process environment is stripped of sensitive tokens via buildAgentEnv.
+		//   4. OS Sandbox Notice: The child process runs with host OS user privileges and is NOT sandboxed
+		//      at the kernel/syscall level. For untrusted code execution or multi-tenant hosting, ContextOS
+		//      must be wrapped in an OS-level container (Docker, Podman) or OS sandbox (e.g. bubblewrap).
 		const args = ["-p", "--output-format", "json", "--dangerously-skip-permissions", "--no-session-persistence"];
 
 		if (model) {

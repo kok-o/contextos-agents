@@ -21,11 +21,11 @@ The ContextOS MCP execution runtime applies strict defense-in-depth isolation ac
 - **Isolated Git Worktrees (`.swarm-worktrees/`):** Every subagent operates in a private git worktree branch (`swarm/<threadId>`). The developer's primary workspace and active staging area cannot be altered or reset during subagent execution.
 - **Headless CLI Execution & `--dangerously-skip-permissions`:**
   - Non-interactive agents (like Claude Code) execute with `--dangerously-skip-permissions` to allow headless autonomous editing without interactive user prompts.
-  - This is safe within ContextOS because:
-    1. Subagents are confined to their specific worktree directory;
-    2. Path validation (`isPathAllowed`, `path.relative`) blocks path traversal outside the worktree;
-    3. Sensitive paths (`.env`, SSH keys, `.pem`, `.git`) are strictly blocked before staging (`isBlockedPath`);
-    4. Child process environments are sanitized via strict allowlists (`getSanitizedEnv`) to prevent credential leakage.
+  - **Trust Boundary & Isolation Details:**
+    1. **Workspace & Branch Protection:** Subagents operate in dedicated Git worktree branches (`swarm/<threadId>`), preventing race conditions and keeping the user's primary working directory clean;
+    2. **Pre-Commit File Filtering:** Changed files are filtered before git staging (`isBlockedPath`, `isPathAllowed`), preventing commits of sensitive files (`.env`, SSH keys, `.git`);
+    3. **Environment Sanitization:** Child processes receive an allowlisted environment (`getSanitizedEnv`) to prevent accidental token propagation;
+    4. **OS-Level Isolation Notice:** Subagent processes run under host user privileges. Git worktrees and pre-commit checks provide version control safety, not kernel-level OS sandboxing. For multi-tenant or untrusted agent workflows, ContextOS must be paired with an OS-level container (Docker/Podman) or OS sandbox (e.g. bubblewrap / seatbelt).
 - **Python Sandbox Restrictions:** The embedded Python REPL (`runtime.py`) enforces strict AST validation, forbids dangerous dunder attributes (`__subclasses__`, `__globals__`, `__reduce__`), restricts module imports to safe standard libraries (`json`, `math`, `re`, `datetime`, `random`, `collections`), and blocks dynamic class creation via 3-argument `type()`.
 - **Egress Secret Redaction:** All output channels (episodic memory, compression diffs, MCP error messages, direct LLM prompts) pass through `SecretFilter` (`redactSecrets`) to redact API keys and tokens.
 - **Safe Verification & Non-Destructive Merges:**

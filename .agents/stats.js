@@ -64,8 +64,18 @@ function calculateContextStats(projectDir = process.cwd()) {
     }
   }
 
-  // Resolved context: 2 foundational skills + average 2 domain skills (e.g. react + ui-ux-pro)
-  const typicalResolvedSkills = ['engineering-workflow', 'ponytail-mindset', 'react', 'ui-ux-pro'];
+  // Resolved context: dynamically resolved skills for this project's stack
+  let typicalResolvedSkills = ['engineering-workflow', 'ponytail-mindset'];
+  try {
+    const resolver = require('./resolver.js');
+    const resolved = resolver.resolveSkills({ prompt: 'Implement standard feature', projectDir });
+    if (resolved && Array.isArray(resolved.skills)) {
+      typicalResolvedSkills = resolved.skills;
+    }
+  } catch (_) {
+    typicalResolvedSkills = ['engineering-workflow', 'ponytail-mindset', 'react', 'ui-ux-pro'];
+  }
+
   let resolvedChars = agentsMdChars;
   let resolvedSkillCount = 0;
   for (const s of typicalResolvedSkills) {
@@ -86,6 +96,7 @@ function calculateContextStats(projectDir = process.cwd()) {
     totalSkillCount,
     profiledSkillCount,
     resolvedSkillCount,
+    resolvedSkillList: typicalResolvedSkills,
     profileName,
     full: { chars: fullChars, tokens: fullTokens },
     profile: { chars: profileChars, tokens: profileTokens, savings: profileSavings },
@@ -96,28 +107,30 @@ function calculateContextStats(projectDir = process.cwd()) {
 function runStats(projectDir = process.cwd()) {
   const stats = calculateContextStats(projectDir);
 
-  console.log('\nContextOS — Context Savings Report\n');
+  console.log('\nContextOS — Context Savings Report & Payload Reduction\n');
   console.log('┌──────────────────────────────────────┬─────────────┬──────────┐');
-  console.log('│ Mode                                 │   Tokens    │  Savings │');
+  console.log('│ Context Mode                         │ Est. Tokens │  Savings │');
   console.log('├──────────────────────────────────────┼─────────────┼──────────┤');
 
-  const fullLabel = `Full (${stats.totalSkillCount} skills)`;
+  const fullLabel = `Full (${stats.totalSkillCount} skills catalog)`;
   const fullTok = stats.full.tokens.toLocaleString().padStart(9);
-  console.log(`│ ${fullLabel.padEnd(36)} │ ${fullTok}   │     —    │`);
+  console.log(`│ ${fullLabel.slice(0, 36).padEnd(36)} │ ${fullTok}   │ baseline │`);
 
   const profLabel = `Profile: ${stats.profileName} (${stats.profiledSkillCount} skills)`;
   const profTok = stats.profile.tokens.toLocaleString().padStart(9);
   const profSav = `${stats.profile.savings}%`.padStart(7);
   console.log(`│ ${profLabel.slice(0, 36).padEnd(36)} │ ${profTok}   │  ${profSav} │`);
 
-  const resLabel = `Resolved: typical task (${stats.resolvedSkillCount} skills)`;
+  const resLabel = `Dynamic: resolved task (${stats.resolvedSkillCount} skills)`;
   const resTok = stats.resolved.tokens.toLocaleString().padStart(9);
   const resSav = `${stats.resolved.savings}%`.padStart(7);
   console.log(`│ ${resLabel.slice(0, 36).padEnd(36)} │ ${resTok}   │  ${resSav} │`);
 
   console.log('└──────────────────────────────────────┴─────────────┴──────────┘');
-  console.log('\nToken estimation: ~4 chars/token (GPT-4 / Claude / Gemini approximation)');
-  console.log('Dynamic skill resolution prevents prompt bloat and cuts LLM API costs.\n');
+  console.log(`Resolved skills for project: ${stats.resolvedSkillList.join(', ')}`);
+  console.log('\nNote: Character-based token estimation (~4 chars/token heuristic).');
+  console.log('Measures static rule payload reduction against an uncurated full-catalog dump.');
+  console.log('Real workflow cost savings depend on prompt turns, model tokenizer, and task complexity.\n');
 
   return stats;
 }

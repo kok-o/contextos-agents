@@ -248,8 +248,11 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
         return crypto.timingSafeEqual(h1, h2);
       }
       export class RateLimiter {
-        private maxAttempts: number = 5;
-        public isBlocked(key: string): boolean { return false; }
+        attempts: any = {};
+        isBlocked(key: string): boolean {
+          this.attempts[key] = (this.attempts[key] || 0) + 1;
+          return this.attempts[key] > 5;
+        }
       }
       export function errorHandler(err, req, res) {
         res.status(500).json({ error: 'Internal Server Error' });
@@ -266,6 +269,17 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
     const secureRun = await runRuntimeSuite(authSuite, secureCode);
     assert.ok(secureRun.passRate >= 80, 'Secure code must achieve high pass rate on runtime assertions');
     assert.equal(secureRun.compiled, true);
+
+    // Verify that a dummy limiter that never blocks fails the rate-limiting-lockout test
+    const dummyLimiterCode = `
+      export class RateLimiter {
+        isBlocked(key: string): boolean { return false; }
+      }
+    `;
+    const dummyRun = await runRuntimeSuite(authSuite, dummyLimiterCode);
+    const rateLimitTest = dummyRun.tests.find(t => t.id === 'rate-limiting-lockout');
+    assert.ok(rateLimitTest, 'rate-limiting-lockout test should exist');
+    assert.equal(rateLimitTest.passed, false, 'Dummy rate limiter that never blocks MUST fail test');
   });
 
   test('runRuntimeSuite executes DDD order invariants and catches invariant violations', async () => {

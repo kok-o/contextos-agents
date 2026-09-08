@@ -162,5 +162,65 @@ describe('resolver.js — Dynamic Skill Resolver & Progressive Index', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  test('resolveSkills enforces Intent Precedence: security is not evicted by Next.js stack noise', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'resolver-intent-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'package.json'),
+        JSON.stringify({
+          dependencies: {
+            next: '^14.0.0',
+            react: '^18.0.0',
+            'react-dom': '^18.0.0',
+            tailwindcss: '^3.0.0',
+            typescript: '^5.0.0',
+          },
+        })
+      );
+      fs.writeFileSync(path.join(tmpDir, 'tsconfig.json'), '{}');
+      fs.writeFileSync(path.join(tmpDir, 'tailwind.config.js'), 'module.exports = {};');
+
+      const res = resolver.resolveSkills({
+        prompt: 'Исправь авторизацию и проверку JWT токена',
+        projectDir: tmpDir,
+      });
+
+      // Crucial verification: security MUST be preserved and not evicted by react/nextjs/typescript/ui-ux-pro
+      assert.ok(res.skills.includes('security'), 'security must have immunity against eviction by project stack signals');
+      assert.ok(res.skills.includes('ponytail-mindset'), 'foundational skills must be present');
+      assert.ok(res.skills.includes('engineering-workflow'), 'foundational skills must be present');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  test('resolveSkills suppresses ambient UI noise on pure infrastructure tasks (Docker)', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'resolver-infra-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'package.json'),
+        JSON.stringify({
+          dependencies: {
+            next: '^14.0.0',
+            react: '^18.0.0',
+            tailwindcss: '^3.0.0',
+          },
+        })
+      );
+      fs.writeFileSync(path.join(tmpDir, 'tailwind.config.js'), 'module.exports = {};');
+
+      const res = resolver.resolveSkills({
+        prompt: 'Создай Dockerfile для мультистейдж сборки приложения',
+        projectDir: tmpDir,
+      });
+
+      assert.ok(res.skills.includes('docker'), 'docker must be activated');
+      assert.ok(!res.skills.includes('ui-ux-pro'), 'ui-ux-pro must be suppressed on pure infrastructure task');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
+
 
