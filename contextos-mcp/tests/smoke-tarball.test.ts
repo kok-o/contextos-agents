@@ -111,9 +111,7 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 			const timeout = setTimeout(() => {
 				child.kill("SIGKILL");
 				reject(
-					new Error(
-						`Timeout waiting for MCP initialize response.\nStdout: ${stdoutBuffer}\nStderr: ${stderrBuffer}`,
-					),
+					new Error(`Timeout waiting for MCP initialize response.\nStdout: ${stdoutBuffer}\nStderr: ${stderrBuffer}`),
 				);
 			}, 15_000);
 

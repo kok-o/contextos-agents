@@ -1,7 +1,7 @@
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { execFileSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ActionDispatcher } from "../../src/core/action-dispatcher.js";
 import { cleanupSession, getSession } from "../../src/mcp/session.js";
@@ -55,8 +55,6 @@ describe("SwarmSession ActionDispatcher wiring (Task 0.2c)", () => {
 	it("rejects non-declarative action payloads", async () => {
 		const session = await getSession(testDir);
 
-		await expect(
-			session.dispatcher!.dispatch('eval("process.exit(1)")'),
-		).rejects.toThrow("Invalid action payload");
+		await expect(session.dispatcher!.dispatch('eval("process.exit(1)")')).rejects.toThrow("Invalid action payload");
 	});
 });

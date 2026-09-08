@@ -16,6 +16,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { assertWithinRepository } from "../security/repository-boundary.js";
+import { redactSecrets } from "../security/secret-filter.js";
 import {
 	cancelThreads,
 	cleanupSession,
@@ -25,8 +27,6 @@ import {
 	mergeThreads,
 	spawnThread,
 } from "./session.js";
-import { assertWithinRepository } from "../security/repository-boundary.js";
-import { redactSecrets } from "../security/secret-filter.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

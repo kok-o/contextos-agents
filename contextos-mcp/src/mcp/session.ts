@@ -19,7 +19,6 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { SwarmConfig } from "../config.js";
 import { loadConfig } from "../config.js";
-import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
 import { ActionDispatcher } from "../core/action-dispatcher.js";
 import type {
 	FinishAction,
@@ -29,8 +28,9 @@ import type {
 	SpawnAction,
 	WaitAction,
 } from "../core/action-schema.js";
-import { ThreadManager } from "../threads/manager.js";
+import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
+import { ThreadManager } from "../threads/manager.js";
 import { mergeAllThreads, mergeThreadBranch } from "../worktree/merge.js";
 import {
 	type AsyncTaskRecord,

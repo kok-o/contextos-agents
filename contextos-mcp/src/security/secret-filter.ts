@@ -20,28 +20,10 @@ const BLOCKED_EXACT_FILENAMES = new Set([
 ]);
 
 /** File extensions that should never be sent. */
-const BLOCKED_EXTENSIONS = new Set([
-	".pem",
-	".key",
-	".p12",
-	".pfx",
-	".jks",
-	".keystore",
-	".pkcs12",
-	".crt",
-	".der",
-]);
+const BLOCKED_EXTENSIONS = new Set([".pem", ".key", ".p12", ".pfx", ".jks", ".keystore", ".pkcs12", ".crt", ".der"]);
 
 /** Directory names that should be blocked entirely. */
-const BLOCKED_DIRS = new Set([
-	".ssh",
-	".gnupg",
-	".aws",
-	".azure",
-	".gcp",
-	".kube",
-	".credentials",
-]);
+const BLOCKED_DIRS = new Set([".ssh", ".gnupg", ".aws", ".azure", ".gcp", ".kube", ".credentials"]);
 
 export interface SecretPatternDef {
 	name: string;
@@ -88,7 +70,8 @@ export const SECRET_PATTERN_DEFS: SecretPatternDef[] = [
 	},
 	{
 		name: "PRIVATE_KEY",
-		pattern: /-----BEGIN\s+(?:[A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----[\s\S]*?-----END\s+(?:[A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----|-----BEGIN\s+(?:[A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----/,
+		pattern:
+			/-----BEGIN\s+(?:[A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----[\s\S]*?-----END\s+(?:[A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----|-----BEGIN\s+(?:[A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----/,
 	},
 	{
 		name: "CERTIFICATE",
@@ -100,7 +83,8 @@ export const SECRET_PATTERN_DEFS: SecretPatternDef[] = [
 	},
 	{
 		name: "GENERIC_SECRET",
-		pattern: /(?:API[_-]?KEY|SECRET[_-]?KEY|ACCESS[_-]?KEY|PRIVATE[_-]?KEY|AUTH[_-]?TOKEN|PASSWORD)\s*[=:]\s*['"]?[A-Za-z0-9+/=_-]{16,}['"]?/i,
+		pattern:
+			/(?:API[_-]?KEY|SECRET[_-]?KEY|ACCESS[_-]?KEY|PRIVATE[_-]?KEY|AUTH[_-]?TOKEN|PASSWORD)\s*[=:]\s*['"]?[A-Za-z0-9+/=_-]{16,}['"]?/i,
 	},
 ];
 
@@ -118,7 +102,10 @@ export function isBlockedPath(filePath: string): boolean {
 	const normalized = path.normalize(filePath).replace(/\\/g, "/");
 	const basename = path.basename(normalized).toLowerCase();
 	const ext = path.extname(normalized).toLowerCase();
-	const parts = normalized.split("/").map((p) => p.toLowerCase()).filter(Boolean);
+	const parts = normalized
+		.split("/")
+		.map((p) => p.toLowerCase())
+		.filter(Boolean);
 
 	// Block all .env variants (.env, .env.local, .env.staging, foo.env)
 	if (basename === ".env" || basename.startsWith(".env.") || basename.endsWith(".env")) {

@@ -276,7 +276,9 @@ async function main(): Promise<void> {
 	// Start REPL: PythonRepl if explicitly specified; NodeVmRepl is deprecated/disabled
 	const usePython = process.argv.includes("--python-repl") || process.argv.includes("--repl=python");
 	if (!usePython) {
-		console.error("Error: In-process JavaScript execution has been permanently deprecated for security. Pass --python-repl for Python text processing.");
+		console.error(
+			"Error: In-process JavaScript execution has been permanently deprecated for security. Pass --python-repl for Python text processing.",
+		);
 		process.exit(1);
 	}
 	const repl = new PythonRepl();

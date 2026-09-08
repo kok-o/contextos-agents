@@ -13,13 +13,13 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, lstatSync, realpathSync, statSync } from "node:fs";
+import { existsSync, lstatSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
-import { redactSecrets } from "../../security/secret-filter.js";
 import { assertWithinRepository } from "../../security/repository-boundary.js";
+import { redactSecrets } from "../../security/secret-filter.js";
 import { resolveExecutablePath } from "../../utils/command-exists.js";
 import { mergeThreadBranch } from "../../worktree/merge.js";
 import {

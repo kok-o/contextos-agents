@@ -47,7 +47,10 @@ export async function mergeThreadBranch(repoRoot: string, branchName: string, th
 	}
 	assertWithinRepository(path.resolve(canonicalRepoRoot, ".git", "refs", "heads", branchName), canonicalRepoRoot);
 	try {
-		const { stdout } = await git(["merge", "--no-ff", "-m", `swarm: merge thread ${threadId}`, branchName], canonicalRepoRoot);
+		const { stdout } = await git(
+			["merge", "--no-ff", "-m", `swarm: merge thread ${threadId}`, branchName],
+			canonicalRepoRoot,
+		);
 
 		return {
 			success: true,

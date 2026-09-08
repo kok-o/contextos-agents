@@ -231,11 +231,7 @@ function scanDirectory(dir: string, maxFiles: number = 200, maxTotalSize: number
 			if (files.length >= maxFiles || totalSize >= maxTotalSize) return;
 
 			if (entry.isDirectory()) {
-				if (
-					isBlockedPath(entry.name) ||
-					SKIP_DIRS.has(entry.name) ||
-					entry.name.startsWith(".")
-				) {
+				if (isBlockedPath(entry.name) || SKIP_DIRS.has(entry.name) || entry.name.startsWith(".")) {
 					continue;
 				}
 				const nextDir = path.join(currentDir, entry.name);
@@ -615,9 +611,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			async wait(action) {
 				const threads = threadManager.getThreads();
 				return {
-					threads: threads
-						.filter((t) => action.threadIds.includes(t.id))
-						.map((t) => ({ id: t.id, status: t.status })),
+					threads: threads.filter((t) => action.threadIds.includes(t.id)).map((t) => ({ id: t.id, status: t.status })),
 				};
 			},
 			async inspectDiff(action) {
@@ -631,7 +625,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			async review(action) {
 				return { threadId: action.threadId, status: "reviewed" };
 			},
-			async merge(action) {
+			async merge(_action) {
 				return mergeHandler();
 			},
 			async finish(action) {

@@ -1,10 +1,6 @@
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-	containsSecrets,
-	isBlockedPath,
-	redactSecrets,
-} from "../../src/security/secret-filter.js";
+import { containsSecrets, isBlockedPath, redactSecrets } from "../../src/security/secret-filter.js";
 
 describe("Task 0.6: Universal Secret Redaction & Sensitive-Path Denylist", () => {
 	describe("Sensitive-Path Denylist (Default-Deny)", () => {
@@ -95,7 +91,8 @@ describe("Task 0.6: Universal Secret Redaction & Sensitive-Path Denylist", () =>
 		});
 
 		it("redacts JWT tokens with [REDACTED:JWT_TOKEN]", () => {
-			const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+			const jwt =
+				"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 			const redacted = redactSecrets(`jwt_token = "${jwt}"`);
 			expect(redacted).toContain("[REDACTED:JWT_TOKEN]");
 			expect(redacted).not.toContain("SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");

@@ -63,7 +63,12 @@ describe("Task 0.5: Opt-in Repository Hooks Security", () => {
 		fs.writeFileSync(
 			path.join(agentsDir, "hooks.json"),
 			JSON.stringify({
-				post_merge: [{ command: `node -e 'require("fs").writeFileSync("${markerFile.replace(/\\/g, "/")}", "pwned")'`, on_failure: "warn" }],
+				post_merge: [
+					{
+						command: `node -e 'require("fs").writeFileSync("${markerFile.replace(/\\/g, "/")}", "pwned")'`,
+						on_failure: "warn",
+					},
+				],
 			}),
 		);
 

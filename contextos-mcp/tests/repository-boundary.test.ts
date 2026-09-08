@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { loadPersistedState, scanOrphanWorktrees } from "../src/mcp/state.js";
 import {
 	assertWithinRepository,
 	isWithinRepository,
@@ -9,7 +10,6 @@ import {
 } from "../src/security/repository-boundary.js";
 import { WorktreeManager } from "../src/worktree/manager.js";
 import { mergeThreadBranch } from "../src/worktree/merge.js";
-import { loadPersistedState, scanOrphanWorktrees } from "../src/mcp/state.js";
 
 describe("RepositoryBoundary (Task 0.3a)", () => {
 	let repoDir: string;
@@ -147,12 +147,12 @@ describe("Universal RepositoryBoundary Wiring (Task 0.3b)", () => {
 	});
 
 	it("mergeThreadBranch blocks branch traversal and flag injection", async () => {
-		await expect(
-			mergeThreadBranch(repoDir, "../../../outside/branch", "test-thread"),
-		).rejects.toThrow(SecurityBoundaryException);
-		await expect(
-			mergeThreadBranch(repoDir, "--upload-pack=evil", "test-thread"),
-		).rejects.toThrow(SecurityBoundaryException);
+		await expect(mergeThreadBranch(repoDir, "../../../outside/branch", "test-thread")).rejects.toThrow(
+			SecurityBoundaryException,
+		);
+		await expect(mergeThreadBranch(repoDir, "--upload-pack=evil", "test-thread")).rejects.toThrow(
+			SecurityBoundaryException,
+		);
 	});
 
 	it("state operations block escaping worktreeBaseDir", () => {
@@ -160,8 +160,6 @@ describe("Universal RepositoryBoundary Wiring (Task 0.3b)", () => {
 	});
 
 	it("scanOrphanWorktrees blocks escaping worktreeBaseDir", async () => {
-		await expect(scanOrphanWorktrees(repoDir, "../outside/worktrees")).rejects.toThrow(
-			SecurityBoundaryException,
-		);
+		await expect(scanOrphanWorktrees(repoDir, "../outside/worktrees")).rejects.toThrow(SecurityBoundaryException);
 	});
 });

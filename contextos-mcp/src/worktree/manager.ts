@@ -96,10 +96,7 @@ export class WorktreeManager {
 			try {
 				const raw = readFileSync(sessionMarkerPath, "utf-8");
 				const marker: WorktreeSessionMarker = JSON.parse(raw);
-				return (
-					marker.schemaVersion === 1 &&
-					marker.repositoryFingerprint === this.repoFingerprint
-				);
+				return marker.schemaVersion === 1 && marker.repositoryFingerprint === this.repoFingerprint;
 			} catch {
 				return false;
 			}

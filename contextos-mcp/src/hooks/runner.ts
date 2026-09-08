@@ -50,14 +50,9 @@ export interface RunHooksOptions {
  * If hook files exist and allow_hooks is false (default), execution is blocked
  * and a structured warning is emitted.
  */
-export function loadHooks(
-	projectDir: string,
-	allowHooksOrOptions: boolean | LoadHooksOptions = false,
-): HooksConfig {
+export function loadHooks(projectDir: string, allowHooksOrOptions: boolean | LoadHooksOptions = false): HooksConfig {
 	const allowHooks =
-		typeof allowHooksOrOptions === "boolean"
-			? allowHooksOrOptions
-			: Boolean(allowHooksOrOptions?.allow_hooks);
+		typeof allowHooksOrOptions === "boolean" ? allowHooksOrOptions : Boolean(allowHooksOrOptions?.allow_hooks);
 
 	const swarmHooksFile = path.join(projectDir, ".swarm", "hooks.yaml");
 	const agentsHooksFile = path.join(projectDir, ".agents", "hooks.json");
@@ -129,17 +124,8 @@ function parseHooksJson(raw: string): HooksConfig {
 
 		if (Array.isArray(target)) {
 			for (const item of target) {
-				if (
-					item &&
-					typeof item === "object" &&
-					typeof item.command === "string" &&
-					typeof item.event === "string"
-				) {
-					if (
-						item.event === "post_thread" ||
-						item.event === "post_merge" ||
-						item.event === "post_session"
-					) {
+				if (item && typeof item === "object" && typeof item.command === "string" && typeof item.event === "string") {
+					if (item.event === "post_thread" || item.event === "post_merge" || item.event === "post_session") {
 						hooks[item.event as keyof HooksConfig].push({
 							command: item.command.trim(),
 							on_failure: item.on_failure === "block" ? "block" : "warn",
@@ -205,9 +191,7 @@ export function runHooks(
 	}
 
 	const allowHooks =
-		typeof allowHooksOrOptions === "boolean"
-			? allowHooksOrOptions
-			: (allowHooksOrOptions?.allow_hooks ?? true);
+		typeof allowHooksOrOptions === "boolean" ? allowHooksOrOptions : (allowHooksOrOptions?.allow_hooks ?? true);
 
 	if (!allowHooks) {
 		console.warn(`[hooks] Hooks execution is disabled. Skipping ${label} hooks.`);

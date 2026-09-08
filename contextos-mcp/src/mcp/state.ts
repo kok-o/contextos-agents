@@ -60,7 +60,7 @@ export function isProcessAlive(pid: number): boolean {
 function getStatePath(dir: string, worktreeBaseDir?: string): string {
 	const canonicalDir = assertWithinRepository(dir, dir);
 	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
-		? (worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
 		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
 	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
 	const statePath = path.join(canonicalBaseDir, STATE_FILE_NAME);
@@ -70,7 +70,7 @@ function getStatePath(dir: string, worktreeBaseDir?: string): string {
 export function getStateLockPath(dir: string, worktreeBaseDir?: string): string {
 	const canonicalDir = assertWithinRepository(dir, dir);
 	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
-		? (worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
 		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
 	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
 	const lockPath = path.join(canonicalBaseDir, STATE_LOCK_NAME);
@@ -176,7 +176,8 @@ export function loadPersistedState(dir: string, worktreeBaseDir?: string): Persi
 		const parsed = JSON.parse(raw) as PersistedSessionState;
 		if (parsed && typeof parsed.threads === "object") {
 			// Crash/Restart recovery: if state was owned by a dead process or previous process instance
-			const isRecoveredSession = parsed.ownerPid && (parsed.ownerPid !== process.pid || !isProcessAlive(parsed.ownerPid));
+			const isRecoveredSession =
+				parsed.ownerPid && (parsed.ownerPid !== process.pid || !isProcessAlive(parsed.ownerPid));
 			if (isRecoveredSession) {
 				for (const thread of Object.values(parsed.threads)) {
 					if (thread.status === "running" || thread.phase === "agent_running") {
@@ -290,7 +291,7 @@ export function clearPersistedState(dir: string, worktreeBaseDir?: string): void
 export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: string): Promise<OrphanReport> {
 	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
 	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
-		? (worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
 		: path.join(canonicalRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
 	const baseDir = assertWithinRepository(targetBase, canonicalRoot);
 	const worktreeDirs: string[] = [];

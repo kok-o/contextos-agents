@@ -502,7 +502,7 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 				conversationHistory.push({
 					role: "user",
 					content:
-						"Error: Could not extract action payload. Respond with a valid JSON action (e.g. { \"version\": 1, \"action\": \"spawn\" | \"wait\" | \"inspect_diff\" | \"review\" | \"merge\" | \"finish\" }).",
+						'Error: Could not extract action payload. Respond with a valid JSON action (e.g. { "version": 1, "action": "spawn" | "wait" | "inspect_diff" | "review" | "merge" | "finish" }).',
 					timestamp: Date.now(),
 				});
 				continue;
@@ -519,11 +519,7 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 
 			try {
 				const actionResult = await dispatcher.dispatch(actionPayload);
-				if (
-					typeof actionPayload === "object" &&
-					actionPayload !== null &&
-					(actionPayload as any).action === "finish"
-				) {
+				if (typeof actionPayload === "object" && actionPayload !== null && (actionPayload as any).action === "finish") {
 					return {
 						answer: (actionPayload as any).summary || "",
 						iterations: iteration,
