@@ -8,12 +8,18 @@
  * src/mcp/server.ts with tsx in local development.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distServer = join(__dirname, "..", "dist", "mcp", "server.js");
+
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+	const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
+	console.log(pkg.version);
+	process.exit(0);
+}
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
 	console.log(`
@@ -24,6 +30,7 @@ Usage:
 
 Options:
   --dir <path>     Target repository directory (default: current working directory)
+  --version, -v    Show version number
   --help, -h       Show this help message
 `);
 	process.exit(0);

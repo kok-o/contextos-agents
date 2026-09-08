@@ -26,8 +26,7 @@ export type ThreadHandler = (
 export type MergeHandler = () => Promise<{ result: string; success: boolean }>;
 
 /**
- * Common execution engine interface implemented by both NodeVmRepl (native TypeScript/JavaScript)
- * and PythonRepl (legacy/optional Python subprocess).
+ * Common execution engine interface implemented by PythonRepl (legacy/optional Python subprocess).
  */
 export interface Repl {
 	readonly isAlive: boolean;

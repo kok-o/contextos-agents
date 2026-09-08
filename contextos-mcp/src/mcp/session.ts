@@ -20,8 +20,17 @@ import * as path from "node:path";
 import type { SwarmConfig } from "../config.js";
 import { loadConfig } from "../config.js";
 import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
+import { ActionDispatcher } from "../core/action-dispatcher.js";
+import type {
+	FinishAction,
+	InspectDiffAction,
+	MergeAction,
+	ReviewAction,
+	SpawnAction,
+	WaitAction,
+} from "../core/action-schema.js";
 import { ThreadManager } from "../threads/manager.js";
-import { mergeAllThreads } from "../worktree/merge.js";
+import { mergeAllThreads, mergeThreadBranch } from "../worktree/merge.js";
 import {
 	type AsyncTaskRecord,
 	clearPersistedState,
@@ -40,6 +49,7 @@ export interface SwarmSession {
 	threadManager: ThreadManager;
 	abortController: AbortController;
 	createdAt: number;
+	dispatcher?: ActionDispatcher;
 }
 
 export interface ThreadSpawnParams {
@@ -167,6 +177,7 @@ async function initSession(absDir: string): Promise<SwarmSession> {
 		abortController,
 		createdAt: Date.now(),
 	};
+	session.dispatcher = createSessionDispatcher(session);
 
 	sessions.set(absDir, session);
 	return session;
@@ -312,4 +323,99 @@ export async function cleanupAllSessions(): Promise<void> {
 	for (const dir of dirs) {
 		await cleanupSession(dir);
 	}
+}
+
+/**
+ * Creates an ActionDispatcher wired to a SwarmSession for declarative orchestration.
+ */
+export function createSessionDispatcher(session: SwarmSession): ActionDispatcher {
+	return new ActionDispatcher({
+		async spawn(action: SpawnAction) {
+			const threadId = `mcp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+			const result = await spawnThread(session, {
+				id: threadId,
+				task: action.task,
+				files: action.writeScope,
+				model: action.model,
+			});
+			return {
+				threadId,
+				success: result.success,
+				summary: result.summary,
+				filesChanged: result.filesChanged,
+				durationMs: result.durationMs,
+			};
+		},
+
+		async wait(action: WaitAction) {
+			const threads = getThreads(session);
+			const matched = threads.filter((t) => action.threadIds.includes(t.id));
+			return {
+				threads: matched.map((t) => ({
+					id: t.id,
+					status: t.status,
+					phase: t.phase,
+					success: t.result?.success,
+				})),
+			};
+		},
+
+		async inspectDiff(action: InspectDiffAction) {
+			const threads = getThreads(session);
+			const thread = threads.find((t) => t.id === action.threadId);
+			if (!thread) {
+				return { error: `Thread ${action.threadId} not found` };
+			}
+			let diff = "";
+			if (thread.worktreePath) {
+				const wm = session.threadManager.getWorktreeManager();
+				diff = await wm.getDiff(action.threadId);
+			}
+			return {
+				threadId: action.threadId,
+				diff,
+				diffStats: thread.result?.diffStats || "",
+				filesChanged: thread.result?.filesChanged || [],
+			};
+		},
+
+		async review(action: ReviewAction) {
+			const threads = getThreads(session);
+			const thread = threads.find((t) => t.id === action.threadId);
+			if (!thread) {
+				return { error: `Thread ${action.threadId} not found` };
+			}
+			return {
+				threadId: action.threadId,
+				status: thread.status,
+				reviewed: true,
+			};
+		},
+
+		async merge(action: MergeAction) {
+			const threads = getThreads(session);
+			const thread = threads.find((t) => t.id === action.threadId);
+			if (!thread) {
+				return { error: `Thread ${action.threadId} not found` };
+			}
+			if (!thread.branchName) {
+				return { error: `Thread ${action.threadId} has no branch` };
+			}
+			const result = await mergeThreadBranch(session.dir, thread.branchName, action.threadId);
+			return {
+				threadId: action.threadId,
+				merged: result.success,
+				branch: result.branch,
+				message: result.message,
+				conflicts: result.conflicts,
+			};
+		},
+
+		async finish(action: FinishAction) {
+			return {
+				finished: true,
+				summary: action.summary,
+			};
+		},
+	});
 }

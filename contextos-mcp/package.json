@@ -25,7 +25,7 @@
     "test:watch": "vitest",
     "lint": "biome check src/ tests/",
     "lint:fix": "biome check --fix src/ tests/",
-    "prepublishOnly": "npm run build:bundle"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "swarm",

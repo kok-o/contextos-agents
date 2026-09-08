@@ -17,7 +17,8 @@ import * as path from "node:path";
 
 // Dynamic imports — ensures env.js has set process.env BEFORE pi-ai loads
 await import("@mariozechner/pi-ai");
-const { PythonRepl, NodeVmRepl } = await import("./core/repl.js");
+const { PythonRepl } = await import("./core/repl.js");
+const { ActionDispatcher } = await import("./core/action-dispatcher.js");
 const { runRlmLoop } = await import("./core/rlm.js");
 const { loadConfig } = await import("./config.js");
 
@@ -334,8 +335,8 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	spinner.stop();
 	logSuccess(`Scanned codebase — ${(context.length / 1024).toFixed(1)}KB context`);
 
-	// Start REPL: NodeVmRepl by default, PythonRepl if explicitly specified
-	const repl = args.replBackend === "python" ? new PythonRepl() : new NodeVmRepl();
+	// Start REPL: PythonRepl if explicitly specified; default is declarative ActionDispatcher
+	const repl = args.replBackend === "python" ? new PythonRepl() : undefined;
 	const ac = new AbortController();
 
 	// Thread dashboard and streaming feed for live status
@@ -382,7 +383,9 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 	process.on("SIGTERM", abortAndExit);
 
 	try {
-		await repl.start(ac.signal);
+		if (repl) {
+			await repl.start(ac.signal);
+		}
 
 		// Register LLM summarizer for llm-summary compression strategy
 		if (config.compression_strategy === "llm-summary") {
@@ -408,7 +411,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 
 		// Build system prompt
 		const agentDesc = await describeAvailableAgents();
-		let systemPrompt = buildSwarmSystemPrompt(config, agentDesc, repl.getLanguage());
+		let systemPrompt = buildSwarmSystemPrompt(config, agentDesc, repl ? repl.getLanguage() : undefined);
 		if (args.dryRun) {
 			systemPrompt +=
 				"\n\n## DRY RUN MODE\nDo NOT call thread() or async_thread(). Instead, describe what threads you WOULD spawn (task, files, model). Call FINAL() with your execution plan.";
@@ -566,6 +569,44 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			};
 		};
 
+		// Wire declarative ActionDispatcher for production orchestration
+		const dispatcher = new ActionDispatcher({
+			async spawn(action) {
+				return threadHandler(
+					action.task,
+					"",
+					config.default_agent,
+					action.model || config.default_model,
+					action.writeScope,
+				);
+			},
+			async wait(action) {
+				const threads = threadManager.getThreads();
+				return {
+					threads: threads
+						.filter((t) => action.threadIds.includes(t.id))
+						.map((t) => ({ id: t.id, status: t.status })),
+				};
+			},
+			async inspectDiff(action) {
+				const threads = threadManager.getThreads();
+				const thread = threads.find((t) => t.id === action.threadId);
+				if (!thread) return { error: `Thread ${action.threadId} not found` };
+				const wm = threadManager.getWorktreeManager();
+				const diff = await wm.getDiff(action.threadId);
+				return { threadId: action.threadId, diff };
+			},
+			async review(action) {
+				return { threadId: action.threadId, status: "reviewed" };
+			},
+			async merge(action) {
+				return mergeHandler();
+			},
+			async finish(action) {
+				return { finished: true, summary: action.summary };
+			},
+		});
+
 		// Run the orchestrator
 		spinner.start();
 		const startTime = Date.now();
@@ -575,6 +616,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 			query: args.query,
 			model: resolved.model,
 			repl,
+			dispatcher,
 			signal: ac.signal,
 			systemPrompt,
 			threadHandler: args.dryRun ? undefined : threadHandler,
@@ -624,7 +666,7 @@ export async function runSwarmMode(rawArgs: string[]): Promise<void> {
 		streamingFeed.clear();
 		process.removeListener("SIGINT", abortAndExit);
 		process.removeListener("SIGTERM", abortAndExit);
-		repl.shutdown();
+		repl?.shutdown();
 		await threadManager.cleanup();
 		// Shut down any managed OpenCode server instances
 		await opencodeMod.disableServerMode();

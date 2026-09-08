@@ -22,6 +22,7 @@ import {
 	type UserMessage,
 } from "@mariozechner/pi-ai";
 import { loadConfig } from "../config.js";
+import type { ActionDispatcher } from "./action-dispatcher.js";
 import type { ExecResult, MergeHandler, Repl, ThreadHandler } from "./repl.js";
 
 // ── Load config ─────────────────────────────────────────────────────────────
@@ -34,7 +35,8 @@ export interface RlmOptions {
 	context: string;
 	query: string;
 	model: Model<Api>;
-	repl: Repl;
+	repl?: Repl;
+	dispatcher?: ActionDispatcher;
 	signal?: AbortSignal;
 	onProgress?: (info: RlmProgress) => void;
 	onSubQueryStart?: (info: SubQueryStartInfo) => void;
@@ -280,6 +282,23 @@ function truncateOutput(text: string): string {
 	return `[TRUNCATED: Last ${config.truncate_len} chars shown].. ${text.slice(-config.truncate_len)}`;
 }
 
+function extractActionPayload(text: string): unknown | null {
+	const jsonBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+	if (jsonBlockMatch) {
+		try {
+			return JSON.parse(jsonBlockMatch[1].trim());
+		} catch {}
+	}
+	const firstBrace = text.indexOf("{");
+	const lastBrace = text.lastIndexOf("}");
+	if (firstBrace !== -1 && lastBrace > firstBrace) {
+		try {
+			return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+		} catch {}
+	}
+	return null;
+}
+
 // ── Main loop ───────────────────────────────────────────────────────────────
 
 export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
@@ -288,6 +307,7 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 		query,
 		model,
 		repl,
+		dispatcher,
 		signal,
 		onProgress,
 		onSubQueryStart,
@@ -296,6 +316,10 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 		threadHandler,
 		mergeHandler,
 	} = options;
+
+	if (!repl && !dispatcher) {
+		throw new Error("runRlmLoop requires either a repl or a dispatcher");
+	}
 
 	let totalSubQueries = 0;
 	let iterationSubQueries = 0;
@@ -347,6 +371,7 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 
 	/** Set up (or re-set up) the REPL with context and handler. */
 	async function initRepl() {
+		if (!repl) return;
 		await repl.setContext(context);
 		await repl.resetFinal();
 		repl.setLlmQueryHandler(llmQueryHandler);
@@ -363,9 +388,11 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 		}
 	}
 
-	await initRepl();
+	if (repl) {
+		await initRepl();
+	}
 
-	const replLang = typeof repl.getLanguage === "function" ? repl.getLanguage() : "javascript";
+	const replLang = repl && typeof repl.getLanguage === "function" ? repl.getLanguage() : "javascript";
 	const activeSystemPrompt = systemPrompt || buildDefaultSystemPrompt(replLang);
 
 	const metadata = buildContextMetadata(context);
@@ -467,6 +494,72 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 			.filter((b): b is TextContent => b.type === "text")
 			.map((b) => b.text)
 			.join("\n");
+
+		if (dispatcher) {
+			const actionPayload = extractActionPayload(rawResponseText);
+			if (!actionPayload) {
+				conversationHistory.push(response);
+				conversationHistory.push({
+					role: "user",
+					content:
+						"Error: Could not extract action payload. Respond with a valid JSON action (e.g. { \"version\": 1, \"action\": \"spawn\" | \"wait\" | \"inspect_diff\" | \"review\" | \"merge\" | \"finish\" }).",
+					timestamp: Date.now(),
+				});
+				continue;
+			}
+
+			conversationHistory.push(response);
+			onProgress?.({
+				iteration,
+				maxIterations: config.max_iterations,
+				subQueries: totalSubQueries,
+				phase: "executing",
+				rawResponse: rawResponseText,
+			});
+
+			try {
+				const actionResult = await dispatcher.dispatch(actionPayload);
+				if (
+					typeof actionPayload === "object" &&
+					actionPayload !== null &&
+					(actionPayload as any).action === "finish"
+				) {
+					return {
+						answer: (actionPayload as any).summary || "",
+						iterations: iteration,
+						totalSubQueries,
+						completed: true,
+					};
+				}
+
+				conversationHistory.push({
+					role: "user",
+					content: `Action Result:\n${JSON.stringify(actionResult, null, 2)}`,
+					timestamp: Date.now(),
+				});
+				continue;
+			} catch (err) {
+				if (signal?.aborted) {
+					return { answer: "[Aborted]", iterations: iteration, totalSubQueries, completed: false };
+				}
+				const errorMsg = err instanceof Error ? err.message : String(err);
+				conversationHistory.push({
+					role: "user",
+					content: `Action Error: ${errorMsg}\n\nPlease correct the action and try again.`,
+					timestamp: Date.now(),
+				});
+				continue;
+			}
+		}
+
+		if (!repl) {
+			return {
+				answer: "[Error: No REPL or dispatcher available for execution]",
+				iterations: iteration,
+				totalSubQueries,
+				completed: false,
+			};
+		}
 
 		const code = extractCodeFromResponse(response);
 		if (!code) {
