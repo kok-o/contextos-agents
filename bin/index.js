@@ -127,6 +127,14 @@ if (mainCommand === 'update') {
   process.exit(0);
 }
 
+if (mainCommand === 'uninstall') {
+  const { runUninstall } = require('./commands/uninstall.js');
+  runUninstall(process.cwd(), {
+    dryRun: flags.dryRun,
+  });
+  process.exit(0);
+}
+
 if (mainCommand === 'doctor') {
   const doctorModule = require('../.agents/doctor.js');
   doctorModule.runDoctor(process.cwd());
