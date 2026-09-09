@@ -33,6 +33,8 @@ const CODES = {
   INVALID_PATH: 'CTX_MANIFEST_INVALID_PATH',
   DUPLICATE_ID: 'CTX_MANIFEST_DUPLICATE_ID',
   DUPLICATE_ALIAS: 'CTX_MANIFEST_DUPLICATE_ALIAS',
+  MISSING_RULE_CHECKER: 'CTX_MANIFEST_MISSING_RULE_CHECKER',
+  INVALID_RULE: 'CTX_MANIFEST_INVALID_RULE',
 };
 
 // Default signals by skill ID (extracted from canonical resolver patterns for v1 backward compatibility)
@@ -473,6 +475,10 @@ class ManifestCompiler {
       });
     }
 
+    const deprecated = Boolean(parsed.deprecated);
+    const canonical = typeof parsed.canonical === 'string' ? parsed.canonical : null;
+    const rules = Array.isArray(parsed.rules) ? parsed.rules : [];
+
     return {
       schemaVersion: 2,
       id: skillId,
@@ -493,6 +499,9 @@ class ManifestCompiler {
         estimatedTokens: 0, // Calculated during compilation
       },
       resources,
+      deprecated,
+      canonical,
+      rules,
       _raw: parsed,
       _isV2: isV2,
     };
@@ -594,6 +603,50 @@ class ManifestCompiler {
         `Skill '${manifest.id}' cannot require itself.`,
         { file: relManifestPath, path: '/dependencies/requires' }
       );
+    }
+
+    // 6. Validate declared rules and checkers
+    if (Array.isArray(manifest.rules)) {
+      const { AUTOMATED_CHECKERS } = require('../rules/rule-catalog.js');
+      for (let i = 0; i < manifest.rules.length; i++) {
+        const rule = manifest.rules[i];
+        if (!rule.id || !/^[A-Z0-9_-]+$/.test(rule.id)) {
+          this.addDiagnostic(
+            CODES.SCHEMA_ERROR,
+            `Rule [${i}] in '${manifest.id}' has invalid ID '${rule.id}'. Must match pattern ^[A-Z0-9_-]+$.`,
+            { file: relManifestPath, path: `/rules/${i}/id` }
+          );
+        }
+        if (!['must', 'should', 'may'].includes(rule.level)) {
+          this.addDiagnostic(
+            CODES.SCHEMA_ERROR,
+            `Rule '${rule.id}' has invalid level '${rule.level}'. Must be 'must', 'should', or 'may'.`,
+            { file: relManifestPath, path: `/rules/${i}/level` }
+          );
+        }
+        if (!['runtime', 'linter', 'prompt-guidance', 'reference', 'example'].includes(rule.enforcement)) {
+          this.addDiagnostic(
+            CODES.SCHEMA_ERROR,
+            `Rule '${rule.id}' has invalid enforcement '${rule.enforcement}'.`,
+            { file: relManifestPath, path: `/rules/${i}/enforcement` }
+          );
+        }
+        if (['runtime', 'linter'].includes(rule.enforcement)) {
+          if (!rule.checker) {
+            this.addDiagnostic(
+              CODES.MISSING_RULE_CHECKER,
+              `Rule '${rule.id}' marked enforcement '${rule.enforcement}' requires an automated checker, but none was provided.`,
+              { file: relManifestPath, path: `/rules/${i}/checker` }
+            );
+          } else if (!AUTOMATED_CHECKERS[rule.checker]) {
+            this.addDiagnostic(
+              CODES.MISSING_RULE_CHECKER,
+              `Rule '${rule.id}' references unknown automated checker '${rule.checker}'.`,
+              { file: relManifestPath, path: `/rules/${i}/checker` }
+            );
+          }
+        }
+      }
     }
   }
 
@@ -792,8 +845,10 @@ class ManifestCompiler {
     // 4. Compute hashes, estimated tokens, aliases and packageMap
     const compiledSkills = {};
     const aliases = {};
+    const deprecatedAliases = {};
     const packageMap = {};
     const dependencyGraph = {};
+    const rules = {};
 
     const sortedIds = Object.keys(manifestsById).sort();
 
@@ -850,7 +905,25 @@ class ManifestCompiler {
           estimatedTokens,
         },
         resources: m.resources,
+        deprecated: m.deprecated || false,
+        canonical: m.canonical || null,
+        rules: m.rules || [],
       };
+
+      // Register deprecated alias mapping
+      if (m.deprecated && m.canonical) {
+        deprecatedAliases[id] = m.canonical;
+      }
+
+      // Register rules
+      if (Array.isArray(m.rules)) {
+        for (const r of m.rules) {
+          rules[r.id] = {
+            ...r,
+            sourceSkill: id,
+          };
+        }
+      }
 
       // Register aliases
       for (const alias of m.signals.aliases) {
@@ -881,8 +954,10 @@ class ManifestCompiler {
       generatedAt: new Date().toISOString(),
       skills: compiledSkills,
       aliases: sortObjectKeys(aliases),
+      deprecatedAliases: sortObjectKeys(deprecatedAliases),
       packageMap: sortObjectKeys(packageMap),
       dependencyGraph: sortObjectKeys(dependencyGraph),
+      rules: sortObjectKeys(rules),
     };
 
     return {

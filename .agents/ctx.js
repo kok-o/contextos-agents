@@ -42,6 +42,7 @@ function printHelp() {
   console.log('  profile apply <name>            Apply a profile (supports --scope <pkg> --no-export --json)');
   console.log('  profile remove [--scope <pkg>]  Remove active profile or scoped package override');
   console.log('  resolve <prompt>                Resolve minimal skills needed for a task');
+  console.log('  explain [id] [--rules]          Inspect rule catalog, enforcement levels, and automated checkers');
   console.log('  index                           Generate progressive skills-index.json');
   console.log('  detect                          Auto-detect project tech stack');
   console.log('  compile [--check] [--sarif]     Compile skill manifests into deterministic registry v2');
@@ -384,6 +385,62 @@ if (command === 'export') {
     console.log('══════════════════════════════════════════');
     console.log(resolver.formatDeclaration(result));
     console.log('──────────────────────────────────────────\n');
+  }
+
+// ── explain ───────────────────────────────────────────────────────────────────
+} else if (command === 'explain') {
+  const { RuleCatalog } = require('./rules/rule-catalog.js');
+  const catalog = new RuleCatalog({ rootDir: process.cwd() });
+  const fs = require('fs');
+
+  // Load compiled registry rules if available
+  const registryPath = path.join(process.cwd(), '.agents', 'compiled', 'registry.v2.json');
+  if (fs.existsSync(registryPath)) {
+    try {
+      const reg = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+      catalog.loadFromRegistry(reg);
+    } catch {
+      // ignore
+    }
+  }
+
+  const asJson = args.includes('--json');
+  const showRules = args.includes('--rules');
+  const showCheckers = args.includes('--checkers');
+  const targetId = args.slice(1).find(a => !a.startsWith('-'));
+
+  if (asJson) {
+    if (showCheckers) {
+      console.log(JSON.stringify(catalog.getAllCheckers(), null, 2));
+    } else if (targetId) {
+      const rule = catalog.getRule(targetId);
+      if (rule) {
+        console.log(JSON.stringify(rule, null, 2));
+      } else {
+        const skillRules = catalog.getAllRules().filter(r => r.sourceSkill === targetId);
+        console.log(JSON.stringify({ skill: targetId, rules: skillRules }, null, 2));
+      }
+    } else {
+      console.log(JSON.stringify({
+        rules: catalog.getAllRules(),
+        checkers: catalog.getAllCheckers(),
+      }, null, 2));
+    }
+  } else if (showCheckers) {
+    console.log(catalog.formatCheckersSummary());
+  } else if (showRules) {
+    console.log(catalog.formatRulesSummary());
+  } else if (targetId) {
+    const rule = catalog.getRule(targetId);
+    if (rule) {
+      console.log(catalog.explainRule(targetId));
+    } else {
+      console.log(catalog.explainSkill(targetId));
+    }
+  } else {
+    // Default: print both rules summary and checkers
+    console.log(catalog.formatRulesSummary());
+    console.log(catalog.formatCheckersSummary());
   }
 
 // ── index ─────────────────────────────────────────────────────────────────────

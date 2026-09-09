@@ -10,6 +10,8 @@ tags:
   - workflow
   - planning
 version: 1.0.0
+deprecated: true
+canonical: engineering-workflow
 source: https://github.com/garrytan/gstack
 resources:
   - EXAMPLES.md

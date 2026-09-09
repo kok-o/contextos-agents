@@ -7,6 +7,8 @@ requires: []
 optional: [ui-design, web-accessibility]
 conflicts: []
 weight: 7
+deprecated: true
+canonical: ui-ux-pro
 documents:
   - ux.md
 resources:

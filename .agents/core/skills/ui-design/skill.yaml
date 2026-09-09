@@ -7,6 +7,8 @@ requires: []
 optional: [react, tailwind, web-accessibility]
 conflicts: []
 weight: 7
+deprecated: true
+canonical: ui-ux-pro
 documents:
   - ui.md
 resources:

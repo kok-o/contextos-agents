@@ -218,6 +218,17 @@ const COMMAND_REGISTRY = {
       { flag: '--json', desc: 'Output resolution in JSON format' },
     ],
   },
+  explain: {
+    name: 'explain',
+    description: 'Inspect rule catalog, enforcement levels, and automated checkers',
+    usage: 'contextos explain [ruleId|skillId] [--rules] [--checkers] [--json]',
+    requiresProject: true,
+    options: [
+      { flag: '--rules', desc: 'Display all declared rules with enforcement levels' },
+      { flag: '--checkers', desc: 'Display all registered automated enforcement checkers' },
+      { flag: '--json', desc: 'Output rule and enforcement data in JSON format' },
+    ],
+  },
   stats: {
     name: 'stats',
     description: 'Display token context savings report',

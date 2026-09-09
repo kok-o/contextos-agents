@@ -7,6 +7,8 @@ tags:
   - performance
   - vercel
 version: 1.0.0
+deprecated: true
+canonical: react
 requires:
   - react
 resources:

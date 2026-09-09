@@ -246,7 +246,7 @@ if (mainCommand === 'doctor') {
 // Proxy commands to .agents/ctx.js when executed in a ContextOS project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',
-  'clean-worktrees', 'stats', 'watch', 'compile', 'recover'
+  'clean-worktrees', 'stats', 'watch', 'compile', 'recover', 'explain'
 ];
 
 const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
@@ -292,7 +292,7 @@ if (mainCommand === 'watch') {
   watchModule.runWatch(process.cwd());
 }
 
-const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees', 'compile'];
+const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees', 'compile', 'explain'];
 if (mainCommand && PROJECT_ONLY_COMMANDS.includes(mainCommand) && !hasLocalCtx) {
   console.error('[ERROR] .agents/ctx.js not found in current directory.');
   console.error('        Are you in a ContextOS project? Run `contextos` or `npx contextos-agents` first.');

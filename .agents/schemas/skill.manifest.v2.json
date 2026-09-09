@@ -149,6 +149,29 @@
           "mode": { "type": "string", "enum": ["eager", "on-demand"] }
         }
       }
+    },
+    "deprecated": {
+      "type": "boolean"
+    },
+    "canonical": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "level", "enforcement", "summary"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Z0-9_-]+$" },
+          "level": { "type": "string", "enum": ["must", "should", "may"] },
+          "enforcement": { "type": "string", "enum": ["runtime", "linter", "prompt-guidance", "reference", "example"] },
+          "summary": { "type": "string" },
+          "checker": { "type": "string" },
+          "tokenCost": { "type": "integer", "minimum": 0 }
+        }
+      }
     }
   }
 }

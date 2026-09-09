@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:d409fc9d9489426f8c6eae11ab6ec47a4525b612e4ab6e3d6ef95bc4790d0cd3",
-  "generatedAt": "2026-09-09T20:29:31.849Z",
+  "sourceGraphHash": "sha256:aaca5403ceb2f360bcdf21ddb9262b1f9498f9cd8b4b9b5fd355360c31b8143c",
+  "generatedAt": "2026-09-09T21:18:04.495Z",
   "skills": {
     "adapters": {
       "id": "adapters",
@@ -50,7 +50,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "architecture-diagrams": {
       "id": "architecture-diagrams",
@@ -90,7 +93,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "brutalist-design": {
       "id": "brutalist-design",
@@ -131,7 +137,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "context-manager": {
       "id": "context-manager",
@@ -183,7 +192,10 @@
           "path": "references/context-rules.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": true,
+      "canonical": "context-os",
+      "rules": []
     },
     "context-os": {
       "id": "context-os",
@@ -251,7 +263,10 @@
           "path": "rules.yaml",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "database": {
       "id": "database",
@@ -363,7 +378,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "ddd": {
       "id": "ddd",
@@ -419,7 +437,10 @@
           "path": "ddd.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "decisions": {
       "id": "decisions",
@@ -468,7 +489,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "docker": {
       "id": "docker",
@@ -554,7 +578,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "engineering-workflow": {
       "id": "engineering-workflow",
@@ -604,7 +631,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "fastapi": {
       "id": "fastapi",
@@ -691,7 +721,10 @@
           "path": "fastapi.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "gemini-precision": {
       "id": "gemini-precision",
@@ -731,7 +764,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "generators": {
       "id": "generators",
@@ -816,7 +852,10 @@
           "path": "templates/UI.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "graphify": {
       "id": "graphify",
@@ -863,7 +902,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "gstack-roles": {
       "id": "gstack-roles",
@@ -911,7 +953,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": true,
+      "canonical": "engineering-workflow",
+      "rules": []
     },
     "impeccable-design": {
       "id": "impeccable-design",
@@ -959,7 +1004,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "interview-me": {
       "id": "interview-me",
@@ -999,7 +1047,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "microservices": {
       "id": "microservices",
@@ -1056,7 +1107,10 @@
           "path": "microservices.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "minimalist-design": {
       "id": "minimalist-design",
@@ -1097,7 +1151,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "nestjs": {
       "id": "nestjs",
@@ -1185,7 +1242,10 @@
           "path": "nestjs.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "nextjs": {
       "id": "nextjs",
@@ -1292,7 +1352,10 @@
           "path": "nextjs.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "node": {
       "id": "node",
@@ -1374,7 +1437,10 @@
           "path": "node.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "performance": {
       "id": "performance",
@@ -1430,7 +1496,10 @@
           "path": "performance.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "ponytail-mindset": {
       "id": "ponytail-mindset",
@@ -1480,7 +1549,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "react": {
       "id": "react",
@@ -1582,7 +1654,10 @@
           "path": "react.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "react-best-practices": {
       "id": "react-best-practices",
@@ -1625,7 +1700,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": true,
+      "canonical": "react",
+      "rules": []
     },
     "redesign-audit": {
       "id": "redesign-audit",
@@ -1666,7 +1744,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "security": {
       "id": "security",
@@ -1769,6 +1850,29 @@
           "path": "security.md",
           "mode": "on-demand"
         }
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": [
+        {
+          "id": "SEC-001",
+          "level": "must",
+          "enforcement": "prompt-guidance",
+          "summary": "Always validate and sanitize all user input and untrusted external payloads before processing"
+        },
+        {
+          "id": "SEC-002",
+          "level": "must",
+          "enforcement": "runtime",
+          "checker": "secret-scanner",
+          "summary": "Zero plaintext credentials, private keys, or API tokens committed to repository"
+        },
+        {
+          "id": "SEC-003",
+          "level": "must",
+          "enforcement": "prompt-guidance",
+          "summary": "Enforce authentication and authorization checks prior to accessing sensitive resources or data"
+        }
       ]
     },
     "soft-design": {
@@ -1810,7 +1914,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "state-management": {
       "id": "state-management",
@@ -1861,7 +1968,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "subagent-orchestrator": {
       "id": "subagent-orchestrator",
@@ -1901,7 +2011,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "system-design": {
       "id": "system-design",
@@ -1955,7 +2068,10 @@
           "path": "system-design.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "testing": {
       "id": "testing",
@@ -2052,7 +2168,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "typescript": {
       "id": "typescript",
@@ -2150,7 +2269,10 @@
           "path": "typescript.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "ui-design": {
       "id": "ui-design",
@@ -2206,7 +2328,10 @@
           "path": "ui.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": true,
+      "canonical": "ui-ux-pro",
+      "rules": []
     },
     "ui-ux-pro": {
       "id": "ui-ux-pro",
@@ -2299,7 +2424,10 @@
           "path": "VALIDATION.json",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "ux-design": {
       "id": "ux-design",
@@ -2354,7 +2482,10 @@
           "path": "ux.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": true,
+      "canonical": "ui-ux-pro",
+      "rules": []
     },
     "vercel-optimize": {
       "id": "vercel-optimize",
@@ -2412,7 +2543,10 @@
           "path": "scripts/scan-codebase.mjs",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     },
     "web-accessibility": {
       "id": "web-accessibility",
@@ -2467,7 +2601,10 @@
           "path": "accessibility.md",
           "mode": "on-demand"
         }
-      ]
+      ],
+      "deprecated": false,
+      "canonical": null,
+      "rules": []
     }
   },
   "aliases": {
@@ -2535,6 +2672,13 @@
     "vercel-react-best-practices": "react-best-practices",
     "web-accessibility": "web-accessibility",
     "web-performance": "performance"
+  },
+  "deprecatedAliases": {
+    "context-manager": "context-os",
+    "gstack-roles": "engineering-workflow",
+    "react-best-practices": "react",
+    "ui-design": "ui-ux-pro",
+    "ux-design": "ui-ux-pro"
   },
   "packageMap": {
     "npm:@nestjs/core": "nestjs",
@@ -2613,5 +2757,29 @@
       "nextjs"
     ],
     "web-accessibility": []
+  },
+  "rules": {
+    "SEC-001": {
+      "id": "SEC-001",
+      "level": "must",
+      "enforcement": "prompt-guidance",
+      "summary": "Always validate and sanitize all user input and untrusted external payloads before processing",
+      "sourceSkill": "security"
+    },
+    "SEC-002": {
+      "id": "SEC-002",
+      "level": "must",
+      "enforcement": "runtime",
+      "checker": "secret-scanner",
+      "summary": "Zero plaintext credentials, private keys, or API tokens committed to repository",
+      "sourceSkill": "security"
+    },
+    "SEC-003": {
+      "id": "SEC-003",
+      "level": "must",
+      "enforcement": "prompt-guidance",
+      "summary": "Enforce authentication and authorization checks prior to accessing sensitive resources or data",
+      "sourceSkill": "security"
+    }
   }
 }

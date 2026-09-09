@@ -9,6 +9,8 @@ tags:
   - tokens
   - architecture
 version: 1.0.0
+deprecated: true
+canonical: context-os
 resources:
   - EXAMPLES.md
   - SKILL.md

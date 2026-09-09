@@ -22,7 +22,7 @@ const {
  * @param {Object} options - Context options
  * @returns {Object} Resolution result
  */
-function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', projectDir = process.cwd(), maxSkills } = {}) {
+function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', projectDir = process.cwd(), maxSkills, contextBudgetTokens = DEFAULT_CONTEXT_BUDGET_TOKENS } = {}) {
   const resolver = new CanonicalResolver({ rootDir: projectDir });
   const result = resolver.resolve({
     task: prompt,
@@ -31,6 +31,7 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
     domain,
     projectDir,
     maxSkills,
+    contextBudgetTokens,
   });
 
   return {

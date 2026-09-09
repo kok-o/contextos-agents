@@ -20,8 +20,79 @@ const path = require('path');
 const crypto = require('crypto');
 const { WorkspaceGraphBuilder } = require('../workspace/workspace-graph');
 
-// Default dynamic token budget (~8,000 tokens)
+// Prompt budget limits (Section 14.4)
+const BUDGET_TIERS = {
+  BOOTSTRAP: 1200,      // always-on bootstrap budget
+  SKILL_SUMMARY: 150,   // single skill summary limit
+  SKILL_BODY: 1200,     // single skill body limit
+  ROUTINE: 2000,        // routine context limit
+  STANDARD: 4000,       // standard normal compiled context limit
+  HIGH: 7500,           // high-risk compiled context limit
+  DESTRUCTIVE: 10000,   // destructive compiled context limit
+};
+
 const DEFAULT_CONTEXT_BUDGET_TOKENS = 8000;
+
+// Risk-based workflows (Section 14.3)
+const WORKFLOW_TEMPLATES = {
+  routine: {
+    name: 'ROUTINE',
+    summary: 'Low-risk fast-track: documentation, typo, formatting, low-risk config',
+    steps: [
+      '1. INSPECT: Read target files and locate exact lines to change',
+      '2. CHANGE: Apply targeted edits directly without ceremonial spec/plan',
+      '3. TARGETED_VERIFY: Execute specific test, linter, or validation check',
+    ],
+  },
+  standard: {
+    name: 'STANDARD',
+    summary: 'Standard feature development, bugfix, or component refactor',
+    steps: [
+      '1. SHORT_PLAN: Outline affected files and atomic steps',
+      '2. CHANGE: Implement minimal code adhering to ponytail mindset',
+      '3. TESTS: Run relevant unit and integration test suites',
+      '4. SELF_REVIEW: Verify diff cleanly contains changes to target files only',
+    ],
+  },
+  high: {
+    name: 'HIGH',
+    summary: 'High-risk feature: auth, migration, public API, security, CI, concurrency',
+    steps: [
+      '1. SPEC: Document explicit in-scope/out-of-scope and acceptance criteria',
+      '2. APPROVED_PLAN: Atomic tasks (<2h), risk mitigation, and rollback strategy',
+      '3. ISOLATED_CHANGE: Surgical implementation strictly within planned files',
+      '4. FULL_VERIFICATION: Global test suite + secret scanner + validator',
+      '5. INDEPENDENT_REVIEW: Review through security, database, and accessibility lenses',
+    ],
+  },
+  destructive: {
+    name: 'DESTRUCTIVE',
+    summary: 'Destructive action: file deletion, irreversible migration, history rewrite',
+    steps: [
+      '1. EXPLICIT_AUTHORITY: Confirm explicit user authorization and bounds',
+      '2. ROLLBACK_REHEARSAL: Verify snapshot, backup, or rollback transaction log',
+      '3. GUARDED_CHANGE: Execute modification inside journaled transaction with project lock',
+      '4. POST_VERIFY: Confirm integrity, state consistency, and absence of data loss',
+    ],
+  },
+};
+
+// Streamlined execution modes (Section 14.2)
+const MODES = {
+  DISCOVER: 'DISCOVER',
+  CHANGE: 'CHANGE',
+  VERIFY: 'VERIFY',
+  REVIEW: 'REVIEW',
+};
+
+// Consolidated deprecated aliases (Section 14.7)
+const DEPRECATED_ALIASES = {
+  'context-manager': 'context-os',
+  'gstack-roles': 'engineering-workflow',
+  'ui-design': 'ui-ux-pro',
+  'ux-design': 'ui-ux-pro',
+  'react-best-practices': 'react',
+};
 
 // Weight constants based on architecture spec
 const WEIGHTS = {
@@ -323,28 +394,35 @@ function collectWorkspaceEvidence(projectRoot, registry) {
 function evaluateRisk(taskText, files = []) {
   const reasons = [];
   const text = (taskText || '').toLowerCase();
+  let value = 'standard';
 
   // Destructive operations
-  if (/\b(drop\s*database|drop\s*table|rm\s*-rf|truncate|destroy|delete\s*from|format\s*disk)\b/i.test(text)) {
+  if (/\b(drop\s*database|drop\s*table|rm\s*-rf|truncate|destroy|delete\s*from|format\s*disk)\b/i.test(text) ||
+      /\b(удали\w*\s*(?:базу|таблиц|диск|файл)|очист\w*\s*базу|уничтож\w*)\b/i.test(text)) {
     reasons.push({ kind: 'risk_keyword', weight: 100, reason: 'Mentions destructive database or filesystem operation' });
-    return { value: 'destructive', reasons };
-  }
-
-  // High-risk operations
-  if (/\b(secur\w*|auth\w*|jwt|password|token|secret|migration|schema|permission|billing|payment|credit\s*card|crypto)\b/i.test(text) ||
+    value = 'destructive';
+  } else if (/\b(secur\w*|auth\w*|jwt|password|token|secret|migration|schema|permission|billing|payment|credit\s*card|crypto)\b/i.test(text) ||
+      /\b(безопасн\w*|авториз\w*|аутентифик\w*|парол\w*|токен\w*|миграц\w*|платеж\w*|платёж\w*|доступ\w*)\b/i.test(text) ||
       files.some(f => /\b(auth|security|migration|schema)\b/i.test(f))) {
+    // High-risk operations
     reasons.push({ kind: 'risk_keyword', weight: 50, reason: 'Touches security, authentication, migration, or sensitive domain' });
-    return { value: 'high', reasons };
-  }
-
-  // Routine operations
-  if (/\b(typo|readme|doc|comment|format|lint|prettier)\b/i.test(text) && files.every(f => /\.(md|txt|json|ya?ml)$/i.test(f))) {
+    value = 'high';
+  } else if ((/\b(typo|readme|doc|comment|format|lint|prettier)\b/i.test(text) ||
+      /\b(опечатк\w*|документац\w*|комментар\w*|форматирован\w*)\b/i.test(text)) &&
+      files.every(f => /\.(md|txt|json|ya?ml)$/i.test(f))) {
+    // Routine operations
     reasons.push({ kind: 'risk_keyword', weight: 10, reason: 'Routine documentation or formatting change' });
-    return { value: 'routine', reasons };
+    value = 'routine';
+  } else {
+    reasons.push({ kind: 'risk_default', weight: 20, reason: 'Standard feature development or modification' });
+    value = 'standard';
   }
 
-  reasons.push({ kind: 'risk_default', weight: 20, reason: 'Standard feature development or modification' });
-  return { value: 'standard', reasons };
+  return {
+    value,
+    reasons,
+    workflow: WORKFLOW_TEMPLATES[value] || WORKFLOW_TEMPLATES.standard,
+  };
 }
 
 /**
@@ -520,10 +598,20 @@ class CanonicalResolver {
     const files = (request.files || []).map(f => f.replace(/\\/g, '/'));
     const projectRoot = request.projectDir ? path.resolve(request.projectDir) : this.rootDir;
     const explicitPhase = request.explicitPhase || request.phase;
-    const budgetTokens = request.contextBudgetTokens || DEFAULT_CONTEXT_BUDGET_TOKENS;
+
+    // Evaluate risk early to establish tiered prompt budget (Section 14.4)
+    const risk = evaluateRisk(task, files);
+    const defaultTierBudget = (risk.value === 'high' || risk.value === 'destructive')
+      ? BUDGET_TIERS.HIGH
+      : BUDGET_TIERS.STANDARD;
+    const budgetTokens = (typeof request.contextBudgetTokens === 'number' && request.contextBudgetTokens > 0)
+      ? request.contextBudgetTokens
+      : defaultTierBudget;
+
     const maxSkillsLimit = request.maxSkills ? Math.max(1, request.maxSkills) : Infinity;
 
     const taskLower = task.toLowerCase();
+    const warnings = [];
 
     // Ensure registry is loaded
     if (!this.registry) {
@@ -546,10 +634,25 @@ class CanonicalResolver {
 
     // 2. Collect Evidence
     const evidenceBySkill = new Map(); // skillId -> Evidence[]
+    const deprecatedMap = { ...DEPRECATED_ALIASES, ...(this.registry?.deprecatedAliases || {}) };
+
     const addEvidence = (id, kind, weight, reason) => {
-      if (profileExcluded.has(id)) return;
-      if (!evidenceBySkill.has(id)) evidenceBySkill.set(id, []);
-      evidenceBySkill.get(id).push({ kind, weight, reason });
+      let resolvedId = id;
+      if (deprecatedMap[id]) {
+        resolvedId = deprecatedMap[id];
+        if (!warnings.some(w => w.code === 'CTX_SKILL_DEPRECATED_ALIAS' && w.deprecatedSkill === id)) {
+          warnings.push({
+            code: 'CTX_SKILL_DEPRECATED_ALIAS',
+            deprecatedSkill: id,
+            canonicalSkill: resolvedId,
+            message: `Skill '${id}' is a deprecated alias. Redirected to canonical skill '${resolvedId}' with 0 duplicate tokens.`,
+          });
+        }
+      }
+
+      if (profileExcluded.has(resolvedId)) return;
+      if (!evidenceBySkill.has(resolvedId)) evidenceBySkill.set(resolvedId, []);
+      evidenceBySkill.get(resolvedId).push({ kind, weight, reason });
     };
 
     // Workspace Evidence Graph
@@ -825,7 +928,8 @@ class CanonicalResolver {
 
     const closureMap = new Map();
     for (const item of initialSelection) {
-      const estTokens = skillsDict[item.id]?.estimatedTokens || 1000;
+      const rawEst = skillsDict[item.id]?.estimatedTokens || 1000;
+      const estTokens = Math.min(rawEst, BUDGET_TIERS.SKILL_BODY);
       closureMap.set(item.id, {
         id: item.id,
         displayName: skillsDict[item.id]?.displayName || item.id,
@@ -848,7 +952,8 @@ class CanonicalResolver {
             entry.reasons.push({ kind: 'dependency', weight: 100, reason: `Required by "${cand.id}"` });
           }
         } else {
-          const estTokens = skillsDict[reqId]?.estimatedTokens || 1000;
+          const rawEst = skillsDict[reqId]?.estimatedTokens || 1000;
+          const estTokens = Math.min(rawEst, BUDGET_TIERS.SKILL_BODY);
           closureMap.set(reqId, {
             id: reqId,
             displayName: skillsDict[reqId]?.displayName || reqId,
@@ -895,7 +1000,6 @@ class CanonicalResolver {
     }
 
     // 7. Token Budget Planner & Capability Clustering
-    const warnings = [];
     const BASE_SKILLS = ['ponytail-mindset', 'engineering-workflow'];
     let baseTokens = 0;
 
@@ -939,7 +1043,7 @@ class CanonicalResolver {
           priorityScore: 1000,
           reasons: [{ kind: 'dependency', weight: 100, reason: `Required by "${cand.id}"` }],
           requiredBy: [cand.id],
-          estimatedTokens: skillsDict[sId]?.estimatedTokens || 1000,
+          estimatedTokens: closureMap.get(sId)?.estimatedTokens || Math.min(skillsDict[sId]?.estimatedTokens || 1000, BUDGET_TIERS.SKILL_BODY),
         };
         admitted.set(sId, entry);
         if (!BASE_SKILLS.includes(sId)) {
@@ -982,7 +1086,7 @@ class CanonicalResolver {
 
       const clusterCost = unadmittedCluster.reduce((sum, sId) => {
         if (BASE_SKILLS.includes(sId)) return sum;
-        return sum + (skillsDict[sId]?.estimatedTokens || closureMap.get(sId)?.estimatedTokens || 1000);
+        return sum + (closureMap.get(sId)?.estimatedTokens || Math.min(skillsDict[sId]?.estimatedTokens || 1000, BUDGET_TIERS.SKILL_BODY));
       }, 0);
 
       if (allocatedDynamicTokens + clusterCost <= budgetTokens) {
@@ -994,7 +1098,7 @@ class CanonicalResolver {
             priorityScore: cand.priorityScore,
             reasons: sId === cand.id ? cand.reasons : [{ kind: 'dependency', weight: 100, reason: `Required by "${cand.id}"` }],
             requiredBy: sId === cand.id ? [] : [cand.id],
-            estimatedTokens: skillsDict[sId]?.estimatedTokens || 1000,
+            estimatedTokens: closureMap.get(sId)?.estimatedTokens || Math.min(skillsDict[sId]?.estimatedTokens || 1000, BUDGET_TIERS.SKILL_BODY),
           };
           admitted.set(sId, entry);
         }
@@ -1031,7 +1135,53 @@ class CanonicalResolver {
     }
 
     const { phase, role } = resolvePhaseAndRole(explicitPhase, task, allSelectedIds);
-    const risk = evaluateRisk(task, files);
+
+    // Streamlined execution modes (Section 14.2)
+    let mode = request.mode || request.explicitMode || null;
+    if (!mode) {
+      const pVal = typeof phase === 'object' ? phase.value : phase;
+      if (pVal === 'Define' || pVal === 'Plan') mode = MODES.DISCOVER;
+      else if (pVal === 'Build') mode = MODES.CHANGE;
+      else if (pVal === 'Verify') mode = MODES.VERIFY;
+      else if (pVal === 'Review' || pVal === 'Ship') mode = MODES.REVIEW;
+      else mode = MODES.CHANGE;
+    }
+
+    // Review lenses
+    const reviewLenses = [];
+    if (allSelectedIds.includes('security') || risk.value === 'high' || risk.value === 'destructive') {
+      reviewLenses.push('security');
+    }
+    if (allSelectedIds.includes('database')) {
+      reviewLenses.push('database');
+    }
+    if (allSelectedIds.includes('web-accessibility') || allSelectedIds.includes('ui-ux-pro')) {
+      reviewLenses.push('accessibility');
+    }
+    if (allSelectedIds.includes('performance') || allSelectedIds.includes('vercel-optimize')) {
+      reviewLenses.push('performance');
+    }
+    if (allSelectedIds.includes('system-design') || allSelectedIds.includes('ddd') || allSelectedIds.includes('microservices')) {
+      reviewLenses.push('architecture');
+    }
+    if (reviewLenses.length === 0) {
+      reviewLenses.push('general-code-quality');
+    }
+
+    // Rule catalog integration (Section 14.1 & 14.6)
+    let applicableRules = [];
+    try {
+      const { RuleCatalog } = require('../rules/rule-catalog.js');
+      const catalog = new RuleCatalog({ rootDir: projectRoot });
+      if (this.registry) {
+        catalog.loadFromRegistry(this.registry);
+      }
+      applicableRules = catalog.getAllRules().filter(r =>
+        allSelectedIds.includes(r.sourceSkill) || r.applicability.includes('all')
+      );
+    } catch {
+      // ignore
+    }
 
     return {
       registryFingerprint: this.registry?.sourceGraphHash || 'none',
@@ -1039,8 +1189,12 @@ class CanonicalResolver {
       workspaceGraph: workspaceGraph || null,
       domain,
       phase,
+      mode,
+      reviewLenses,
       role,
       risk,
+      workflow: risk.workflow,
+      rules: applicableRules,
       selected: finalSelected,
       excluded,
       conflicts,
@@ -1056,8 +1210,21 @@ class CanonicalResolver {
    */
   formatDeclaration(res) {
     const phaseStr = typeof res.phase === 'object' ? res.phase.value : res.phase;
+    const modeStr = res.mode || 'CHANGE';
+    const lensesStr = Array.isArray(res.reviewLenses) && res.reviewLenses.length > 0
+      ? res.reviewLenses.join(', ')
+      : 'general';
+    const riskStr = res.risk?.value || 'standard';
     const skillsList = (res.skills || []).join(', ');
-    return `[DOMAIN: ${res.domain}] [PHASE: ${phaseStr}] [ROLE: ${res.role}]\nSkills loaded: ${skillsList}`;
+
+    const lines = [
+      `[DOMAIN: ${res.domain}] [PHASE: ${phaseStr}] [ROLE: ${res.role}] [MODE: ${modeStr}] [LENSES: ${lensesStr}] [RISK: ${riskStr}]`,
+      `Skills loaded: ${skillsList}`,
+    ];
+    if (res.workflow && res.workflow.steps && res.workflow.steps.length > 0) {
+      lines.push(`Workflow (${res.workflow.name}): ${res.workflow.steps[0]}`);
+    }
+    return lines.join('\n');
   }
 
   /**
@@ -1069,8 +1236,16 @@ class CanonicalResolver {
     lines.push('══════════════════════════════════════════');
     lines.push('  ContextOS — Dynamic Skill Resolution');
     lines.push('══════════════════════════════════════════');
-    lines.push(`[DOMAIN: ${res.domain}] [PHASE: ${phaseStr}] [ROLE: ${res.role}] [RISK: ${res.risk?.value || 'standard'}]`);
+    lines.push(`[DOMAIN: ${res.domain}] [PHASE: ${phaseStr}] [ROLE: ${res.role}] [MODE: ${res.mode}] [LENSES: ${(res.reviewLenses || []).join(', ')}] [RISK: ${res.risk?.value || 'standard'}]`);
     lines.push(`Registry: ${(res.registryFingerprint || '').slice(0, 19)}... | Estimated Budget: ~${res.totalEstimatedTokens} tokens\n`);
+
+    if (res.workflow) {
+      lines.push(`Workflow: ${res.workflow.name} — ${res.workflow.summary}`);
+      for (const st of res.workflow.steps) {
+        lines.push(`  → ${st}`);
+      }
+      lines.push('');
+    }
 
     lines.push('Selected Skills:');
     for (const item of res.selected) {
@@ -1082,6 +1257,17 @@ class CanonicalResolver {
       lines.push('\nExcluded Skills:');
       for (const ex of res.excluded) {
         lines.push(`  ✗ ${ex.id.padEnd(22)} [${ex.reasonCode}] ${ex.details}`);
+      }
+    }
+
+    if (res.rules && res.rules.length > 0) {
+      lines.push('\nApplicable Rules:');
+      for (const r of res.rules.slice(0, 10)) {
+        const enf = r.enforcement === 'ENFORCED' ? `[ENFORCED: ${r.checker}]` : `[${r.enforcement}]`;
+        lines.push(`  • ${r.id.padEnd(10)} ${enf.padEnd(25)} ${r.summary.slice(0, 60)}`);
+      }
+      if (res.rules.length > 10) {
+        lines.push(`    ... and ${res.rules.length - 10} more rules`);
       }
     }
 
@@ -1142,6 +1328,10 @@ class CanonicalResolver {
 module.exports = {
   CanonicalResolver,
   DEFAULT_CONTEXT_BUDGET_TOKENS,
+  BUDGET_TIERS,
+  WORKFLOW_TEMPLATES,
+  MODES,
+  DEPRECATED_ALIASES,
   WEIGHTS,
   analyzeImportGraph,
   evaluateRisk,

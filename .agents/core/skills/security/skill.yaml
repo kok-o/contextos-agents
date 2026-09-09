@@ -15,3 +15,17 @@ resources:
   - TROUBLESHOOTING.md
   - VALIDATION.json
   - security.md
+rules:
+  - id: SEC-001
+    level: must
+    enforcement: prompt-guidance
+    summary: Always validate and sanitize all user input and untrusted external payloads before processing
+  - id: SEC-002
+    level: must
+    enforcement: runtime
+    checker: secret-scanner
+    summary: Zero plaintext credentials, private keys, or API tokens committed to repository
+  - id: SEC-003
+    level: must
+    enforcement: prompt-guidance
+    summary: Enforce authentication and authorization checks prior to accessing sensitive resources or data
