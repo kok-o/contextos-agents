@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:e4469f284658fca8b1667ff361c67095454fcbd8970f34b5109a6398d96af79c",
-  "generatedAt": "2026-09-09T18:17:41.200Z",
+  "sourceGraphHash": "sha256:d409fc9d9489426f8c6eae11ab6ec47a4525b612e4ab6e3d6ef95bc4790d0cd3",
+  "generatedAt": "2026-09-09T19:40:13.245Z",
   "skills": {
     "adapters": {
       "id": "adapters",
@@ -484,7 +484,6 @@
       "source": ".agents/core/skills/docker/skill.yaml",
       "signals": {
         "aliases": [
-          "container",
           "docker"
         ],
         "keywords": [
@@ -493,8 +492,8 @@
             "weight": 45
           },
           {
-            "value": "container",
-            "weight": 35
+            "value": "dockerfile",
+            "weight": 45
           },
           {
             "value": "compose",
@@ -506,9 +505,13 @@
             "weight": 40
           },
           {
+            "value": "container",
+            "weight": 5
+          },
+          {
             "value": "контейнер",
             "locale": "ru",
-            "weight": 35
+            "weight": 5
           }
         ],
         "fileGlobs": [
@@ -2472,7 +2475,6 @@
     "architecture-diagrams": "architecture-diagrams",
     "auth": "security",
     "brutalist-design": "brutalist-design",
-    "container": "docker",
     "context-manager": "context-manager",
     "context-os": "context-os",
     "database": "database",

@@ -1,18 +1,19 @@
 /**
  * ContextOS Selector — determines which rules and skills are relevant for a task.
  *
- * Uses weighted scoring against task description to select the exact 2–4 skills
- * needed for the immediate task, preventing context bloat in agent prompts.
- *
- * Implements:
- * 1. Strong (10 pts), Medium (5 pts), and Weak (2 pts) regex triggers with word boundaries.
- * 2. Minimum threshold (>= 5 pts) to reject casual mentions (e.g., "container", "type", "query").
- * 3. Sorting by relevance and a hard cap of maximum 4 skills (exact 2–4 domain skills).
- * 4. Architectural synergy resolution (e.g., system-design for database/microservices/ddd).
+ * Unified with CanonicalResolver (.agents/resolver/canonical-resolver.js) for 100%
+ * parity between CLI and MCP runtimes:
+ *   - Evidence-based scoring (aliases, keywords, file globs, nearest package)
+ *   - Direct query to compiled registry (registry.v2.json)
+ *   - Transitive dependency closure
+ *   - Token budget planner and intent precedence
  */
 
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 
 export interface SelectedContext {
 	/** Always-loaded rules (e.g., AGENTS.md core principles). */
@@ -40,7 +41,7 @@ interface SkillRule {
 }
 
 /**
- * Weighted skill triggers based on AGENTS.md matrix.
+ * Weighted skill triggers based on AGENTS.md matrix (fallback).
  */
 export const SKILL_RULES: SkillRule[] = [
 	{
@@ -321,6 +322,31 @@ export const SKILL_RULES: SkillRule[] = [
 ];
 
 /**
+ * Lazily loads the canonical resolver instance from .agents.
+ */
+function getCanonicalResolver(): any {
+	const candidatePaths = [
+		path.join(process.cwd(), ".agents", "resolver", "canonical-resolver.js"),
+		path.join(process.cwd(), "..", ".agents", "resolver", "canonical-resolver.js"),
+	];
+
+	for (const p of candidatePaths) {
+		if (existsSync(p)) {
+			try {
+				const mod = require(p);
+				if (mod && mod.CanonicalResolver) {
+					const rootDir = path.dirname(path.dirname(path.dirname(p)));
+					return new mod.CanonicalResolver({ rootDir });
+				}
+			} catch {
+				// fall through to fallback
+			}
+		}
+	}
+	return null;
+}
+
+/**
  * Select relevant rules and skills for a given task description with relevance scoring and hard capping.
  *
  * @param task - The task description text
@@ -328,31 +354,45 @@ export const SKILL_RULES: SkillRule[] = [
  * @returns SelectedContext with lists of relevant rule/skill identifiers (max 4 skills)
  */
 export function selectContext(task: string, options: SelectorOptions = {}): SelectedContext {
-	const taskText = task || "";
-	const files = options.files || [];
 	const maxSkills = Math.max(1, Math.min(4, options.maxSkills ?? 4));
 
+	// 1. Primary path: Delegate to CanonicalResolver
+	const canonical = getCanonicalResolver();
+	if (canonical) {
+		const res = canonical.resolve({
+			task,
+			files: options.files || [],
+			maxSkills,
+		});
+
+		const domainSkills: string[] = (res.selected || []).map((s: { id: string }) => s.id);
+		return {
+			coreRules: ["AGENTS.md"],
+			rules: [],
+			skills: domainSkills.slice(0, maxSkills),
+		};
+	}
+
+	// 2. Standalone fallback path
+	const taskText = task || "";
+	const files = options.files || [];
 	const scores = new Map<string, { score: number; rules: string[] }>();
 
 	for (const rule of SKILL_RULES) {
 		let score = 0;
 
-		// Strong matches (+10 points)
 		for (const pat of rule.strong) {
 			if (pat.test(taskText)) score += 10;
 		}
 
-		// Medium matches (+5 points)
 		for (const pat of rule.medium) {
 			if (pat.test(taskText)) score += 5;
 		}
 
-		// Weak matches (+2 points)
 		for (const pat of rule.weak) {
 			if (pat.test(taskText)) score += 2;
 		}
 
-		// File matches (+10 points per matched file)
 		for (const file of files) {
 			const normalized = file.replace(/\\/g, "/");
 			for (const pat of rule.fileGlobs || []) {
@@ -360,7 +400,6 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 			}
 		}
 
-		// Minimum score threshold of 5 points prevents single casual weak matches from activating heavy skills
 		if (score >= 5) {
 			scores.set(rule.skill, {
 				score,
@@ -369,16 +408,12 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 		}
 	}
 
-	// Sort candidate domain skills strictly by relevance score descending
 	const sortedSkills = Array.from(scores.entries())
 		.sort((a, b) => b[1].score - a[1].score)
 		.map(([skill]) => skill);
 
-	// Cap to top skills within maxSkills ceiling
 	const topSkills = sortedSkills.slice(0, maxSkills);
 
-	// Synergy resolution: if database, microservices, ddd or graphify is present,
-	// ensure system-design is included if room permits within the hard cap
 	const hasSynergyPrereq =
 		topSkills.includes("database") ||
 		topSkills.includes("microservices") ||
@@ -389,7 +424,6 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 		topSkills.push("system-design");
 	}
 
-	// Transitive Dependency Resolution (from compiled registry.v2.json or fallback)
 	let depGraph: Record<string, string[]> = {
 		react: ["typescript"],
 		node: ["typescript"],
@@ -427,7 +461,6 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 		}
 	}
 
-	// Collect any specific rules from matched skills
 	const matchedRules = new Set<string>();
 	for (const skill of topSkills) {
 		const ruleObj = scores.get(skill);

@@ -202,11 +202,13 @@ const COMMAND_REGISTRY = {
   resolve: {
     name: 'resolve',
     description: 'Dynamically resolve minimal skills needed for a prompt or files',
-    usage: 'contextos resolve <prompt> [--files <a,b>] [--phase <p>] [--json]',
+    usage: 'contextos resolve <prompt> [--files <a,b>] [--phase <p>] [--explain] [--budget <n>] [--json]',
     requiresProject: true,
     options: [
       { flag: '--files <list>', desc: 'Comma-separated list of touched files' },
       { flag: '--phase <name>', desc: 'Lifecycle phase (Define, Plan, Build, Verify, Review, Ship)' },
+      { flag: '--explain', desc: 'Display evidence scoring and decision breakdown' },
+      { flag: '--budget <tokens>', desc: 'Context token budget limit (default: 8000)' },
       { flag: '--json', desc: 'Output resolution in JSON format' },
     ],
   },

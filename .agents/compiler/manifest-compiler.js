@@ -191,13 +191,14 @@ const DEFAULT_SIGNALS = {
     packages: [{ ecosystem: 'npm', name: '@nestjs/core', weight: 40 }],
   },
   docker: {
-    aliases: ['docker', 'container'],
+    aliases: ['docker'],
     keywords: [
       { value: 'docker', weight: 45 },
-      { value: 'container', weight: 35 },
+      { value: 'dockerfile', weight: 45 },
       { value: 'compose', weight: 30 },
       { value: 'докер', locale: 'ru', weight: 40 },
-      { value: 'контейнер', locale: 'ru', weight: 35 },
+      { value: 'container', weight: 5 },
+      { value: 'контейнер', locale: 'ru', weight: 5 },
     ],
     fileGlobs: [
       { value: '**/Dockerfile*', weight: 40 },

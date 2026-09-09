@@ -233,19 +233,36 @@ if (command === 'export') {
 
 // ── resolve ───────────────────────────────────────────────────────────────────
 } else if (command === 'resolve') {
-  const resolver = require('./resolver.js');
+  const { CanonicalResolver } = require('./resolver/canonical-resolver.js');
   const promptArgs = args.slice(1).filter(a => !a.startsWith('-')).join(' ');
   const filesIdx = args.indexOf('--files');
   const files = filesIdx !== -1 && args[filesIdx + 1] ? args[filesIdx + 1].split(',') : [];
   const phaseIdx = args.indexOf('--phase');
-  const phase = phaseIdx !== -1 && args[phaseIdx + 1] ? args[phaseIdx + 1] : 'Build';
+  const phase = phaseIdx !== -1 && args[phaseIdx + 1] ? args[phaseIdx + 1] : undefined;
+  const budgetIdx = args.indexOf('--budget');
+  const budget = budgetIdx !== -1 && args[budgetIdx + 1] ? parseInt(args[budgetIdx + 1], 10) : undefined;
+  const explain = args.includes('--explain');
+  const asJson = args.includes('--json');
 
-  const result = resolver.resolveSkills({ prompt: promptArgs, files, phase });
-  console.log('\n══════════════════════════════════════════');
-  console.log('  ContextOS — Dynamic Skill Resolution');
-  console.log('══════════════════════════════════════════');
-  console.log(resolver.formatDeclaration(result));
-  console.log('──────────────────────────────────────────\n');
+  const resolver = new CanonicalResolver({ rootDir: process.cwd() });
+  const result = resolver.resolve({
+    task: promptArgs,
+    files,
+    explicitPhase: phase,
+    contextBudgetTokens: budget,
+  });
+
+  if (asJson) {
+    console.log(JSON.stringify(result, null, 2));
+  } else if (explain) {
+    console.log(resolver.formatExplanation(result));
+  } else {
+    console.log('\n══════════════════════════════════════════');
+    console.log('  ContextOS — Dynamic Skill Resolution');
+    console.log('══════════════════════════════════════════');
+    console.log(resolver.formatDeclaration(result));
+    console.log('──────────────────────────────────────────\n');
+  }
 
 // ── index ─────────────────────────────────────────────────────────────────────
 } else if (command === 'index') {
