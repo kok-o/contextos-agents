@@ -65,4 +65,7 @@ module.exports = {
   TX_ERRORS,
   TransactionError,
   safeRenameSync,
+
+  // Platform Hardening
+  ...require('./platform-hardening.js'),
 };
