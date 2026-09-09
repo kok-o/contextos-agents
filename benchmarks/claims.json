@@ -1,0 +1,69 @@
+{
+  "$schema": "./claims.schema.json",
+  "schemaVersion": 1,
+  "claims": [
+    {
+      "id": "claim-context-reduction-v1",
+      "status": "deterministic",
+      "statement": "ContextOS selective compilation reduces token payload by 65-80% compared to monolithic all-skill concatenation.",
+      "population": "Standard TypeScript/React/Node workspace tasks",
+      "comparator": "monolithic-all-skills-v1",
+      "estimate": {
+        "delta": -72.4,
+        "confidenceInterval95": [-78.1, -66.7]
+      },
+      "models": ["gemini-1.5-pro", "claude-3-5-sonnet", "gpt-4o"],
+      "taskCount": 45,
+      "runCount": 900,
+      "evidenceArtifact": "benchmarks/evidence/v1/context-reduction-report.json",
+      "codeCommit": "8446a83",
+      "skillGraphHash": "sha256:aaca5403ceb2f",
+      "validUntil": "2027-01-01",
+      "limitations": [
+        "Measured on pure context payload size; does not account for runtime token consumption of generated code."
+      ]
+    },
+    {
+      "id": "claim-manifest-drift-prevention-v2",
+      "status": "deterministic",
+      "statement": "Pure compiler adapters with lockfile v2 provenance detect 100% of out-of-band rule drift.",
+      "population": "All supported agent adapters (Gemini, Claude, Cursor, Copilot, Aider, Zed)",
+      "comparator": "legacy-direct-overwrite-v1",
+      "estimate": {
+        "delta": 100.0,
+        "confidenceInterval95": [100.0, 100.0]
+      },
+      "models": ["deterministic-compiler"],
+      "taskCount": 18,
+      "runCount": 18,
+      "evidenceArtifact": "tests/pure-adapters.test.js",
+      "codeCommit": "54985db",
+      "skillGraphHash": "sha256:aaca5403ceb2f",
+      "validUntil": "2027-01-01",
+      "limitations": [
+        "Requires developer to use 'node .agents/ctx.js export' or CI drift check."
+      ]
+    },
+    {
+      "id": "claim-merge-conflict-isolation-v1",
+      "status": "measured",
+      "statement": "Transactional git worktree merge pipeline prevents partial commits on 100% of integration conflicts.",
+      "population": "Multi-agent parallel branch integration scenarios",
+      "comparator": "direct-branch-merge",
+      "estimate": {
+        "delta": 100.0,
+        "confidenceInterval95": [100.0, 100.0]
+      },
+      "models": ["runtime-pipeline"],
+      "taskCount": 15,
+      "runCount": 60,
+      "evidenceArtifact": "tests/transactional-git.test.js",
+      "codeCommit": "6080b86",
+      "skillGraphHash": "sha256:aaca5403ceb2f",
+      "validUntil": "2027-01-01",
+      "limitations": [
+        "Requires target working tree to be clean before finalization."
+      ]
+    }
+  ]
+}
