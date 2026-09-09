@@ -1,18 +1,31 @@
+/**
+ * .agents/adapters/gemini/export.js
+ * ContextOS Gemini & Antigravity IDE Pure Adapter
+ */
+
 const fs = require('fs');
 const path = require('path');
-const { collectSkillDirectories, resetDirectory, readMeaningfulMarkdown, extractYamlField } = require('../shared.js');
+const { collectSkillDirectories, readMeaningfulMarkdown, extractYamlField } = require('../shared.js');
+const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
-const GENERATED_SKILLS_PATH = path.join(__dirname, '..', '..', 'generated', 'gemini', 'skills');
+const GENERATOR_ID = 'gemini@2';
 
-function generateGeminiSkill(skillDir) {
+function describe() {
+  return {
+    name: 'gemini',
+    version: '2.0.0',
+    description: 'Compiles modular skills for Gemini 3.8 and Google Antigravity IDE',
+    targetPattern: '.agents/generated/gemini/skills/**/SKILL.md',
+  };
+}
+
+function renderGeminiSkill(skillDir, context) {
   const skillName = path.basename(skillDir);
   const yamlPath = path.join(skillDir, 'skill.yaml');
   const existingSkillMdPath = path.join(skillDir, 'SKILL.md');
-  const outputDir = path.join(GENERATED_SKILLS_PATH, skillName);
 
   if (!fs.existsSync(existingSkillMdPath) && !fs.existsSync(yamlPath)) {
-    console.log(`Skipping ${skillName} (no skill.yaml or SKILL.md)`);
-    return;
+    return [];
   }
 
   let name = skillName;
@@ -30,11 +43,9 @@ function generateGeminiSkill(skillDir) {
   }
   description = description || `ContextOS skill for ${name}`;
 
-  // Find all .md files in the skill directory deterministically
   const files = fs.readdirSync(skillDir).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
   const mdFiles = files.filter(f => f.endsWith('.md'));
 
-  // Primary skill content first: SKILL.md is canonical; fallback to <skillName>.md
   const primaryMd = mdFiles.includes('SKILL.md')
     ? 'SKILL.md'
     : (mdFiles.find(f => f === `${skillName}.md`) || mdFiles[0]);
@@ -42,22 +53,16 @@ function generateGeminiSkill(skillDir) {
   let mergedContent = '';
   if (primaryMd) {
     let primaryText = fs.readFileSync(path.join(skillDir, primaryMd), 'utf8');
-    // Strip existing frontmatter from source so we don't double-nest
     primaryText = primaryText.replace(/^---[\s\S]*?---\r?\n/, '');
     mergedContent += primaryText;
   }
 
-  // Partition supplemental markdown files for deterministic, logical ordering:
-  // 1. Specific topic / reference docs (e.g. accessibility.md), sorted alphabetically
-  // 2. EXAMPLES.md
-  // 3. TROUBLESHOOTING.md
   const otherTopicFiles = mdFiles.filter(f => f !== primaryMd && f !== 'EXAMPLES.md' && f !== 'TROUBLESHOOTING.md');
   const orderedExtras = [...otherTopicFiles];
   if (mdFiles.includes('EXAMPLES.md') && primaryMd !== 'EXAMPLES.md') orderedExtras.push('EXAMPLES.md');
   if (mdFiles.includes('TROUBLESHOOTING.md') && primaryMd !== 'TROUBLESHOOTING.md') orderedExtras.push('TROUBLESHOOTING.md');
 
   for (const mdFile of orderedExtras) {
-    // Avoid re-appending content that was already inlined via Source comments in SKILL.md
     if (mergedContent.includes(`<!-- Source: ${mdFile} -->`)) continue;
     const extraContent = readMeaningfulMarkdown(path.join(skillDir, mdFile));
     if (extraContent) {
@@ -65,7 +70,6 @@ function generateGeminiSkill(skillDir) {
     }
   }
 
-  // Construct Gemini SKILL.md format (normalizing line endings to \n)
   const outputContent = `---
 name: ${name}
 description: >
@@ -74,42 +78,69 @@ description: >
 ${mergedContent.trimStart()}
 `.replace(/\r\n/g, '\n');
 
-  fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(path.join(outputDir, 'SKILL.md'), outputContent);
+  const artifacts = [
+    {
+      path: `.agents/generated/gemini/skills/${skillName}/SKILL.md`,
+      content: outputContent,
+      mediaType: 'text/markdown',
+      kind: 'generated-adapter',
+      generator: GENERATOR_ID,
+      sourceSkillIds: [skillName],
+      inputsHash: context?.sourceGraphHash || 'none',
+    },
+    {
+      path: `.agents/skills/${skillName}/SKILL.md`,
+      content: outputContent,
+      mediaType: 'text/markdown',
+      kind: 'generated-adapter',
+      generator: GENERATOR_ID,
+      sourceSkillIds: [skillName],
+      inputsHash: context?.sourceGraphHash || 'none',
+    },
+  ];
 
-  console.log(`Generated SKILL.md for ${skillName}`);
+  return artifacts;
 }
 
-const ANTIGRAVITY_SKILLS_PATH = path.join(__dirname, '..', '..', 'skills');
+function render(context) {
+  const skills = collectSkillDirectories(context?.profile);
+  const artifacts = [];
 
-function copyFolderRecursiveSync(source, target) {
-  if (!fs.existsSync(target)) fs.mkdirSync(target, { recursive: true });
-  const files = fs.readdirSync(source).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-  for (const file of files) {
-    const curSource = path.join(source, file);
-    const curTarget = path.join(target, file);
-    if (fs.statSync(curSource).isDirectory()) {
-      copyFolderRecursiveSync(curSource, curTarget);
-    } else {
-      fs.copyFileSync(curSource, curTarget);
+  for (const skill of skills) {
+    const rendered = renderGeminiSkill(skill, context);
+    artifacts.push(...rendered);
+  }
+
+  return artifacts;
+}
+
+function validate(artifacts) {
+  const diagnostics = [];
+  for (const art of artifacts) {
+    if (!art.content || art.content.length === 0) {
+      diagnostics.push({ path: art.path, message: 'Empty artifact content' });
     }
   }
+  return diagnostics;
 }
 
-function run() {
-  console.log('Starting Gemini adapter export...');
-  resetDirectory(GENERATED_SKILLS_PATH);
-  
-  const skills = collectSkillDirectories();
-  for (const skill of skills) {
-    generateGeminiSkill(skill);
-  }
-
-  // Also sync to .agents/skills for Antigravity IDE native discovery
-  resetDirectory(ANTIGRAVITY_SKILLS_PATH);
-  copyFolderRecursiveSync(GENERATED_SKILLS_PATH, ANTIGRAVITY_SKILLS_PATH);
-
-  console.log('Export complete. Skills are in generated/gemini/skills and .agents/skills');
+function run(options = {}) {
+  const { loadCompilerContext } = require('../pure-compiler.js');
+  const projectRoot = process.cwd();
+  const context = loadCompilerContext(projectRoot, options);
+  const artifacts = render(context);
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export gemini', context });
+  console.log(`✓ Gemini export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
+  return result;
 }
 
-module.exports = { run };
+const adapter = {
+  describe,
+  render,
+  validate,
+  run,
+};
+
+registerAdapter('gemini', adapter);
+
+module.exports = adapter;

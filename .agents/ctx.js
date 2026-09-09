@@ -93,79 +93,140 @@ const target  = args[1];
 
 // ── export ────────────────────────────────────────────────────────────────────
 if (command === 'export') {
+  const pureCompiler = require('./adapters/pure-compiler.js');
+  const driftDetector = require('./adapters/drift-detector.js');
+
   const profileFlagIdx = args.indexOf('--profile');
+  let overrideProfile = null;
   if (profileFlagIdx !== -1 && args[profileFlagIdx + 1]) {
     const profiles = require('./profiles.js');
-    const profileName = args[profileFlagIdx + 1];
+    overrideProfile = args[profileFlagIdx + 1];
     try {
-      profiles.applyProfile(profileName);
-      console.log(`[PROFILE] Applied profile '${profileName}' for this export.\n`);
+      profiles.applyProfile(overrideProfile);
+      console.log(`[PROFILE] Applied profile '${overrideProfile}' for this export.\n`);
     } catch (err) {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     }
   }
 
-  const runGemini = () => {
-    const adapter = require('./adapters/gemini/export.js');
-    adapter.run();
-  };
+  const isCheck = args.includes('--check');
+  const isDiff = args.includes('--diff');
+  const isDryRun = args.includes('--dry-run');
+  const asJson = args.includes('--json');
 
-  const runClaude = () => {
-    const adapter = require('./adapters/claude/export.js');
-    adapter.run();
-  };
+  const rawTarget = args[1] && !args[1].startsWith('--') ? args[1] : 'all';
 
-  const runCursor = () => {
-    const adapter = require('./adapters/cursor/export.js');
-    adapter.run();
-  };
+  // 1. Drift Check Mode (--check)
+  if (isCheck) {
+    const drift = driftDetector.detectDrift(process.cwd(), rawTarget, { profile: overrideProfile });
+    if (asJson) {
+      console.log(JSON.stringify(drift, null, 2));
+    } else {
+      console.log('\nContextOS — Adapter Output Drift Check\n');
+      if (!drift.hasDrift) {
+        console.log(`✓ No adapter drift detected. All ${drift.projectedCount} output artifacts are synchronized.`);
+      } else {
+        console.log(`! Drift detected (${drift.totalFindings} finding(s)):\n`);
+        for (const [state, items] of Object.entries(drift.findings)) {
+          if (items.length > 0) {
+            console.log(`  [${state}] (${items.length}):`);
+            for (const item of items) {
+              console.log(`    • ${item.path || item.reason || JSON.stringify(item)}`);
+            }
+          }
+        }
+        if (drift.collisions.length > 0) {
+          console.log(`\n  [PATH_COLLISIONS] (${drift.collisions.length}):`);
+          for (const c of drift.collisions) {
+            console.log(`    • ${c.path} (between ${c.firstAdapter} and ${c.secondAdapter})`);
+          }
+        }
+        console.log('\nRun: node .agents/ctx.js export all    to synchronize outputs with source skills.\n');
+      }
+    }
+    process.exit(drift.hasDrift ? 1 : 0);
+  }
 
-  const runCopilot = () => {
-    const adapter = require('./adapters/copilot/export.js');
-    adapter.run();
-  };
+  // 2. Diff Preview Mode (--diff)
+  if (isDiff) {
+    const drift = driftDetector.detectDrift(process.cwd(), rawTarget, { profile: overrideProfile });
+    if (asJson) {
+      console.log(JSON.stringify(drift.diffs, null, 2));
+    } else {
+      console.log('\nContextOS — Adapter Output Projected Diffs\n');
+      if (drift.diffs.length === 0) {
+        console.log('✓ Disk is in sync with projected render. No diffs found.');
+      } else {
+        for (const d of drift.diffs) {
+          console.log(`--- ${d.path} (${d.type}) ---`);
+          console.log(d.diff);
+          console.log('');
+        }
+      }
+    }
+    process.exit(0);
+  }
 
-  const runAider = () => {
-    const adapter = require('./adapters/aider/export.js');
-    adapter.run();
-  };
+  // 3. Dry-Run Mode (--dry-run)
+  if (isDryRun) {
+    const rendered = pureCompiler.renderAdapters(process.cwd(), rawTarget, { profile: overrideProfile });
+    if (asJson) {
+      console.log(JSON.stringify(rendered, null, 2));
+    } else {
+      console.log('\nContextOS — Adapter Export Dry Run\n');
+      console.log(`Target: ${rawTarget}`);
+      console.log(`Planned artifacts: ${rendered.artifacts.length}\n`);
+      for (const art of rendered.artifacts) {
+        console.log(`  + ${art.path.padEnd(50)} [${art.generator}] (${art.content.length} bytes)`);
+      }
+      if (rendered.collisions.length > 0) {
+        console.log(`\n! Collisions detected: ${rendered.collisions.length}`);
+        for (const c of rendered.collisions) {
+          console.log(`  • ${c.path} (${c.firstAdapter} vs ${c.secondAdapter})`);
+        }
+      }
+      console.log('\nDry run complete. No files were written to disk.');
+    }
+    process.exit(0);
+  }
 
-  const runZed = () => {
-    const adapter = require('./adapters/zed/export.js');
-    adapter.run();
-  };
+  // 4. Live Export Execution
+  if (rawTarget === 'all') {
+    console.log('Starting pure compiler export for all adapters...');
+    const rendered = pureCompiler.renderAdapters(process.cwd(), 'all', { profile: overrideProfile });
 
-  if (target === 'gemini') {
-    runGemini();
-  } else if (target === 'claude') {
-    runClaude();
-  } else if (target === 'cursor') {
-    runCursor();
-  } else if (target === 'copilot') {
-    runCopilot();
-  } else if (target === 'aider') {
-    runAider();
-  } else if (target === 'zed') {
-    runZed();
-  } else if (target === 'all') {
-    console.log('Exporting skills for all agents...\n');
-    runGemini();
-    console.log('');
-    runClaude();
-    console.log('');
-    runCursor();
-    console.log('');
-    runCopilot();
-    console.log('');
-    runAider();
-    console.log('');
-    runZed();
-    console.log('\nAll exports complete.');
+    if (rendered.collisions.length > 0) {
+      console.error(`[ERROR] Path collisions detected across adapters:`);
+      for (const c of rendered.collisions) {
+        console.error(`  • ${c.path} (${c.firstAdapter} vs ${c.secondAdapter})`);
+      }
+      process.exit(1);
+    }
+
+    const result = pureCompiler.applyArtifacts(process.cwd(), rendered.artifacts, {
+      command: 'export all',
+      context: rendered.context,
+    });
+
+    if (asJson) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(`✓ All exports complete: ${result.appliedCount} artifacts applied in a single transaction (tx: ${result.txId}).`);
+      console.log(`  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed`);
+    }
   } else {
-    console.error(`Adapter for '${target}' not implemented yet.`);
-    console.error('Supported agents: gemini, claude, cursor, copilot, aider, zed, all');
-    process.exit(1);
+    const adapter = pureCompiler.getAdapter(rawTarget);
+    if (!adapter) {
+      console.error(`Adapter for '${rawTarget}' not implemented yet.`);
+      console.error(`Supported agents: ${pureCompiler.listAdapters().join(', ')}, all`);
+      process.exit(1);
+    }
+
+    const result = adapter.run({ profile: overrideProfile });
+    if (asJson) {
+      console.log(JSON.stringify(result, null, 2));
+    }
   }
 
 // ── profile ───────────────────────────────────────────────────────────────────

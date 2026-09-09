@@ -1,55 +1,97 @@
+/**
+ * .agents/adapters/claude/export.js
+ * ContextOS Claude Code Pure Adapter
+ */
+
 const fs = require('fs');
 const path = require('path');
-const { collectSkillDirectories, resetDirectory, readMeaningfulMarkdown } = require('../shared.js');
+const { collectSkillDirectories, readMeaningfulMarkdown } = require('../shared.js');
+const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
-const GENERATED_SKILLS_PATH = path.join(__dirname, '..', '..', 'generated', 'claude', 'skills');
+const GENERATOR_ID = 'claude@2';
 
-/**
- * Claude Code skill format:
- * - Plain Markdown, no YAML frontmatter required
- * - First line is the skill name as an H1 comment
- * - Content is preserved as-is (Claude reads raw Markdown well)
- */
-function generateClaudeSkill(skillDir) {
+function describe() {
+  return {
+    name: 'claude',
+    version: '2.0.0',
+    description: 'Compiles clean markdown skills for Claude Code CLI',
+    targetPattern: '.agents/generated/claude/skills/**/SKILL.md',
+  };
+}
+
+function renderClaudeSkill(skillDir, context) {
   const skillName = path.basename(skillDir);
   const existingSkillMdPath = path.join(skillDir, 'SKILL.md');
-  const outputDir = path.join(GENERATED_SKILLS_PATH, skillName);
 
   if (!fs.existsSync(existingSkillMdPath)) {
-    console.log(`Skipping ${skillName} (no SKILL.md)`);
-    return;
+    return null;
   }
 
   let content = fs.readFileSync(existingSkillMdPath, 'utf8');
-  
+
   const examples = readMeaningfulMarkdown(path.join(skillDir, 'EXAMPLES.md'));
   if (examples) {
     content += '\n\n' + examples;
   }
-  
+
   const troubleshooting = readMeaningfulMarkdown(path.join(skillDir, 'TROUBLESHOOTING.md'));
   if (troubleshooting) {
     content += '\n\n' + troubleshooting;
   }
 
-  // Strip YAML frontmatter if present (Claude doesn't need it)
+  // Strip YAML frontmatter
   content = content.replace(/^---[\s\S]*?---\r?\n/, '');
 
-  // Write the cleaned Markdown
-  fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(path.join(outputDir, 'SKILL.md'), content.trimStart());
-  console.log(`Generated SKILL.md for ${skillName} (claude)`);
+  return {
+    path: `.agents/generated/claude/skills/${skillName}/SKILL.md`,
+    content: content.trimStart().replace(/\r\n/g, '\n'),
+    mediaType: 'text/markdown',
+    kind: 'generated-adapter',
+    generator: GENERATOR_ID,
+    sourceSkillIds: [skillName],
+    inputsHash: context?.sourceGraphHash || 'none',
+  };
 }
 
-function run() {
-  console.log('Starting Claude adapter export...');
-  resetDirectory(GENERATED_SKILLS_PATH);
+function render(context) {
+  const skills = collectSkillDirectories(context?.profile);
+  const artifacts = [];
 
-  const skills = collectSkillDirectories();
   for (const skill of skills) {
-    generateClaudeSkill(skill);
+    const art = renderClaudeSkill(skill, context);
+    if (art) artifacts.push(art);
   }
-  console.log('Export complete. Skills are in generated/claude/skills');
+
+  return artifacts;
 }
 
-module.exports = { run };
+function validate(artifacts) {
+  const diagnostics = [];
+  for (const art of artifacts) {
+    if (!art.content || art.content.length === 0) {
+      diagnostics.push({ path: art.path, message: 'Empty artifact content' });
+    }
+  }
+  return diagnostics;
+}
+
+function run(options = {}) {
+  const { loadCompilerContext } = require('../pure-compiler.js');
+  const projectRoot = process.cwd();
+  const context = loadCompilerContext(projectRoot, options);
+  const artifacts = render(context);
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export claude', context });
+  console.log(`✓ Claude export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
+  return result;
+}
+
+const adapter = {
+  describe,
+  render,
+  validate,
+  run,
+};
+
+registerAdapter('claude', adapter);
+
+module.exports = adapter;
