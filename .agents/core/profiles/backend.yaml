@@ -1,20 +1,55 @@
 # Profile: Backend
 # Dedicated backend & API architecture focus
 
+schemaVersion: 2
 id: backend
 name: Backend
 description: "Specialized for server-side architectures, APIs, databases, microservices, and system design."
 
-generate_docs:
-  - PRD
-  - ARCHITECTURE
-  - DATABASE
-  - API
-  - TASKS
+skills:
+  required: []
+  preferred:
+    - system-design
+    - node
+    - fastapi
+    - nestjs
+    - microservices
+    - ddd
+    - database
+    - security
+    - performance
+    - decisions
+    - engineering-workflow
+    - ponytail-mindset
+  excluded:
+    - ui-ux-pro
+    - impeccable-design
+    - ui-design
+    - ux-design
+    - web-accessibility
 
-skip_docs:
-  - UI
+policy:
+  verification: required
+  review: required
+  security: required
+  adr: required
+  testing: required
+  accessibility: off
 
+generation:
+  documents:
+    - PRD
+    - ARCHITECTURE
+    - DATABASE
+    - API
+    - TASKS
+
+technologyDefaults:
+  architecture: modular-monolith-or-microservices
+  database: postgresql
+  auth: jwt
+
+# Legacy v1 fields for backward compatibility
 prefer_skills:
   - system-design
   - node
@@ -22,25 +57,31 @@ prefer_skills:
   - nestjs
   - microservices
   - ddd
+  - database
   - security
   - performance
   - decisions
   - engineering-workflow
   - ponytail-mindset
-
 exclude_skills:
   - ui-ux-pro
   - impeccable-design
   - ui-design
   - ux-design
   - web-accessibility
-
+generate_docs:
+  - PRD
+  - ARCHITECTURE
+  - DATABASE
+  - API
+  - TASKS
+skip_docs:
+  - UI
 enforce:
   adr: true
   testing: true
   security_audit: true
   code_review: true
-
 defaults:
   architecture: modular-monolith-or-microservices
   database: postgresql

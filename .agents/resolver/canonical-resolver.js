@@ -530,11 +530,11 @@ class CanonicalResolver {
       this.registry = loadRegistry(findAgentsDir(projectRoot));
     }
 
-    // 1. Load active profile
+    // 1. Load active profile (supports monorepo package overrides for touched files)
     let activeProfile = null;
     try {
       const profilesModule = require('../profiles.js');
-      activeProfile = profilesModule.getActiveProfile(projectRoot);
+      activeProfile = profilesModule.getActiveProfile(projectRoot, files[0]);
     } catch {
       // ignore
     }

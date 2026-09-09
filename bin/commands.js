@@ -194,10 +194,14 @@ const COMMAND_REGISTRY = {
   },
   profile: {
     name: 'profile',
-    description: 'Manage project profiles (list, show, apply, remove)',
-    usage: 'contextos profile <list|show|apply|remove> [name]',
+    description: 'Manage project profiles (list, show, explain, apply, remove)',
+    usage: 'contextos profile <list|show|explain|apply|remove> [name] [--scope <pkg>] [--no-export] [--json]',
     requiresProject: true,
-    options: [],
+    options: [
+      { flag: '--scope <path>', desc: 'Scope profile application or removal to specific package' },
+      { flag: '--no-export', desc: 'Skip re-exporting adapter skills after applying profile' },
+      { flag: '--json', desc: 'Output profile information in JSON format' },
+    ],
   },
   resolve: {
     name: 'resolve',

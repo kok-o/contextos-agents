@@ -525,10 +525,19 @@ function checkProfilesIntegrity(sourceSkills) {
 
   let profilesValidated = 0;
   const files = fs.readdirSync(CORE_PROFILES).filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
+  const profiles = require('./profiles.js');
+  const mockRegistry = { skills: Object.fromEntries(Array.from(knownIds).map(id => [id, true])) };
 
   for (const file of files) {
     const filePath = path.join(CORE_PROFILES, file);
     const text = fs.readFileSync(filePath, 'utf8');
+
+    try {
+      const parsed = profiles.parseYamlProfile(text);
+      profiles.validateProfile(parsed, mockRegistry);
+    } catch (err) {
+      error(`[profiles] ${file} — validation failed: ${err.message}`);
+    }
 
     const referenced = [
       ...yamlList(text, 'skills'),

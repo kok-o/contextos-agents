@@ -36,10 +36,11 @@ function printHelp() {
   console.log('  export aider [--profile <p>]    Compile skills → .aider.conf.yml + CONVENTIONS.md');
   console.log('  export zed [--profile <p>]      Compile skills → .zed/rules.md & .zed/prompts/*.md');
   console.log('  export all [--profile <p>]      Compile skills for all supported agents');
-  console.log('  profile list                    List available project profiles');
-  console.log('  profile show <name>             Show profile configuration');
-  console.log('  profile apply <name>            Apply a profile (e.g. mvp, startup, enterprise, frontend)');
-  console.log('  profile remove                  Remove active profile filter');
+  console.log('  profile list [--json]           List available project profiles');
+  console.log('  profile show <name> [--json]    Show profile configuration');
+  console.log('  profile explain <name> [--json] Detailed explanation of profile skills, policies & defaults');
+  console.log('  profile apply <name>            Apply a profile (supports --scope <pkg> --no-export --json)');
+  console.log('  profile remove [--scope <pkg>]  Remove active profile or scoped package override');
   console.log('  resolve <prompt>                Resolve minimal skills needed for a task');
   console.log('  index                           Generate progressive skills-index.json');
   console.log('  detect                          Auto-detect project tech stack');
@@ -169,30 +170,46 @@ if (command === 'export') {
 // ── profile ───────────────────────────────────────────────────────────────────
 } else if (command === 'profile') {
   const subcommand = args[1] || 'list';
-  const profileName = args[2];
+  const profileName = args[2] && !args[2].startsWith('-') ? args[2] : null;
   const profiles = require('./profiles.js');
+  const asJson = args.includes('--json');
+
+  const scopeIdx = args.indexOf('--scope');
+  const scopeArg = scopeIdx !== -1 && args[scopeIdx + 1] && !args[scopeIdx + 1].startsWith('--')
+    ? args[scopeIdx + 1]
+    : (args.find(a => a.startsWith('--scope=')) || '').split('=')[1] || null;
 
   if (subcommand === 'list') {
     const list = profiles.listProfiles();
     const active = profiles.getActiveProfile();
-    console.log('\nAvailable ContextOS Profiles:\n');
-    for (const p of list) {
-      const isActive = active && active.profile === p.id;
-      const marker = isActive ? '● [ACTIVE]' : '○';
-      console.log(`  ${marker} ${p.id.padEnd(12)} - ${p.name}: ${p.description}`);
-      if (p.exclude_skills && p.exclude_skills.length > 0) {
-        console.log(`      Excludes: ${p.exclude_skills.join(', ')}`);
+    if (asJson) {
+      console.log(JSON.stringify({ active, profiles: list }, null, 2));
+    } else {
+      console.log('\nAvailable ContextOS Profiles:\n');
+      for (const p of list) {
+        const isActive = active && active.profile === p.id;
+        const marker = isActive ? '● [ACTIVE]' : '○';
+        console.log(`  ${marker} ${p.id.padEnd(12)} - ${p.name}: ${p.description}`);
+        if (p.exclude_skills && p.exclude_skills.length > 0) {
+          console.log(`      Excludes: ${p.exclude_skills.join(', ')}`);
+        }
       }
+      console.log('\nApply a profile: node .agents/ctx.js profile apply <name> [--scope <pkg>]');
+      if (active) {
+        console.log(`Current active profile: ${active.profile} (${active.name || active.profile})`);
+        if (active.overrides && Object.keys(active.overrides).length > 0) {
+          console.log('Package Overrides:');
+          for (const [s, oProf] of Object.entries(active.overrides)) {
+            console.log(`  • ${s} → ${oProf}`);
+          }
+        }
+      }
+      console.log('');
     }
-    console.log('\nApply a profile: node .agents/ctx.js profile apply <name>');
-    if (active) {
-      console.log(`Current active profile: ${active.profile} (${active.name})`);
-    }
-    console.log('');
   } else if (subcommand === 'show') {
     const name = profileName || (profiles.getActiveProfile() || {}).profile;
     if (!name) {
-      console.error('[ERROR] Usage: node ctx.js profile show <name>');
+      console.error('[ERROR] Usage: node ctx.js profile show <name> [--json]');
       process.exit(1);
     }
     const profile = profiles.getProfile(name);
@@ -200,34 +217,77 @@ if (command === 'export') {
       console.error(`[ERROR] Profile '${name}' not found.`);
       process.exit(1);
     }
-    console.log(`\nProfile: ${profile.name} (${profile.id})`);
-    console.log(`Description: ${profile.description}`);
-    console.log(`Preferred Skills: ${(profile.prefer_skills || []).join(', ') || 'none'}`);
-    console.log(`Excluded Skills: ${(profile.exclude_skills || []).join(', ') || 'none'}\n`);
-  } else if (subcommand === 'apply') {
-    if (!profileName) {
-      console.error('[ERROR] Usage: node ctx.js profile apply <name>');
+    if (asJson) {
+      console.log(JSON.stringify(profile, null, 2));
+    } else {
+      console.log(`\nProfile: ${profile.name} (${profile.id})`);
+      console.log(`Description: ${profile.description}`);
+      console.log(`Required Skills: ${(profile.skills?.required || profile.require_skills || []).join(', ') || 'none'}`);
+      console.log(`Preferred Skills: ${(profile.skills?.preferred || profile.prefer_skills || []).join(', ') || 'none'}`);
+      console.log(`Excluded Skills: ${(profile.skills?.excluded || profile.exclude_skills || []).join(', ') || 'none'}\n`);
+    }
+  } else if (subcommand === 'explain') {
+    const name = profileName || (profiles.getActiveProfile() || {}).profile;
+    if (!name) {
+      console.error('[ERROR] Usage: node ctx.js profile explain <name> [--json]');
       process.exit(1);
     }
     try {
-      const applied = profiles.applyProfile(profileName);
-      console.log(`\n✓ Profile '${applied.name}' successfully applied!`);
-      console.log(`  Excluded skills: ${(applied.exclude_skills || []).join(', ') || 'none'}`);
-      console.log('  Run: node .agents/ctx.js export all  (to rebuild exports with this profile)\n');
+      const explanation = profiles.explainProfile(name);
+      if (asJson) {
+        console.log(JSON.stringify(explanation, null, 2));
+      } else {
+        console.log('\n' + profiles.formatProfileExplanation(explanation) + '\n');
+      }
+    } catch (err) {
+      console.error(`[ERROR] ${err.message}`);
+      process.exit(1);
+    }
+  } else if (subcommand === 'apply') {
+    if (!profileName) {
+      console.error('[ERROR] Usage: node ctx.js profile apply <name> [--scope <pkg>] [--no-export] [--json]');
+      process.exit(1);
+    }
+    try {
+      const applied = profiles.applyProfile(profileName, process.cwd(), {
+        scope: scopeArg,
+        noExport: args.includes('--no-export'),
+      });
+      if (asJson) {
+        console.log(JSON.stringify(applied, null, 2));
+      } else {
+        if (scopeArg) {
+          console.log(`\n✓ Scoped profile override '${profileName}' applied to scope: ${scopeArg}!`);
+        } else {
+          console.log(`\n✓ Profile '${applied.name || profileName}' successfully applied as root profile!`);
+          console.log(`  Excluded skills: ${(applied.exclude_skills || []).join(', ') || 'none'}`);
+        }
+        if (!args.includes('--no-export')) {
+          console.log('  Run: node .agents/ctx.js export all  (to rebuild exports with this profile)\n');
+        }
+      }
     } catch (err) {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     }
   } else if (subcommand === 'remove' || subcommand === 'reset') {
-    const removed = profiles.removeActiveProfile();
-    if (removed) {
-      console.log('\n✓ Active profile filter removed. All skills will be included.\n');
+    const removed = profiles.removeActiveProfile(process.cwd(), { scope: scopeArg });
+    if (asJson) {
+      console.log(JSON.stringify({ removed, scope: scopeArg }, null, 2));
     } else {
-      console.log('\nNo active profile was set.\n');
+      if (removed) {
+        if (scopeArg) {
+          console.log(`\n✓ Profile override for scope '${scopeArg}' removed.\n`);
+        } else {
+          console.log('\n✓ Active profile filter removed. All skills will be included.\n');
+        }
+      } else {
+        console.log(`\nNo active profile${scopeArg ? ` override for '${scopeArg}'` : ''} was found.\n`);
+      }
     }
   } else {
     console.error(`Unknown profile subcommand: ${subcommand}`);
-    console.error('Valid subcommands: list, show, apply, remove');
+    console.error('Valid subcommands: list, show, explain, apply, remove');
     process.exit(1);
   }
 

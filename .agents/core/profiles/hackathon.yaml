@@ -1,14 +1,56 @@
 # Profile: Hackathon
 # 24-48 hours to ship something impressive
 
+schemaVersion: 2
 id: hackathon
 name: Hackathon
 description: "Ship something impressive in 24-48 hours. No ceremony, just build."
 
-generate_docs:
-  - TASKS          # What to build, in order
-  - PROJECT_GRAPH  # Quick module map
+skills:
+  required: []
+  preferred:
+    - react
+    - typescript
+    - database
+  excluded:
+    - ddd
+    - microservices
+    - security
+    - testing
 
+policy:
+  verification: off
+  review: off
+  security: off
+  adr: off
+  testing: off
+  accessibility: off
+
+generation:
+  documents:
+    - TASKS
+    - PROJECT_GRAPH
+
+technologyDefaults:
+  architecture: single-file
+  database: sqlite
+  auth: simple-jwt
+  hosting: vercel
+  orm: prisma
+
+# Legacy v1 fields for backward compatibility
+prefer_skills:
+  - react
+  - typescript
+  - database
+exclude_skills:
+  - ddd
+  - microservices
+  - security
+  - testing
+generate_docs:
+  - TASKS
+  - PROJECT_GRAPH
 skip_docs:
   - PRD
   - ARCHITECTURE
@@ -17,29 +59,14 @@ skip_docs:
   - UI
   - ROADMAP
   - DEPLOYMENT
-
-prefer_skills:
-  - sqlite
-  - react
-  - typescript
-
-exclude_skills:
-  - ddd
-  - microservices
-  - kubernetes
-  - monitoring
-  - cicd
-  - security  # Sorry, security — not today
-  - testing   # Sorry, tests — not today
-
 enforce:
   adr: false
   testing: false
   security_audit: false
   code_review: false
-
 defaults:
-  architecture: single-file  # or monolith
+  architecture: single-file
   database: sqlite
-  auth: none  # or simple-jwt
+  auth: simple-jwt
   hosting: vercel
+  orm: prisma

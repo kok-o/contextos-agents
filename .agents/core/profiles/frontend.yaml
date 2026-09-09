@@ -1,19 +1,52 @@
 # Profile: Frontend
 # Dedicated frontend stack focus
 
+schemaVersion: 2
 id: frontend
 name: Frontend
 description: "Specialized for modern frontend applications (React, Next.js, UI/UX, Design Systems, Accessibility)."
 
-generate_docs:
-  - PRD
-  - UI
-  - TASKS
+skills:
+  required:
+    - react
+    - typescript
+  preferred:
+    - nextjs
+    - ui-ux-pro
+    - impeccable-design
+    - ui-design
+    - ux-design
+    - web-accessibility
+    - ponytail-mindset
+    - engineering-workflow
+    - gstack-roles
+  excluded:
+    - fastapi
+    - nestjs
+    - microservices
+    - ddd
 
-skip_docs:
-  - DATABASE
-  - MICROSERVICES
+policy:
+  verification: recommended
+  review: required
+  security: recommended
+  adr: off
+  testing: required
+  accessibility: required
 
+generation:
+  documents:
+    - PRD
+    - UI
+    - TASKS
+
+technologyDefaults:
+  architecture: frontend-spa-or-ssr
+  framework: nextjs
+  styling: tailwind
+  state: react-state
+
+# Legacy v1 fields for backward compatibility
 prefer_skills:
   - react
   - nextjs
@@ -26,21 +59,25 @@ prefer_skills:
   - ponytail-mindset
   - engineering-workflow
   - gstack-roles
-
 exclude_skills:
   - fastapi
   - nestjs
   - microservices
   - ddd
-
+generate_docs:
+  - PRD
+  - UI
+  - TASKS
+skip_docs:
+  - DATABASE
+  - MICROSERVICES
 enforce:
   adr: false
   testing: true
   accessibility_audit: true
   code_review: true
-
 defaults:
   architecture: frontend-spa-or-ssr
   framework: nextjs
-  styling: tailwind-or-css
+  styling: tailwind
   state: react-state

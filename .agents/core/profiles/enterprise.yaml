@@ -1,10 +1,66 @@
 # Profile: Enterprise
 # Maximum rigor and documentation
 
+schemaVersion: 2
 id: enterprise
 name: Enterprise
 description: "Full documentation, DDD, ADR, security audits, comprehensive testing."
 
+skills:
+  required:
+    - security
+    - testing
+  preferred:
+    - system-design
+    - database
+    - docker
+    - ddd
+    - microservices
+    - decisions
+  excluded: []
+
+policy:
+  verification: required
+  review: required
+  security: required
+  adr: required
+  testing: required
+  accessibility: required
+
+generation:
+  documents:
+    - PRD
+    - ARCHITECTURE
+    - DATABASE
+    - API
+    - UI
+    - ROADMAP
+    - TASKS
+    - PROJECT_GRAPH
+    - DEPLOYMENT
+
+technologyDefaults:
+  architecture: microservices
+  database: postgresql
+  cache: redis
+  auth: oauth2-jwt
+  hosting: kubernetes
+  orm: prisma
+  monitoring: prometheus-grafana
+  logging: elk-stack
+  ci_cd: github-actions
+
+# Legacy v1 fields for backward compatibility
+prefer_skills:
+  - security
+  - testing
+  - system-design
+  - database
+  - docker
+  - ddd
+  - microservices
+  - decisions
+exclude_skills: []
 generate_docs:
   - PRD
   - ARCHITECTURE
@@ -15,32 +71,20 @@ generate_docs:
   - TASKS
   - PROJECT_GRAPH
   - DEPLOYMENT
-
-skip_docs: []  # Generate everything
-
-prefer_skills:
-  - postgres
-  - redis
-  - docker
-  - ddd
-  - microservices
-  - security
-
-exclude_skills: []  # Nothing excluded
-
+skip_docs: []
 enforce:
-  adr: true                # Every decision must be recorded
-  testing: true             # Tests required, min coverage 80%
-  security_audit: true      # OWASP check on every PR
-  code_review: true         # Mandatory review
-  accessibility_audit: true # WCAG 2.1 AA compliance
-
+  adr: true
+  testing: true
+  security_audit: true
+  code_review: true
+  accessibility_audit: true
 defaults:
-  architecture: microservices  # or modular-monolith
+  architecture: microservices
   database: postgresql
+  cache: redis
   auth: oauth2-jwt
   hosting: kubernetes
-  orm: typeorm  # or prisma
+  orm: prisma
   monitoring: prometheus-grafana
   logging: elk-stack
   ci_cd: github-actions

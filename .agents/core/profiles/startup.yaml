@@ -1,11 +1,58 @@
 # Profile: Startup
 # Balanced between speed and quality
 
+schemaVersion: 2
 id: startup
 name: Startup
 description: "Fast iteration with reasonable quality. Ship early, learn fast."
 
-# What to generate
+skills:
+  required:
+    - engineering-workflow
+  preferred:
+    - docker
+    - database
+    - security
+    - testing
+  excluded:
+    - ddd
+    - microservices
+
+policy:
+  verification: recommended
+  review: recommended
+  security: recommended
+  adr: off
+  testing: recommended
+  accessibility: recommended
+
+generation:
+  documents:
+    - PRD
+    - ARCHITECTURE
+    - DATABASE
+    - API
+    - UI
+    - TASKS
+    - PROJECT_GRAPH
+
+technologyDefaults:
+  architecture: modular-monolith
+  database: postgresql
+  cache: redis
+  auth: jwt
+  hosting: vercel-railway
+  orm: prisma
+
+# Legacy v1 fields for backward compatibility
+prefer_skills:
+  - docker
+  - database
+  - security
+  - testing
+exclude_skills:
+  - ddd
+  - microservices
 generate_docs:
   - PRD
   - ARCHITECTURE
@@ -14,35 +61,18 @@ generate_docs:
   - UI
   - TASKS
   - PROJECT_GRAPH
-
-# What to skip
 skip_docs:
-  - ROADMAP  # Optional — generate on request
-  - DEPLOYMENT  # Handle later
-
-# Skill preferences
-prefer_skills:
-  - postgres
-  - redis
-  - docker
-  - jwt
-
-exclude_skills:
-  - kubernetes
-  - ddd
-  - microservices
-
-# Quality gates
+  - ROADMAP
+  - DEPLOYMENT
 enforce:
-  adr: false            # Record decisions, but don't block on it
-  testing: true          # Tests required
-  security_audit: false  # Not mandatory at this stage
-  code_review: true      # Self-review
-
-# Architecture defaults
+  adr: false
+  testing: true
+  security_audit: false
+  code_review: true
 defaults:
   architecture: modular-monolith
   database: postgresql
+  cache: redis
   auth: jwt
   hosting: vercel-railway
   orm: prisma
