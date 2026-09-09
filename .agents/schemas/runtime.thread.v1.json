@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContextOS Runtime Thread State v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "revision",
+    "execution",
+    "verification",
+    "review",
+    "merge",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "config": {
+      "type": "object",
+      "required": ["task"],
+      "properties": {
+        "task": { "type": "string" },
+        "objective": { "type": "string" },
+        "writeScope": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "testCommand": { "type": "string" },
+        "agent": { "type": "string" },
+        "model": { "type": "string" },
+        "targetBase": { "type": "string" },
+        "requiredSandbox": {
+          "type": "string",
+          "enum": ["none", "host-unsafe", "oci", "strict-sandbox"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "PREPARING",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "TIMED_OUT",
+            "CANCELLED",
+            "INTERRUPTED"
+          ]
+        },
+        "startedAt": { "type": "number" },
+        "completedAt": { "type": "number" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "maxAttempts": { "type": "integer", "minimum": 1 },
+        "error": { "type": "string" },
+        "executionId": { "type": "string" },
+        "worktreePath": { "type": "string" },
+        "branchName": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "NOT_CONFIGURED",
+            "NOT_APPLICABLE",
+            "PENDING",
+            "RUNNING",
+            "PASS",
+            "FAIL",
+            "ERROR",
+            "TIMEOUT",
+            "STALE"
+          ]
+        },
+        "attestation": { "$ref": "attestation.verification.v1.json" },
+        "reason": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "NOT_CONFIGURED",
+            "PENDING",
+            "RUNNING",
+            "PASS",
+            "FAIL",
+            "ERROR",
+            "TIMEOUT",
+            "UNAVAILABLE",
+            "MALFORMED",
+            "STALE"
+          ]
+        },
+        "attestation": { "$ref": "attestation.review.v1.json" },
+        "reason": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "merge": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "NOT_READY",
+            "READY",
+            "MERGING",
+            "MERGED",
+            "BLOCKED",
+            "CONFLICT",
+            "STALE_BASE",
+            "ERROR"
+          ]
+        },
+        "readiness": {
+          "type": "object",
+          "required": ["isReady", "checks", "evaluatedAt"],
+          "properties": {
+            "isReady": { "type": "boolean" },
+            "checks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "passed", "message"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "passed": { "type": "boolean" },
+                  "message": { "type": "string" },
+                  "code": { "type": "string" }
+                }
+              }
+            },
+            "evaluatedAt": { "type": "number" }
+          }
+        },
+        "mergedAt": { "type": "number" },
+        "targetBranch": { "type": "string" },
+        "mergeCommitSha": { "type": "string" },
+        "error": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "subject": {
+      "type": "object",
+      "required": ["repositoryFingerprint", "baseSha"],
+      "properties": {
+        "repositoryFingerprint": { "type": "string" },
+        "baseSha": { "type": "string" },
+        "headSha": { "type": "string" },
+        "diffSha256": { "type": "string" },
+        "scopeSha256": { "type": "string" },
+        "filesChanged": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "createdAt": { "type": "number" },
+    "updatedAt": { "type": "number" }
+  }
+}

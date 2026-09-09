@@ -790,6 +790,78 @@ if (command === 'export') {
     }
   }
 
+// ── thread ──────────────────────────────────────────────────────────────────
+} else if (command === 'thread') {
+  const { ThreadStore } = require('./runtime/thread-store.js');
+  const { evaluateMergeReadiness } = require('./runtime/state-machine.js');
+  const store = new ThreadStore({ baseDir: process.cwd() });
+  const subcmd = args[1] || 'list';
+  const isJson = args.includes('--json');
+
+  if (subcmd === 'list') {
+    const list = store.list();
+    if (isJson) {
+      console.log(JSON.stringify(list, null, 2));
+    } else {
+      console.log('\n══════════════════════════════════════════');
+      console.log('  ContextOS — Runtime Execution Threads');
+      console.log('══════════════════════════════════════════\n');
+      if (list.length === 0) {
+        console.log('  No runtime threads recorded yet.');
+      } else {
+        for (const th of list) {
+          const ready = th.merge?.status === 'READY' ? ' [READY TO MERGE]' : '';
+          console.log(`  • ID: ${th.id} (rev: ${th.revision})`);
+          console.log(`    Status      : Exec: ${th.execution.status} | Verify: ${th.verification.status} | Review: ${th.review.status} | Merge: ${th.merge.status}${ready}`);
+          console.log(`    Task        : ${(th.config?.task || '').slice(0, 70)}`);
+          console.log(`    Created     : ${new Date(th.createdAt).toISOString()}`);
+          console.log('');
+        }
+      }
+      console.log('──────────────────────────────────────────\n');
+    }
+  } else if (subcmd === 'get') {
+    const threadId = args[2];
+    if (!threadId) {
+      console.error('Usage: node ctx.js thread get <threadId> [--json]');
+      process.exit(1);
+    }
+    const th = store.get(threadId);
+    if (!th) {
+      console.error(`Thread "${threadId}" not found.`);
+      process.exit(1);
+    }
+    console.log(JSON.stringify(th, null, 2));
+  } else if (subcmd === 'readiness') {
+    const threadId = args[2];
+    if (!threadId) {
+      console.error('Usage: node ctx.js thread readiness <threadId> [--json]');
+      process.exit(1);
+    }
+    const th = store.get(threadId);
+    if (!th) {
+      console.error(`Thread "${threadId}" not found.`);
+      process.exit(1);
+    }
+    const readiness = evaluateMergeReadiness(th);
+    if (isJson) {
+      console.log(JSON.stringify(readiness, null, 2));
+    } else {
+      console.log('\n══════════════════════════════════════════');
+      console.log(`  ContextOS — Merge Readiness (${th.id})`);
+      console.log('══════════════════════════════════════════\n');
+      console.log(`  Overall Verdict: ${readiness.isReady ? 'READY TO MERGE ✓' : 'NOT READY ✗'}\n`);
+      for (const c of readiness.checks) {
+        const mark = c.passed ? '✓' : '✗';
+        console.log(`  ${mark} [${c.name.padEnd(24)}] ${c.message}`);
+      }
+      console.log('\n──────────────────────────────────────────\n');
+    }
+  } else {
+    console.error(`Unknown thread subcommand: ${subcmd}. Available: list, get, readiness`);
+    process.exit(1);
+  }
+
 // ── unknown ───────────────────────────────────────────────────────────────────
 } else {
   console.error(`Unknown command: ${command}`);

@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContextOS Review Attestation v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "subject",
+    "implementerExecutionId",
+    "reviewerExecutionId",
+    "provider",
+    "model",
+    "independenceLevel",
+    "rawOutputDigest",
+    "retries"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "NOT_CONFIGURED",
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "TIMEOUT",
+        "UNAVAILABLE",
+        "MALFORMED",
+        "STALE"
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "repositoryFingerprint",
+        "baseSha",
+        "headSha",
+        "diffSha256",
+        "scopeSha256"
+      ],
+      "properties": {
+        "repositoryFingerprint": { "type": "string" },
+        "baseSha": { "type": "string" },
+        "headSha": { "type": "string" },
+        "diffSha256": { "type": "string" },
+        "scopeSha256": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "implementerExecutionId": { "type": "string" },
+    "reviewerExecutionId": { "type": "string" },
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "independenceLevel": {
+      "type": "string",
+      "enum": [
+        "same_process",
+        "separate_process",
+        "isolated_container",
+        "external_evaluator"
+      ]
+    },
+    "rawOutputDigest": { "type": "string" },
+    "staticFindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ruleId", "severity", "message"],
+        "properties": {
+          "ruleId": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "message": { "type": "string" },
+          "file": { "type": "string" },
+          "line": { "type": "integer" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "llmVerdict": {
+      "type": "object",
+      "required": ["specCompliance", "codeQuality", "summary"],
+      "properties": {
+        "specCompliance": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "UNCERTAIN"]
+        },
+        "codeQuality": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "NEEDS_WORK"]
+        },
+        "summary": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "retries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "startedAt": { "type": "number" },
+    "completedAt": { "type": "number" }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContextOS Verification Attestation v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "subject",
+    "runnerMode"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "NOT_CONFIGURED",
+        "NOT_APPLICABLE",
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "TIMEOUT",
+        "STALE"
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "repositoryFingerprint",
+        "baseSha",
+        "headSha",
+        "diffSha256",
+        "scopeSha256"
+      ],
+      "properties": {
+        "repositoryFingerprint": { "type": "string" },
+        "baseSha": { "type": "string" },
+        "headSha": { "type": "string" },
+        "diffSha256": { "type": "string" },
+        "scopeSha256": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "command": {
+      "type": "object",
+      "required": ["executable", "args"],
+      "properties": {
+        "executable": { "type": "string" },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "cwd": { "type": "string" },
+        "timeoutMs": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["exitCode", "outputSha256"],
+      "properties": {
+        "exitCode": { "type": ["integer", "null"] },
+        "signal": { "type": ["string", "null"] },
+        "outputSha256": { "type": "string" },
+        "redactedPreview": { "type": "string" },
+        "totalTests": { "type": "integer" },
+        "passedTests": { "type": "integer" },
+        "failedTests": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "runnerMode": {
+      "type": "string",
+      "enum": ["oci", "host-unsafe"]
+    },
+    "startedAt": { "type": "number" },
+    "completedAt": { "type": "number" },
+    "reasonCode": { "type": "string" }
+  }
+}

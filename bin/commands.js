@@ -299,6 +299,15 @@ const COMMAND_REGISTRY = {
       { flag: '--continue [txId]', desc: 'Attempt to resume and complete prepared transaction' },
     ],
   },
+  thread: {
+    name: 'thread',
+    description: 'Inspect runtime execution threads, attestations, and merge readiness',
+    usage: 'contextos thread <list|get|readiness> [id] [--json]',
+    requiresProject: true,
+    options: [
+      { flag: '--json', desc: 'Output in structured JSON format' },
+    ],
+  },
 };
 
 /**

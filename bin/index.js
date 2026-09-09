@@ -246,7 +246,8 @@ if (mainCommand === 'doctor') {
 // Proxy commands to .agents/ctx.js when executed in a ContextOS project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',
-  'clean-worktrees', 'stats', 'watch', 'compile', 'recover', 'explain'
+  'clean-worktrees', 'stats', 'watch', 'compile', 'recover', 'explain',
+  'thread'
 ];
 
 const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');

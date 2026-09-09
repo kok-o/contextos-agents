@@ -100,6 +100,111 @@ export interface TaskBrief {
 export type VerificationVerdict = "NOT_CONFIGURED" | "PENDING" | "RUNNING" | "PASS" | "FAIL" | "ERROR" | "TIMEOUT";
 export type ReviewVerdictValue = "PASS" | "FAIL" | "ERROR" | "TIMEOUT" | "UNAVAILABLE" | "MALFORMED" | "NOT_CONFIGURED";
 
+// ── Milestone 10 Independent Runtime Statuses (Section 15.1) ─────────────────
+
+export type ExecutionStatus =
+	| "QUEUED"
+	| "PREPARING"
+	| "RUNNING"
+	| "SUCCEEDED"
+	| "FAILED"
+	| "TIMED_OUT"
+	| "CANCELLED"
+	| "INTERRUPTED";
+
+export type VerificationStatus =
+	| "NOT_CONFIGURED"
+	| "NOT_APPLICABLE"
+	| "PENDING"
+	| "RUNNING"
+	| "PASS"
+	| "FAIL"
+	| "ERROR"
+	| "TIMEOUT"
+	| "STALE";
+
+export type ReviewStatus =
+	| "NOT_CONFIGURED"
+	| "PENDING"
+	| "RUNNING"
+	| "PASS"
+	| "FAIL"
+	| "ERROR"
+	| "TIMEOUT"
+	| "UNAVAILABLE"
+	| "MALFORMED"
+	| "STALE";
+
+export type MergeStatus =
+	| "NOT_READY"
+	| "READY"
+	| "MERGING"
+	| "MERGED"
+	| "BLOCKED"
+	| "CONFLICT"
+	| "STALE_BASE"
+	| "ERROR";
+
+// ── Milestone 10 Attestations (Section 15.2 & 15.3) ──────────────────────────
+
+export interface VerificationAttestation {
+	schemaVersion: 1;
+	status: VerificationStatus;
+	subject: {
+		repositoryFingerprint: string;
+		baseSha: string;
+		headSha: string;
+		diffSha256: string;
+		scopeSha256: string;
+	};
+	command?: {
+		executable: string;
+		args: string[];
+		cwd: string;
+		timeoutMs: number;
+	};
+	evidence?: {
+		exitCode: number | null;
+		signal: string | null;
+		outputSha256: string;
+		redactedPreview: string;
+		totalTests?: number;
+		passedTests?: number;
+		failedTests?: number;
+	};
+	runnerMode: "oci" | "host-unsafe";
+	startedAt?: number;
+	completedAt?: number;
+	reasonCode?: string;
+}
+
+export interface ReviewAttestation {
+	schemaVersion: 1;
+	status: ReviewStatus;
+	subject: {
+		repositoryFingerprint: string;
+		baseSha: string;
+		headSha: string;
+		diffSha256: string;
+		scopeSha256: string;
+	};
+	implementerExecutionId: string;
+	reviewerExecutionId: string;
+	provider: string;
+	model: string;
+	independenceLevel: "same_process" | "separate_process" | "isolated_container" | "external_evaluator";
+	rawOutputDigest: string;
+	staticFindings?: Array<{ ruleId: string; severity: string; message: string; file?: string; line?: number }>;
+	llmVerdict?: {
+		specCompliance: string;
+		codeQuality: string;
+		summary: string;
+	};
+	retries: number;
+	startedAt?: number;
+	completedAt?: number;
+}
+
 export interface ReviewVerdict {
 	readonly reviewerId: string;
 	readonly specCompliance: ReviewVerdictValue;
@@ -126,6 +231,14 @@ export interface ThreadState {
 	verification?: VerificationVerdict;
 	review?: ReviewVerdict;
 	scopeViolation?: boolean;
+	// Milestone 10 additions
+	revision?: number;
+	executionStatus?: ExecutionStatus;
+	verificationStatus?: VerificationStatus;
+	reviewStatus?: ReviewStatus;
+	mergeStatus?: MergeStatus;
+	verificationAttestation?: VerificationAttestation;
+	reviewAttestation?: ReviewAttestation;
 }
 
 export interface CompressedResult {
