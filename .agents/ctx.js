@@ -48,6 +48,7 @@ function printHelp() {
   console.log('  audit                           Alias for validate (check skills)');
   console.log('  validate                        Validate skill sources, frontmatter, deps & sync');
   console.log('  clean-worktrees                 Clean up lingering .swarm-worktrees and swarm/* branches');
+  console.log('  recover [--status|rollback|cont] Inspect, rollback, or resume interrupted transactions');
   console.log('  doctor                          Run project diagnostic health check');
   console.log('  stats                           Display token context savings report');
   console.log('  watch                           Start continuous file watcher and auto-sync daemon');
@@ -606,6 +607,70 @@ if (command === 'export') {
   console.log('\nAfter setup, verify your installation:');
   console.log('  node .agents/ctx.js doctor');
   console.log('  node .agents/ctx.js stats\n');
+
+// ── recover ───────────────────────────────────────────────────────────────────
+} else if (command === 'recover') {
+  const { JournaledTransaction, TX_STATES } = require('./filesystem/index.js');
+  const isStatus = args.includes('--status') || (!args.includes('--rollback') && !args.includes('--continue'));
+  const isRollback = args.includes('--rollback');
+  const isContinue = args.includes('--continue');
+
+  const pending = JournaledTransaction.listPending(process.cwd());
+
+  if (isStatus) {
+    console.log('\nContextOS — Transaction Recovery Status\n');
+    if (pending.length === 0) {
+      console.log('✓ No pending or interrupted transactions found. Project state is clean.');
+    } else {
+      console.log(`! Found ${pending.length} pending/interrupted transaction(s):\n`);
+      for (const tx of pending) {
+        console.log(`  • ID: ${tx.txId}`);
+        console.log(`    State: ${tx.state}`);
+        console.log(`    Created: ${tx.createdAt || 'unknown'}`);
+        console.log(`    Operations: ${tx.operations ? tx.operations.length : 'unknown'}`);
+        console.log('');
+      }
+      console.log('Run: node .agents/ctx.js recover --rollback [txId]');
+      console.log('     node .agents/ctx.js recover --continue [txId]\n');
+    }
+  } else if (isRollback || isContinue) {
+    const txIdArg = args.find(a => !a.startsWith('--') && a !== 'recover');
+    const targetTx = txIdArg ? pending.find(p => p.txId === txIdArg) : pending[0];
+
+    if (!targetTx) {
+      console.error(txIdArg ? `Transaction '${txIdArg}' not found in pending list.` : 'No pending transactions found to recover.');
+      process.exit(1);
+    }
+
+    const tx = new JournaledTransaction(process.cwd(), targetTx.txId);
+    if (fs.existsSync(tx.journalPath)) {
+      const jData = JSON.parse(fs.readFileSync(tx.journalPath, 'utf8'));
+      tx.state = jData.state;
+      tx.operations = jData.operations || [];
+      tx.appliedOperations = tx.operations.filter(o => o.backupFilePath);
+    }
+
+    if (isRollback) {
+      console.log(`Rolling back transaction '${targetTx.txId}'...`);
+      try {
+        tx.rollback();
+        console.log(`✓ Transaction '${targetTx.txId}' rolled back cleanly.`);
+      } catch (err) {
+        console.error(`Rollback failed: ${err.message}`);
+        process.exit(1);
+      }
+    } else if (isContinue) {
+      console.log(`Continuing transaction '${targetTx.txId}'...`);
+      try {
+        tx.state = TX_STATES.PREPARED;
+        tx.commit();
+        console.log(`✓ Transaction '${targetTx.txId}' committed cleanly.`);
+      } catch (err) {
+        console.error(`Continue failed: ${err.message}`);
+        process.exit(1);
+      }
+    }
+  }
 
 // ── unknown ───────────────────────────────────────────────────────────────────
 } else {

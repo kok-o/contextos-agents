@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LockfileV2",
+  "description": "ContextOS Lockfile Schema v2 tracking managed generated files, exact and semantic text hashes, and generator provenance.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "revision",
+    "package",
+    "profile",
+    "sourceGraphHash",
+    "enabledAdapters",
+    "managedFiles"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2,
+      "description": "Lockfile schema version (always 2 for v2)"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing revision counter for optimistic concurrency and compare-and-swap (CAS)"
+    },
+    "package": {
+      "type": "object",
+      "required": ["name", "version", "compilerVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compilerVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["id", "hash"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "sourceGraphHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Cryptographic hash of the authoring sources (skills + manifests) at compile time"
+    },
+    "enabledAdapters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "List of active target AI tool adapters"
+    },
+    "managedFiles": {
+      "type": "object",
+      "description": "Map of relative POSIX file paths to file metadata and provenance",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[^\\0]+$": {
+          "type": "object",
+          "required": [
+            "exactSha256",
+            "semanticTextSha256",
+            "kind",
+            "generator",
+            "inputsHash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "exactSha256": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "description": "Byte-exact SHA-256 hash of the generated file content"
+            },
+            "semanticTextSha256": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "description": "CRLF-normalized text SHA-256 hash to prevent false dirty states across Git checkouts"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "generated-adapter",
+                "vendor-skill",
+                "template",
+                "schema",
+                "reference",
+                "custom"
+              ]
+            },
+            "generator": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Generator identifier and version, e.g. cursor@2, claude@1"
+            },
+            "inputsHash": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "description": "Hash of input context and profile that produced this artifact"
+            },
+            "mode": {
+              "type": "integer",
+              "description": "POSIX file mode permissions (e.g. 420 for 0644)"
+            },
+            "lastTransaction": {
+              "type": "string",
+              "description": "Transaction identifier that last modified this file"
+            }
+          }
+        }
+      }
+    }
+  }
+}

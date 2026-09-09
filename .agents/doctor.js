@@ -136,6 +136,23 @@ function checkLockfileIntegrity(projectDir) {
   }
 }
 
+function checkTransactions(projectDir) {
+  try {
+    const { JournaledTransaction } = require('./filesystem/index.js');
+    const pending = JournaledTransaction.listPending(projectDir);
+    if (pending.length > 0) {
+      return {
+        ok: false,
+        error: `RECOVERY_REQUIRED: Found ${pending.length} incomplete/interrupted transaction(s). Run: node .agents/ctx.js recover --rollback`,
+        pending,
+      };
+    }
+  } catch {
+    // Best-effort
+  }
+  return { ok: true };
+}
+
 function checkAdapterIntegrity(projectDir) {
   const errors = [];
   const filesToCheck = [
@@ -262,6 +279,11 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
     errors.push(lockfileCheck.error);
   } else if (!lockfileCheck.exists && hasAgents) {
     warnings.push('Lockfile missing (.agents/contextos.lock.json)');
+  }
+
+  const txCheck = checkTransactions(projectDir);
+  if (!txCheck.ok) {
+    errors.push(txCheck.error);
   }
 
   const adapterCheck = checkAdapterIntegrity(projectDir);
