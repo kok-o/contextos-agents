@@ -18,6 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { WorkspaceGraphBuilder } = require('../workspace/workspace-graph');
 
 // Default dynamic token budget (~8,000 tokens)
 const DEFAULT_CONTEXT_BUDGET_TOKENS = 8000;
@@ -442,6 +443,70 @@ class CanonicalResolver {
     this.rootDir = options.rootDir || process.cwd();
     this.agentsDir = options.agentsDir || findAgentsDir(this.rootDir);
     this.registry = options.registry || loadRegistry(this.agentsDir);
+    this.workspaceGraph = options.workspaceGraph || null;
+    this.workspaceGraphBuilder = new WorkspaceGraphBuilder();
+    this._workspaceGraphCache = new Map();
+  }
+
+  getWorkspaceGraph(projectDir) {
+    if (this.workspaceGraph) return this.workspaceGraph;
+    const root = this.workspaceGraphBuilder.findRepositoryRoot(projectDir);
+    if (!this._workspaceGraphCache.has(root)) {
+      this._workspaceGraphCache.set(root, this.workspaceGraphBuilder.build(root));
+    }
+    return this._workspaceGraphCache.get(root);
+  }
+
+  _mapDependencyOrConfigToSkill(target, registry) {
+    if (!target) return null;
+    const clean = target.toLowerCase();
+
+    const packageMap = registry?.packageMap || {};
+    if (packageMap[`npm:${clean}`]) return packageMap[`npm:${clean}`];
+    if (packageMap[`pypi:${clean}`]) return packageMap[`pypi:${clean}`];
+    if (packageMap[clean]) return packageMap[clean];
+
+    const PKG_MAP = {
+      'next': 'nextjs',
+      'react': 'react',
+      'react-dom': 'react',
+      'typescript': 'typescript',
+      'tailwindcss': 'ui-ux-pro',
+      '@tailwindcss/postcss': 'ui-ux-pro',
+      'lucide-react': 'ui-ux-pro',
+      '@nestjs/core': 'nestjs',
+      '@nestjs/common': 'nestjs',
+      'fastapi': 'fastapi',
+      'pydantic': 'fastapi',
+      'uvicorn': 'fastapi',
+      'prisma': 'database',
+      '@prisma/client': 'database',
+      'drizzle-orm': 'database',
+      'drizzle-kit': 'database',
+      'typeorm': 'database',
+      'vitest': 'testing',
+      'jest': 'testing',
+      'playwright': 'testing',
+      '@playwright/test': 'testing',
+      'dockerode': 'docker',
+      'ioredis': 'system-design',
+      'kafkajs': 'microservices',
+      'amqplib': 'microservices',
+      'zod': 'typescript',
+    };
+    if (PKG_MAP[clean]) return PKG_MAP[clean];
+
+    const base = path.basename(clean);
+    if (base.startsWith('next.config.')) return 'nextjs';
+    if (base.startsWith('tailwind.config.')) return 'ui-ux-pro';
+    if (base.startsWith('vitest.config.') || base.startsWith('playwright.config.') || base.startsWith('jest.config.')) return 'testing';
+    if (base === 'tsconfig.json') return 'typescript';
+    if (base === 'nest-cli.json') return 'nestjs';
+    if (base.includes('docker-compose') || base === 'dockerfile') return 'docker';
+    if (base === 'schema.prisma' || base.startsWith('drizzle.config.')) return 'database';
+    if (base === 'requirements.txt' || base === 'pyproject.toml') return 'fastapi';
+
+    return null;
   }
 
   /**
@@ -487,11 +552,50 @@ class CanonicalResolver {
       evidenceBySkill.get(id).push({ kind, weight, reason });
     };
 
-    // Ambient workspace evidence
-    const workspaceEvidence = collectWorkspaceEvidence(projectRoot, this.registry);
-    for (const [sId, evList] of workspaceEvidence.entries()) {
-      for (const ev of evList) {
-        addEvidence(sId, ev.kind, ev.weight, ev.reason);
+    // Workspace Evidence Graph
+    const workspaceGraph = request.workspaceGraph || this.getWorkspaceGraph(projectRoot);
+    if (workspaceGraph) {
+      if (files.length > 0) {
+        // Collect nearest-package evidence for specific touched files
+        const touchedPackages = new Set();
+        for (const file of files) {
+          const nearestPkg = this.workspaceGraphBuilder.findNearestPackage(file, workspaceGraph);
+          if (nearestPkg && !touchedPackages.has(nearestPkg.id)) {
+            touchedPackages.add(nearestPkg.id);
+            const pkgEvidences = this.workspaceGraphBuilder.extractPackageEvidence(file, workspaceGraph);
+            for (const pe of pkgEvidences) {
+              const skillId = this._mapDependencyOrConfigToSkill(pe.target, this.registry);
+              if (skillId) {
+                addEvidence(skillId, pe.source, pe.weight, pe.description);
+              }
+            }
+          }
+        }
+      } else {
+        // Ambient workspace evidence from root package
+        const rootPkg = workspaceGraph.packages.find(p => p.root === '.');
+        if (rootPkg) {
+          for (const dep of rootPkg.dependencies) {
+            const skillId = this._mapDependencyOrConfigToSkill(dep, this.registry);
+            if (skillId) {
+              addEvidence(skillId, 'nearest_package', WEIGHTS.NEAREST_PACKAGE, `Root package dependency "${dep}" (+${WEIGHTS.NEAREST_PACKAGE})`);
+            }
+          }
+          for (const cfg of rootPkg.configs) {
+            const skillId = this._mapDependencyOrConfigToSkill(cfg, this.registry);
+            if (skillId) {
+              addEvidence(skillId, 'package_config', 50, `Root package config "${cfg}" (+50)`);
+            }
+          }
+        }
+      }
+    } else {
+      // Fallback to ambient workspace scan
+      const workspaceEvidence = collectWorkspaceEvidence(projectRoot, this.registry);
+      for (const [sId, evList] of workspaceEvidence.entries()) {
+        for (const ev of evList) {
+          addEvidence(sId, ev.kind, ev.weight, ev.reason);
+        }
       }
     }
 
@@ -931,7 +1035,8 @@ class CanonicalResolver {
 
     return {
       registryFingerprint: this.registry?.sourceGraphHash || 'none',
-      workspaceFingerprint: crypto.createHash('md5').update(projectRoot).digest('hex'),
+      workspaceFingerprint: workspaceGraph?.fingerprint || crypto.createHash('md5').update(projectRoot).digest('hex'),
+      workspaceGraph: workspaceGraph || null,
       domain,
       phase,
       role,

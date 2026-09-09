@@ -230,11 +230,13 @@ const COMMAND_REGISTRY = {
   },
   detect: {
     name: 'detect',
-    description: 'Auto-detect project tech stack and recommend profile',
-    usage: 'contextos detect [--json]',
+    description: 'Auto-detect project tech stack, workspace evidence graph, and scope',
+    usage: 'contextos detect [--scope <path>] [--explain] [--json]',
     requiresProject: false,
     options: [
-      { flag: '--json', desc: 'Output detection result in JSON format' },
+      { flag: '--scope <path>', desc: 'Scope detection to nearest package of specific file or directory' },
+      { flag: '--explain', desc: 'Display evidence signals, internal dependencies, and stack breakdown' },
+      { flag: '--json', desc: 'Output workspace graph and detection in JSON format' },
     ],
   },
   'install-skill': {

@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WorkspaceGraph",
+  "description": "ContextOS Workspace Evidence Graph Schema v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "repositoryRoot",
+    "packages",
+    "evidence",
+    "fingerprint",
+    "partial"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "repositoryRoot": {
+      "type": "string",
+      "description": "Normalized root directory of the workspace/repository"
+    },
+    "packages": {
+      "type": "array",
+      "description": "Discovered packages in the monorepo or workspace",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "root",
+          "ecosystem",
+          "manifests",
+          "dependencies",
+          "configs",
+          "languages",
+          "internalDependencies"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Package identifier (name from manifest or normalized directory path)"
+          },
+          "root": {
+            "type": "string",
+            "description": "POSIX relative directory path from repositoryRoot"
+          },
+          "ecosystem": {
+            "type": "string",
+            "enum": ["npm", "python", "rust", "go", "unknown"],
+            "description": "Primary package ecosystem"
+          },
+          "manifests": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Relative paths to package manifests (e.g. package.json, pyproject.toml)"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Normalized dependency package names"
+          },
+          "configs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Detected configuration files (e.g. tsconfig.json, next.config.js)"
+          },
+          "languages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Programming languages identified in the package"
+          },
+          "internalDependencies": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Package IDs within this workspace that this package depends on"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "description": "Accumulated evidence items derived from the workspace structure",
+      "items": {
+        "type": "object",
+        "required": ["target", "source", "weight", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "target": { "type": "string" },
+          "source": { "type": "string" },
+          "weight": { "type": "number" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "fingerprint": {
+      "type": "string",
+      "description": "Cryptographic SHA-256 fingerprint of the workspace manifest state"
+    },
+    "partial": {
+      "type": "boolean",
+      "description": "True if workspace discovery hit a depth, package count, or traversal limit"
+    }
+  }
+}

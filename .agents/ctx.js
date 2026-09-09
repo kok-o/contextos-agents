@@ -275,17 +275,101 @@ if (command === 'export') {
 
 // ── detect ────────────────────────────────────────────────────────────────────
 } else if (command === 'detect') {
+  const { WorkspaceGraphBuilder } = require('./workspace/workspace-graph.js');
   const profiles = require('./profiles.js');
-  const detection = profiles.detectStack(process.cwd());
-  console.log('\nContextOS — Tech Stack Detection\n');
-  if (detection.detected.length === 0) {
-    console.log('  Detected stack: Generic / Vanilla JavaScript');
+  const asJson = args.includes('--json');
+  const explain = args.includes('--explain');
+  const scopeIdx = args.indexOf('--scope');
+  const scopeArg = scopeIdx !== -1 && args[scopeIdx + 1] && !args[scopeIdx + 1].startsWith('--')
+    ? args[scopeIdx + 1]
+    : (args.find(a => a.startsWith('--scope=')) || '').split('=')[1];
+
+  const builder = new WorkspaceGraphBuilder();
+  const graph = builder.build(process.cwd());
+
+  if (scopeArg) {
+    const nearestPkg = builder.findNearestPackage(scopeArg, graph);
+    const evidence = builder.extractPackageEvidence(scopeArg, graph);
+
+    if (asJson) {
+      console.log(JSON.stringify({
+        scope: scopeArg,
+        nearestPackage: nearestPkg,
+        evidence,
+      }, null, 2));
+    } else {
+      console.log('\n══════════════════════════════════════════');
+      console.log('  ContextOS — Workspace Scoped Detection');
+      console.log('══════════════════════════════════════════\n');
+      console.log(`  Scope Path       : ${scopeArg}`);
+      if (nearestPkg) {
+        console.log(`  Nearest Package  : ${nearestPkg.id} (${nearestPkg.ecosystem})`);
+        console.log(`  Package Root     : ${nearestPkg.root}`);
+        console.log(`  Languages        : ${nearestPkg.languages.join(', ') || 'unspecified'}`);
+        console.log(`  Dependencies     : ${nearestPkg.dependencies.length} (${nearestPkg.dependencies.slice(0, 8).join(', ')}${nearestPkg.dependencies.length > 8 ? '...' : ''})`);
+        console.log(`  Configs          : ${nearestPkg.configs.join(', ') || 'none'}`);
+        if (nearestPkg.internalDependencies.length > 0) {
+          console.log(`  Internal Links   : ${nearestPkg.internalDependencies.join(', ')}`);
+        }
+        if (evidence.length > 0) {
+          console.log('\n  Scoped Evidence:');
+          for (const ev of evidence.slice(0, 10)) {
+            console.log(`    • [${ev.source}] ${ev.target} (+${ev.weight}) — ${ev.description}`);
+          }
+          if (evidence.length > 10) {
+            console.log(`      ... and ${evidence.length - 10} more signals`);
+          }
+        }
+      } else {
+        console.log('  Nearest Package  : (none found)');
+      }
+      console.log('\n──────────────────────────────────────────\n');
+    }
+  } else if (asJson) {
+    const stack = profiles.detectStack(process.cwd());
+    console.log(JSON.stringify({
+      workspaceGraph: graph,
+      stack,
+    }, null, 2));
+  } else if (explain) {
+    console.log('\n══════════════════════════════════════════');
+    console.log('  ContextOS — Workspace Evidence Graph');
+    console.log('══════════════════════════════════════════\n');
+    console.log(`  Repository Root  : ${graph.repositoryRoot}`);
+    console.log(`  Fingerprint      : ${graph.fingerprint}`);
+    console.log(`  Packages Found   : ${graph.packages.length} ${graph.partial ? '(partial: true)' : ''}\n`);
+    for (const pkg of graph.packages) {
+      console.log(`  • ${pkg.id} [${pkg.ecosystem}]`);
+      console.log(`    Root           : ${pkg.root}`);
+      console.log(`    Manifests      : ${pkg.manifests.join(', ')}`);
+      console.log(`    Languages      : ${pkg.languages.join(', ') || 'unspecified'}`);
+      console.log(`    Dependencies   : ${pkg.dependencies.length}`);
+      if (pkg.configs.length > 0) {
+        console.log(`    Configs        : ${pkg.configs.join(', ')}`);
+      }
+      if (pkg.internalDependencies.length > 0) {
+        console.log(`    Internal Links : ${pkg.internalDependencies.join(', ')}`);
+      }
+      console.log('');
+    }
+    console.log('──────────────────────────────────────────\n');
   } else {
-    console.log(`  Detected stack: ${detection.detected.join(', ')}`);
+    const detection = profiles.detectStack(process.cwd());
+    console.log('\nContextOS — Workspace & Tech Stack Detection\n');
+    console.log(`  Repository Root   : ${graph.repositoryRoot}`);
+    console.log(`  Packages Detected : ${graph.packages.map(p => `${p.id} (${p.root})`).join(', ')}`);
+    if (detection.detected.length === 0) {
+      console.log('  Detected Stack    : Generic / Vanilla JavaScript');
+    } else {
+      console.log(`  Detected Stack    : ${detection.detected.join(', ')}`);
+    }
+    console.log(`  Recommended Profile: ${detection.recommendedProfile}`);
+    console.log(`  Recommended Skills : ${detection.recommendedSkills.join(', ')}`);
+    console.log(`\nCommands:`);
+    console.log(`  node .agents/ctx.js detect --scope <path>    Scope detection to a specific file/subproject`);
+    console.log(`  node .agents/ctx.js detect --explain         Display full workspace evidence graph`);
+    console.log(`  node .agents/ctx.js profile apply ${detection.recommendedProfile}\n`);
   }
-  console.log(`  Recommended Profile: ${detection.recommendedProfile}`);
-  console.log(`  Recommended Skills: ${detection.recommendedSkills.join(', ')}`);
-  console.log(`\nApply recommended profile:\n  node .agents/ctx.js profile apply ${detection.recommendedProfile}\n`);
 
 // ── compile ───────────────────────────────────────────────────────────────────
 } else if (command === 'compile') {

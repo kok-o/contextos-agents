@@ -179,4 +179,57 @@ describe('canonical-resolver.js — Milestone 3 Canonical Resolver Engine', () =
     assert.ok(Array.isArray(parsed.selected));
     assert.ok(parsed.skills.includes('react'));
   });
+
+  test('Workspace Evidence Graph isolates monorepo package signals (Next.js in apps/web vs FastAPI in apps/api)', () => {
+    const monorepoResolver = new CanonicalResolver({ rootDir });
+    const mockGraph = {
+      schemaVersion: 1,
+      repositoryRoot: 'c:/mock-repo',
+      fingerprint: 'abc123sha',
+      partial: false,
+      packages: [
+        {
+          id: 'web',
+          root: 'apps/web',
+          ecosystem: 'npm',
+          manifests: ['apps/web/package.json'],
+          dependencies: ['next', 'react', 'typescript'],
+          configs: ['apps/web/next.config.js'],
+          languages: ['typescript'],
+          internalDependencies: []
+        },
+        {
+          id: 'api',
+          root: 'apps/api',
+          ecosystem: 'python',
+          manifests: ['apps/api/requirements.txt'],
+          dependencies: ['fastapi', 'uvicorn', 'pydantic'],
+          configs: ['apps/api/requirements.txt'],
+          languages: ['python'],
+          internalDependencies: []
+        }
+      ],
+      evidence: []
+    };
+
+    // 1. Task targeting apps/web
+    const webRes = monorepoResolver.resolve({
+      task: 'Build the profile page',
+      files: ['apps/web/page.tsx'],
+      workspaceGraph: mockGraph,
+    });
+    assert.ok(webRes.skills.includes('nextjs'), 'nextjs selected for web task');
+    assert.ok(webRes.skills.includes('react'), 'react selected for web task');
+    assert.ok(!webRes.skills.includes('fastapi'), 'fastapi NOT selected for web task');
+
+    // 2. Task targeting apps/api
+    const apiRes = monorepoResolver.resolve({
+      task: 'Add health check endpoint',
+      files: ['apps/api/main.py'],
+      workspaceGraph: mockGraph,
+    });
+    assert.ok(apiRes.skills.includes('fastapi'), 'fastapi selected for api task');
+    assert.ok(!apiRes.skills.includes('nextjs'), 'nextjs NOT selected for api task');
+    assert.ok(!apiRes.skills.includes('react'), 'react NOT selected for api task');
+  });
 });
