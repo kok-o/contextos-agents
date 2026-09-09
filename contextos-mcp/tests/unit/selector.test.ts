@@ -101,6 +101,13 @@ describe("ContextOS Selector & Budget", () => {
 		expect(res.skills).toContain("typescript");
 	});
 
+	it("transitively resolves multi-level dependencies: nextjs pulls react and typescript", () => {
+		const res = selectContext("create nextjs app router server actions", { maxSkills: 4 });
+		expect(res.skills).toContain("nextjs");
+		expect(res.skills).toContain("react");
+		expect(res.skills).toContain("typescript");
+	});
+
 	it("matches literal 'security review' to security skill", () => {
 		const res = selectContext("perform a security review of authentication endpoints");
 		expect(res.skills).toContain("security");

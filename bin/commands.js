@@ -156,6 +156,17 @@ const COMMAND_REGISTRY = {
       { flag: '--json', desc: 'Output health report in JSON format' },
     ],
   },
+  compile: {
+    name: 'compile',
+    description: 'Compile skill manifests into deterministic registry v2 (registry.v2.json)',
+    usage: 'contextos compile [--check] [--sarif] [--json]',
+    requiresProject: true,
+    options: [
+      { flag: '--check', desc: 'Validate manifests without writing to disk' },
+      { flag: '--sarif', desc: 'Output diagnostics in SARIF 2.1.0 format' },
+      { flag: '--json', desc: 'Output result in JSON format' },
+    ],
+  },
   validate: {
     name: 'validate',
     description: 'Validate skill sources, frontmatter, dependency graph, and adapter sync',

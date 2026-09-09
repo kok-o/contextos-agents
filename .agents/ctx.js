@@ -43,6 +43,7 @@ function printHelp() {
   console.log('  resolve <prompt>                Resolve minimal skills needed for a task');
   console.log('  index                           Generate progressive skills-index.json');
   console.log('  detect                          Auto-detect project tech stack');
+  console.log('  compile [--check] [--sarif]     Compile skill manifests into deterministic registry v2');
   console.log('  audit                           Alias for validate (check skills)');
   console.log('  validate                        Validate skill sources, frontmatter, deps & sync');
   console.log('  clean-worktrees                 Clean up lingering .swarm-worktrees and swarm/* branches');
@@ -268,6 +269,44 @@ if (command === 'export') {
   console.log(`  Recommended Profile: ${detection.recommendedProfile}`);
   console.log(`  Recommended Skills: ${detection.recommendedSkills.join(', ')}`);
   console.log(`\nApply recommended profile:\n  node .agents/ctx.js profile apply ${detection.recommendedProfile}\n`);
+
+// ── compile ───────────────────────────────────────────────────────────────────
+} else if (command === 'compile') {
+  const { ManifestCompiler } = require('./compiler/manifest-compiler.js');
+  const checkOnly = args.includes('--check');
+  const asSarif = args.includes('--sarif');
+  const asJson = args.includes('--json');
+
+  const compiler = new ManifestCompiler();
+  const res = checkOnly ? compiler.compile() : compiler.compileAndWrite();
+
+  if (asSarif) {
+    console.log(JSON.stringify(compiler.formatSarif(), null, 2));
+    process.exit(res.success ? 0 : 1);
+  }
+
+  if (asJson) {
+    console.log(JSON.stringify(res, null, 2));
+    process.exit(res.success ? 0 : 1);
+  }
+
+  if (!res.success) {
+    console.error('\n✗ Manifest compilation failed:\n');
+    for (const d of res.diagnostics) {
+      console.error(`  [${d.code}] ${d.file}${d.path ? ' ' + d.path : ''}: ${d.message}`);
+      if (d.remediation) console.error(`    ↳ Remediation: ${d.remediation}`);
+    }
+    console.error('');
+    process.exit(1);
+  }
+
+  const skillCount = Object.keys(res.registry.skills).length;
+  console.log(`\n✓ Successfully compiled ${skillCount} skills into Registry v2!`);
+  console.log(`  Source Graph Hash: ${res.registry.sourceGraphHash}`);
+  if (!checkOnly) {
+    console.log(`  Registry: .agents/compiled/registry.v2.json`);
+    console.log(`  Checksum: .agents/compiled/registry.v2.sha256\n`);
+  }
 
 // ── validate / audit ──────────────────────────────────────────────────────────
 } else if (command === 'validate' || command === 'audit') {

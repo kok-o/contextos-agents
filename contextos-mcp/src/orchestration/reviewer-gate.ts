@@ -261,6 +261,21 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
 	const reviewerId = `combined-reviewer-${reviewerAgent || "audit"}-${randomUUID().slice(0, 8)}`;
 
+	let agentProvider: any = null;
+	if (reviewerAgent && reviewerAgent !== "mock") {
+		try {
+			agentProvider = getAgent(reviewerAgent);
+		} catch {
+			return {
+				reviewerId,
+				specCompliance: "UNAVAILABLE",
+				codeQuality: "UNAVAILABLE",
+				summary: `Combined staging review failed: reviewer agent "${reviewerAgent}" is not available.`,
+				reviewedAt: Date.now(),
+			};
+		}
+	}
+
 	let combinedDiff = "";
 	try {
 		const { stdout } = await execFileAsync("git", ["diff", `${baseSha}...${stagingBranch}`], {
@@ -271,8 +286,8 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 	} catch (err) {
 		return {
 			reviewerId,
-			specCompliance: "FAIL",
-			codeQuality: "FAIL",
+			specCompliance: "ERROR",
+			codeQuality: "ERROR",
 			summary: `Failed to inspect staging diff: ${err instanceof Error ? err.message : String(err)}`,
 			reviewedAt: Date.now(),
 		};
@@ -288,19 +303,7 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 		};
 	}
 
-	if (reviewerAgent && reviewerAgent !== "mock") {
-		let agentProvider = null;
-		try {
-			agentProvider = getAgent(reviewerAgent);
-		} catch {
-			return {
-				reviewerId,
-				specCompliance: "UNAVAILABLE",
-				codeQuality: "UNAVAILABLE",
-				summary: `Combined staging review failed: reviewer agent "${reviewerAgent}" is not available.`,
-				reviewedAt: Date.now(),
-			};
-		}
+	if (agentProvider) {
 
 		try {
 			const prompt = buildCombinedStagingReviewPrompt(baseSha, stagingBranch, combinedDiff, taskSummaries);

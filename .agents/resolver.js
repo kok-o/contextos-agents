@@ -518,8 +518,8 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
     }
   }
 
-  // 6. Transitive Dependency Resolution (from skill.yaml manifests)
-  const SKILL_DEPENDENCIES = {
+  // 6. Transitive Dependency Resolution (from compiled registry.v2.json or fallback)
+  let depGraph = {
     'react': ['typescript'],
     'node': ['typescript'],
     'nextjs': ['react', 'typescript'],
@@ -528,9 +528,21 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
     'vercel-optimize': ['nextjs', 'react', 'typescript'],
   };
 
+  try {
+    const regPath = path.join(AGENTS_DIR, 'compiled', 'registry.v2.json');
+    if (fs.existsSync(regPath)) {
+      const reg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
+      if (reg && reg.dependencyGraph) {
+        depGraph = reg.dependencyGraph;
+      }
+    }
+  } catch {
+    // Keep fallback
+  }
+
   for (let i = 0; i < selectedSkills.length; i++) {
     const s = selectedSkills[i];
-    const deps = SKILL_DEPENDENCIES[s] || [];
+    const deps = depGraph[s] || [];
     for (const dep of deps) {
       if (!selectedSkills.includes(dep) && !profileExcluded.has(dep)) {
         selectedSkills.push(dep);

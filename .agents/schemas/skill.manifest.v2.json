@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SkillManifestV2",
+  "description": "ContextOS Skill Manifest Schema v2",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "displayName",
+    "version",
+    "description",
+    "category",
+    "entrypoint"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+.*$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": ["instruction-only", "compiler", "runtime", "experimental"]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "frontend",
+        "backend",
+        "architecture",
+        "devops",
+        "testing",
+        "security",
+        "ui",
+        "cross-cutting",
+        "workflow",
+        "general"
+      ]
+    },
+    "entrypoint": {
+      "type": "string",
+      "pattern": "^[^/\\\\].*\\.md$"
+    },
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["value", "weight"],
+            "additionalProperties": false,
+            "properties": {
+              "value": { "type": "string" },
+              "locale": { "type": "string", "enum": ["en", "ru", "any"] },
+              "weight": { "type": "number", "minimum": 1, "maximum": 100 }
+            }
+          }
+        },
+        "fileGlobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["value", "weight"],
+            "additionalProperties": false,
+            "properties": {
+              "value": { "type": "string" },
+              "weight": { "type": "number", "minimum": 1, "maximum": 100 }
+            }
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ecosystem", "name", "weight"],
+            "additionalProperties": false,
+            "properties": {
+              "ecosystem": { "type": "string", "enum": ["npm", "pypi", "cargo", "go", "unknown"] },
+              "name": { "type": "string" },
+              "weight": { "type": "number", "minimum": 1, "maximum": 100 }
+            }
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requires": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "optional": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "estimatedTokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string" },
+          "mode": { "type": "string", "enum": ["eager", "on-demand"] }
+        }
+      }
+    }
+  }
+}

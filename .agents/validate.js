@@ -600,6 +600,39 @@ function printReport() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+//  CHECK 12 — Compiled Registry v2 Validation
+// ═════════════════════════════════════════════════════════════════════════════
+function checkRegistryV2() {
+  const { ManifestCompiler } = require('./compiler/manifest-compiler.js');
+  const compiler = new ManifestCompiler();
+  const res = compiler.compile();
+
+  if (!res.success) {
+    for (const d of res.diagnostics) {
+      error(`[registry-v2] ${d.file}: ${d.message} (${d.code})`);
+    }
+    return;
+  }
+
+  const compiledFile = path.join(AGENTS_DIR, 'compiled', 'registry.v2.json');
+  if (!fs.existsSync(compiledFile)) {
+    warn('[registry-v2] .agents/compiled/registry.v2.json does not exist (run: node .agents/ctx.js compile)');
+    return;
+  }
+
+  try {
+    const onDisk = JSON.parse(fs.readFileSync(compiledFile, 'utf8'));
+    if (onDisk.sourceGraphHash !== res.registry.sourceGraphHash) {
+      warn('[registry-v2] Compiled registry is stale (hash mismatch, run: node .agents/ctx.js compile)');
+    } else {
+      info(`[registry-v2] Compiled registry v2 verified (${Object.keys(res.registry.skills).length} skills, hash ${res.registry.sourceGraphHash.slice(0, 20)}...)`);
+    }
+  } catch (err) {
+    error(`[registry-v2] Corrupt registry.v2.json: ${err.message}`);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 //  MAIN
 // ═════════════════════════════════════════════════════════════════════════════
 function run() {
@@ -626,6 +659,7 @@ function run() {
   checkMcpBundleSync();
   checkResourcesManifest(sourceSkills);
   checkProfilesIntegrity(sourceSkills);
+  checkRegistryV2();
 
   const passed = printReport();
   process.exit(passed ? 0 : 1);

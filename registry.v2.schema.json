@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CompiledRegistryV2",
+  "description": "ContextOS Compiled Registry v2 Schema",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "compilerVersion",
+    "sourceGraphHash",
+    "generatedAt",
+    "skills"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "compilerVersion": {
+      "type": "string"
+    },
+    "sourceGraphHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "skills": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "id",
+          "displayName",
+          "version",
+          "entrypoint",
+          "entrypointHash",
+          "resourceTreeHash",
+          "estimatedTokens",
+          "source",
+          "dependencies"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "displayName": { "type": "string" },
+          "version": { "type": "string" },
+          "description": { "type": "string" },
+          "category": { "type": "string" },
+          "type": { "type": "string" },
+          "entrypoint": { "type": "string" },
+          "entrypointHash": { "type": "string" },
+          "resourceTreeHash": { "type": "string" },
+          "estimatedTokens": { "type": "integer" },
+          "source": { "type": "string" },
+          "signals": { "type": "object" },
+          "dependencies": {
+            "type": "object",
+            "properties": {
+              "requires": { "type": "array", "items": { "type": "string" } },
+              "optional": { "type": "array", "items": { "type": "string" } },
+              "conflicts": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "context": { "type": "object" },
+          "resources": { "type": "array" }
+        }
+      }
+    },
+    "aliases": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "packageMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "dependencyGraph": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    }
+  }
+}

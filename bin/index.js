@@ -76,6 +76,7 @@ Commands:
   doctor              Run full project diagnostic health check
   audit               Validate local skills (alias for validate)
   validate            Validate local skills, frontmatter, and sync
+  compile             Compile skill manifests into deterministic registry v2
   profile <subcmd>    Manage profiles (list, apply, show, remove)
   export <target>     Export skills (gemini, claude, cursor, copilot, aider, zed, all)
   resolve <prompt>    Dynamically resolve minimal skills for a prompt or files
@@ -162,7 +163,7 @@ if (mainCommand === 'doctor') {
 // Proxy commands to .agents/ctx.js when executed in a ContextOS project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',
-  'clean-worktrees', 'stats', 'watch'
+  'clean-worktrees', 'stats', 'watch', 'compile'
 ];
 
 const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
@@ -208,7 +209,7 @@ if (mainCommand === 'watch') {
   watchModule.runWatch(process.cwd());
 }
 
-const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees'];
+const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees', 'compile'];
 if (mainCommand && PROJECT_ONLY_COMMANDS.includes(mainCommand) && !hasLocalCtx) {
   console.error('[ERROR] .agents/ctx.js not found in current directory.');
   console.error('        Are you in a ContextOS project? Run `contextos` or `npx contextos-agents` first.');

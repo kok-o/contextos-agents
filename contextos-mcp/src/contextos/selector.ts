@@ -11,6 +11,9 @@
  * 4. Architectural synergy resolution (e.g., system-design for database/microservices/ddd).
  */
 
+import { existsSync, readFileSync } from "node:fs";
+import * as path from "node:path";
+
 export interface SelectedContext {
 	/** Always-loaded rules (e.g., AGENTS.md core principles). */
 	coreRules: string[];
@@ -386,8 +389,8 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 		topSkills.push("system-design");
 	}
 
-	// Transitive Dependency Resolution (from skill.yaml manifests)
-	const SKILL_DEPENDENCIES: Record<string, string[]> = {
+	// Transitive Dependency Resolution (from compiled registry.v2.json or fallback)
+	let depGraph: Record<string, string[]> = {
 		react: ["typescript"],
 		node: ["typescript"],
 		nextjs: ["react", "typescript"],
@@ -396,9 +399,27 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 		"vercel-optimize": ["nextjs", "react", "typescript"],
 	};
 
+	try {
+		const candidatePaths = [
+			path.join(process.cwd(), ".agents", "compiled", "registry.v2.json"),
+			path.join(process.cwd(), "..", ".agents", "compiled", "registry.v2.json"),
+		];
+		for (const p of candidatePaths) {
+			if (existsSync(p)) {
+				const reg = JSON.parse(readFileSync(p, "utf-8"));
+				if (reg && reg.dependencyGraph) {
+					depGraph = reg.dependencyGraph;
+					break;
+				}
+			}
+		}
+	} catch {
+		// Keep fallback
+	}
+
 	for (let i = 0; i < topSkills.length; i++) {
 		const s = topSkills[i];
-		const deps = SKILL_DEPENDENCIES[s] || [];
+		const deps = depGraph[s] || [];
 		for (const dep of deps) {
 			if (!topSkills.includes(dep) && topSkills.length < maxSkills) {
 				topSkills.push(dep);
