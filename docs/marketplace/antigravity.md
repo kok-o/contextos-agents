@@ -30,7 +30,7 @@ The native plugin lives in `.agents/plugins/contextos/`:
 ```json
 {
   "name": "contextos",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Deterministic AI Project Operating System context compiler, MCP runtime, and high-precision engineering skills for Antigravity.",
   "author": {
     "name": "ContextOS Team",

@@ -1,6 +1,6 @@
 {
   "name": "contextos-agents",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "ContextOS — Deterministic context compiler, MCP runtime, and high-precision agent skills for pair-programming.",
   "bin": {
     "contextos": "./bin/index.js",

@@ -59,7 +59,7 @@ function createLockfileData(options = {}) {
   return {
     schemaVersion: 1,
     installedPackage: options.installedPackage || 'contextos-agents',
-    version: options.version || '1.7.0',
+    version: options.version || '1.7.1',
     selectedProfile: options.selectedProfile || 'default',
     installedAt: options.installedAt || new Date().toISOString(),
     managedFiles: options.managedFiles ? { ...options.managedFiles } : {},

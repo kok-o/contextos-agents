@@ -22,7 +22,7 @@ ContextOS provides a validated plugin configuration for Claude Code workspaces:
 {
   "$schema": "https://json.schemastore.org/claude-plugin.json",
   "name": "contextos",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Deterministic AI Project Operating System context compiler, MCP runtime, and high-precision engineering skills for Claude Code.",
   "author": {
     "name": "ContextOS Team",
@@ -40,15 +40,15 @@ ContextOS provides a validated plugin configuration for Claude Code workspaces:
     },
     {
       "name": "build",
-      "description": "Run Phase 3: BUILD with minimalist 7-rung ponytail ladder"
+      "description": "Run Phase 3: BUILD atomic implementation with TDD"
     },
     {
       "name": "test",
-      "description": "Run Phase 4: VERIFY test quality gates and edge cases"
+      "description": "Run Phase 4: VERIFY test coverage and regression checks"
     },
     {
       "name": "review",
-      "description": "Run Phase 5: REVIEW code and design against anti-slop rules"
+      "description": "Run Phase 5: REVIEW code against engineering and design standards"
     },
     {
       "name": "ship",
@@ -62,7 +62,7 @@ ContextOS provides a validated plugin configuration for Claude Code workspaces:
   "mcpServers": {
     "contextos": {
       "command": "npx",
-      "args": ["-y", "contextos-mcp@0.3.0"]
+      "args": ["-y", "contextos-mcp@0.3.1"]
     }
   }
 }
