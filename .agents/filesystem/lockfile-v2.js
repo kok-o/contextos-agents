@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { safeRenameSync } = require('./safe-path.js');
 
 const DEFAULT_LOCKFILE_SUBPATH = path.join('.agents', 'lockfile.v2.json');
 const SCHEMA_PATH = path.join(__dirname, '..', 'schemas', 'lockfile.v2.schema.json');
@@ -221,7 +222,7 @@ class LockfileV2Manager {
     fs.writeFileSync(tmpPath, JSON.stringify(dataToWrite, null, 2) + '\n', 'utf8');
 
     try {
-      fs.renameSync(tmpPath, this.lockfilePath);
+      safeRenameSync(tmpPath, this.lockfilePath);
     } catch (err) {
       try {
         if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);

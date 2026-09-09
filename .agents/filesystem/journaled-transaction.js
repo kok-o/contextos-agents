@@ -359,7 +359,8 @@ class JournaledTransaction {
         if (fs.existsSync(jPath)) {
           try {
             const data = JSON.parse(fs.readFileSync(jPath, 'utf8'));
-            if (data.state === TX_STATES.APPLYING || data.state === TX_STATES.ROLLING_BACK || data.state === TX_STATES.RECOVERY_REQUIRED) {
+            const st = data.state || data.status;
+            if (st === TX_STATES.APPLYING || st === TX_STATES.ROLLING_BACK || st === TX_STATES.RECOVERY_REQUIRED || st === TX_STATES.PREPARED) {
               pending.push(data);
             }
           } catch {

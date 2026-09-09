@@ -222,8 +222,9 @@ function renderAdapters(projectRoot, adapterNames = 'all', options = {}) {
  */
 function applyArtifacts(projectRoot, artifacts, options = {}) {
   const absRoot = path.resolve(projectRoot);
-  const lock = new ProjectMutationLock(absRoot);
-  const lockToken = lock.acquire({ command: options.command || 'export' });
+  const ownLock = !options.lockToken;
+  const lock = ownLock ? new ProjectMutationLock(absRoot) : null;
+  const lockToken = ownLock ? lock.acquire({ command: options.command || 'export' }) : options.lockToken;
 
   try {
     const tx = new JournaledTransaction(absRoot);
@@ -379,7 +380,9 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
       appliedCount: artifacts.length,
     };
   } finally {
-    lock.release(lockToken);
+    if (ownLock && lockToken && lock) {
+      lock.release(lockToken);
+    }
   }
 }
 

@@ -201,10 +201,44 @@ function resolveManagedPath(projectRoot, relativePath, options = {}) {
   };
 }
 
+/**
+ * Windows-aware atomic rename with bounded retry for transient locks (EPERM, EBUSY, EACCES).
+ */
+function safeRenameSync(sourcePath, targetPath, maxRetries = 4, delays = [10, 50, 150, 300]) {
+  const targetDir = path.dirname(targetPath);
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+
+  let lastError = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      fs.renameSync(sourcePath, targetPath);
+      return;
+    } catch (err) {
+      lastError = err;
+      const isTransient = err.code === 'EPERM' || err.code === 'EBUSY' || err.code === 'EACCES';
+      if (isTransient && attempt < maxRetries) {
+        const waitMs = delays[attempt] || 50;
+        try {
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitMs);
+        } catch {
+          const start = Date.now();
+          while (Date.now() - start < waitMs) {}
+        }
+      } else {
+        break;
+      }
+    }
+  }
+  throw lastError;
+}
+
 module.exports = {
   resolveManagedPath,
   toPosix,
   isReservedDeviceName,
+  safeRenameSync,
   SafePathError,
   ERROR_CODES,
   WINDOWS_RESERVED_NAMES,

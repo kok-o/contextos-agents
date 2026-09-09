@@ -149,11 +149,13 @@ const COMMAND_REGISTRY = {
   },
   doctor: {
     name: 'doctor',
-    description: 'Run project diagnostic health check',
-    usage: 'contextos doctor [--json]',
+    description: 'Run project diagnostic health check (Doctor v2)',
+    usage: 'contextos doctor [--fix] [--strict] [--json]',
     requiresProject: false,
     options: [
-      { flag: '--json', desc: 'Output health report in JSON format' },
+      { flag: '--fix', desc: 'Automatically remediate safe diagnostic issues and clean caches' },
+      { flag: '--strict', desc: 'Exit with non-zero code on any warning' },
+      { flag: '--json', desc: 'Output health report in versioned JSON format' },
     ],
   },
   compile: {
@@ -274,6 +276,17 @@ const COMMAND_REGISTRY = {
     usage: 'contextos clean-worktrees',
     requiresProject: false,
     options: [],
+  },
+  recover: {
+    name: 'recover',
+    description: 'Recover from interrupted or failed multi-file transactions',
+    usage: 'contextos recover [--status] [--rollback [txId]] [--continue [txId]]',
+    requiresProject: true,
+    options: [
+      { flag: '--status', desc: 'Inspect pending uncommitted transaction journals' },
+      { flag: '--rollback [txId]', desc: 'Roll back uncommitted or failed transaction' },
+      { flag: '--continue [txId]', desc: 'Attempt to resume and complete prepared transaction' },
+    ],
   },
 };
 

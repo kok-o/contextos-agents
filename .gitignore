@@ -51,6 +51,7 @@ pnpm-debug.log*
 .agents/state/
 .agents/transactions/
 .agents/mcp/
+.agents/.contextos/
 .contextos-worktrees/
 .swarm-worktrees/
 .contextos-session
