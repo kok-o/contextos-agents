@@ -304,7 +304,6 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 	}
 
 	if (agentProvider) {
-
 		try {
 			const prompt = buildCombinedStagingReviewPrompt(baseSha, stagingBranch, combinedDiff, taskSummaries);
 			const result = await agentProvider.run({

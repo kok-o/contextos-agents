@@ -202,8 +202,11 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 							? {
 									verified: currentThread?.verification === "PASS",
 									verdict: currentThread?.verification || "PENDING",
-									output: currentThread?.verification === "PASS" ? "Verification passed" : currentThread?.error || "Verification failed",
-							  }
+									output:
+										currentThread?.verification === "PASS"
+											? "Verification passed"
+											: currentThread?.error || "Verification failed",
+								}
 							: undefined;
 
 						const status = result.success
@@ -249,9 +252,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					// Run in background without blocking MCP response
 					Promise.allSettled(asyncPromises)
 						.then((results) => {
-							const allSucceeded = results.every(
-								(r) => r.status === "fulfilled" && r.value.status === "completed",
-							);
+							const allSucceeded = results.every((r) => r.status === "fulfilled" && r.value.status === "completed");
 							recordAsyncJob(session, taskId, args.agents.length, allSucceeded ? "completed" : "failed");
 						})
 						.catch((err) => {

@@ -315,13 +315,13 @@ export class WorktreeManager {
 				const { stdout: fullDiff } = await git(
 					["diff", "--cached", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
 					info.path,
-					{ GIT_INDEX_FILE: tmpIndex }
+					{ GIT_INDEX_FILE: tmpIndex },
 				);
 				return redactSecrets(fullDiff || "(no changes)");
 			} catch {
 				const { stdout: fallbackDiff } = await git(
 					["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-					info.path
+					info.path,
 				);
 				return redactSecrets(fallbackDiff || "(no changes)");
 			}
@@ -348,13 +348,13 @@ export class WorktreeManager {
 				const { stdout } = await git(
 					["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
 					info.path,
-					{ GIT_INDEX_FILE: tmpIndex }
+					{ GIT_INDEX_FILE: tmpIndex },
 				);
 				return redactSecrets(stdout.trim() || "(no changes)");
 			} catch {
 				const { stdout: fallbackStats } = await git(
 					["diff", "HEAD", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-					info.path
+					info.path,
 				);
 				return redactSecrets(fallbackStats.trim() || "(no changes)");
 			}
@@ -373,16 +373,13 @@ export class WorktreeManager {
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
 
-		const { stdout: status } = await git(
-			["status", "--porcelain=v2", "-z", "--untracked-files=all"],
-			info.path
-		);
+		const { stdout: status } = await git(["status", "--porcelain=v2", "-z", "--untracked-files=all"], info.path);
 		const internal = new Set([".contextos-owner", ".contextos-session"]);
 		return [
 			...new Set(
 				parsePorcelainV2(status)
 					.map(normalizeGitPath)
-					.filter((file) => file && !internal.has(file) && !isBlockedPath(file))
+					.filter((file) => file && !internal.has(file) && !isBlockedPath(file)),
 			),
 		];
 	}

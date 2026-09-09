@@ -10,8 +10,8 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import * as path from "node:path";
 import { createRequire } from "node:module";
+import * as path from "node:path";
 
 const require = createRequire(import.meta.url);
 
@@ -334,7 +334,7 @@ function getCanonicalResolver(): any {
 		if (existsSync(p)) {
 			try {
 				const mod = require(p);
-				if (mod && mod.CanonicalResolver) {
+				if (mod?.CanonicalResolver) {
 					const rootDir = path.dirname(path.dirname(path.dirname(p)));
 					return new mod.CanonicalResolver({ rootDir });
 				}
@@ -441,7 +441,7 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 		for (const p of candidatePaths) {
 			if (existsSync(p)) {
 				const reg = JSON.parse(readFileSync(p, "utf-8"));
-				if (reg && reg.dependencyGraph) {
+				if (reg?.dependencyGraph) {
 					depGraph = reg.dependencyGraph;
 					break;
 				}
