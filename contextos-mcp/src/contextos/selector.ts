@@ -29,6 +29,8 @@ export interface SelectorOptions {
 	maxSkills?: number;
 	/** File paths touched or relevant to task for file-pattern boosting. */
 	files?: string[];
+	/** Custom token budget for context selection (defaults to 8000). */
+	contextBudgetTokens?: number;
 }
 
 interface SkillRule {
@@ -363,6 +365,7 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 			task,
 			files: options.files || [],
 			maxSkills,
+			contextBudgetTokens: options.contextBudgetTokens ?? 8000,
 		});
 
 		const domainSkills: string[] = (res.selected || []).map((s: { id: string }) => s.id);
