@@ -168,8 +168,8 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}
 
 			try {
-				// Load ContextOS rules
-				const contextPrompt = buildContextPrompt(resolvedDir, args.task);
+				// Load ContextOS rules with file context ranking
+				const contextPrompt = buildContextPrompt(resolvedDir, args.task, { files: args.files });
 				log(`ContextOS prompt: ${contextPrompt.length} chars`);
 
 				const session = await getSession(resolvedDir);
@@ -198,19 +198,19 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 						const threads = getThreads(session);
 						const currentThread = threads.find((t) => t.id === threadId);
 
-						let verificationResult: { verified: boolean; output: string } | undefined;
-						if (args.verify_command && result.success) {
-							if (currentThread?.worktreePath) {
-								log(`Running verification inside worktree for thread ${threadId}: ${args.verify_command}`);
-								verificationResult = await runWorktreeVerification(currentThread.worktreePath, args.verify_command);
-							}
-						}
+						const verificationResult = args.verify_command
+							? {
+									verified: currentThread?.verification === "PASS",
+									verdict: currentThread?.verification || "PENDING",
+									output: currentThread?.verification === "PASS" ? "Verification passed" : currentThread?.error || "Verification failed",
+							  }
+							: undefined;
 
 						const status = result.success
-							? verificationResult && !verificationResult.verified
+							? "completed"
+							: currentThread?.status === "verification_failed"
 								? "verification_failed"
-								: "completed"
-							: "failed";
+								: "failed";
 
 						if (currentThread) {
 							currentThread.status = status;
@@ -250,7 +250,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					Promise.allSettled(asyncPromises)
 						.then((results) => {
 							const allSucceeded = results.every(
-								(r) => r.status === "fulfilled" && (r.value as any)?.success !== false,
+								(r) => r.status === "fulfilled" && r.value.status === "completed",
 							);
 							recordAsyncJob(session, taskId, args.agents.length, allSucceeded ? "completed" : "failed");
 						})

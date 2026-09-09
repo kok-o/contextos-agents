@@ -32,13 +32,43 @@ function atomicWriteFile(targetPath, content) {
   const tmpPath = `${targetPath}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   try {
     fs.writeFileSync(tmpPath, content, 'utf8');
-    fs.renameSync(tmpPath, targetPath);
+
+    let renamed = false;
+    let lastError = null;
+    const maxRetries = 3;
+    const delays = [10, 50, 100];
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        fs.renameSync(tmpPath, targetPath);
+        renamed = true;
+        break;
+      } catch (renameErr) {
+        lastError = renameErr;
+        // Check for transient locking errors common on Windows (EPERM, EBUSY, EACCES)
+        const isTransient = renameErr.code === 'EPERM' || renameErr.code === 'EBUSY' || renameErr.code === 'EACCES';
+        if (isTransient && attempt < maxRetries) {
+          const waitMs = delays[attempt];
+          try {
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitMs);
+          } catch {
+            const start = Date.now();
+            while (Date.now() - start < waitMs) {}
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    if (!renamed) {
+      throw lastError || new Error(`Failed to atomically rename ${tmpPath} to ${targetPath}`);
+    }
   } catch (err) {
     try {
       if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
     } catch {}
-    // Direct write fallback
-    fs.writeFileSync(targetPath, content, 'utf8');
+    throw err;
   }
 }
 

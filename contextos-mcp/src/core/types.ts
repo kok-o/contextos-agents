@@ -97,8 +97,8 @@ export interface TaskBrief {
 	readonly maxAttempts: number;
 }
 
-export type VerificationVerdict = "PENDING" | "PASS" | "FAIL";
-export type ReviewVerdictValue = "PASS" | "FAIL";
+export type VerificationVerdict = "NOT_CONFIGURED" | "PENDING" | "RUNNING" | "PASS" | "FAIL" | "ERROR" | "TIMEOUT";
+export type ReviewVerdictValue = "PASS" | "FAIL" | "ERROR" | "TIMEOUT" | "UNAVAILABLE" | "MALFORMED" | "NOT_CONFIGURED";
 
 export interface ReviewVerdict {
 	readonly reviewerId: string;

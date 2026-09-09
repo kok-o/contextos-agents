@@ -94,4 +94,15 @@ describe("ContextOS Selector & Budget", () => {
 		// Strictly bounded under 20,000 chars (averaging 10k-16k, far below the old 35k-51k)
 		expect(prompt.length).toBeLessThan(20000);
 	});
+
+	it("transitively resolves dependencies: react pulls typescript", () => {
+		const res = selectContext("build a custom react hook", { maxSkills: 4 });
+		expect(res.skills).toContain("react");
+		expect(res.skills).toContain("typescript");
+	});
+
+	it("matches literal 'security review' to security skill", () => {
+		const res = selectContext("perform a security review of authentication endpoints");
+		expect(res.skills).toContain("security");
+	});
 });

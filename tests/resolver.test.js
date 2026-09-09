@@ -221,6 +221,31 @@ describe('resolver.js — Dynamic Skill Resolver & Progressive Index', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  test('resolveSkills resolves transitive dependencies: react -> typescript', () => {
+    const res = resolver.resolveSkills({ prompt: 'Build a react state hook' });
+    assert.ok(res.skills.includes('react'), 'react must be selected');
+    assert.ok(res.skills.includes('typescript'), 'typescript must be transitively pulled for react');
+  });
+
+  test('resolveSkills resolves transitive dependencies: nextjs -> react + typescript', () => {
+    const res = resolver.resolveSkills({ prompt: 'Configure Next.js server actions' });
+    assert.ok(res.skills.includes('nextjs'), 'nextjs must be selected');
+    assert.ok(res.skills.includes('react'), 'react must be transitively pulled for nextjs');
+    assert.ok(res.skills.includes('typescript'), 'typescript must be transitively pulled for nextjs');
+  });
+
+  test('resolveSkills resolves transitive dependencies: nestjs -> node + typescript', () => {
+    const res = resolver.resolveSkills({ prompt: 'Create NestJS microservice controller' });
+    assert.ok(res.skills.includes('nestjs'), 'nestjs must be selected');
+    assert.ok(res.skills.includes('node'), 'node must be transitively pulled for nestjs');
+    assert.ok(res.skills.includes('typescript'), 'typescript must be transitively pulled for nestjs');
+  });
+
+  test('resolveSkills matches literal "security review" prompt to security skill', () => {
+    const res = resolver.resolveSkills({ prompt: 'Perform a security review of the API endpoints' });
+    assert.ok(res.skills.includes('security'), 'security must be activated on security review');
+  });
 });
 
 

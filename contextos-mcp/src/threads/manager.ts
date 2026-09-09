@@ -470,7 +470,7 @@ export class ThreadManager {
 			maxAttempts,
 			estimatedCostUsd: 0,
 			taskBrief,
-			verification: taskBrief.testCommand ? "PENDING" : "PASS",
+			verification: taskBrief.testCommand ? "PENDING" : "NOT_CONFIGURED",
 			scopeViolation: false,
 		};
 		this.threads.set(threadId, state);
@@ -677,20 +677,27 @@ export class ThreadManager {
 			}
 
 			// Automated test verification (if taskBrief specifies testCommand)
-			let verificationVerdict: VerificationVerdict = "PASS";
+			let verificationVerdict: VerificationVerdict = "NOT_CONFIGURED";
 			let verificationOutput = "";
 			if (state.taskBrief?.testCommand) {
 				state.phase = "verifying";
 				this.onThreadProgress?.(threadId, "verifying", state.taskBrief.testCommand);
-				const verifyRes = await runWorktreeVerification(wtInfo.path, state.taskBrief.testCommand);
-				verificationOutput = verifyRes.output;
-				verificationVerdict = verifyRes.verified ? "PASS" : "FAIL";
-				state.verification = verificationVerdict;
-				if (!verifyRes.verified) {
-					state.error = `Verification failed: ${verifyRes.output}`;
+				try {
+					const verifyRes = await runWorktreeVerification(wtInfo.path, state.taskBrief.testCommand);
+					verificationOutput = verifyRes.output;
+					verificationVerdict = verifyRes.verified ? "PASS" : "FAIL";
+					state.verification = verificationVerdict;
+					if (!verifyRes.verified) {
+						state.error = `Verification failed: ${verifyRes.output}`;
+					}
+				} catch (verifyErr) {
+					verificationVerdict = "ERROR";
+					state.verification = "ERROR";
+					state.error = `Verification error: ${verifyErr instanceof Error ? verifyErr.message : String(verifyErr)}`;
 				}
 			} else {
-				state.verification = "PASS";
+				verificationVerdict = "NOT_CONFIGURED";
+				state.verification = "NOT_CONFIGURED";
 			}
 
 			// Independent Reviewer Gate (Dual Verdict)
@@ -709,7 +716,7 @@ export class ThreadManager {
 			});
 			state.review = reviewVerdict;
 
-			const reviewFailed = reviewVerdict.specCompliance === "FAIL" || reviewVerdict.codeQuality === "FAIL";
+			const reviewFailed = reviewVerdict.specCompliance !== "PASS" || reviewVerdict.codeQuality !== "PASS";
 			if (reviewFailed) {
 				const reason = `Review failed [spec=${reviewVerdict.specCompliance}, quality=${reviewVerdict.codeQuality}]: ${reviewVerdict.summary}`;
 				state.error = reason;
@@ -745,7 +752,8 @@ export class ThreadManager {
 				? ` (${agentResult.usage.inputTokens}+${agentResult.usage.outputTokens} tokens)`
 				: "";
 
-			const overallSuccess = agentResult.success && !reviewFailed && verificationVerdict === "PASS";
+			const verificationOk = verificationVerdict === "PASS" || verificationVerdict === "NOT_CONFIGURED";
+			const overallSuccess = agentResult.success && !reviewFailed && verificationOk;
 			const result: CompressedResult = {
 				success: overallSuccess,
 				summary: compressed,
@@ -760,13 +768,14 @@ export class ThreadManager {
 			if (overallSuccess) {
 				state.status = "completed";
 				state.phase = "completed";
-			} else if (verificationVerdict === "FAIL") {
+			} else if (verificationVerdict === "FAIL" || verificationVerdict === "ERROR") {
 				state.status = "verification_failed";
 				state.phase = "failed";
 			} else if (reviewFailed) {
 				state.status = "failed";
 				state.phase = "failed";
 			} else {
+				// Thread executed without exception or review/verification error, but returned success: false
 				state.status = "completed";
 				state.phase = "completed";
 			}

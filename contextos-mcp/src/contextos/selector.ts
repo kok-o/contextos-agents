@@ -136,6 +136,7 @@ export const SKILL_RULES: SkillRule[] = [
 	{
 		skill: "security",
 		strong: [
+			/\bsecurity\b/i,
 			/\bauth\b/i,
 			/\bjwt\b/i,
 			/\blogin\b/i,
@@ -383,6 +384,26 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 
 	if (hasSynergyPrereq && !topSkills.includes("system-design") && topSkills.length < maxSkills) {
 		topSkills.push("system-design");
+	}
+
+	// Transitive Dependency Resolution (from skill.yaml manifests)
+	const SKILL_DEPENDENCIES: Record<string, string[]> = {
+		react: ["typescript"],
+		node: ["typescript"],
+		nextjs: ["react", "typescript"],
+		nestjs: ["node", "typescript"],
+		microservices: ["system-design"],
+		"vercel-optimize": ["nextjs", "react", "typescript"],
+	};
+
+	for (let i = 0; i < topSkills.length; i++) {
+		const s = topSkills[i];
+		const deps = SKILL_DEPENDENCIES[s] || [];
+		for (const dep of deps) {
+			if (!topSkills.includes(dep) && topSkills.length < maxSkills) {
+				topSkills.push(dep);
+			}
+		}
 	}
 
 	// Collect any specific rules from matched skills

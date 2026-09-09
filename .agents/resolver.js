@@ -77,7 +77,7 @@ const SKILL_RULES = [
   {
     skill: 'security',
     category: 'intent',
-    strong: [/\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /авториз/i, /аутентифик/i, /парол/i, /безопасност/i],
+    strong: [/\bsecurity\b/i, /\bauth\b/i, /\bjwt\b/i, /\blogin\b/i, /\bcsrf\b/i, /\bxss\b/i, /\brate\s*limit\b/i, /авториз/i, /аутентифик/i, /парол/i, /безопасност/i],
     medium: [/\bpermission\b/i, /\bsession\b/i, /\btoken\b/i, /токен/i],
     weak: [],
     fileGlobs: [/\bauth\b/, /\bsecurity\b/],
@@ -515,6 +515,26 @@ function resolveSkills({ prompt = '', files = [], phase = 'Build', domain = '', 
   if (profileEnforce.accessibility_audit === true && (selectedSkills.includes('react') || selectedSkills.includes('ui-ux-pro'))) {
     if (!selectedSkills.includes('web-accessibility') && !profileExcluded.has('web-accessibility')) {
       selectedSkills.push('web-accessibility');
+    }
+  }
+
+  // 6. Transitive Dependency Resolution (from skill.yaml manifests)
+  const SKILL_DEPENDENCIES = {
+    'react': ['typescript'],
+    'node': ['typescript'],
+    'nextjs': ['react', 'typescript'],
+    'nestjs': ['node', 'typescript'],
+    'microservices': ['system-design'],
+    'vercel-optimize': ['nextjs', 'react', 'typescript'],
+  };
+
+  for (let i = 0; i < selectedSkills.length; i++) {
+    const s = selectedSkills[i];
+    const deps = SKILL_DEPENDENCIES[s] || [];
+    for (const dep of deps) {
+      if (!selectedSkills.includes(dep) && !profileExcluded.has(dep)) {
+        selectedSkills.push(dep);
+      }
     }
   }
 

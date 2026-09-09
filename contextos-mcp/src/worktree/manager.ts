@@ -14,17 +14,19 @@
  */
 
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import type { WorktreeInfo, WorktreeSessionMarker } from "../core/types.js";
 import { isPathAllowed } from "../security/file-policy.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
 import { isBlockedPath, redactSecrets } from "../security/secret-filter.js";
 
-function git(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
+function git(args: string[], cwd: string, extraEnv?: NodeJS.ProcessEnv): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
-		execFile("git", args, { cwd, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+		const env = extraEnv ? { ...process.env, ...extraEnv } : process.env;
+		execFile("git", args, { cwd, maxBuffer: 10 * 1024 * 1024, env }, (err, stdout, stderr) => {
 			if (err) {
 				reject(new Error(`git ${args[0]} failed: ${stderr || err.message}`));
 			} else {
@@ -304,23 +306,32 @@ export class WorktreeManager {
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
 
-		// Stage all changes first to include new files in diff
+		// Use an isolated temporary index file so the real Git index is NEVER modified by getDiff
+		const tmpIndex = path.join(os.tmpdir(), `ctx-idx-${randomUUID()}`);
 		try {
-			await git(["add", "-A"], info.path);
 			try {
-				await git(["reset", "--", ".contextos-owner", ".contextos-session"], info.path);
+				await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
+				await git(["add", "-A"], info.path, { GIT_INDEX_FILE: tmpIndex });
+				const { stdout: fullDiff } = await git(
+					["diff", "--cached", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+					info.path,
+					{ GIT_INDEX_FILE: tmpIndex }
+				);
+				return redactSecrets(fullDiff || "(no changes)");
 			} catch {
-				/* non-fatal */
+				const { stdout: fallbackDiff } = await git(
+					["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+					info.path
+				);
+				return redactSecrets(fallbackDiff || "(no changes)");
 			}
-		} catch {
-			// Might be empty
+		} finally {
+			try {
+				if (existsSync(tmpIndex)) unlinkSync(tmpIndex);
+			} catch {
+				/* cleanup best-effort */
+			}
 		}
-
-		const { stdout: fullDiff } = await git(
-			["diff", "--cached", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-			info.path,
-		);
-		return redactSecrets(fullDiff || "(no changes)");
 	}
 
 	/** Get diff stats (short summary). */
@@ -329,51 +340,51 @@ export class WorktreeManager {
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
 
+		const tmpIndex = path.join(os.tmpdir(), `ctx-idx-${randomUUID()}`);
 		try {
-			await git(["add", "-A"], info.path);
 			try {
-				await git(["reset", "--", ".contextos-owner", ".contextos-session"], info.path);
+				await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
+				await git(["add", "-A"], info.path, { GIT_INDEX_FILE: tmpIndex });
+				const { stdout } = await git(
+					["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+					info.path,
+					{ GIT_INDEX_FILE: tmpIndex }
+				);
+				return redactSecrets(stdout.trim() || "(no changes)");
 			} catch {
-				/* non-fatal */
+				const { stdout: fallbackStats } = await git(
+					["diff", "HEAD", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+					info.path
+				);
+				return redactSecrets(fallbackStats.trim() || "(no changes)");
 			}
-		} catch {
-			/* empty */
+		} finally {
+			try {
+				if (existsSync(tmpIndex)) unlinkSync(tmpIndex);
+			} catch {
+				/* cleanup best-effort */
+			}
 		}
-
-		const { stdout } = await git(
-			["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-			info.path,
-		);
-		return redactSecrets(stdout.trim() || "(no changes)");
 	}
 
-	/** Get list of changed files. */
+	/** Get list of changed files without mutating Git index. */
 	async getChangedFiles(threadId: string): Promise<string[]> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
 
-		try {
-			await git(["add", "-A"], info.path);
-			try {
-				await git(["reset", "--", ".contextos-owner", ".contextos-session"], info.path);
-			} catch {
-				/* non-fatal */
-			}
-		} catch {
-			/* empty */
-		}
-
-		const { stdout } = await git(
-			["diff", "--cached", "--name-only", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-			info.path,
+		const { stdout: status } = await git(
+			["status", "--porcelain=v2", "-z", "--untracked-files=all"],
+			info.path
 		);
-		return stdout
-			.trim()
-			.split("\n")
-			.map((f) => f.trim())
-			.filter(Boolean)
-			.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session" && !isBlockedPath(f));
+		const internal = new Set([".contextos-owner", ".contextos-session"]);
+		return [
+			...new Set(
+				parsePorcelainV2(status)
+					.map(normalizeGitPath)
+					.filter((file) => file && !internal.has(file) && !isBlockedPath(file))
+			),
+		];
 	}
 
 	/**
@@ -432,12 +443,10 @@ export class WorktreeManager {
 					continue; // Do not commit internal ownership markers
 				}
 				if (isBlockedPath(unquoted)) {
-					process.stderr.write(`[worktree-manager] Blocked staging of sensitive path: ${unquoted}\n`);
-					continue;
+					throw new Error(`SECURITY_POLICY_FAILED: Attempted commit of blocked sensitive path: "${unquoted}"`);
 				}
 				if (!isPathAllowed(unquoted, info.path)) {
-					process.stderr.write(`[worktree-manager] Blocked path traversal attempt: ${unquoted}\n`);
-					continue;
+					throw new Error(`SECURITY_POLICY_FAILED: Path traversal violation attempt: "${unquoted}"`);
 				}
 				pathsToStage.push(unquoted);
 			}
@@ -446,11 +455,23 @@ export class WorktreeManager {
 				return false;
 			}
 
-			// 3. Stage only verified paths
+			// 3. Reset index first to ensure no previously staged sensitive files leak into commit
+			await git(["reset"], info.path);
+
+			// 4. Stage only verified paths
 			await git(["add", "--", ...pathsToStage], info.path);
 
-			const { stdout: stagedStatus } = await git(["status", "--porcelain"], info.path);
-			if (!stagedStatus.trim()) return false;
+			// 5. Verify staged inventory strictly against blocked paths
+			const { stdout: stagedStatus } = await git(["diff", "--cached", "--name-only", "-z"], info.path);
+			const stagedFiles = stagedStatus.split("\0").filter(Boolean);
+			for (const file of stagedFiles) {
+				if (isBlockedPath(file) || !isPathAllowed(file, info.path)) {
+					await git(["reset"], info.path);
+					throw new Error(`SECURITY_POLICY_FAILED: Sensitive or disallowed path detected in staged index: "${file}"`);
+				}
+			}
+
+			if (stagedFiles.length === 0) return false;
 
 			await git(["commit", "-m", message], info.path);
 			return true;

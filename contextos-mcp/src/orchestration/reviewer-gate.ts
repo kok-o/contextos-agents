@@ -159,15 +159,32 @@ export async function evaluateReviewerGate(options: ReviewerGateOptions): Promis
 		};
 	}
 
-	// 4. LLM-Based Evaluation (if non-mock agent is available and executable)
-	let agentProvider = null;
-	try {
-		agentProvider = getAgent(effectiveReviewer);
-	} catch {
-		// Agent not registered, fallback to deterministic heuristic
-	}
+	// 4. LLM-Based Evaluation (if requested reviewer is specified and non-mock)
+	const shouldRunLlmReview = requestedReviewer !== undefined && requestedReviewer !== "mock";
+	if (shouldRunLlmReview) {
+		let agentProvider = null;
+		try {
+			agentProvider = getAgent(effectiveReviewer);
+		} catch {
+			return {
+				reviewerId,
+				specCompliance: "UNAVAILABLE",
+				codeQuality: "UNAVAILABLE",
+				summary: `Review failed: requested reviewer agent "${effectiveReviewer}" is not registered or available.`,
+				reviewedAt: Date.now(),
+			};
+		}
 
-	if (agentProvider && effectiveReviewer !== "mock" && workDir) {
+		if (!workDir) {
+			return {
+				reviewerId,
+				specCompliance: "ERROR",
+				codeQuality: "ERROR",
+				summary: "Review failed: workDir not provided for LLM evaluation.",
+				reviewedAt: Date.now(),
+			};
+		}
+
 		try {
 			const systemPrompt = getReviewerSystemPrompt();
 			const userPrompt = buildReviewerUserPrompt({
@@ -186,24 +203,47 @@ export async function evaluateReviewerGate(options: ReviewerGateOptions): Promis
 				signal: AbortSignal.timeout(30000),
 			});
 
-			if (result.success && result.output) {
-				const parsed = parseVerdictJson(result.output);
-				if (parsed?.specCompliance && parsed?.codeQuality) {
-					return {
-						reviewerId,
-						specCompliance: parsed.specCompliance,
-						codeQuality: parsed.codeQuality,
-						summary: parsed.summary || "Independent review completed successfully.",
-						reviewedAt: Date.now(),
-					};
-				}
+			if (!result.success) {
+				return {
+					reviewerId,
+					specCompliance: "ERROR",
+					codeQuality: "ERROR",
+					summary: `Review failed: agent execution failed: ${result.error || "unknown error"}`,
+					reviewedAt: Date.now(),
+				};
 			}
-		} catch {
-			// Fallback to deterministic heuristic on agent error or timeout
+
+			const parsed = parseVerdictJson(result.output || "");
+			if (parsed?.specCompliance && parsed?.codeQuality) {
+				return {
+					reviewerId,
+					specCompliance: parsed.specCompliance,
+					codeQuality: parsed.codeQuality,
+					summary: parsed.summary || "Independent review completed successfully.",
+					reviewedAt: Date.now(),
+				};
+			}
+
+			return {
+				reviewerId,
+				specCompliance: "MALFORMED",
+				codeQuality: "MALFORMED",
+				summary: "Review failed: reviewer returned malformed or unparseable JSON verdict.",
+				reviewedAt: Date.now(),
+			};
+		} catch (err: any) {
+			const isTimeout = err?.name === "TimeoutError" || String(err).includes("timeout");
+			return {
+				reviewerId,
+				specCompliance: isTimeout ? "TIMEOUT" : "ERROR",
+				codeQuality: isTimeout ? "TIMEOUT" : "ERROR",
+				summary: `Review failed with ${isTimeout ? "timeout" : "error"}: ${err?.message || String(err)}`,
+				reviewedAt: Date.now(),
+			};
 		}
 	}
 
-	// Deterministic default when all static criteria pass
+	// Deterministic default when all static criteria pass and no LLM reviewer was requested
 	return {
 		reviewerId,
 		specCompliance: "PASS",
@@ -248,16 +288,20 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 		};
 	}
 
-	let agentProvider = null;
-	try {
-		if (reviewerAgent) {
+	if (reviewerAgent && reviewerAgent !== "mock") {
+		let agentProvider = null;
+		try {
 			agentProvider = getAgent(reviewerAgent);
+		} catch {
+			return {
+				reviewerId,
+				specCompliance: "UNAVAILABLE",
+				codeQuality: "UNAVAILABLE",
+				summary: `Combined staging review failed: reviewer agent "${reviewerAgent}" is not available.`,
+				reviewedAt: Date.now(),
+			};
 		}
-	} catch {
-		// Non-fatal fallback
-	}
 
-	if (agentProvider && reviewerAgent !== "mock") {
 		try {
 			const prompt = buildCombinedStagingReviewPrompt(baseSha, stagingBranch, combinedDiff, taskSummaries);
 			const result = await agentProvider.run({
@@ -266,20 +310,41 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 				model: reviewerModel || "default",
 				signal: AbortSignal.timeout(30000),
 			});
-			if (result.success && result.output) {
-				const parsed = parseVerdictJson(result.output);
-				if (parsed?.specCompliance && parsed?.codeQuality) {
-					return {
-						reviewerId,
-						specCompliance: parsed.specCompliance,
-						codeQuality: parsed.codeQuality,
-						summary: parsed.summary || "Combined staging review passed.",
-						reviewedAt: Date.now(),
-					};
-				}
+			if (!result.success) {
+				return {
+					reviewerId,
+					specCompliance: "ERROR",
+					codeQuality: "ERROR",
+					summary: `Combined staging review failed: agent execution error: ${result.error || "unknown error"}`,
+					reviewedAt: Date.now(),
+				};
 			}
-		} catch {
-			// Fallback to static inspection
+			const parsed = parseVerdictJson(result.output || "");
+			if (parsed?.specCompliance && parsed?.codeQuality) {
+				return {
+					reviewerId,
+					specCompliance: parsed.specCompliance,
+					codeQuality: parsed.codeQuality,
+					summary: parsed.summary || "Combined staging review passed.",
+					reviewedAt: Date.now(),
+				};
+			}
+			return {
+				reviewerId,
+				specCompliance: "MALFORMED",
+				codeQuality: "MALFORMED",
+				summary: "Combined staging review failed: reviewer returned invalid JSON verdict.",
+				reviewedAt: Date.now(),
+			};
+		} catch (err: any) {
+			const isTimeout = err?.name === "TimeoutError" || String(err).includes("timeout");
+			return {
+				reviewerId,
+				specCompliance: isTimeout ? "TIMEOUT" : "ERROR",
+				codeQuality: isTimeout ? "TIMEOUT" : "ERROR",
+				summary: `Combined staging review failed with ${isTimeout ? "timeout" : "error"}: ${err?.message || String(err)}`,
+				reviewedAt: Date.now(),
+			};
 		}
 	}
 

@@ -185,4 +185,33 @@ describe("Combined Staging Review (Task 2.5f)", () => {
 			fs.rmSync(tmpDir, { recursive: true, force: true });
 		}
 	});
+
+	it("fails closed with UNAVAILABLE when requested reviewer is missing", async () => {
+		const brief = createTaskBrief({ writeScope: ["src/calc.ts"] });
+		const verdict = await evaluateReviewerGate({
+			taskBrief: brief,
+			diff: "+ export function add() { return 1; }",
+			filesChanged: ["src/calc.ts"],
+			verificationVerdict: "PASS",
+			reviewerAgent: "non-existent-agent-xyz",
+			workDir: process.cwd(),
+		});
+
+		expect(verdict.specCompliance).toBe("UNAVAILABLE");
+		expect(verdict.codeQuality).toBe("UNAVAILABLE");
+		expect(verdict.summary).toContain("not registered or available");
+	});
+
+	it("combined staging fails closed with UNAVAILABLE when requested reviewer is missing", async () => {
+		const verdict = await reviewCombinedStaging({
+			repoRoot: process.cwd(),
+			baseSha: "HEAD~1",
+			stagingBranch: "HEAD",
+			reviewerAgent: "non-existent-agent-xyz",
+		});
+
+		expect(verdict.specCompliance).toBe("UNAVAILABLE");
+		expect(verdict.codeQuality).toBe("UNAVAILABLE");
+		expect(verdict.summary).toContain("not available");
+	});
 });

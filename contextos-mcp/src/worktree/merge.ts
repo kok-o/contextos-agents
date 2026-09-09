@@ -60,7 +60,7 @@ export function isEligibleForMerge(thread: ThreadState): MergeEligibility {
 	if (thread.scopeViolation) {
 		return { eligible: false, reason: "Thread touched files outside its assigned writeScope" };
 	}
-	if (thread.verification !== "PASS") {
+	if (thread.verification !== "PASS" && thread.verification !== "NOT_CONFIGURED") {
 		return {
 			eligible: false,
 			reason: `Verification verdict is "${thread.verification || "PENDING"}", expected "PASS"`,
