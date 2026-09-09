@@ -5,7 +5,30 @@ package-lock.json.bak
 # OS Clutter
 .DS_Store
 Thumbs.db
+Desktop.ini
 *.tmp
+*.temp
+*.bak
+*.swp
+
+# IDE & Editor files
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Python & Tool caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+
+# Build & Test outputs
+dist/
+build/
+*.tsbuildinfo
+coverage/
+.nyc_output/
 
 # Environment and Secrets
 .env
@@ -18,10 +41,20 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Benchmark Run Outputs & Reports (tracked so test results are visible to collaborators)
 !benchmarks/results/
 
+# ContextOS Runtime, Caches & Transactions
+.agents/cache/
+.agents/state/
+.agents/transactions/
+.agents/mcp/
+.contextos-worktrees/
+.swarm-worktrees/
+.contextos-session
+*.contextos.bak
 
 # Plugin cache & local installs
 .agents/plugins/*
@@ -29,10 +62,6 @@ yarn-error.log*
 .agents/plugins.json
 
 website/
-.agents/mcp/
-
-# Swarm worktrees
-.swarm-worktrees/
 
 # Local scratch and temporary scripts
 scratch/

@@ -57,28 +57,37 @@ Most AI coding assistants suffer from two extremes: they either operate in a vac
 
 ## Project Profiles & Stack Auto-Detection
 
-ContextOS allows you to tailor your AI rules to the project lifecycle and architecture:
+ContextOS allows you to tailor your AI rules to the project lifecycle and architecture via **ProfileV2** schemas:
 
 | Profile | Focus | Excluded / Filtered Skills | Ideal For |
 |---|---|---|---|
-| `mvp` | Maximum speed & minimalism | `microservices`, `ddd`, `cqrs`, `kubernetes` | Hackathons, prototypes, fast validation |
-| `startup` | Balanced agile stack | `microservices`, `kubernetes` | SaaS startups, modular monoliths |
+| `default` | Standard balanced development | _(none)_ — standard general engineering | General applications, mixed stacks |
+| `minimal` (`mvp`) | Maximum speed & minimalism | `microservices`, `ddd`, `cqrs` | Hackathons, prototypes, fast validation |
+| `fullstack` (`startup`) | Agile full-stack engineering | `microservices` | SaaS startups, modular monoliths |
 | `enterprise` | Maximum rigor & compliance | _(none)_ — full TDD, DDD, Security Audit | Large scale teams, strict audit requirements |
 | `frontend` | Dedicated UI/UX & React | `fastapi`, `nestjs`, `microservices`, `ddd` | Next.js, React, Design systems, SPAs |
 | `backend` | Server-side & APIs | `ui-ux-pro`, `impeccable-design`, `ui-design` | API servers, microservices, databases |
 
-### Profile Commands
+### Profile & Workspace Commands
 
 ```bash
-# Auto-detect tech stack in the current project
+# Auto-detect tech stack and build Workspace Evidence Graph
 contextos detect
-# or: node .agents/ctx.js detect
+# or with package scoping & explainability:
+contextos detect --scope apps/web --explain
 
 # List available profiles and current active profile
 contextos profile list
 
-# Apply a profile
-contextos profile apply mvp
+# Inspect profile rules, required/preferred skills, and policies
+contextos profile explain enterprise
+# or structured JSON:
+contextos profile explain frontend --json
+
+# Apply a profile (with optional monorepo package scope and export suppression)
+contextos profile apply minimal
+contextos profile apply frontend --scope apps/web
+contextos profile apply enterprise --no-export
 
 # Recompile all agent exports for the active profile
 contextos export all
@@ -154,7 +163,7 @@ ContextOS provides a unified CLI (`contextos` or `npx contextos-agents`) and loc
 
 ### Dynamic Skill Resolution (`resolve` & `index`)
 
-To prevent context bloat, ContextOS dynamically resolves the exact 2–4 skills needed for any prompt or file:
+To prevent context bloat, ContextOS dynamically resolves the exact minimal skill closure needed for any prompt or file using a multi-source evidence scoring engine:
 
 ```bash
 # Resolve skills for a task description (English):
@@ -171,8 +180,11 @@ contextos resolve "создай модальное окно авторизаци
 # [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer]
 # Skills loaded: ponytail-mindset, engineering-workflow, react, ui-ux-pro, security, testing
 
-# Resolve skills based on active files (hybrid AST & config analysis):
-contextos resolve --files "app/api/auth/route.ts"
+# Resolve skills with full evidence scoring explanation:
+contextos resolve "security review Next.js auth" --files apps/web/app/login/page.tsx --explain
+
+# Resolve with structured JSON output for tooling, MCP, and scripts:
+contextos resolve "Dockerize NestJS API" --json
 
 # Generate/update progressive lightweight skills index:
 contextos index
@@ -349,28 +361,28 @@ Add ContextOS to your IDE's MCP settings (e.g. in `.agents/mcp_config.json`):
 
 Tests use the **Node.js built-in test runner** for the core framework and **Vitest** for the MCP engine — zero external test bloat.
 
-### 1. Root Test Suite (131 tests)
+### 1. Root Test Suite (245 tests, 21 test files)
 
 ```bash
 npm test
 ```
 
 ```text
-# tests 131
-# suites 27
-# pass  131
+# tests 245
+# suites 39
+# pass  245
 # fail  0
 ```
 
-### 2. MCP Server Test Suite (440 tests)
+### 2. MCP Server Test Suite (510 tests, 40 test files)
 
 ```bash
 cd contextos-mcp && npm test
 ```
 
 ```text
-Test Files  25 passed | 1 skipped (26)
-     Tests  440 passed | 13 skipped (453)
+Test Files  40 passed | 1 skipped (41)
+     Tests  510 passed | 13 skipped (523)
 ```
 
 **Test coverage:**
@@ -378,13 +390,16 @@ Test Files  25 passed | 1 skipped (26)
 - `tests/install.test.js` — installer CLI flags (--help, --minimal, --dry-run, --force)
 - `tests/export.test.js` — ctx.js export for gemini, claude, cursor (.mdc rules), copilot, aider, zed
 - `tests/skills.test.js` — validates all skill source files and frontmatter
-- `tests/profile.test.js` — profile resolution, stack auto-detection, and skill filtering
+- `tests/profile.test.js` & `tests/profiles-v2.test.js` — ProfileV2 schema validation, conflict detection, monorepo package overrides
 - `tests/validate.test.js` — validator rules, dependency graph, and sync checks
 - `tests/plugins.test.js` — plugin lockfile, registry fetching, and security checks
-- `tests/resolver.test.js` — dynamic skill resolution, AST import graph analysis, progressive index, and bilingual prompt matching
+- `tests/resolver.test.js` & `tests/canonical-resolver.test.js` — canonical manifest-driven resolver, evidence scoring, dependency closure, budget planner, risk assessment
+- `tests/workspace-graph.test.js` — Workspace Evidence Graph builder, monorepo package isolation, and nearest-package scoping
+- `tests/manifest-compiler.test.js` — Manifest Compiler & Registry v2 (DAG cycle check, hashes, JSON Schema)
 - `tests/benchmark.test.js` — benchmark scoring engine, static AST checks, runtime sandbox, and reporters
 - `contextos-mcp/tests/unit/session-persistence.test.ts` — session disk persistence, thread state tracking, and orphan purge
 - `contextos-mcp/tests/unit/contextos-tools.test.ts` — all 6 MCP tool handlers and validation
+- `contextos-mcp/tests/integration/worktree.test.ts` — isolated Git worktree management, safe commits, and temporary index isolation
 
 ## Benchmark: With Skills vs. Without Skills
 
@@ -466,6 +481,23 @@ When executed, reports are generated in `benchmarks/results/` (`.html`, `.md`, `
 > [!NOTE]
 > **Why Runtime Benchmarks Are Dispatch-Only in CI:** Standard CI checks (`validate-skills.yml`) run hermetically without external API calls to avoid flaky network dependencies and API token expenditures on every pull request. Live runtime evaluation is triggered on demand via GitHub Actions **Workflow Dispatch** ([`benchmark-runtime.yml`](.github/workflows/benchmark-runtime.yml)) using secure repository secrets.
 
+
+## Architecture Decision Records (ADRs)
+
+Key architectural decisions, system boundaries, and trade-offs are formally tracked in Architecture Decision Records under [`docs/decisions/`](./docs/decisions/):
+
+| ADR | Title | Status | Scope |
+|---|---|---|---|
+| [ADR-001](./docs/decisions/0001-core-runtime-catalog-split.md) | Separation of Core, Runtime, and Catalog | Accepted | Architecture |
+| [ADR-002](./docs/decisions/0002-canonical-typescript-core-bundled-cli.md) | Canonical TypeScript Core & Bundled CLI | Accepted | Tooling |
+| [ADR-003](./docs/decisions/0003-zero-install-time-dependencies.md) | Zero Install-Time Runtime Dependencies | Accepted | Runtime |
+| [ADR-004](./docs/decisions/0004-manifest-schema-v2.md) | Manifest Schema v2 & Compiled Registry | Accepted | Manifests |
+| [ADR-005](./docs/decisions/0005-resolver-precedence-and-conflict-policy.md) | Resolver Precedence & Conflict Policy | Accepted | Resolver |
+| [ADR-006](./docs/decisions/0006-recoverable-transactions.md) | Recoverable Transactions over False Atomicity | Accepted | Transactions |
+| [ADR-007](./docs/decisions/0007-fail-closed-verification-review.md) | Fail-Closed Verification & Review Quality Gates | Accepted | Verification |
+| [ADR-008](./docs/decisions/0008-git-isolation-vs-os-sandbox.md) | Git Worktree Isolation vs. OS Sandboxing | Accepted | Worktree / MCP |
+| [ADR-009](./docs/decisions/0009-ownership-vendor-project-generated.md) | Ownership Model: Vendor, Project & Generated | Accepted | File System |
+| [ADR-010](./docs/decisions/0010-benchmark-v2-protocol.md) | Benchmark v2 Protocol & Evaluation Harness | Accepted | Evaluation |
 
 ## Security — Third-Party Skills
 

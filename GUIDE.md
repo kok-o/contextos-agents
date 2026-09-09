@@ -20,22 +20,45 @@
 
 Управление профилями, адаптерами, диагностикой и валидацией осуществляется через CLI утилиту `contextos` (или напрямую через `node .agents/ctx.js`). Все команды поддерживают оба формата вызова:
 
-### Определение стека и профили
+### Динамический резолювер навыков (`resolve`)
 
 ```bash
-# Автоматически определить стек проекта (React, Next.js, FastAPI и т.д.)
+# Динамический расчет минимального набора навыков под задачу:
+contextos resolve "Сделай адаптивное модальное окно на React с Tailwind"
+
+# С подробным объяснением скоринга и доказательной базы evidence:
+contextos resolve "security review Next.js auth" --files apps/web/app/login/page.tsx --explain
+
+# В структурированном формате JSON для скриптов и IDE:
+contextos resolve "Dockerize NestJS API" --json
+```
+
+### Определение стека и граф рабочего пространства (`detect`)
+
+```bash
+# Автоматически определить стек проекта (React, Next.js, FastAPI, Cargo, Go и т.д.)
 contextos detect
 # или: node .agents/ctx.js detect
 
+# С таргетингом на конкретный пакет монорепозитория и выводом доказательств:
+contextos detect --scope apps/web --explain
+```
+
+### Управление профилями v2 (`profile`)
+
+```bash
 # Посмотреть список доступных профилей и активный профиль
 contextos profile list
-# или: node .agents/ctx.js profile list
 
-# Переключить профиль проекта (отключает нерелевантные навыки, экономя токены)
-contextos profile apply mvp        # Для быстрых прототипов (без микросервисов и DDD)
-contextos profile apply frontend   # Фокус на React, UI/UX, анимациях и верстке
-contextos profile apply backend    # Фокус на базах данных, архитектуре и API
-contextos profile apply enterprise # Полный аудит, строгий TDD, безопасность
+# Изучить структуру профиля, обязательные/предпочтительные навыки и политики:
+contextos profile explain enterprise
+contextos profile explain frontend --json
+
+# Переключить профиль проекта (с поддержкой монорепозиториев и подавлением экспорта):
+contextos profile apply minimal                          # Для быстрых прототипов
+contextos profile apply frontend --scope apps/web        # Таргетинг на пакет
+contextos profile apply backend                          # Фокус на API и БД
+contextos profile apply enterprise --no-export           # Без немедленной перезаписи адаптеров
 ```
 
 ### Экспорт настроек в редакторы (Адаптеры)
@@ -71,12 +94,15 @@ contextos watch
 ### Валидация и тестирование
 
 ```bash
-# Проверить целостность и валидность всех навыков, зависимостей и сборки MCP
+# Проверить целостность и валидность всех навыков, схем v2, зависимостей и сборки MCP
 contextos validate
 # или: node .agents/ctx.js validate
 
-# Запустить проектные тесты
+# Запустить полный набор тестов ядра (245 тестов, 21 тестовый файл)
 npm test
+
+# Запустить тесты runtime-сервера MCP (510 тестов, 40 тестовых файлов)
+cd contextos-mcp && npm test
 ```
 
 ### Подключение MCP-сервера (Параллельные сабагенты и git worktrees)

@@ -68,7 +68,7 @@ cat .agents/generated/claude/skills/<your-skill-name>/SKILL.md
 npm test
 ```
 
-All 131 tests across 27 suites (and 440 MCP tests) must pass before submitting a PR.
+All 245 tests across 39 suites (and 510 MCP tests) must pass before submitting a PR.
 
 ---
 
@@ -105,7 +105,9 @@ npm unlink contextos-agents
 | `contextos doctor` | Diagnostic health check for skills, profiles, and sync |
 | `contextos stats` | Token savings telemetry report across task categories |
 | `contextos watch` | Continuous background watcher & auto-compiler daemon |
-| `contextos resolve <prompt>` | Dynamic minimal skill resolution |
+| `contextos resolve <prompt>` | Dynamic minimal skill resolution (`--explain`, `--json`) |
+| `contextos detect` | Workspace Evidence Graph detection (`--scope`, `--explain`) |
+| `contextos profile list/explain/apply` | Profile management (`--scope`, `--no-export`, `--json`) |
 | `contextos export gemini` | Compile skills for Gemini / Antigravity |
 | `contextos export claude` | Compile skills for Claude Code |
 | `contextos export cursor` | Compile → `.cursorrules` + `.cursor/rules/*.mdc` |
@@ -113,12 +115,12 @@ npm unlink contextos-agents
 | `contextos export aider` | Compile → `.aider.conf.yml` + `CONVENTIONS.md` |
 | `contextos export zed` | Compile → `.zed/rules.md` + `.zed/prompts/*.md` |
 | `contextos export all` | Compile for all agents |
-| `contextos validate` | Validate skills, frontmatter, deps & sync |
+| `contextos validate` | Validate skills, frontmatter, schemas v2, deps & sync |
 | `node .agents/ctx.js skill add <ref>` | Install a plugin skill |
 | `node .agents/ctx.js skill remove <name>` | Remove a plugin skill |
 | `node .agents/ctx.js skill list` | List built-in + plugin skills |
 | `node .agents/ctx.js skill search [q]` | Search community registry |
-| `npm test` | Run full test suite (131 tests, 27 suites) |
+| `npm test` | Run full test suite (245 tests, 21 test files) |
 | `npm run validate` | Alias for `ctx.js validate` |
 | `npm run build` | Alias for `export all` |
 | `npm run watch` | Alias for `contextos watch` |
@@ -127,23 +129,56 @@ npm unlink contextos-agents
 
 ---
 
-## skill.yaml Format (Optional)
+## Skill Manifest V2 Format (`skill.yaml`)
 
-If your skill has complex metadata, you can add a `skill.yaml` alongside `SKILL.md`:
+Each skill must include a `skill.yaml` alongside `SKILL.md` conforming to the Manifest V2 schema ([`.agents/schemas/skill.v2.schema.json`](./.agents/schemas/skill.v2.schema.json)):
 
 ```yaml
-name: your-skill-name
+schemaVersion: 2
+id: your-skill-name
+displayName: Your Skill Name
+version: 1.0.0
 description: >
-  Description of the skill.
-tags:
-  - frontend
-  - react
-version: "1.0.0"
-requires: [typescript]      # other skills this one depends on
-conflicts: [vue, angular]   # skills that conflict (external names allowed)
+  Concise description of what this skill does and when it activates.
+type: instruction-only
+category: frontend
+entrypoint: SKILL.md
+
+signals:
+  aliases: [your-skill]
+  keywords:
+    - value: your feature keyword
+      locale: en
+      weight: 10
+  fileGlobs:
+    - value: "**/config.js"
+      weight: 15
+  packages:
+    - ecosystem: npm
+      name: your-package
+      weight: 15
+
+dependencies:
+  requires: [typescript]      # mandatory transitive dependencies
+  optional: []                # recommended auxiliary skills
+  conflicts: []               # incompatible skills
+
+context:
+  priority: 50
+  estimatedTokens: 1200
+
+resources:
+  - path: references/guide.md
+    mode: on-demand
 ```
 
-The compiler will merge `skill.yaml` metadata with the `SKILL.md` content when generating output.
+The manifest compiler validates DAG cycles, ensures referential integrity, and generates deterministic SHA-256 hashes into `.agents/compiled/registry.v2.json`.
+
+---
+
+## Architecture Decision Records (ADRs)
+
+Any architectural changes, new platform layers, lifecycle phases, or contract modifications require an Architecture Decision Record (ADR) under [`docs/decisions/`](./docs/decisions/) before implementation. Follow the format of existing ADRs (ADR-001 through ADR-010).
 
 ---
 
