@@ -54,6 +54,13 @@ export async function runWorktreeVerification(
 	const rawTool = parts[0];
 	const baseTool = rawTool.toLowerCase().replace(/\.(cmd|bat|exe)$/i, "");
 
+	if (baseTool === "npx") {
+		return {
+			verified: false,
+			output: 'Security error: "npx" is strictly forbidden in host mode. Use OCI sandbox or local package runner.',
+		};
+	}
+
 	if (!ALLOWED_VERIFY_TOOLS.has(baseTool)) {
 		return {
 			verified: false,

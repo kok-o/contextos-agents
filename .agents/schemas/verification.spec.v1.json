@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContextOS Verification Spec v1",
+  "type": "object",
+  "required": [
+    "executable",
+    "args",
+    "timeoutMs",
+    "required",
+    "network"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "executable": {
+      "type": "string",
+      "enum": ["npm", "pnpm", "yarn", "pytest", "cargo", "go"]
+    },
+    "args": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 600000
+    },
+    "required": {
+      "type": "boolean"
+    },
+    "network": {
+      "type": "string",
+      "enum": ["deny", "allow"]
+    },
+    "allowedOutputPaths": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
