@@ -33,7 +33,6 @@
     ".agents/workspace",
     ".agents/filesystem",
     ".agents/runtime",
-    ".agents/plugin-supply-chain.js",
     ".agents/customization-dx.js",
     "benchmarks/v2"
   ],
@@ -79,7 +78,8 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "markdownlint-cli": "^0.43.0"
-  },
-  "dependencies": {}
+    "esbuild": "^0.28.2",
+    "markdownlint-cli": "^0.43.0",
+    "yaml": "^2.9.0"
+  }
 }

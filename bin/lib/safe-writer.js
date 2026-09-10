@@ -286,4 +286,5 @@ module.exports = {
   executeFileWrite,
   planFileDelete,
   executeFileDelete,
+  cleanEmptyParentDirectories,
 };

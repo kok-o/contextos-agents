@@ -3359,4 +3359,4 @@ trust patch
 
 До прохождения этого порядка любые новые claims о гарантиях, sandbox, AST analysis и 70–80% token savings должны считаться aspirational, а не свойствами продукта.
 
-Статус плана: DONE
+

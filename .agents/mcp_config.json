@@ -1,4 +1,7 @@
 {
+  "capabilities": {
+    "enable_subagents": true
+  },
   "mcpServers": {
     "contextos": {
       "command": "node",

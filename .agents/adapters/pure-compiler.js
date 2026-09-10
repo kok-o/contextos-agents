@@ -348,9 +348,6 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
       } catch {}
     }
 
-    // Commit all file modifications atomically
-    const txResult = tx.commit();
-
     // Clean up empty/orphan skill directories in generated paths
     const cleanupDirs = [
       path.join(absRoot, '.agents', 'generated', 'gemini', 'skills'),
@@ -363,17 +360,25 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
           if (fs.statSync(entryPath).isDirectory()) {
             const relMd = toPosix(path.relative(absRoot, path.join(entryPath, 'SKILL.md')));
             if (!activePaths.has(relMd)) {
-              try {
-                fs.rmSync(entryPath, { recursive: true, force: true });
-              } catch {}
+              // Delete orphaned files inside the directory, if any. The generator writes SKILL.md and optional references.
+              for (const child of fs.readdirSync(entryPath)) {
+                tx.stageDelete(toPosix(path.relative(absRoot, path.join(entryPath, child))));
+              }
+              const relDir = toPosix(path.relative(absRoot, entryPath));
+              tx.stageDeleteDir(relDir);
             }
           }
         }
       }
     }
 
-    // Persist lockfile update
-    lockfileManager.write(lockfileData);
+    // Stage lockfile v2 update
+    lockfileData.revision += 1;
+    const relLockPath = toPosix(path.relative(absRoot, lockfileManager.lockfilePath));
+    tx.stageWrite(relLockPath, JSON.stringify(lockfileData, null, 2) + '\n');
+
+    // Commit all file modifications atomically
+    const txResult = tx.commit();
 
     return {
       success: true,

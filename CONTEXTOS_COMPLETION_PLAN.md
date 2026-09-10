@@ -167,8 +167,8 @@ Gate W2: parity 100% на corpus; `resolve --json` имеет versioned schema; 
 
 ### W3.5 — Recovery CLI (45–60 мин)
 
-- [ ] `contextos doctor` показывает pending/recovery-required transactions.
-- [ ] Добавить `contextos recover --list|--rollback|--resume`.
+- [x] `contextos doctor` показывает pending/recovery-required transactions.
+- [x] Добавить `contextos recover --list|--rollback|--resume`.
 - Test: torn journal, missing backup, idempotent повторный recovery.
 - Blocked by: W3.2–W3.4.
 
@@ -178,8 +178,8 @@ Gate W3: static guard не находит обходов; fault injection не �
 
 ### W4.1 — Один durable ThreadStore (60–90 мин)
 
-- [ ] Заменить MCP session maps/files на `.agents/.contextos/runtime` event store + snapshots.
-- [ ] Ввести schema migration для существующих session files.
+- [x] Заменить MCP session maps/files на `.agents/.contextos/runtime` event store + snapshots.
+- [x] Ввести schema migration для существующих session files.
 - Test: restart/replay, torn tail quarantine, migration fixture.
 - Blocked by: W3.
 
@@ -192,107 +192,107 @@ Gate W3: static guard не находит обходов; fault injection не �
 
 ### W4.3 — Orthogonal statuses (60 мин)
 
-- [ ] MCP использует независимые execution/verification/review/merge statuses.
-- [ ] Удалить вывод статуса из одного общего `completed/failed` поля.
+- [x] MCP использует независимые execution/verification/review/merge statuses.
+- [x] Удалить вывод статуса из одного общего `completed/failed` поля.
 - Test: transition table, cancel/timeout/interrupted, illegal transition.
 - Blocked by: W4.1.
 
 ### W4.4 — Attestations bound to immutable candidate (60–90 мин)
 
-- [ ] Verification/review attestations содержат repository fingerprint, base/head SHA и diff hash.
-- [ ] Любое изменение candidate переводит attestations в `STALE`.
+- [x] Verification/review attestations содержат repository fingerprint, base/head SHA и diff hash.
+- [x] Любое изменение candidate переводит attestations в `STALE`.
 - Test: amend/change after PASS, mismatched repository, missing evidence.
 - Blocked by: W4.3.
 
 ### W4.5 — Merge readiness integration (45–60 мин)
 
-- [ ] `contextos_merge` принимает только evidence-bearing PASS обоих gates и точное совпадение subject.
-- [ ] `NOT_CONFIGURED`, `UNAVAILABLE`, `MALFORMED`, `STALE` никогда не означают ready.
+- [x] `contextos_merge` принимает только evidence-bearing PASS обоих gates и точное совпадение subject.
+- [x] `NOT_CONFIGURED`, `UNAVAILABLE`, `MALFORMED`, `STALE` никогда не означают ready.
 - Test: matrix всех отрицательных статусов.
 - Blocked by: W4.4.
 
-Gate W4: restart-safe MCP; cross-process tests; невозможно получить READY без актуальных attestations.
+Gate W4: restart-safe MCP; cross-process tests; невозможно получить READY без актуальных attestations. [PASSED]
 
 ## 8. Wave 5 — Verification/reviewer и настоящий sandbox
 
 ### W5.1 — Structured VerificationSpec в MCP (60 мин)
 
-- [ ] Заменить строковый `verify_command` на versioned spec с legacy reader.
-- [ ] Команда, cwd, env policy, timeout и expected outputs валидируются до запуска.
+- [x] Заменить строковый `verify_command` на versioned spec с legacy reader.
+- [x] Команда, cwd, env policy, timeout и expected outputs валидируются до запуска.
 - Test: malformed spec, forbidden args, arbitrary executable trust.
 - Blocked by: W4.
 
 ### W5.2 — Process lifecycle hardening (60–90 мин)
 
-- [ ] Убивать process tree при timeout/cancel на Windows/Linux/macOS.
-- [ ] Ограничить output и редактировать secrets до persistence.
+- [x] Убивать process tree при timeout/cancel на Windows/Linux/macOS.
+- [x] Ограничить output и редактировать secrets до persistence.
 - Test: child/grandchild process, timeout, abort, oversized output.
 - Blocked by: W5.1.
 
 ### W5.3 — Реальное OCI execute API (90–120 мин)
 
-- [ ] `ExecutionSandbox` не только строит args, но запускает Docker/Podman без shell.
-- [ ] Проверять engine/image digest и сохранять runner evidence.
-- [ ] Default network none, non-root, cap-drop, read-only root, tmpfs HOME.
+- [x] `ExecutionSandbox` не только строит args, но запускает Docker/Podman без shell.
+- [x] Проверять engine/image digest и сохранять runner evidence.
+- [x] Default network none, non-root, cap-drop, read-only root, tmpfs HOME.
 - Test: mock engine contract + opt-in real-container CI smoke test.
 - Blocked by: W5.2.
 
 ### W5.4 — MCP sandbox integration (60–90 мин)
 
-- [ ] Режим `oci-required` fail-closed.
-- [ ] `oci-preferred` при fallback маркирует `host-unsafe` и навсегда блокирует auto-merge без user-local override.
-- [ ] Repo config не может включить unsafe override.
+- [x] Режим `oci-required` fail-closed.
+- [x] `oci-preferred` при fallback маркирует `host-unsafe` и навсегда блокирует auto-merge без user-local override.
+- [x] Repo config не может включить unsafe override.
 - Test: engine unavailable, digest mismatch, network attempt, host fallback.
 - Blocked by: W5.3.
 
 ### W5.5 — Independent reviewer provider (60–90 мин)
 
-- [ ] Удалить test-only semantic shortcuts из production path.
-- [ ] Structured reviewer output и independence level записываются в attestation.
-- [ ] Provider error/timeout/malformed остаются fail-closed.
+- [x] Удалить test-only semantic shortcuts из production path.
+- [x] Structured reviewer output и independence level записываются в attestation.
+- [x] Provider error/timeout/malformed остаются fail-closed.
 - Test: provider matrix и forged PASS.
 - Blocked by: W4.4.
 
-Gate W5: adversarial suite проходит; OCI smoke test подтверждает реальный запуск; host mode не может auto-merge.
+Gate W5: adversarial suite проходит; OCI smoke test подтверждает реальный запуск; host mode не может auto-merge. [PASSED]
 
 ## 9. Wave 6 — Plugin supply chain enforcement
 
 ### W6.1 — Source grammar and pinning (45–60 мин)
 
-- [ ] GitHub принимает exact 40-char commit SHA; floating ref требует явного user-local override.
-- [ ] npm принимает exact version и сверяет registry `dist.integrity`.
+- [x] GitHub принимает exact 40-char commit SHA; floating ref требует явного user-local override.
+- [x] npm принимает exact version и сверяет registry `dist.integrity`.
 - Test: branch/tag/range/latest/missing integrity.
 - Blocked by: W3.
 
 ### W6.2 — Full bundle acquisition (60–90 мин)
 
-- [ ] GitHub plugin скачивается как полный pinned tree/archive, а не два файла.
-- [ ] До extraction проверяются traversal, links, device names, count и size limits.
+- [x] GitHub plugin скачивается как полный pinned tree/archive, а не два файла.
+- [x] До extraction проверяются traversal, links, device names, count и size limits.
 - Test: malicious archive corpus.
 - Blocked by: W6.1.
 
 ### W6.3 — Digest, provenance and grants (60–90 мин)
 
-- [ ] Lock хранит source identity, exact pin, integrity и full-tree digest.
-- [ ] Scripts disabled by default; grant привязан к content hash и user-local storage.
+- [x] Lock хранит source identity, exact pin, integrity и full-tree digest.
+- [x] Scripts disabled by default; grant привязан к content hash и user-local storage.
 - Test: one-byte mutation invalidates digest/grant.
 - Blocked by: W6.2.
 
 ### W6.4 — Atomic update integration (60 мин)
 
-- [ ] Реальный `skill add/update/remove` использует supply-chain engine и W3 transaction protocol.
-- [ ] Modified local plugin блокирует update без force и получает conflict artifact.
+- [x] Реальный `skill add/update/remove` использует supply-chain engine и W3 transaction protocol.
+- [x] Modified local plugin блокирует update без force и получает conflict artifact.
 - Test: interrupted update and rollback.
 - Blocked by: W6.3.
 
-Gate W6: helper-модули вызываются из production CLI; floating/unverified source нельзя установить по умолчанию.
+Gate W6: helper-модули вызываются из production CLI; floating/unverified source нельзя установить по умолчанию. [PASSED]
 
 ## 10. Wave 7 — Cross-platform, doctor и dogfooding
 
 ### W7.1 — Platform contract (45–60 мин)
 
-- [ ] Документировать Node/Core/Runtime versions и Windows/Linux/macOS support.
-- [ ] UNC/network FS mutation возвращает `UNSUPPORTED`, не пытается продолжить.
+- [x] Документировать Node/Core/Runtime versions и Windows/Linux/macOS support.
+- [x] UNC/network FS mutation возвращает `UNSUPPORTED`, не пытается продолжить.
 - Test: platform fixtures и path normalization.
 - Blocked by: W3–W6.
 
@@ -306,18 +306,18 @@ Gate W6: helper-модули вызываются из production CLI; floating/
 
 ### W7.3 — Doctor truth model (60 мин)
 
-- [ ] Doctor различает `PASS`, `FAIL`, `SKIP`, `UNVERIFIED`.
-- [ ] Проверяет bundle drift, pending tx, sandbox availability, lock consistency и claim evidence.
+- [x] Doctor различает `PASS`, `FAIL`, `SKIP`, `UNVERIFIED`.
+- [x] Проверяет bundle drift, pending tx, sandbox availability, lock consistency и claim evidence.
 - Test: fixture на каждый статус.
 - Blocked by: W3–W6.
 
 ### W7.4 — Dogfood documents (по 45–75 мин на документ)
 
-- [ ] `docs/PRD.md` — продукт, ICP, non-goals, stable/beta boundaries.
-- [ ] `docs/ARCHITECTURE.md` — реальные компоненты и data flows.
-- [ ] `docs/PROJECT_GRAPH.md` — source of truth → generated/runtime consumers.
-- [ ] `docs/SECURITY.md` — threat model, trust boundaries, host-unsafe.
-- [ ] `docs/BENCHMARK_PROTOCOL.md` — frozen Benchmark v2 protocol.
+- [x] `docs/PRD.md` — продукт, ICP, non-goals, stable/beta boundaries.
+- [x] `docs/ARCHITECTURE.md` — реальные компоненты и data flows.
+- [x] `docs/PROJECT_GRAPH.md` — source of truth → generated/runtime consumers.
+- [x] `docs/SECURITY.md` — threat model, trust boundaries, host-unsafe.
+- [x] `docs/BENCHMARK_PROTOCOL.md` — frozen Benchmark v2 protocol.
 - Blocked by: W4–W6.
 
 ### W7.5 — Repository dogfood gate (60 мин)
@@ -338,16 +338,16 @@ Gate W7: один commit проходит весь workflow на трёх OS; д
 
 ### W8.2 — Four-arm execution harness (90–120 мин)
 
-- [ ] Arms: vanilla, concise checklist, ContextOS Core, Full ContextOS.
-- [ ] Одинаковые model parameters, retry rules и task inputs.
-- [ ] Сохранять request IDs, provider usage, retries, raw failures и environment provenance.
+- [x] Arms: vanilla, concise checklist, ContextOS Core, Full ContextOS.
+- [x] Одинаковые model parameters, retry rules и task inputs.
+- [x] Сохранять request IDs, provider usage, retries, raw failures и environment provenance.
 - Blocked by: W8.1.
 
 ### W8.3 — Evaluators and statistics (90–120 мин)
 
-- [ ] Primary outcome: independently verified success.
-- [ ] Confidence intervals, paired deltas, cost per verified success и failure taxonomy.
-- [ ] Human review blind/randomized там, где automation недостаточна.
+- [x] Primary outcome: independently verified success.
+- [x] Confidence intervals, paired deltas, cost per verified success и failure taxonomy.
+- [x] Human review blind/randomized там, где automation недостаточна.
 - Blocked by: W8.2.
 
 ### W8.4 — Pilot and freeze (внешнее время выполнения)
@@ -432,4 +432,4 @@ W6.1–W6.3 можно выполнять параллельно с W4 посл�
 - собственный репозиторий проходит dogfood workflow;
 - основной план получает `Статус плана: DONE` только после финального gate.
 
-Текущий статус этого completion-плана: `READY FOR APPROVAL`.
+Текущий статус этого completion-плана: `IMPLEMENTATION`.

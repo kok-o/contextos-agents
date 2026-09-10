@@ -13,16 +13,22 @@
 const fs = require('fs');
 const path = require('path');
 const {
+  LockfileV2Manager,
+  ProjectMutationLock,
+  JournaledTransaction,
+  computeExactHash,
+  computeSemanticHash,
+} = require('../../.agents/filesystem/index.js');
+const {
   loadLockfile,
   saveLockfile,
+  recordManagedFile,
   migrateExistingInstallation,
-  createLockfileData,
 } = require('../lib/lockfile.js');
 const {
   planFileWrite,
-  executeFileWrite,
   planFileDelete,
-  executeFileDelete,
+  cleanEmptyParentDirectories,
 } = require('../lib/safe-writer.js');
 
 const pkg = require('../../package.json');
@@ -214,22 +220,78 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
 
   // Execute plans
   let executedCount = 0;
-  for (const item of plans) {
-    if (item.action === 'CREATE' || item.action === 'UPDATE' || item.action === 'CONFLICT') {
-      executeFileWrite(item, lockData, { dryRun: false });
-      if (item.action !== 'SKIP') executedCount++;
-    } else if (item.action === 'DELETE') {
-      executeFileDelete(item, lockData, { dryRun: false });
-      executedCount++;
+  
+  const lock = new ProjectMutationLock(projectDir);
+  const lockToken = lock.acquire({ command: 'update' });
+
+  try {
+    const tx = new JournaledTransaction(projectDir);
+
+    for (const item of plans) {
+      if (item.action === 'CREATE' || item.action === 'UPDATE' || item.action === 'CONFLICT') {
+        const targetRel = item.action === 'CONFLICT' ? (item.conflictPath || `${item.relPath}.contextos.new`) : item.relPath;
+        tx.stageWrite(targetRel, item.newContent);
+        if (item.action !== 'SKIP') executedCount++;
+      } else if (item.action === 'DELETE') {
+        tx.stageDelete(item.relPath);
+        executedCount++;
+      }
     }
+
+    const txResult = tx.commit();
+
+    // Clean up empty directories left behind by deletions
+    for (const item of plans) {
+      if (item.action === 'DELETE') {
+        cleanEmptyParentDirectories(path.join(projectDir, item.relPath));
+      }
+    }
+
+    // Update lockfile metadata via V2 Manager
+    const lockfileManager = new LockfileV2Manager(projectDir);
+    let lockfileData = lockfileManager.read();
+    
+    if (!lockfileData) {
+      lockfileData = lockfileManager.createEmpty({ packageVersion: options.packageVersion || pkg.version });
+    }
+
+    for (const item of plans) {
+      if (item.action === 'CREATE' || item.action === 'UPDATE') {
+        lockfileManager.recordManagedFile(lockfileData, item.relPath, {
+          exactSha256: computeExactHash(item.newContent),
+          semanticTextSha256: computeSemanticHash(item.newContent),
+          kind: 'distribution-skill',
+          generator: 'update',
+          lastTransaction: txResult.txId,
+        });
+      } else if (item.action === 'DELETE') {
+        if (lockfileData.managedFiles && lockfileData.managedFiles[item.relPath]) {
+          delete lockfileData.managedFiles[item.relPath];
+        }
+      }
+    }
+
+    lockfileData.package.version = options.packageVersion || pkg.version;
+    // We update the timestamp equivalent in v2
+    lockfileManager.write(lockfileData);
+
+    if (lockData) {
+      for (const item of plans) {
+        if (item.action === 'CREATE' || item.action === 'UPDATE') {
+          recordManagedFile(lockData, item.relPath, item.newContent);
+        } else if (item.action === 'DELETE') {
+          if (lockData.managedFiles) delete lockData.managedFiles[item.relPath];
+        }
+      }
+      lockData.version = options.packageVersion || pkg.version;
+      saveLockfile(projectDir, lockData);
+    }
+
+  } finally {
+    lock.release(lockToken);
   }
 
-  // Update lockfile metadata
-  lockData.version = options.packageVersion || pkg.version;
-  lockData.updatedAt = new Date().toISOString();
-  saveLockfile(projectDir, lockData);
-
-  console.log(`\n[OK] ContextOS successfully updated to v${lockData.version}!`);
+  console.log(`\n[OK] ContextOS successfully updated!`);
   if (summary.conflict > 0) {
     console.warn(`[WARN] ${summary.conflict} customized file(s) had upstream changes.`);
     console.warn('       Inspect the .contextos.new file(s) to merge upstream updates.');

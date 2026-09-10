@@ -158,6 +158,17 @@ const COMMAND_REGISTRY = {
       { flag: '--json', desc: 'Output health report in versioned JSON format' },
     ],
   },
+  recover: {
+    name: 'recover',
+    description: 'List, rollback, or resume stuck filesystem transactions',
+    usage: 'contextos recover [--list] [--rollback <txId>] [--resume <txId>]',
+    requiresProject: true,
+    options: [
+      { flag: '--list', desc: 'List pending or broken transactions requiring recovery' },
+      { flag: '--rollback <txId>', desc: 'Rollback a broken transaction' },
+      { flag: '--resume <txId>', desc: 'Resume and complete a stuck transaction' },
+    ],
+  },
   compile: {
     name: 'compile',
     description: 'Compile skill manifests into deterministic registry v2 (registry.v2.json)',

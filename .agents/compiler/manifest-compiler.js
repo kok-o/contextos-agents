@@ -224,146 +224,22 @@ class DiagnosticError extends Error {
   }
 }
 
+const yaml = require('./vendor/yaml.js');
+
 /**
  * Robust zero-dep YAML parser for skill manifests.
  * Handles scalars, inline arrays, block lists, nested maps, and quoted multiline strings.
  */
 function parseYaml(yamlText) {
-  if (typeof yamlText !== 'string') return {};
-  const lines = yamlText.split(/\r?\n/);
-  const root = {};
-  let currentKey = null;
-  let currentArray = null;
-  let currentObject = null;
-  let currentSubKey = null;
-  let indentStack = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-    // Remove comments unless inside quotes
-    const lineWithoutComment = rawLine.replace(/(["'])(?:(?=(\\?))\2[\s\S])*?\1|(#.*$)/g, (m, g1, g2, g3) => g3 ? '' : m);
-    const trimmed = lineWithoutComment.trim();
-    if (!trimmed) continue;
-
-    const indent = rawLine.search(/\S/);
-
-    // List item
-    if (trimmed.startsWith('- ')) {
-      const itemVal = trimmed.slice(2).trim();
-      // If list item is key-value object (e.g. - value: "foo", weight: 10)
-      if (itemVal.includes(': ')) {
-        const [k, ...vParts] = itemVal.split(': ');
-        const v = vParts.join(': ').trim();
-        const obj = { [k.trim()]: parseScalar(v) };
-        if (!currentArray) {
-          currentArray = [];
-          if (currentSubKey && currentObject) {
-            currentObject[currentSubKey] = currentArray;
-          } else if (currentKey) {
-            root[currentKey] = currentArray;
-          }
-        }
-        currentArray.push(obj);
-        // Look ahead for continuation of this object
-        while (i + 1 < lines.length) {
-          const nextRaw = lines[i + 1];
-          const nextIndent = nextRaw.search(/\S/);
-          const nextTrimmed = nextRaw.trim();
-          if (nextTrimmed && nextIndent > indent && !nextTrimmed.startsWith('- ') && nextTrimmed.includes(': ')) {
-            const [nk, ...nvParts] = nextTrimmed.split(': ');
-            obj[nk.trim()] = parseScalar(nvParts.join(': ').trim());
-            i++;
-          } else {
-            break;
-          }
-        }
-        continue;
-      }
-
-      // Simple list item
-      if (!currentArray) {
-        currentArray = [];
-        if (currentSubKey && currentObject) {
-          currentObject[currentSubKey] = currentArray;
-        } else if (currentKey) {
-          root[currentKey] = currentArray;
-        }
-      }
-      currentArray.push(parseScalar(itemVal));
-      continue;
-    }
-
-    // Key-value pair
-    if (trimmed.includes(':')) {
-      const colonIdx = trimmed.indexOf(':');
-      const key = trimmed.slice(0, colonIdx).trim();
-      const val = trimmed.slice(colonIdx + 1).trim();
-
-      if (indent === 0) {
-        currentKey = key;
-        currentArray = null;
-        currentObject = null;
-        currentSubKey = null;
-
-        if (val === '') {
-          // Pending container; will become array or object based on next lines
-          root[key] = null;
-        } else if (val.startsWith('[') && val.endsWith(']')) {
-          root[key] = parseInlineArray(val);
-          currentArray = null;
-          currentObject = null;
-        } else {
-          root[key] = parseScalar(val);
-          currentObject = null;
-        }
-      } else if (indent > 0) {
-        if (!currentObject) {
-          currentObject = {};
-          root[currentKey] = currentObject;
-        }
-        currentSubKey = key;
-        if (val === '') {
-          currentArray = [];
-          currentObject[key] = currentArray;
-        } else if (val.startsWith('[') && val.endsWith(']')) {
-          currentObject[key] = parseInlineArray(val);
-          currentArray = null;
-        } else {
-          currentObject[key] = parseScalar(val);
-          currentArray = null;
-        }
-      }
-    }
+  if (typeof yamlText !== 'string' || !yamlText.trim()) return {};
+  const doc = yaml.parseDocument(yamlText, { merge: true, strict: true, uniqueKeys: true });
+  if (doc.errors && doc.errors.length > 0) {
+    throw new DiagnosticError({
+      message: `YAML Parse Error: ${doc.errors[0].message}`,
+      code: CODES.PARSE_ERROR
+    });
   }
-
-  // Clean empty containers if key became scalar or array
-  for (const k of Object.keys(root)) {
-    if (root[k] === null) {
-      root[k] = [];
-    }
-  }
-
-  return root;
-}
-
-function parseScalar(val) {
-  if (!val) return '';
-  const trimmed = val.trim();
-  if (trimmed === 'true') return true;
-  if (trimmed === 'false') return false;
-  if (trimmed === 'null') return null;
-  if (/^-?\d+$/.test(trimmed)) return parseInt(trimmed, 10);
-  if (/^-?\d+\.\d+$/.test(trimmed)) return parseFloat(trimmed);
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-}
-
-function parseInlineArray(val) {
-  const content = val.slice(1, -1).trim();
-  if (!content) return [];
-  return content.split(',').map(s => parseScalar(s.trim())).filter(s => s !== '');
+  return doc.toJS() || {};
 }
 
 /**
@@ -385,6 +261,8 @@ class ManifestCompiler {
       component: 'manifest-compiler',
       file: options.file || '',
       path: options.path || '',
+      line: options.line,
+      column: options.column,
       message,
       remediation: options.remediation || 'Correct the manifest according to the schema specification.',
     };
@@ -841,9 +719,13 @@ class ManifestCompiler {
         this.validateSingleManifest(dir, norm, manifestFile);
       } catch (err) {
         this.addDiagnostic(
-          CODES.PARSE_ERROR,
+          err.diag ? err.diag.code : CODES.PARSE_ERROR,
           `Failed to parse manifest at ${path.relative(this.rootDir, manifestFile)}: ${err.message}`,
-          { file: path.relative(this.rootDir, manifestFile) }
+          { 
+            file: path.relative(this.rootDir, manifestFile),
+            line: err.diag ? err.diag.line : undefined,
+            column: err.diag ? err.diag.column : undefined
+          }
         );
       }
     }
@@ -1039,6 +921,7 @@ class ManifestCompiler {
           {
             physicalLocation: {
               artifactLocation: { uri: d.file.replace(/\\/g, '/') },
+              ...(d.line ? { region: { startLine: d.line, ...(d.column ? { startColumn: d.column } : {}) } } : {})
             },
           },
         ],

@@ -124,8 +124,10 @@ function saveLockfile(projectDir, lockData) {
     try {
       if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
     } catch {}
-    // Fallback direct write
-    fs.writeFileSync(lockfilePath, content, 'utf8');
+    const atomicError = new Error(`Atomic lockfile update failed; original lockfile was preserved: ${err.message}`);
+    atomicError.code = 'CTX_LOCKFILE_ATOMIC_WRITE_FAILED';
+    atomicError.cause = err;
+    throw atomicError;
   }
 }
 

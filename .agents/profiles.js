@@ -12,6 +12,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { ProjectMutationLock, JournaledTransaction } = require('./filesystem/index.js');
 
 const AGENTS_DIR = path.join(__dirname);
 const PROFILES_DIR = path.join(AGENTS_DIR, 'core', 'profiles');
@@ -487,10 +488,16 @@ function applyProfile(profileName, projectDir = process.cwd(), options = {}) {
     };
   }
 
-  // Atomic write via temp file
-  const tmpPath = `${lockPath}.tmp.${process.pid}.${Date.now()}`;
-  fs.writeFileSync(tmpPath, JSON.stringify(lockData, null, 2) + '\n');
-  fs.renameSync(tmpPath, lockPath);
+  const lock = new ProjectMutationLock(projectDir);
+  const lockToken = lock.acquire({ command: `profile apply ${profile.id}` });
+
+  try {
+    const tx = new JournaledTransaction(projectDir);
+    tx.stageWrite(path.relative(projectDir, lockPath).replace(/\\/g, '/'), JSON.stringify(lockData, null, 2) + '\n');
+    tx.commit();
+  } finally {
+    lock.release(lockToken);
+  }
 
   return lockData;
 }
@@ -512,7 +519,16 @@ function removeActiveProfile(projectDir = process.cwd(), options = {}) {
       const cleanScope = options.scope.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/$/, '');
       if (lockData.overrides && lockData.overrides[cleanScope]) {
         delete lockData.overrides[cleanScope];
-        fs.writeFileSync(lockPath, JSON.stringify(lockData, null, 2) + '\n');
+        
+        const lock = new ProjectMutationLock(projectDir);
+        const lockToken = lock.acquire({ command: 'profile remove override' });
+        try {
+          const tx = new JournaledTransaction(projectDir);
+          tx.stageWrite(path.relative(projectDir, lockPath).replace(/\\/g, '/'), JSON.stringify(lockData, null, 2) + '\n');
+          tx.commit();
+        } finally {
+          lock.release(lockToken);
+        }
         return true;
       }
     } catch {
@@ -521,7 +537,15 @@ function removeActiveProfile(projectDir = process.cwd(), options = {}) {
     return false;
   }
 
-  fs.unlinkSync(lockPath);
+  const lock = new ProjectMutationLock(projectDir);
+  const lockToken = lock.acquire({ command: 'profile remove' });
+  try {
+    const tx = new JournaledTransaction(projectDir);
+    tx.stageDelete(path.relative(projectDir, lockPath).replace(/\\/g, '/'));
+    tx.commit();
+  } finally {
+    lock.release(lockToken);
+  }
   return true;
 }
 

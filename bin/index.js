@@ -243,10 +243,17 @@ if (mainCommand === 'doctor') {
   process.exit(result && result.ok === false ? 1 : 0);
 }
 
+// Recover command
+if (mainCommand === 'recover') {
+  const recoverModule = require('./commands/recover.js');
+  recoverModule(args, flags);
+  process.exit(0);
+}
+
 // Proxy commands to .agents/ctx.js when executed in a ContextOS project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',
-  'clean-worktrees', 'stats', 'watch', 'compile', 'recover', 'explain',
+  'clean-worktrees', 'stats', 'watch', 'compile', 'explain',
   'thread'
 ];
 
