@@ -39,7 +39,7 @@ describe("OpenCode Agent Fallback", () => {
 		// (which will fail since we don't have opencode, but should not throw)
 		const { default: agent } = await import("../src/agents/opencode.js");
 		const result = await agent.run({
-			task: "test task",
+			task: "test task", writeScope: ["."],
 			workDir: "/tmp",
 		});
 		// Should fail gracefully (opencode not installed or subprocess fails)

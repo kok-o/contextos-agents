@@ -21,7 +21,7 @@ import * as path from "node:path";
 import type { WorktreeInfo, WorktreeSessionMarker } from "../core/types.js";
 import { isPathAllowed } from "../security/file-policy.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
-import { isBlockedPath, redactSecrets } from "../security/secret-filter.js";
+import { isBlockedPath, redactSecrets, containsSecrets } from "../security/secret-filter.js";
 
 function git(args: string[], cwd: string, extraEnv?: NodeJS.ProcessEnv): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
@@ -482,6 +482,13 @@ export class WorktreeManager {
 				}
 				if (!isPathAllowed(file, info.path)) {
 					throw new Error(`SECURITY_POLICY_FAILED: Path traversal violation attempt: "${file}"`);
+				}
+				const absPath = path.join(info.path, file);
+				if (existsSync(absPath)) {
+					const content = readFileSync(absPath, "utf-8");
+					if (containsSecrets(content)) {
+						throw new Error(`SECURITY_POLICY_FAILED: Secret detected in file content: "${file}"`);
+					}
 				}
 				pathsToStage.push(file);
 			}

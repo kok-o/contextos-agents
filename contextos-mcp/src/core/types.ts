@@ -86,6 +86,7 @@ export interface ThreadConfig {
 	};
 	files?: string[];
 	focusFiles?: string[];
+	writeScope?: readonly string[];
 	taskBrief?: TaskBrief;
 }
 

@@ -19,7 +19,7 @@ function rmDir(dir: string): void {
 /** Default episode params factory. Override individual fields as needed. */
 function makeEpisodeParams(overrides: Partial<Parameters<EpisodicMemory["record"]>[0]> = {}) {
 	return {
-		task: "refactor the user authentication module",
+		task: "refactor the user authentication module", writeScope: ["."],
 		agent: "claude-code",
 		model: "sonnet-4",
 		slot: "execution",
@@ -82,7 +82,7 @@ describe("EpisodicMemory", () => {
 			expect(ep.id).toBeTruthy();
 			expect(ep.id.length).toBe(16);
 
-			await mem.record(makeEpisodeParams({ task: "add logging to the API layer" }));
+			await mem.record(makeEpisodeParams({ task: "add logging to the API layer", writeScope: ["."] }));
 			expect(mem.size).toBe(2);
 		});
 
@@ -130,7 +130,7 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			const ep = await mem.record(makeEpisodeParams({ task: "Fix the broken CSS layout in dashboard" }));
+			const ep = await mem.record(makeEpisodeParams({ task: "Fix the broken CSS layout in dashboard", writeScope: ["."] }));
 			// "the" and "in" are stop words; "fix" is 3 chars and kept; "broken", "css", "layout", "dashboard" kept
 			expect(ep.taskKeywords).toBeInstanceOf(Array);
 			expect(ep.taskKeywords.length).toBeGreaterThan(0);
@@ -156,9 +156,9 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			await mem.record(makeEpisodeParams({ task: "refactor the authentication module" }));
-			await mem.record(makeEpisodeParams({ task: "deploy docker containers to production" }));
-			await mem.record(makeEpisodeParams({ task: "refactor the user auth system" }));
+			await mem.record(makeEpisodeParams({ task: "refactor the authentication module", writeScope: ["."] }));
+			await mem.record(makeEpisodeParams({ task: "deploy docker containers to production", writeScope: ["."] }));
+			await mem.record(makeEpisodeParams({ task: "refactor the user auth system", writeScope: ["."] }));
 
 			const results = mem.recall("refactor the auth module");
 			expect(results.length).toBeGreaterThanOrEqual(1);
@@ -184,7 +184,7 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			await mem.record(makeEpisodeParams({ task: "refactor the user authentication module" }));
+			await mem.record(makeEpisodeParams({ task: "refactor the user authentication module", writeScope: ["."] }));
 
 			const results = mem.recall("deploy kubernetes cluster infrastructure", 5, 0.5);
 			expect(results.length).toBe(0);
@@ -196,7 +196,7 @@ describe("EpisodicMemory", () => {
 
 			// Record several similar episodes
 			for (let i = 0; i < 10; i++) {
-				await mem.record(makeEpisodeParams({ task: `refactor auth module part ${i}` }));
+				await mem.record(makeEpisodeParams({ task: `refactor auth module part ${i}`, writeScope: ["."] }));
 			}
 
 			const results = mem.recall("refactor auth module", 3, 0.05);
@@ -207,8 +207,8 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			await mem.record(makeEpisodeParams({ task: "refactor auth module" }));
-			await mem.record(makeEpisodeParams({ task: "deploy containers to production cluster" }));
+			await mem.record(makeEpisodeParams({ task: "refactor auth module", writeScope: ["."] }));
+			await mem.record(makeEpisodeParams({ task: "deploy containers to production cluster", writeScope: ["."] }));
 
 			// High minSimilarity should filter out the unrelated episode
 			const results = mem.recall("refactor the auth module", 10, 0.5);
@@ -222,8 +222,8 @@ describe("EpisodicMemory", () => {
 			await mem.init();
 
 			// Record a successful episode (stored) and a failed one (not stored)
-			await mem.record(makeEpisodeParams({ task: "refactor auth module", success: true }));
-			await mem.record(makeEpisodeParams({ task: "refactor auth module", success: false }));
+			await mem.record(makeEpisodeParams({ task: "refactor auth module", writeScope: ["."], success: true }));
+			await mem.record(makeEpisodeParams({ task: "refactor auth module", writeScope: ["."], success: false }));
 
 			// Size should be 1 (failed episodes are not stored at all)
 			expect(mem.size).toBe(1);
@@ -249,7 +249,7 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "refactor user authentication",
+					task: "refactor user authentication", writeScope: ["."],
 					agent: "opencode",
 					model: "gpt-4o",
 				}),
@@ -333,7 +333,7 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "task one",
+					task: "task one", writeScope: ["."],
 					agent: "claude-code",
 					durationMs: 10000,
 					estimatedCostUsd: 0.04,
@@ -341,7 +341,7 @@ describe("EpisodicMemory", () => {
 			);
 			await mem.record(
 				makeEpisodeParams({
-					task: "task two",
+					task: "task two", writeScope: ["."],
 					agent: "claude-code",
 					durationMs: 20000,
 					estimatedCostUsd: 0.06,
@@ -349,7 +349,7 @@ describe("EpisodicMemory", () => {
 			);
 			await mem.record(
 				makeEpisodeParams({
-					task: "task three",
+					task: "task three", writeScope: ["."],
 					agent: "opencode",
 					durationMs: 8000,
 					estimatedCostUsd: 0.02,
@@ -376,9 +376,9 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			await mem.record(makeEpisodeParams({ task: "task a", slot: "execution" }));
-			await mem.record(makeEpisodeParams({ task: "task b", slot: "execution" }));
-			await mem.record(makeEpisodeParams({ task: "task c", slot: "search" }));
+			await mem.record(makeEpisodeParams({ task: "task a", writeScope: ["."], slot: "execution" }));
+			await mem.record(makeEpisodeParams({ task: "task b", writeScope: ["."], slot: "execution" }));
+			await mem.record(makeEpisodeParams({ task: "task c", writeScope: ["."], slot: "search" }));
 
 			const stats = mem.getAggregateStats();
 			expect(stats).not.toBeNull();
@@ -394,13 +394,13 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "task a",
+					task: "task a", writeScope: ["."],
 					filesChanged: ["src/index.ts", "src/utils.ts", "styles/main.css"],
 				}),
 			);
 			await mem.record(
 				makeEpisodeParams({
-					task: "task b",
+					task: "task b", writeScope: ["."],
 					agent: "opencode",
 					filesChanged: ["src/index.ts"],
 				}),
@@ -441,7 +441,7 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			await mem.record(makeEpisodeParams({ task: "deploy kubernetes infrastructure cluster" }));
+			await mem.record(makeEpisodeParams({ task: "deploy kubernetes infrastructure cluster", writeScope: ["."] }));
 
 			// getStrategyHints uses minSimilarity=0.2, so a totally different task should miss
 			const hints = mem.getStrategyHints("fix broken CSS gradient in mobile header");
@@ -457,7 +457,7 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "refactor authentication module",
+					task: "refactor authentication module", writeScope: ["."],
 					agent: "claude-code",
 					model: "sonnet-4",
 					slot: "execution",
@@ -484,13 +484,13 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir, 3);
 			await mem.init();
 
-			const ep1 = await mem.record(makeEpisodeParams({ task: "first task ever" }));
-			const ep2 = await mem.record(makeEpisodeParams({ task: "second task ever" }));
-			const ep3 = await mem.record(makeEpisodeParams({ task: "third task ever" }));
+			const ep1 = await mem.record(makeEpisodeParams({ task: "first task ever", writeScope: ["."] }));
+			const ep2 = await mem.record(makeEpisodeParams({ task: "second task ever", writeScope: ["."] }));
+			const ep3 = await mem.record(makeEpisodeParams({ task: "third task ever", writeScope: ["."] }));
 			expect(mem.size).toBe(3);
 
 			// Adding a 4th should evict the oldest (ep1)
-			const ep4 = await mem.record(makeEpisodeParams({ task: "fourth task ever" }));
+			const ep4 = await mem.record(makeEpisodeParams({ task: "fourth task ever", writeScope: ["."] }));
 			expect(mem.size).toBe(3);
 
 			const allIds = mem.getAll().map((e) => e.id);
@@ -514,7 +514,7 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			const ep = await mem.record(makeEpisodeParams({ task: "save me to disk" }));
+			const ep = await mem.record(makeEpisodeParams({ task: "save me to disk", writeScope: ["."] }));
 
 			const episodesDir = path.join(tmpDir, "episodes");
 			const filePath = path.join(episodesDir, `${ep.id}.json`);
@@ -531,8 +531,8 @@ describe("EpisodicMemory", () => {
 			const mem1 = new EpisodicMemory(tmpDir);
 			await mem1.init();
 
-			await mem1.record(makeEpisodeParams({ task: "persistent task alpha" }));
-			await mem1.record(makeEpisodeParams({ task: "persistent task beta" }));
+			await mem1.record(makeEpisodeParams({ task: "persistent task alpha", writeScope: ["."] }));
+			await mem1.record(makeEpisodeParams({ task: "persistent task beta", writeScope: ["."] }));
 			expect(mem1.size).toBe(2);
 
 			// Second instance: should load from disk
@@ -551,7 +551,7 @@ describe("EpisodicMemory", () => {
 			const mem1 = new EpisodicMemory(tmpDir);
 			await mem1.init();
 
-			await mem1.record(makeEpisodeParams({ task: "valid episode here" }));
+			await mem1.record(makeEpisodeParams({ task: "valid episode here", writeScope: ["."] }));
 			expect(mem1.size).toBe(1);
 
 			// Manually write a corrupt JSON file into the episodes directory
@@ -595,10 +595,10 @@ describe("EpisodicMemory", () => {
 				const mem = new EpisodicMemory(tmpDir);
 				await mem.init();
 
-				const ep1 = await mem.record(makeEpisodeParams({ task: "unique task" }));
+				const ep1 = await mem.record(makeEpisodeParams({ task: "unique task", writeScope: ["."] }));
 				// Advance time to guarantee different timestamps
 				vi.advanceTimersByTime(100);
-				const ep2 = await mem.record(makeEpisodeParams({ task: "unique task" }));
+				const ep2 = await mem.record(makeEpisodeParams({ task: "unique task", writeScope: ["."] }));
 
 				expect(ep1.id).not.toBe(ep2.id);
 				expect(ep1.id.length).toBe(16);
@@ -615,7 +615,7 @@ describe("EpisodicMemory", () => {
 				await mem1.init();
 
 				for (let i = 0; i < 5; i++) {
-					await mem1.record(makeEpisodeParams({ task: `task number ${i}` }));
+					await mem1.record(makeEpisodeParams({ task: `task number ${i}`, writeScope: ["."] }));
 					// Advance time to guarantee distinct, ordered timestamps
 					vi.advanceTimersByTime(100);
 				}
@@ -639,7 +639,7 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			const ep = await mem.record(makeEpisodeParams({ task: "go to my DB and fix it up" }));
+			const ep = await mem.record(makeEpisodeParams({ task: "go to my DB and fix it up", writeScope: ["."] }));
 			// "go", "to", "my", "DB", "it", "up" are all 2 chars — should be filtered
 			// "and" is a stop word, "fix" is 3 chars and kept
 			expect(ep.taskKeywords).not.toContain("go");

@@ -12,7 +12,7 @@ function createMockThread(id: string, overrides: Partial<ThreadState> = {}): Thr
 		id,
 		config: {
 			id,
-			task: "Test task",
+			task: "Test task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "test-model" },
 		},

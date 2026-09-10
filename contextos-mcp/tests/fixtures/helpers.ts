@@ -81,7 +81,7 @@ export function mockCompressedResult(overrides?: Partial<CompressedResult>): Com
 export function mockThreadConfig(overrides?: Partial<ThreadConfig>): ThreadConfig {
 	return {
 		id: `test-${Date.now().toString(36)}`,
-		task: "Fix the authentication bug",
+		task: "Fix the authentication bug", writeScope: ["."],
 		context: "",
 		agent: { backend: "mock", model: "mock-model" },
 		files: [],

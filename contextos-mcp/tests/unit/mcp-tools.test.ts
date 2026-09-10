@@ -101,7 +101,7 @@ describe("registerTools", () => {
 describe("swarm_thread tool", () => {
 	it("returns JSON result on success", async () => {
 		const handler = registeredTools.get("swarm_thread")!;
-		const result = await handler({ task: "add a test" });
+		const result = await handler({ task: "add a test", writeScope: ["."] });
 
 		expect(result.isError).toBeUndefined();
 		expect(result.content).toHaveLength(1);
@@ -121,7 +121,7 @@ describe("swarm_thread tool", () => {
 		registerTools(mockServer as any, undefined);
 
 		const handler = registeredTools.get("swarm_thread")!;
-		const result = await handler({ task: "test" });
+		const result = await handler({ task: "test", writeScope: ["."] });
 
 		expect(result.isError).toBe(true);
 		expect(result.content[0].text).toContain("dir");
@@ -130,7 +130,7 @@ describe("swarm_thread tool", () => {
 	it("returns error when files escape repository boundary", async () => {
 		const handler = registeredTools.get("swarm_thread")!;
 		const result = await handler({
-			task: "test",
+			task: "test", writeScope: ["."],
 			files: ["../../../../etc/passwd"],
 		});
 
@@ -208,7 +208,7 @@ describe("swarm_run tool", () => {
 		registerTools(mockServer as any, undefined);
 
 		const handler = registeredTools.get("swarm_run")!;
-		const result = await handler({ task: "test" });
+		const result = await handler({ task: "test", writeScope: ["."] });
 
 		expect(result.isError).toBe(true);
 		expect(result.content[0].text).toContain("dir");

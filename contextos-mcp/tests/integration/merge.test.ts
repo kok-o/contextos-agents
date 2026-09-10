@@ -46,7 +46,7 @@ function makeThread(id: string, branchName: string, overrides: Record<string, un
 		branchName,
 		result: { success: true, summary: "done", filesChanged: [], diffStats: "", durationMs: 100, estimatedCostUsd: 0 },
 		completedAt: Date.now(),
-		config: { id, task: "test", context: "", agent: { backend: "test", model: "test" } },
+		config: { id, task: "test", writeScope: ["."], context: "", agent: { backend: "test", model: "test" } },
 		attempt: 1,
 		maxAttempts: 1,
 		estimatedCostUsd: 0,

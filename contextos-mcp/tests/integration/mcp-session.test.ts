@@ -130,7 +130,7 @@ describe("MCP Session: spawnThread", () => {
 		const dir = makeTempRepo();
 		const session = await getSession(dir);
 
-		const result = await spawnThread(session, { task: "add a helper function" });
+		const result = await spawnThread(session, { task: "add a helper function", writeScope: ["."] });
 
 		expect(result.success).toBe(true);
 		expect(result.summary).toBeTruthy();
@@ -144,7 +144,7 @@ describe("MCP Session: spawnThread", () => {
 
 		// Still uses mock agent (backend override would fail for non-existent agents)
 		const result = await spawnThread(session, {
-			task: "add a utility",
+			task: "add a utility", writeScope: ["."],
 			agent: "mock",
 			model: "custom-model",
 			context: "extra context",
@@ -158,7 +158,7 @@ describe("MCP Session: spawnThread", () => {
 		const dir = makeTempRepo();
 		const session = await getSession(dir);
 
-		const result = await spawnThread(session, { task: "this should __FAIL__" });
+		const result = await spawnThread(session, { task: "this should __FAIL__", writeScope: ["."] });
 
 		expect(result.success).toBe(false);
 	});
@@ -169,8 +169,8 @@ describe("MCP Session: getThreads + getBudgetState", () => {
 		const dir = makeTempRepo();
 		const session = await getSession(dir);
 
-		await spawnThread(session, { task: "task A" });
-		await spawnThread(session, { task: "task B" });
+		await spawnThread(session, { task: "task A", writeScope: ["."] });
+		await spawnThread(session, { task: "task B", writeScope: ["."] });
 
 		const threads = getThreads(session);
 		expect(threads).toHaveLength(2);
@@ -193,7 +193,7 @@ describe("MCP Session: getThreads + getBudgetState", () => {
 		const budgetBefore = getBudgetState(session);
 		expect(budgetBefore.totalSpentUsd).toBe(0);
 
-		await spawnThread(session, { task: "do something" });
+		await spawnThread(session, { task: "do something", writeScope: ["."] });
 
 		const budgetAfter = getBudgetState(session);
 		expect(budgetAfter.totalSpentUsd).toBeGreaterThan(0);
@@ -205,7 +205,7 @@ describe("MCP Session: mergeThreads", () => {
 		const dir = makeTempRepo();
 		const session = await getSession(dir);
 
-		await spawnThread(session, { task: "add feature A" });
+		await spawnThread(session, { task: "add feature A", writeScope: ["."] });
 
 		const results = await mergeThreads(session);
 
@@ -240,7 +240,7 @@ describe("MCP Session: cancelThreads", () => {
 		const dir = makeTempRepo();
 		const session = await getSession(dir);
 
-		await spawnThread(session, { task: "quick task" });
+		await spawnThread(session, { task: "quick task", writeScope: ["."] });
 		const threads = getThreads(session);
 		const threadId = threads[0].id;
 

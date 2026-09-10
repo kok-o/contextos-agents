@@ -20,7 +20,7 @@ describe("ActionDispatcher", () => {
 		const result = await dispatcher.dispatch({
 			version: 1,
 			action: "spawn",
-			task: "Harden authentication",
+			task: "Harden authentication", writeScope: ["."],
 			writeScope: ["src/auth.ts"],
 			model: "claude-sonnet-4-6",
 		});
@@ -50,10 +50,10 @@ describe("ActionDispatcher", () => {
 		const dispatcher = new ActionDispatcher(createHandlers());
 
 		await expect(
-			dispatcher.dispatch({ version: 1, action: "spawn", task: "bad", writeScope: ["../outside.ts"] }),
+			dispatcher.dispatch({ version: 1, action: "spawn", task: "bad", writeScope: ["."], writeScope: ["../outside.ts"] }),
 		).rejects.toThrow("Invalid action payload");
 		await expect(
-			dispatcher.dispatch({ version: 1, action: "spawn", task: "bad", writeScope: ["C:\\outside.ts"] }),
+			dispatcher.dispatch({ version: 1, action: "spawn", task: "bad", writeScope: ["."], writeScope: ["C:\\outside.ts"] }),
 		).rejects.toThrow("Invalid action payload");
 	});
 });

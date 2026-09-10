@@ -11,7 +11,7 @@ function createValidThread(overrides: Partial<ThreadState> = {}): ThreadState {
 		id: "thread-test-1",
 		config: {
 			id: "thread-test-1",
-			task: "Add feature",
+			task: "Add feature", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		},

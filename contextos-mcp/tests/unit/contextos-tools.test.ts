@@ -19,7 +19,7 @@ const mockThreads = [
 		status: "completed",
 		phase: "completed",
 		config: {
-			task: "Add feature",
+			task: "Add feature", writeScope: ["."],
 			agent: { backend: "direct-llm", model: "gpt-4o" },
 		},
 		worktreePath: "/tmp/worktrees/wt-1",
@@ -48,7 +48,7 @@ const mockThreads = [
 		status: "completed",
 		phase: "completed",
 		config: {
-			task: "Add feature",
+			task: "Add feature", writeScope: ["."],
 			agent: { backend: "direct-llm", model: "claude-sonnet-4-6" },
 		},
 		worktreePath: "/tmp/worktrees/wt-2",
@@ -176,7 +176,7 @@ describe("registerContextosTools", () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({
 				dir: process.cwd(),
-				task: "Build authentication modal with React",
+				task: "Build authentication modal with React", writeScope: ["."],
 				agents: [
 					{ provider: "openai", model: "gpt-4o" },
 					{ provider: "anthropic", model: "claude-sonnet-4-6" },
@@ -195,7 +195,7 @@ describe("registerContextosTools", () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({
 				dir: process.cwd(),
-				task: "Test task",
+				task: "Test task", writeScope: ["."],
 				agents: [{ provider: "openai", model: "gpt-4o" }],
 				files: ["../../../../etc/passwd"],
 			});
@@ -208,7 +208,7 @@ describe("registerContextosTools", () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({
 				dir: process.cwd(),
-				task: "Refactor backend database models",
+				task: "Refactor backend database models", writeScope: ["."],
 				agents: [{ provider: "gemini", model: "gemini-2.5-pro" }],
 				wait: false,
 			});

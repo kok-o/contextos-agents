@@ -71,7 +71,7 @@ describe("Budget Tracking with Token Usage", () => {
 	it("should track token usage from mock agent", async () => {
 		const result = await tm.spawnThread({
 			id: "usage-1",
-			task: "add hello function",
+			task: "add hello function", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -87,14 +87,14 @@ describe("Budget Tracking with Token Usage", () => {
 	it("should track budget state with token totals", async () => {
 		await tm.spawnThread({
 			id: "budget-tok-1",
-			task: "task 1",
+			task: "task 1", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
 
 		await tm.spawnThread({
 			id: "budget-tok-2",
-			task: "task 2",
+			task: "task 2", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -110,7 +110,7 @@ describe("Budget Tracking with Token Usage", () => {
 		// mock-model is not in MODEL_PRICING, so cost should be estimated
 		const result = await tm.spawnThread({
 			id: "est-cost",
-			task: "task with unknown model",
+			task: "task with unknown model", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -123,7 +123,7 @@ describe("Budget Tracking with Token Usage", () => {
 	it("should calculate actual cost when model pricing is known", async () => {
 		const result = await tm.spawnThread({
 			id: "actual-cost",
-			task: "task with known model",
+			task: "task with known model", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});
@@ -148,7 +148,7 @@ describe("Budget Tracking with Token Usage", () => {
 		// First thread with known model pricing should use actual cost
 		await tmBudget.spawnThread({
 			id: "enforce-1",
-			task: "first task",
+			task: "first task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});
@@ -156,7 +156,7 @@ describe("Budget Tracking with Token Usage", () => {
 		// Second thread should be blocked by budget
 		const result2 = await tmBudget.spawnThread({
 			id: "enforce-2",
-			task: "second task",
+			task: "second task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});
@@ -170,14 +170,14 @@ describe("Budget Tracking with Token Usage", () => {
 	it("should accumulate costs across multiple threads", async () => {
 		await tm.spawnThread({
 			id: "accum-1",
-			task: "task a",
+			task: "task a", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});
 
 		await tm.spawnThread({
 			id: "accum-2",
-			task: "task b",
+			task: "task b", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});
@@ -199,7 +199,7 @@ describe("Budget Tracking with Token Usage", () => {
 			["reserve-a", "reserve-b", "reserve-c"].map((id) =>
 				tmBudget.spawnThread({
 					id,
-					task: `concurrent ${id}`,
+					task: `concurrent ${id}`, writeScope: ["."],
 					context: "",
 					agent: { backend: "mock", model: "mock-model" },
 				}),
@@ -232,7 +232,7 @@ describe("Budget State in Compressed Result", () => {
 
 		const result = await tm.spawnThread({
 			id: "result-check",
-			task: "check result structure",
+			task: "check result structure", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});

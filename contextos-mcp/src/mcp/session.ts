@@ -59,6 +59,7 @@ export interface ThreadSpawnParams {
 	id?: string;
 	task: string;
 	files?: string[];
+	writeScope?: string[];
 	focusFiles?: string[];
 	agent?: string;
 	model?: string;
@@ -213,16 +214,17 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 			backend: params.agent || session.config.default_agent,
 			model: params.model || session.config.default_model,
 		},
-		files: params.files || [],
-		focusFiles: params.focusFiles || [],
+		files: params.focusFiles || params.files || [],
+		focusFiles: params.focusFiles || params.files || [],
+		writeScope: params.writeScope || [],
 		taskBrief:
-			params.testCommand || params.expectedResult || params.maxAttempts
+			params.testCommand || params.expectedResult || params.maxAttempts || params.writeScope
 				? {
 						taskId: threadId,
 						baseSha: "",
 						objective: params.task,
-						writeScope: params.files?.length ? params.files : ["."],
-						focusFiles: params.focusFiles || [],
+						writeScope: params.writeScope || [],
+						focusFiles: params.focusFiles || params.files || [],
 						testCommand: params.testCommand || "",
 						expectedResult: params.expectedResult || "Task completes successfully",
 						maxAttempts: params.maxAttempts || session.config.thread_retries + 1,
@@ -367,8 +369,9 @@ export function createSessionDispatcher(session: SwarmSession): ActionDispatcher
 			const result = await spawnThread(session, {
 				id: threadId,
 				task: action.task,
-				files: action.writeScope,
-				focusFiles: action.focusFiles,
+				files: action.focusFiles || [],
+				writeScope: action.writeScope,
+				focusFiles: action.focusFiles || [],
 				model: action.model,
 			});
 			return {

@@ -169,7 +169,7 @@ describe("Mock Agent Execution", () => {
 
 	it("should execute task and create files", async () => {
 		const agent = getAgent("mock");
-		const result = await agent.run({ task: "add hello function", workDir: repoDir });
+		const result = await agent.run({ task: "add hello function", writeScope: ["."], workDir: repoDir });
 		expect(result.success).toBe(true);
 		expect(result.filesChanged).toContain("hello.ts");
 		expect(fs.existsSync(path.join(repoDir, "hello.ts"))).toBe(true);
@@ -177,14 +177,14 @@ describe("Mock Agent Execution", () => {
 
 	it("should handle forced failures", async () => {
 		const agent = getAgent("mock");
-		const result = await agent.run({ task: "__FAIL__ this task", workDir: repoDir });
+		const result = await agent.run({ task: "__FAIL__ this task", writeScope: ["."], workDir: repoDir });
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();
 	});
 
 	it("should create multiple files for multi tasks", async () => {
 		const agent = getAgent("mock");
-		const result = await agent.run({ task: "multi file changes", workDir: repoDir });
+		const result = await agent.run({ task: "multi file changes", writeScope: ["."], workDir: repoDir });
 		expect(result.success).toBe(true);
 		expect(result.filesChanged).toContain("hello.ts");
 		expect(result.filesChanged).toContain("utils.ts");
@@ -266,7 +266,7 @@ describe("Thread Manager — Single Thread", () => {
 	it("should spawn a thread and get compressed result", async () => {
 		const result = await tm.spawnThread({
 			id: "thread-1",
-			task: "add hello function",
+			task: "add hello function", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -280,7 +280,7 @@ describe("Thread Manager — Single Thread", () => {
 	it("should track thread state", async () => {
 		const resultPromise = tm.spawnThread({
 			id: "thread-state",
-			task: "add hello function",
+			task: "add hello function", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -295,7 +295,7 @@ describe("Thread Manager — Single Thread", () => {
 	it("should handle failed threads", async () => {
 		const result = await tm.spawnThread({
 			id: "thread-fail",
-			task: "__FAIL__ this task",
+			task: "__FAIL__ this task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -311,14 +311,14 @@ describe("Thread Manager — Single Thread", () => {
 
 		await tmLimited.spawnThread({
 			id: "limit-1",
-			task: "first task",
+			task: "first task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
 
 		const result = await tmLimited.spawnThread({
 			id: "limit-2",
-			task: "second task",
+			task: "second task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -351,19 +351,19 @@ describe("Thread Manager — Parallel Threads", () => {
 		const results = await Promise.all([
 			tm.spawnThread({
 				id: "par-1",
-				task: "task one",
+				task: "task one", writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "par-2",
-				task: "task two",
+				task: "task two", writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "par-3",
-				task: "task three",
+				task: "task three", writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
@@ -426,7 +426,7 @@ describe("Merge Pipeline", () => {
 		const threads: ThreadState[] = [
 			{
 				id: "merge-a",
-				config: { id: "merge-a", task: "a", context: "", agent: { backend: "mock", model: "" } },
+				config: { id: "merge-a", task: "a", writeScope: ["."], context: "", agent: { backend: "mock", model: "" } },
 				status: "completed",
 				phase: "completed",
 				branchName: infoA.branch,
@@ -454,7 +454,7 @@ describe("Merge Pipeline", () => {
 			},
 			{
 				id: "merge-b",
-				config: { id: "merge-b", task: "b", context: "", agent: { backend: "mock", model: "" } },
+				config: { id: "merge-b", task: "b", writeScope: ["."], context: "", agent: { backend: "mock", model: "" } },
 				status: "completed",
 				phase: "completed",
 				branchName: infoB.branch,
@@ -539,7 +539,7 @@ describe("Full Pipeline — End-to-End", () => {
 		// 1. Spawn thread
 		const result = await tm.spawnThread({
 			id: "e2e-1",
-			task: "add hello function",
+			task: "add hello function", writeScope: ["."],
 			context: "Working on a TypeScript project",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -577,19 +577,19 @@ describe("Full Pipeline — End-to-End", () => {
 		const results = await Promise.all([
 			tm.spawnThread({
 				id: "e2e-par-1",
-				task: "add feature alpha",
+				task: "add feature alpha", writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "e2e-par-2",
-				task: "add feature beta",
+				task: "add feature beta", writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "e2e-par-3",
-				task: "add feature gamma",
+				task: "add feature gamma", writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
@@ -625,7 +625,7 @@ describe("Full Pipeline — End-to-End", () => {
 
 		const result = await tmAbort.spawnThread({
 			id: "abort-1",
-			task: "should not run",
+			task: "should not run", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -658,7 +658,7 @@ describe("Budget Enforcement", () => {
 		// But since even the minimum estimate exceeds 0.001, this should fail
 		const result = await tm.spawnThread({
 			id: "budget-1",
-			task: "task",
+			task: "task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});

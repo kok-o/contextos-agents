@@ -38,7 +38,7 @@ describe("MCP Session Persistence & Orphan Management", () => {
 			id: "task-101_openai",
 			config: {
 				id: "task-101_openai",
-				task: "Build user auth modal",
+				task: "Build user auth modal", writeScope: ["."],
 				context: "",
 				agent: { backend: "direct-llm", model: "gpt-4o" },
 			},
@@ -71,7 +71,7 @@ describe("MCP Session Persistence & Orphan Management", () => {
 			id: "task-202_anthropic",
 			config: {
 				id: "task-202_anthropic",
-				task: "Run tests",
+				task: "Run tests", writeScope: ["."],
 				context: "",
 				agent: { backend: "direct-llm", model: "claude-sonnet-4-6" },
 			},
@@ -104,7 +104,7 @@ describe("MCP Session Persistence & Orphan Management", () => {
 			id: "task-303",
 			config: {
 				id: "task-303",
-				task: "Clean up",
+				task: "Clean up", writeScope: ["."],
 				context: "",
 				agent: { backend: "direct-llm", model: "gemini-2.5-flash" },
 			},
@@ -140,7 +140,7 @@ describe("MCP Session Persistence & Orphan Management", () => {
 			id: "crashed-thread-1",
 			config: {
 				id: "crashed-thread-1",
-				task: "Work on crash recovery",
+				task: "Work on crash recovery", writeScope: ["."],
 				context: "",
 				agent: { backend: "direct-llm", model: "gpt-4o" },
 			},
@@ -208,7 +208,7 @@ describe("MCP Session Persistence & Orphan Management", () => {
 				id: `concurrent-${index}`,
 				config: {
 					id: `concurrent-${index}`,
-					task: `Task ${index}`,
+					task: `Task ${index}`, writeScope: ["."],
 					context: "",
 					agent: { backend: "direct-llm", model: "gpt-4o" },
 				},

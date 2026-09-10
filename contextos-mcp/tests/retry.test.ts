@@ -75,7 +75,7 @@ describe("Retry with Backoff", () => {
 
 		const result = await tm.spawnThread({
 			id: "no-retry",
-			task: "simple task",
+			task: "simple task", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -98,7 +98,7 @@ describe("Retry with Backoff", () => {
 
 		const result = await tm.spawnThread({
 			id: "retry-test",
-			task: "__FAIL__ this should retry",
+			task: "__FAIL__ this should retry", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -123,7 +123,7 @@ describe("Retry with Backoff", () => {
 
 		const result = await tm.spawnThread({
 			id: "no-retry-config",
-			task: "__FAIL__ no retry",
+			task: "__FAIL__ no retry", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -144,7 +144,7 @@ describe("Retry with Backoff", () => {
 		const startTime = Date.now();
 		await tm.spawnThread({
 			id: "backoff-test",
-			task: "__FAIL__ with backoff",
+			task: "__FAIL__ with backoff", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -180,7 +180,7 @@ describe("Agent Re-routing on Failure", () => {
 
 		await tm.spawnThread({
 			id: "reroute-test",
-			task: "__FAIL__ should try another agent",
+			task: "__FAIL__ should try another agent", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -212,7 +212,7 @@ describe("Error Classification", () => {
 
 		const result = await tm.spawnThread({
 			id: "attempt-count",
-			task: "__FAIL__ show attempts",
+			task: "__FAIL__ show attempts", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -253,7 +253,7 @@ describe("Cancellation During Retry", () => {
 		const startTime = Date.now();
 		const result = await tm.spawnThread({
 			id: "abort-during-retry",
-			task: "__FAIL__ abort me",
+			task: "__FAIL__ abort me", writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
