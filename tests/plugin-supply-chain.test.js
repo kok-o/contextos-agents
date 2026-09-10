@@ -23,7 +23,9 @@ const {
   validatePluginPinning,
   ScriptGrantManager,
   AtomicPluginUpdater,
-} = require('../.agents/plugin-supply-chain');
+  THREAT_CODES,
+  verifyNpmTarballIntegrity,
+} = require('../.agents/runtime/plugin-supply-chain-bundle');
 
 function createTempDir(prefix = 'ctx-supply-test-') {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -184,3 +186,66 @@ test('AtomicPluginUpdater — preserves local modifications and performs atomic 
   assert.equal(result.success, true);
   assert.equal(fs.readFileSync(path.join(targetPlugin, 'SKILL.md'), 'utf8'), '# v2\n');
 });
+
+test('Threat Model Hardening — unknown sources fail-closed & symlink/case/ratio attacks blocked', () => {
+  // 1. Unknown source type fails closed
+  const unknownSource = validatePluginPinning({ type: 'ftp', host: 'evil.com' });
+  assert.equal(unknownSource.valid, false);
+  assert.equal(unknownSource.code, THREAT_CODES.UNKNOWN_SOURCE_TYPE);
+
+  // 2. Symlink escape checks
+  const absoluteSymlink = validateArchiveEntry('link.js', { linkTarget: '/etc/passwd' });
+  assert.equal(absoluteSymlink.valid, false);
+  assert.equal(absoluteSymlink.code, THREAT_CODES.SYMLINK_ESCAPE);
+
+  const traversalSymlink = validateArchiveEntry('sub/link.js', { linkTarget: '../../outside.js' });
+  assert.equal(traversalSymlink.valid, false);
+  assert.equal(traversalSymlink.code, THREAT_CODES.SYMLINK_ESCAPE);
+
+  // 3. Case and Unicode collisions
+  const seenPaths = new Set();
+  const file1 = validateArchiveEntry('config/Settings.json', { seenPaths });
+  assert.equal(file1.valid, true);
+  const file2 = validateArchiveEntry('config/settings.json', { seenPaths });
+  assert.equal(file2.valid, false);
+  assert.equal(file2.code, THREAT_CODES.CASE_COLLISION);
+
+  // 4. Compression ratio bomb (> 100x ratio with uncompressed > 1MB)
+  const ratioBomb = validateArchiveEntry('data.bin', {
+    uncompressedSize: 150 * 1024 * 1024,
+    compressedSize: 512 * 1024,
+    maxRatio: 100,
+  });
+  assert.equal(ratioBomb.valid, false);
+  assert.equal(ratioBomb.code, THREAT_CODES.RATIO_EXCEEDED);
+
+  // 5. Special files blocked
+  const socketEntry = validateArchiveEntry('dev.sock', { entryType: 'socket' });
+  assert.equal(socketEntry.valid, false);
+  assert.equal(socketEntry.code, THREAT_CODES.SPECIAL_FILE);
+});
+
+test('ScriptGrantManager — identity-bound grants and integrity verification', (t) => {
+  const tmpDir = createTempDir('identity-grants-');
+  t.after(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+
+  const scriptPath = path.join(tmpDir, 'task.js');
+  fs.writeFileSync(scriptPath, 'console.log("Plugin task");\n', 'utf8');
+
+  const grantsFile = path.join(tmpDir, 'grants.json');
+  const manager = new ScriptGrantManager(grantsFile);
+
+  // Grant with plugin identity
+  manager.grant(scriptPath, { pluginId: 'acme/optimizer', relPath: 'task.js' });
+
+  const auth = manager.checkAuthorization(scriptPath, { pluginId: 'acme/optimizer', relPath: 'task.js' });
+  assert.equal(auth.authorized, true);
+
+  // npm tarball integrity test
+  const content = Buffer.from('hello-tarball-content');
+  const crypto = require('crypto');
+  const validHash = 'sha512-' + crypto.createHash('sha512').update(content).digest('base64');
+  assert.equal(verifyNpmTarballIntegrity(content, validHash), true);
+  assert.equal(verifyNpmTarballIntegrity(content, 'sha512-invalidbase64hash=='), false);
+});
+

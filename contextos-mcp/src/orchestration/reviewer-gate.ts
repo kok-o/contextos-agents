@@ -159,98 +159,88 @@ export async function evaluateReviewerGate(options: ReviewerGateOptions): Promis
 		};
 	}
 
-	// 4. LLM-Based Evaluation (if requested reviewer is specified and non-mock)
-	const shouldRunLlmReview = requestedReviewer !== undefined && requestedReviewer !== "mock";
-	if (shouldRunLlmReview) {
-		let agentProvider = null;
-		try {
-			agentProvider = getAgent(effectiveReviewer);
-		} catch {
-			return {
-				reviewerId,
-				specCompliance: "UNAVAILABLE",
-				codeQuality: "UNAVAILABLE",
-				summary: `Review failed: requested reviewer agent "${effectiveReviewer}" is not registered or available.`,
-				reviewedAt: Date.now(),
-			};
-		}
+	// 4. Run Reviewer Provider (Fail-closed)
+	let agentProvider = null;
+	try {
+		agentProvider = getAgent(effectiveReviewer);
+	} catch {
+		return {
+			reviewerId,
+			specCompliance: "UNAVAILABLE",
+			codeQuality: "UNAVAILABLE",
+			summary: `Review failed: requested reviewer agent "${effectiveReviewer}" is not registered or available.`,
+			reviewedAt: Date.now(),
+		};
+	}
 
-		if (!workDir) {
+	const effectiveWorkDir = workDir || options.repoRoot || process.cwd();
+	try {
+		const systemPrompt = getReviewerSystemPrompt();
+		const userPrompt = buildReviewerUserPrompt({
+			taskBrief,
+			diff,
+			filesChanged,
+			verificationVerdict,
+			testOutput,
+		});
+
+		const reviewTask = `${systemPrompt}\n\n${userPrompt}`;
+		const result = await agentProvider.run({
+			task: reviewTask,
+			workDir: effectiveWorkDir,
+			model: reviewerModel || implementerModel || "default",
+			signal: AbortSignal.timeout(30000),
+		});
+
+		if (!result.success) {
 			return {
 				reviewerId,
 				specCompliance: "ERROR",
 				codeQuality: "ERROR",
-				summary: "Review failed: workDir not provided for LLM evaluation.",
+				summary: `Review failed: agent execution failed: ${result.error || "unknown error"}`,
 				reviewedAt: Date.now(),
 			};
 		}
 
-		try {
-			const systemPrompt = getReviewerSystemPrompt();
-			const userPrompt = buildReviewerUserPrompt({
-				taskBrief,
-				diff,
-				filesChanged,
-				verificationVerdict,
-				testOutput,
-			});
-
-			const reviewTask = `${systemPrompt}\n\n${userPrompt}`;
-			const result = await agentProvider.run({
-				task: reviewTask,
-				workDir,
-				model: reviewerModel || implementerModel || "default",
-				signal: AbortSignal.timeout(30000),
-			});
-
-			if (!result.success) {
+		const parsed = parseVerdictJson(result.output || "");
+		if (parsed?.specCompliance && parsed?.codeQuality) {
+			// Forged PASS prevention (W5.5): static invariants override forged positive verdicts
+			if ((parsed.specCompliance === "PASS" || parsed.codeQuality === "PASS") && containsLazyStubs(diff)) {
 				return {
 					reviewerId,
-					specCompliance: "ERROR",
-					codeQuality: "ERROR",
-					summary: `Review failed: agent execution failed: ${result.error || "unknown error"}`,
-					reviewedAt: Date.now(),
-				};
-			}
-
-			const parsed = parseVerdictJson(result.output || "");
-			if (parsed?.specCompliance && parsed?.codeQuality) {
-				return {
-					reviewerId,
-					specCompliance: parsed.specCompliance,
-					codeQuality: parsed.codeQuality,
-					summary: parsed.summary || "Independent review completed successfully.",
+					specCompliance: "FAIL",
+					codeQuality: "FAIL",
+					summary: "Review failed: forged PASS rejected — diff contains forbidden lazy stubs.",
 					reviewedAt: Date.now(),
 				};
 			}
 
 			return {
 				reviewerId,
-				specCompliance: "MALFORMED",
-				codeQuality: "MALFORMED",
-				summary: "Review failed: reviewer returned malformed or unparseable JSON verdict.",
-				reviewedAt: Date.now(),
-			};
-		} catch (err: any) {
-			const isTimeout = err?.name === "TimeoutError" || String(err).includes("timeout");
-			return {
-				reviewerId,
-				specCompliance: isTimeout ? "TIMEOUT" : "ERROR",
-				codeQuality: isTimeout ? "TIMEOUT" : "ERROR",
-				summary: `Review failed with ${isTimeout ? "timeout" : "error"}: ${err?.message || String(err)}`,
+				specCompliance: parsed.specCompliance,
+				codeQuality: parsed.codeQuality,
+				summary: parsed.summary || "Independent review completed successfully.",
 				reviewedAt: Date.now(),
 			};
 		}
+
+		return {
+			reviewerId,
+			specCompliance: "MALFORMED",
+			codeQuality: "MALFORMED",
+			summary: "Review failed: reviewer returned malformed or unparseable JSON verdict.",
+			reviewedAt: Date.now(),
+		};
+	} catch (err: any) {
+		const isTimeout = err?.name === "TimeoutError" || String(err).includes("timeout");
+		return {
+			reviewerId,
+			specCompliance: isTimeout ? "TIMEOUT" : "ERROR",
+			codeQuality: isTimeout ? "TIMEOUT" : "ERROR",
+			summary: `Review failed with ${isTimeout ? "timeout" : "error"}: ${err?.message || String(err)}`,
+			reviewedAt: Date.now(),
+		};
 	}
-
-	// Deterministic default when all static criteria pass and no LLM reviewer was requested
-	return {
-		reviewerId,
-		specCompliance: "PASS",
-		codeQuality: "PASS",
-		summary: "Static and contract review passed: scope respected, zero placeholders, verification green.",
-		reviewedAt: Date.now(),
-	};
 }
 
 /**
@@ -261,19 +251,18 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
 	const reviewerId = `combined-reviewer-${reviewerAgent || "audit"}-${randomUUID().slice(0, 8)}`;
 
+	const effectiveReviewer = resolveReviewerAgent(undefined, reviewerAgent);
 	let agentProvider: any = null;
-	if (reviewerAgent && reviewerAgent !== "mock") {
-		try {
-			agentProvider = getAgent(reviewerAgent);
-		} catch {
-			return {
-				reviewerId,
-				specCompliance: "UNAVAILABLE",
-				codeQuality: "UNAVAILABLE",
-				summary: `Combined staging review failed: reviewer agent "${reviewerAgent}" is not available.`,
-				reviewedAt: Date.now(),
-			};
-		}
+	try {
+		agentProvider = getAgent(effectiveReviewer);
+	} catch {
+		return {
+			reviewerId,
+			specCompliance: "UNAVAILABLE",
+			codeQuality: "UNAVAILABLE",
+			summary: `Combined staging review failed: reviewer agent "${effectiveReviewer}" is not available.`,
+			reviewedAt: Date.now(),
+		};
 	}
 
 	let combinedDiff = "";
@@ -303,58 +292,48 @@ export async function reviewCombinedStaging(options: CombinedReviewOptions): Pro
 		};
 	}
 
-	if (agentProvider) {
-		try {
-			const prompt = buildCombinedStagingReviewPrompt(baseSha, stagingBranch, combinedDiff, taskSummaries);
-			const result = await agentProvider.run({
-				task: prompt,
-				workDir: canonicalRoot,
-				model: reviewerModel || "default",
-				signal: AbortSignal.timeout(30000),
-			});
-			if (!result.success) {
-				return {
-					reviewerId,
-					specCompliance: "ERROR",
-					codeQuality: "ERROR",
-					summary: `Combined staging review failed: agent execution error: ${result.error || "unknown error"}`,
-					reviewedAt: Date.now(),
-				};
-			}
-			const parsed = parseVerdictJson(result.output || "");
-			if (parsed?.specCompliance && parsed?.codeQuality) {
-				return {
-					reviewerId,
-					specCompliance: parsed.specCompliance,
-					codeQuality: parsed.codeQuality,
-					summary: parsed.summary || "Combined staging review passed.",
-					reviewedAt: Date.now(),
-				};
-			}
+	try {
+		const prompt = buildCombinedStagingReviewPrompt(baseSha, stagingBranch, combinedDiff, taskSummaries);
+		const result = await agentProvider.run({
+			task: prompt,
+			workDir: canonicalRoot,
+			model: reviewerModel || "default",
+			signal: AbortSignal.timeout(30000),
+		});
+		if (!result.success) {
 			return {
 				reviewerId,
-				specCompliance: "MALFORMED",
-				codeQuality: "MALFORMED",
-				summary: "Combined staging review failed: reviewer returned invalid JSON verdict.",
-				reviewedAt: Date.now(),
-			};
-		} catch (err: any) {
-			const isTimeout = err?.name === "TimeoutError" || String(err).includes("timeout");
-			return {
-				reviewerId,
-				specCompliance: isTimeout ? "TIMEOUT" : "ERROR",
-				codeQuality: isTimeout ? "TIMEOUT" : "ERROR",
-				summary: `Combined staging review failed with ${isTimeout ? "timeout" : "error"}: ${err?.message || String(err)}`,
+				specCompliance: "ERROR",
+				codeQuality: "ERROR",
+				summary: `Combined staging review failed: agent execution error: ${result.error || "unknown error"}`,
 				reviewedAt: Date.now(),
 			};
 		}
+		const parsed = parseVerdictJson(result.output || "");
+		if (parsed?.specCompliance && parsed?.codeQuality) {
+			return {
+				reviewerId,
+				specCompliance: parsed.specCompliance,
+				codeQuality: parsed.codeQuality,
+				summary: parsed.summary || "Combined staging review passed.",
+				reviewedAt: Date.now(),
+			};
+		}
+		return {
+			reviewerId,
+			specCompliance: "MALFORMED",
+			codeQuality: "MALFORMED",
+			summary: "Combined staging review failed: reviewer returned invalid JSON verdict.",
+			reviewedAt: Date.now(),
+		};
+	} catch (err: any) {
+		const isTimeout = err?.name === "TimeoutError" || String(err).includes("timeout");
+		return {
+			reviewerId,
+			specCompliance: isTimeout ? "TIMEOUT" : "ERROR",
+			codeQuality: isTimeout ? "TIMEOUT" : "ERROR",
+			summary: `Combined staging review failed with ${isTimeout ? "timeout" : "error"}: ${err?.message || String(err)}`,
+			reviewedAt: Date.now(),
+		};
 	}
-
-	return {
-		reviewerId,
-		specCompliance: "PASS",
-		codeQuality: "PASS",
-		summary: `Combined staging review passed for ${stagingBranch} against base ${baseSha}.`,
-		reviewedAt: Date.now(),
-	};
 }

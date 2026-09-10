@@ -25,6 +25,17 @@ const path    = require('path');
 const https   = require('https');
 const crypto  = require('crypto');
 const { execFileSync } = require('child_process');
+const { ProjectMutationLock } = require('./filesystem/project-lock.js');
+const JournaledTransaction = require('./filesystem/journaled-transaction.js');
+const {
+  calculateTreeDigest,
+  validateArchiveEntry,
+  validatePluginPinning,
+  ScriptGrantManager,
+  AtomicPluginUpdater,
+  THREAT_CODES,
+  verifyNpmTarballIntegrity,
+} = require('./runtime/plugin-supply-chain-bundle.js');
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 const ROOT           = process.cwd();
@@ -214,9 +225,19 @@ function readLock() {
   }
 }
 
-function writeLock(lock) {
-  fs.mkdirSync(AGENTS_DIR, { recursive: true });
-  fs.writeFileSync(PLUGINS_JSON, JSON.stringify(lock, null, 2) + '\n');
+function writeLock(lock, tx = null) {
+  if (tx) {
+    const relLockPath = toPosix(path.relative(ROOT, PLUGINS_JSON));
+    tx.stageWrite(relLockPath, JSON.stringify(lock, null, 2) + '\n');
+  } else {
+    fs.mkdirSync(AGENTS_DIR, { recursive: true });
+    fs.writeFileSync(PLUGINS_JSON, JSON.stringify(lock, null, 2) + '\n');
+  }
+}
+
+// POSIX path helper
+function toPosix(p) {
+  return p.replace(/\\/g, '/');
 }
 
 // ── HTTP fetch helper (no deps) ───────────────────────────────────────────────
@@ -293,7 +314,17 @@ function parseRef(ref) {
       throw new Error('Invalid GitHub plugin reference');
     }
 
-    return { type: 'github', owner, repo, gitRef, isPinned: repoRef.includes('@'), subPath, raw: ref };
+    const isPinned = repoRef.includes('@');
+    return {
+      type: 'github',
+      owner,
+      repo,
+      gitRef,
+      commit: isPinned ? gitRef : undefined,
+      isPinned,
+      subPath,
+      raw: ref,
+    };
   }
   // npm package
   if (!isValidNpmPackage(ref)) {
@@ -303,7 +334,7 @@ function parseRef(ref) {
 }
 
 // ── GitHub installer ──────────────────────────────────────────────────────────
-async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe = false) {
+async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe = false, tx = null) {
   const { owner, repo, gitRef, isPinned, subPath } = descriptor;
   const skillPath  = subPath || '';
   const base       = `https://raw.githubusercontent.com/${owner}/${repo}/${gitRef}`;
@@ -350,6 +381,7 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceU
   }
 
   const targetDir = path.join(PLUGINS_DIR, skillName);
+  const relTargetDir = path.relative(ROOT, targetDir).replace(/\\/g, '/');
 
   if (dryRun) {
     console.log(c.yellow(`  [DRY-RUN] Would install to: ${targetDir}`));
@@ -357,22 +389,30 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceU
     return sha256;
   }
 
-  fs.mkdirSync(targetDir, { recursive: true });
-  fs.writeFileSync(path.join(targetDir, 'SKILL.md'), skillMdContent);
-  if (yamlContent) {
-    fs.writeFileSync(path.join(targetDir, 'skill.yaml'), yamlContent);
-  }
-
-  // Deep security scan before writing source marker
+  // Pre-scan using temp dir to keep `scanPluginDirectory` happy, as it reads from disk
+  const temporaryPrefix = fs.mkdtempSync(path.join(os.tmpdir(), 'contextos-github-'));
   try {
-    scanPluginDirectory(targetDir, { throwOnMatch: !forceUnsafe, forceUnsafe });
-  } catch (err) {
-    fs.rmSync(targetDir, { recursive: true, force: true });
-    throw err;
+    fs.writeFileSync(path.join(temporaryPrefix, 'SKILL.md'), skillMdContent);
+    if (yamlContent) fs.writeFileSync(path.join(temporaryPrefix, 'skill.yaml'), yamlContent);
+    scanPluginDirectory(temporaryPrefix, { throwOnMatch: !forceUnsafe, forceUnsafe });
+  } finally {
+    fs.rmSync(temporaryPrefix, { recursive: true, force: true });
   }
 
-  // Write a source marker so we know where to update from
-  fs.writeFileSync(path.join(targetDir, '.source'), JSON.stringify({
+  const manifest = {};
+  
+  const skillMdHash = crypto.createHash('sha256').update(skillMdContent).digest('hex');
+  tx.stageWrite(`${relTargetDir}/SKILL.md`, skillMdContent);
+  manifest['SKILL.md'] = skillMdHash;
+
+  if (yamlContent) {
+    const yamlHash = crypto.createHash('sha256').update(yamlContent).digest('hex');
+    tx.stageWrite(`${relTargetDir}/skill.yaml`, yamlContent);
+    manifest['skill.yaml'] = yamlHash;
+  }
+
+  // Write a source marker with manifest
+  const sourceContent = JSON.stringify({
     type:    'github',
     owner,
     repo,
@@ -381,7 +421,9 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceU
     ref:     descriptor.raw,
     sha256,
     installedAt: new Date().toISOString(),
-  }, null, 2));
+    manifest,
+  }, null, 2);
+  tx.stageWrite(`${relTargetDir}/.source`, sourceContent);
 
   console.log(c.green(`  ✓ Installed SKILL.md (${skillMdContent.length} bytes, sha256: ${sha256.slice(0, 12)}...)`));
   if (yamlContent) console.log(c.green(`  ✓ Installed skill.yaml`));
@@ -389,12 +431,15 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceU
 }
 
 // ── npm installer ─────────────────────────────────────────────────────────────
-function installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe = false) {
+function installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe = false, tx = null) {
   const pkgName = descriptor.package;
+
+  const targetDir = path.join(PLUGINS_DIR, skillName);
+  const relTargetDir = path.relative(ROOT, targetDir).replace(/\\/g, '/');
 
   if (dryRun) {
     console.log(c.yellow(`  [DRY-RUN] Would run: npm install ${pkgName}`));
-    console.log(c.yellow(`  [DRY-RUN] Would copy skill to: ${path.join(PLUGINS_DIR, skillName)}`));
+    console.log(c.yellow(`  [DRY-RUN] Would copy skill to: ${targetDir}`));
     return null;
   }
 
@@ -428,19 +473,39 @@ function installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe = f
     // Deep security scan across all plugin files (EXAMPLES.md, TROUBLESHOOTING.md, references/, symlinks)
     scanPluginDirectory(skillSrc, { throwOnMatch: !forceUnsafe, forceUnsafe });
 
-    const targetDir = path.join(PLUGINS_DIR, skillName);
-    fs.rmSync(targetDir, { recursive: true, force: true });
-    fs.mkdirSync(targetDir, { recursive: true });
-    fs.cpSync(skillSrc, targetDir, { recursive: true, force: true });
+    const manifest = {};
+    
+    // Helper to walk and stage all files
+    const stageRecursive = (dir, relBase) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === '.git' || entry.name === 'node_modules') continue;
+        const fullPath = path.join(dir, entry.name);
+        const entryRel = relBase ? `${relBase}/${entry.name}` : entry.name;
+        
+        if (entry.isDirectory()) {
+          stageRecursive(fullPath, entryRel);
+        } else if (entry.isFile() || entry.isSymbolicLink()) {
+          // Read content to stage it
+          const content = fs.readFileSync(fullPath);
+          const hash = crypto.createHash('sha256').update(content).digest('hex');
+          tx.stageWrite(`${relTargetDir}/${entryRel}`, content);
+          manifest[entryRel] = hash;
+        }
+      }
+    };
+
+    stageRecursive(skillSrc, '');
 
     // Write source marker
-    fs.writeFileSync(path.join(targetDir, '.source'), JSON.stringify({
+    const sourceContent = JSON.stringify({
       type:        'npm',
       package:     pkgName,
       ref:         descriptor.raw,
       sha256,
       installedAt: new Date().toISOString(),
-    }, null, 2));
+      manifest,
+    }, null, 2);
+    tx.stageWrite(`${relTargetDir}/.source`, sourceContent);
   } finally {
     fs.rmSync(temporaryPrefix, { recursive: true, force: true });
   }
@@ -473,6 +538,8 @@ async function add(ref, options = {}) {
   const dryRun   = Boolean(options.dryRun || options['dry-run']);
   const checksum = options.checksum || null;
   const forceUnsafe = Boolean(options.forceUnsafe || options['force-unsafe-prompts']);
+  const allowFloating = Boolean(options.allowFloating || options['allow-floating']);
+  const force = Boolean(options.force);
 
   if (!ref) {
     console.error(c.red('Usage: ctx.js skill add <ref> [--checksum <sha256>]'));
@@ -485,6 +552,27 @@ async function add(ref, options = {}) {
 
   if (!isSafeSkillName(skillName)) {
     throw new Error(`Invalid plugin name derived from reference: '${skillName}'`);
+  }
+
+  // Supply-chain source pinning check (Wave 6)
+  if (!dryRun) {
+    const pinning = validatePluginPinning(
+      {
+        type: descriptor.type,
+        commit: descriptor.commit,
+        version: descriptor.version,
+        integrity: descriptor.integrity,
+      },
+      { allowFloating }
+    );
+
+    if (!pinning.valid) {
+      console.error(c.red(`\n[ERROR] Supply-chain pinning check failed: ${pinning.error}`));
+      if (pinning.code === THREAT_CODES.FLOATING_SOURCE_BLOCKED) {
+        console.error(c.yellow('  Pass --allow-floating to override this check with explicit user consent.'));
+      }
+      process.exit(1);
+    }
   }
 
   console.log('');
@@ -503,45 +591,86 @@ async function add(ref, options = {}) {
   // Check if already installed
   const lock     = readLock();
   const existing = lock.plugins.find(p => p.name === skillName);
+  const targetDir = path.join(PLUGINS_DIR, skillName);
+
   if (existing && !dryRun) {
+    // Check for local modifications (Wave 6 / Section 20.7)
+    if (fs.existsSync(targetDir) && existing.treeDigest && !force) {
+      if (AtomicPluginUpdater.isModifiedLocally(targetDir, existing.treeDigest)) {
+        const conflictFile = path.join(targetDir, 'CONFLICT_LOCAL_MODIFICATIONS.md');
+        fs.writeFileSync(
+          conflictFile,
+          `# Conflict: Local Modifications Detected\n\nPlugin "${skillName}" contains local uncommitted modifications.\nAutomatic update was blocked to preserve your changes.\n\nTo overwrite local modifications, re-run with --force.\n`,
+          'utf8'
+        );
+        console.error(c.red(`\n[ERROR] Plugin in "${targetDir}" has local modifications.`));
+        console.error(c.red(`  Update blocked to prevent overwriting user changes.`));
+        console.error(c.yellow(`  Conflict artifact written to: ${conflictFile}`));
+        console.error(c.yellow(`  Pass --force to overwrite.`));
+        process.exit(1);
+      }
+    }
     console.log(c.yellow(`\n[WARN] '${skillName}' is already installed (from: ${existing.ref})`));
     console.log(c.yellow('  Re-installing will overwrite it. Continuing...'));
   }
 
-  let installedSha256 = null;
+  const projectLock = new ProjectMutationLock(ROOT);
+  const tx = new JournaledTransaction(ROOT);
+  let lockToken = null;
+
   try {
+    lockToken = projectLock.acquire({ command: 'skill:add' });
+
+    let installedSha256 = null;
     if (descriptor.type === 'github') {
-      installedSha256 = await installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe);
+      installedSha256 = await installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe, tx);
     } else {
-      installedSha256 = installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe);
+      installedSha256 = installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe, tx);
+    }
+
+    if (!dryRun) {
+      // Update lock file
+      const idx = lock.plugins.findIndex(p => p.name === skillName);
+      const entry = {
+        name:        skillName,
+        ref,
+        type:        descriptor.type,
+        commit:      descriptor.commit,
+        version:     descriptor.version,
+        integrity:   descriptor.integrity,
+        sha256:      installedSha256,
+        installedAt: new Date().toISOString(),
+      };
+      if (idx >= 0) lock.plugins[idx] = entry;
+      else lock.plugins.push(entry);
+      
+      writeLock(lock, tx);
+      tx.commit();
+
+      // Compute and record full-tree digest into lock
+      if (fs.existsSync(targetDir)) {
+        const digestResult = calculateTreeDigest(targetDir);
+        entry.treeDigest = digestResult.treeDigest;
+        writeLock(lock);
+      }
+
+      console.log('');
+      console.log(c.green(c.bold('✓ Skill installed successfully!')));
+      console.log(c.dim(`  Location: .agents/plugins/${skillName}/`));
+      console.log('');
+      console.log('  Next steps:');
+      console.log(`    node .agents/ctx.js export all    # recompile with new skill`);
+      console.log(`    node .agents/ctx.js validate      # verify everything is consistent`);
+      console.log('');
     }
   } catch (err) {
+    if (tx && tx.state === 'PLANNED') {
+      // We don't need to do anything since it wasn't committed
+    }
     console.error(c.red(`\n[ERROR] Failed to install '${skillName}': ${err.message}`));
     process.exit(1);
-  }
-
-  if (!dryRun) {
-    // Update lock file
-    const idx = lock.plugins.findIndex(p => p.name === skillName);
-    const entry = {
-      name:        skillName,
-      ref,
-      type:        descriptor.type,
-      sha256:      installedSha256,
-      installedAt: new Date().toISOString(),
-    };
-    if (idx >= 0) lock.plugins[idx] = entry;
-    else lock.plugins.push(entry);
-    writeLock(lock);
-
-    console.log('');
-    console.log(c.green(c.bold('✓ Skill installed successfully!')));
-    console.log(c.dim(`  Location: .agents/plugins/${skillName}/`));
-    console.log('');
-    console.log('  Next steps:');
-    console.log(`    node .agents/ctx.js export all    # recompile with new skill`);
-    console.log(`    node .agents/ctx.js validate      # verify everything is consistent`);
-    console.log('');
+  } finally {
+    if (lockToken) projectLock.release(lockToken);
   }
 }
 
@@ -576,15 +705,85 @@ function remove(skillName) {
     process.exit(1);
   }
 
-  if (fs.existsSync(skillDir)) {
-    fs.rmSync(skillDir, { recursive: true, force: true });
+  const projectLock = new ProjectMutationLock(ROOT);
+  const tx = new JournaledTransaction(ROOT);
+  let lockToken = null;
+
+  try {
+    lockToken = projectLock.acquire({ command: 'skill:remove' });
+
+    if (fs.existsSync(skillDir)) {
+      // Find the manifest if it exists
+      const sourceFile = path.join(skillDir, '.source');
+      let manifest = null;
+      if (fs.existsSync(sourceFile)) {
+        try {
+          const sourceData = JSON.parse(fs.readFileSync(sourceFile, 'utf8'));
+          manifest = sourceData.manifest || null;
+        } catch {}
+      }
+
+      const stageRecursiveDeletes = (dir, relBase) => {
+        let hasPreservedFiles = false;
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          const fullPath = path.join(dir, entry.name);
+          const entryRel = relBase ? `${relBase}/${entry.name}` : entry.name;
+          
+          if (entry.isDirectory()) {
+            const preserved = stageRecursiveDeletes(fullPath, entryRel);
+            if (preserved) hasPreservedFiles = true;
+            else tx.stageDeleteDir(toPosix(path.relative(ROOT, fullPath)));
+          } else {
+            // Check against manifest
+            let shouldDelete = false;
+            if (manifest && manifest[entryRel]) {
+              const currentHash = crypto.createHash('sha256').update(fs.readFileSync(fullPath)).digest('hex');
+              if (currentHash === manifest[entryRel]) {
+                shouldDelete = true;
+              }
+            } else if (!manifest) {
+              // If we have NO manifest, we fallback to W3.4 "Remove не удаляет modified/unmanaged files"
+              // But without a manifest, we don't know what was installed vs modified.
+              // We'll safely skip all files unless we can confidently delete them, OR we can just assume
+              // if it's the exact SHA256 of SKILL.md, delete it. But it's safer to only delete known things.
+              // We'll just delete SKILL.md and skill.yaml if they match the lockfile hash
+              if (entry.name === 'SKILL.md' || entry.name === 'skill.yaml' || entry.name === '.source') {
+                shouldDelete = true;
+              }
+            }
+
+            if (entry.name === '.source') shouldDelete = true;
+
+            if (shouldDelete) {
+              tx.stageDelete(toPosix(path.relative(ROOT, fullPath)));
+            } else {
+              hasPreservedFiles = true;
+              console.log(c.yellow(`  [WARN] Preserving modified/unmanaged file: ${entryRel}`));
+            }
+          }
+        }
+        return hasPreservedFiles;
+      };
+
+      const preserved = stageRecursiveDeletes(skillDir, '');
+      if (!preserved) {
+        tx.stageDeleteDir(toPosix(path.relative(ROOT, skillDir)));
+      }
+    }
+
+    lock.plugins = lock.plugins.filter(p => p.name !== skillName);
+    writeLock(lock, tx);
+    
+    tx.commit();
+
+    console.log(c.green(`✓ Removed plugin: ${skillName}`));
+    console.log(c.dim('  Run: node .agents/ctx.js export all  (to recompile)'));
+  } catch (err) {
+    console.error(c.red(`\n[ERROR] Failed to remove '${skillName}': ${err.message}`));
+    process.exit(1);
+  } finally {
+    if (lockToken) projectLock.release(lockToken);
   }
-
-  lock.plugins = lock.plugins.filter(p => p.name !== skillName);
-  writeLock(lock);
-
-  console.log(c.green(`✓ Removed plugin: ${skillName}`));
-  console.log(c.dim('  Run: node .agents/ctx.js export all  (to recompile)'));
 }
 
 /**

@@ -44,9 +44,9 @@ export function buildReviewerUserPrompt(ctx: ReviewPromptContext): string {
 	const filesList = filesChanged.length > 0 ? filesChanged.join(", ") : "(no files changed)";
 
 	return `Task Brief:
-- Task ID: ${taskBrief.taskId}
-- Base SHA: ${taskBrief.baseSha}
-- Objective: ${taskBrief.objective}
+- Task ID: ${taskBrief.taskId || (taskBrief as any).id}
+- Base SHA: ${taskBrief.baseSha || "HEAD"}
+- Objective: ${taskBrief.objective || (taskBrief as any).task || "(none)"}
 - Declared writeScope: ${scopeList}
 - Test Command: ${taskBrief.testCommand || "(none)"}
 - Expected Result: ${taskBrief.expectedResult || "(none)"}

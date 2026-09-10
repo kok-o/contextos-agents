@@ -1119,6 +1119,15 @@ class CanonicalResolver {
     for (const baseId of BASE_SKILLS) {
       if (!profileExcluded.has(baseId) && !allSelectedIds.includes(baseId)) {
         allSelectedIds.unshift(baseId);
+        finalSelected.unshift({
+          id: baseId,
+          displayName: skillsDict[baseId]?.displayName || baseId,
+          score: 100,
+          priorityScore: 1000,
+          reasons: [{ kind: 'foundation', weight: 100, reason: 'Core skill' }],
+          requiredBy: [],
+          estimatedTokens: skillsDict[baseId]?.estimatedTokens || 800,
+        });
       }
     }
 

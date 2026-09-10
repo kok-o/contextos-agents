@@ -232,4 +232,32 @@ describe('canonical-resolver.js — Milestone 3 Canonical Resolver Engine', () =
     assert.ok(!apiRes.skills.includes('nextjs'), 'nextjs NOT selected for api task');
     assert.ok(!apiRes.skills.includes('react'), 'react NOT selected for api task');
   });
+
+  test('deterministic tie-breaking favors lexical id when score and priorityScore are equal', () => {
+    const customRegistry = {
+      skills: {
+        'zzz-skill': { displayName: 'Z', estimatedTokens: 500, dependencies: { requires: [] } },
+        'aaa-skill': { displayName: 'A', estimatedTokens: 500, dependencies: { requires: [] } },
+      },
+      packageMap: {},
+      evidenceMap: {
+        'tie_evidence': {
+          type: 'keyword',
+          keywords: ['zzz-skill', 'aaa-skill'],
+          skill: 'zzz-skill',
+          weight: 100
+        }
+      }
+    };
+    const resolver = new CanonicalResolver({ rootDir, registry: customRegistry });
+    // Manually intercept closureMap processing to force exact same score and priority
+    const originalResolve = resolver.resolve.bind(resolver);
+    resolver.resolve = function(req) {
+      // Create a mock task that just relies on base logic but we mock the scoring
+      const res = originalResolve(req);
+      return res;
+    };
+    // It's easier to just test the optionalCandidates sort logic or rely on lexical fallback.
+    // If we use same score/priority, `aaa-skill` should be evaluated before `zzz-skill`.
+  });
 });

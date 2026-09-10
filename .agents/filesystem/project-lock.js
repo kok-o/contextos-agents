@@ -13,12 +13,14 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
+const { isNetworkOrUNCPath } = require('./platform-hardening.js');
 
 const LOCK_SUBPATH = path.join('.agents', '.contextos', 'locks', 'mutation.lock');
 const ERROR_CODES = {
   BUSY: 'CTX_PROJECT_BUSY',
   INVALID_TOKEN: 'CTX_LOCK_INVALID_TOKEN',
   NOT_LOCKED: 'CTX_LOCK_NOT_LOCKED',
+  UNSUPPORTED: 'UNSUPPORTED',
 };
 
 class ProjectLockError extends Error {
@@ -45,6 +47,13 @@ function isPidAlive(pid) {
 
 class ProjectMutationLock {
   constructor(projectRoot, options = {}) {
+    if (isNetworkOrUNCPath(projectRoot)) {
+      throw new ProjectLockError(
+        ERROR_CODES.UNSUPPORTED,
+        `UNC/network filesystem mutation is unsupported for projectRoot: ${projectRoot}`,
+        { projectRoot, status: 'UNSUPPORTED' }
+      );
+    }
     this.projectRoot = path.resolve(projectRoot);
     this.lockPath = options.lockPath
       ? path.resolve(this.projectRoot, options.lockPath)

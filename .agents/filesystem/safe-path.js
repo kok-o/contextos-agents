@@ -12,12 +12,14 @@
 
 const fs = require('fs');
 const path = require('path');
+const { isNetworkOrUNCPath } = require('./platform-hardening.js');
 
 const ERROR_CODES = {
   OUTSIDE_PROJECT: 'CTX_PATH_OUTSIDE_PROJECT',
   INVALID: 'CTX_PATH_INVALID',
   RESERVED_DEVICE: 'CTX_PATH_RESERVED_DEVICE',
   SYMLINK_ESCAPE: 'CTX_PATH_SYMLINK_ESCAPE',
+  UNSUPPORTED: 'UNSUPPORTED',
 };
 
 const WINDOWS_RESERVED_NAMES = new Set([
@@ -78,6 +80,15 @@ function resolveManagedPath(projectRoot, relativePath, options = {}) {
       ERROR_CODES.INVALID,
       'Invalid path: target relativePath must be a non-empty string',
       { relativePath }
+    );
+  }
+
+  // Check UNC/network path on project root
+  if (isNetworkOrUNCPath(projectRoot)) {
+    throw new SafePathError(
+      ERROR_CODES.UNSUPPORTED,
+      `UNC/network filesystem mutation is unsupported for projectRoot: ${projectRoot}`,
+      { projectRoot, status: 'UNSUPPORTED' }
     );
   }
 

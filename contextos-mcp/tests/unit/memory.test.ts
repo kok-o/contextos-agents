@@ -19,7 +19,8 @@ function rmDir(dir: string): void {
 /** Default episode params factory. Override individual fields as needed. */
 function makeEpisodeParams(overrides: Partial<Parameters<EpisodicMemory["record"]>[0]> = {}) {
 	return {
-		task: "refactor the user authentication module", writeScope: ["."],
+		task: "refactor the user authentication module",
+		writeScope: ["."],
 		agent: "claude-code",
 		model: "sonnet-4",
 		slot: "execution",
@@ -130,7 +131,9 @@ describe("EpisodicMemory", () => {
 			const mem = new EpisodicMemory(tmpDir);
 			await mem.init();
 
-			const ep = await mem.record(makeEpisodeParams({ task: "Fix the broken CSS layout in dashboard", writeScope: ["."] }));
+			const ep = await mem.record(
+				makeEpisodeParams({ task: "Fix the broken CSS layout in dashboard", writeScope: ["."] }),
+			);
 			// "the" and "in" are stop words; "fix" is 3 chars and kept; "broken", "css", "layout", "dashboard" kept
 			expect(ep.taskKeywords).toBeInstanceOf(Array);
 			expect(ep.taskKeywords.length).toBeGreaterThan(0);
@@ -249,7 +252,8 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "refactor user authentication", writeScope: ["."],
+					task: "refactor user authentication",
+					writeScope: ["."],
 					agent: "opencode",
 					model: "gpt-4o",
 				}),
@@ -333,7 +337,8 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "task one", writeScope: ["."],
+					task: "task one",
+					writeScope: ["."],
 					agent: "claude-code",
 					durationMs: 10000,
 					estimatedCostUsd: 0.04,
@@ -341,7 +346,8 @@ describe("EpisodicMemory", () => {
 			);
 			await mem.record(
 				makeEpisodeParams({
-					task: "task two", writeScope: ["."],
+					task: "task two",
+					writeScope: ["."],
 					agent: "claude-code",
 					durationMs: 20000,
 					estimatedCostUsd: 0.06,
@@ -349,7 +355,8 @@ describe("EpisodicMemory", () => {
 			);
 			await mem.record(
 				makeEpisodeParams({
-					task: "task three", writeScope: ["."],
+					task: "task three",
+					writeScope: ["."],
 					agent: "opencode",
 					durationMs: 8000,
 					estimatedCostUsd: 0.02,
@@ -394,13 +401,15 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "task a", writeScope: ["."],
+					task: "task a",
+					writeScope: ["."],
 					filesChanged: ["src/index.ts", "src/utils.ts", "styles/main.css"],
 				}),
 			);
 			await mem.record(
 				makeEpisodeParams({
-					task: "task b", writeScope: ["."],
+					task: "task b",
+					writeScope: ["."],
 					agent: "opencode",
 					filesChanged: ["src/index.ts"],
 				}),
@@ -457,7 +466,8 @@ describe("EpisodicMemory", () => {
 
 			await mem.record(
 				makeEpisodeParams({
-					task: "refactor authentication module", writeScope: ["."],
+					task: "refactor authentication module",
+					writeScope: ["."],
 					agent: "claude-code",
 					model: "sonnet-4",
 					slot: "execution",

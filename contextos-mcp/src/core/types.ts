@@ -47,7 +47,10 @@ export type ThreadStatus =
 	| "cancelled"
 	| "verification_failed"
 	| "interrupted"
-	| "needs_recovery";
+	| "needs_recovery"
+	| "requires_verification"
+	| "requires_review"
+	| "ready_for_merge";
 
 export type ThreadProgressPhase =
 	| "queued"
@@ -87,7 +90,26 @@ export interface ThreadConfig {
 	files?: string[];
 	focusFiles?: string[];
 	writeScope?: readonly string[];
+	writeScopeDeny?: readonly string[];
+	allowRepositoryWide?: boolean;
+	testCommand?: string;
+	verificationSpec?: VerificationSpec;
 	taskBrief?: TaskBrief;
+}
+
+/** Structured specification for automated verification (Section 16.1). */
+export interface VerificationSpec {
+	readonly schemaVersion?: number;
+	readonly executable: string;
+	readonly args: readonly string[];
+	readonly timeoutMs?: number;
+	readonly required?: boolean;
+	readonly network?: "deny" | "allow";
+	readonly allowedOutputPaths?: readonly string[];
+	readonly env?: Readonly<Record<string, string>>;
+	readonly cwd?: string;
+	readonly trusted?: boolean;
+	readonly isLegacyString?: boolean;
 }
 
 /** Immutable execution contract supplied to every subagent. */
@@ -96,14 +118,18 @@ export interface TaskBrief {
 	readonly baseSha: string;
 	readonly objective: string;
 	readonly writeScope: readonly string[];
+	readonly writeScopeDeny?: readonly string[];
+	readonly allowRepositoryWide?: boolean;
 	readonly focusFiles?: readonly string[];
 	readonly testCommand: string;
+	readonly verificationSpec?: VerificationSpec;
 	readonly expectedResult: string;
 	readonly maxAttempts: number;
+	readonly sandboxMode?: "oci-required" | "oci-preferred" | "host-unsafe";
 }
 
-export type VerificationVerdict = "NOT_CONFIGURED" | "PENDING" | "RUNNING" | "PASS" | "FAIL" | "ERROR" | "TIMEOUT";
-export type ReviewVerdictValue = "PASS" | "FAIL" | "ERROR" | "TIMEOUT" | "UNAVAILABLE" | "MALFORMED" | "NOT_CONFIGURED";
+export type VerificationVerdict = VerificationStatus | "CANCELLED";
+export type ReviewVerdictValue = ReviewStatus;
 
 // ── Milestone 10 Independent Runtime Statuses (Section 15.1) ─────────────────
 
@@ -126,6 +152,8 @@ export type VerificationStatus =
 	| "FAIL"
 	| "ERROR"
 	| "TIMEOUT"
+	| "UNAVAILABLE"
+	| "MALFORMED"
 	| "STALE";
 
 export type ReviewStatus =

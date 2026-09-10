@@ -29,7 +29,14 @@ import type {
 	SpawnAction,
 	WaitAction,
 } from "../core/action-schema.js";
-import type { BudgetState, CompressedResult, MergeResult, ThreadConfig, ThreadState } from "../core/types.js";
+import type {
+	BudgetState,
+	CompressedResult,
+	MergeResult,
+	ThreadConfig,
+	ThreadState,
+	VerificationSpec,
+} from "../core/types.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
 import { ThreadManager } from "../threads/manager.js";
 import { isEligibleForMerge, mergeAllThreads, mergeThreadBranch } from "../worktree/merge.js";
@@ -60,11 +67,14 @@ export interface ThreadSpawnParams {
 	task: string;
 	files?: string[];
 	writeScope?: string[];
+	writeScopeDeny?: string[];
+	allowRepositoryWide?: boolean;
 	focusFiles?: string[];
 	agent?: string;
 	model?: string;
 	context?: string;
 	testCommand?: string;
+	verificationSpec?: VerificationSpec;
 	expectedResult?: string;
 	maxAttempts?: number;
 }
@@ -217,15 +227,30 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 		files: params.focusFiles || params.files || [],
 		focusFiles: params.focusFiles || params.files || [],
 		writeScope: params.writeScope || [],
+		writeScopeDeny: params.writeScopeDeny || [],
+		allowRepositoryWide: params.allowRepositoryWide ?? params.writeScope?.includes(".") ?? false,
+		verificationSpec: params.verificationSpec,
+		testCommand:
+			params.testCommand ||
+			(params.verificationSpec?.executable
+				? `${params.verificationSpec.executable} ${params.verificationSpec.args.join(" ")}`.trim()
+				: undefined),
 		taskBrief:
-			params.testCommand || params.expectedResult || params.maxAttempts || params.writeScope
+			params.testCommand || params.verificationSpec || params.expectedResult || params.maxAttempts || params.writeScope
 				? {
 						taskId: threadId,
 						baseSha: "",
 						objective: params.task,
 						writeScope: params.writeScope || [],
+						writeScopeDeny: params.writeScopeDeny || [],
+						allowRepositoryWide: params.allowRepositoryWide ?? params.writeScope?.includes(".") ?? false,
 						focusFiles: params.focusFiles || params.files || [],
-						testCommand: params.testCommand || "",
+						testCommand:
+							params.testCommand ||
+							(params.verificationSpec?.executable
+								? `${params.verificationSpec.executable} ${params.verificationSpec.args.join(" ")}`.trim()
+								: ""),
+						verificationSpec: params.verificationSpec,
 						expectedResult: params.expectedResult || "Task completes successfully",
 						maxAttempts: params.maxAttempts || session.config.thread_retries + 1,
 					}
@@ -421,12 +446,27 @@ export function createSessionDispatcher(session: SwarmSession): ActionDispatcher
 			if (!thread) {
 				return { error: `Thread ${action.threadId} not found` };
 			}
-			return {
-				threadId: action.threadId,
-				status: thread.status,
-				reviewed: Boolean(thread.review),
-				verdict: thread.review,
-			};
+
+			// Acquire lease for thread mutation
+			const store = require("../mcp/state.js").getThreadStore(session.dir);
+			let lease: any = null;
+			if (store && typeof store.acquireLease === "function") {
+				lease = store.acquireLease(action.threadId, "mcp-action");
+				if (!lease.tryAcquire()) {
+					return { error: `Thread ${action.threadId} is locked by another process (failed to acquire lease)` };
+				}
+			}
+
+			try {
+				return {
+					threadId: action.threadId,
+					status: thread.status,
+					reviewed: Boolean(thread.review),
+					verdict: thread.review,
+				};
+			} finally {
+				if (lease) lease.release();
+			}
 		},
 
 		async merge(action: MergeAction) {
@@ -446,14 +486,33 @@ export function createSessionDispatcher(session: SwarmSession): ActionDispatcher
 					error: `Merge blocked by strict merge predicate: ${eligibility.reason}`,
 				};
 			}
-			const result = await mergeThreadBranch(session.dir, thread.branchName, action.threadId, thread);
-			return {
-				threadId: action.threadId,
-				merged: result.success,
-				branch: result.branch,
-				message: result.message,
-				conflicts: result.conflicts,
-			};
+
+			// Acquire lease for thread mutation
+			const store = require("../mcp/state.js").getThreadStore(session.dir);
+			let lease: any = null;
+			if (store && typeof store.acquireLease === "function") {
+				lease = store.acquireLease(action.threadId, "mcp-action");
+				if (!lease.tryAcquire()) {
+					return {
+						threadId: action.threadId,
+						merged: false,
+						error: `Thread ${action.threadId} is locked by another process (failed to acquire lease)`,
+					};
+				}
+			}
+
+			try {
+				const result = await mergeThreadBranch(session.dir, thread.branchName, action.threadId, thread);
+				return {
+					threadId: action.threadId,
+					merged: result.success,
+					branch: result.branch,
+					message: result.message,
+					conflicts: result.conflicts,
+				};
+			} finally {
+				if (lease) lease.release();
+			}
 		},
 
 		async finish(action: FinishAction) {

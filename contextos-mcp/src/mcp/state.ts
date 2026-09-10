@@ -3,6 +3,8 @@
  *
  * Ensures that thread execution states, worktree locations, and results
  * survive MCP server process restarts and can be recovered or cleaned up.
+ *
+ * Integrates with ContextOS Runtime v2 ThreadStore.
  */
 
 import { execFile } from "node:child_process";
@@ -22,24 +24,13 @@ export interface AsyncTaskRecord {
 	status: "running" | "completed" | "failed" | "unknown_after_restart";
 }
 
-export interface PersistedSessionState {
-	dir: string;
-	sessionId?: string;
-	ownerPid?: number;
-	createdAt: number;
-	lastUpdatedAt: number;
-	sequence?: number;
-	threads: Record<string, ThreadState>;
-	asyncTasks?: Record<string, AsyncTaskRecord>;
-}
-
 export interface OrphanReport {
 	worktreeDirs: string[];
 	swarmBranches: string[];
 }
 
-const STATE_FILE_NAME = "session-state.json";
-const STATE_LOCK_NAME = "session-state.lock";
+const ASYNC_TASKS_FILE_NAME = "async-tasks.json";
+const ASYNC_TASKS_LOCK_NAME = "async-tasks.lock";
 const DEFAULT_WORKTREE_BASE_DIR = ".swarm-worktrees";
 const LOCK_TIMEOUT_MS = 30_000;
 const LOCK_ACQUIRE_TIMEOUT_MS = 2_000;
@@ -59,36 +50,97 @@ export function isProcessAlive(pid: number): boolean {
 	}
 }
 
-function getStatePath(dir: string, worktreeBaseDir?: string): string {
+let ThreadStoreClass: any = null;
+
+function getThreadStore(dir: string) {
 	const canonicalDir = assertWithinRepository(dir, dir);
-	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
-		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
-		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
-	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
-	const statePath = path.join(canonicalBaseDir, STATE_FILE_NAME);
-	return assertWithinRepository(statePath, canonicalDir);
+	if (!ThreadStoreClass) {
+		const candidatePaths = [
+			path.join(canonicalDir, ".agents", "runtime", "thread-store.js"),
+			path.join(process.cwd(), ".agents", "runtime", "thread-store.js"),
+			path.join(process.cwd(), "..", ".agents", "runtime", "thread-store.js"),
+			path.join(canonicalDir, "..", "..", ".agents", "runtime", "thread-store.js"), // For tests
+			path.join(canonicalDir, "..", "..", "..", ".agents", "runtime", "thread-store.js"), // For tests in deeply nested dirs
+			path.join(canonicalDir, "..", "..", "..", "..", ".agents", "runtime", "thread-store.js"), // For tests in deeply nested dirs
+		];
+		for (const p of candidatePaths) {
+			if (fs.existsSync(p)) {
+				try {
+					ThreadStoreClass = require(p).ThreadStore;
+					break;
+				} catch {
+					// ignore
+				}
+			}
+		}
+	}
+	if (!ThreadStoreClass) return null;
+	return new ThreadStoreClass({ baseDir: canonicalDir });
 }
 
-export function getStateLockPath(dir: string, worktreeBaseDir?: string): string {
+function getAsyncTasksPath(dir: string): string {
 	const canonicalDir = assertWithinRepository(dir, dir);
-	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
-		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
-		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
-	const canonicalBaseDir = assertWithinRepository(targetBase, canonicalDir);
-	const lockPath = path.join(canonicalBaseDir, STATE_LOCK_NAME);
-	return assertWithinRepository(lockPath, canonicalDir);
+	const targetBase = path.join(canonicalDir, ".agents", ".contextos", "runtime");
+	if (!fs.existsSync(targetBase)) {
+		fs.mkdirSync(targetBase, { recursive: true });
+	}
+	return path.join(targetBase, ASYNC_TASKS_FILE_NAME);
 }
 
-/**
- * Attempts to acquire an advisory state lock with stale lock timeout & dead-owner recovery.
- */
-export function acquireStateLock(dir: string, sessionId?: string, worktreeBaseDir?: string): (() => void) | null {
-	const lockPath = getStateLockPath(dir, worktreeBaseDir);
+function getAsyncTasksLockPath(dir: string): string {
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const targetBase = path.join(canonicalDir, ".agents", ".contextos", "runtime");
+	if (!fs.existsSync(targetBase)) {
+		fs.mkdirSync(targetBase, { recursive: true });
+	}
+	return path.join(targetBase, ASYNC_TASKS_LOCK_NAME);
+}
+
+let LeaseLockClass: any = null;
+
+function getLeaseLockClass(dir: string) {
+	const canonicalDir = assertWithinRepository(dir, dir);
+	if (!LeaseLockClass) {
+		let current = canonicalDir;
+		while (current !== path.dirname(current)) {
+			const p = path.join(current, ".agents", "runtime", "ipc-lock.js");
+			if (fs.existsSync(p)) {
+				try {
+					LeaseLockClass = require(p).LeaseLock;
+					break;
+				} catch (e) {
+					console.error("Failed to load LeaseLock:", e);
+				}
+			}
+			current = path.dirname(current);
+		}
+	}
+	return LeaseLockClass;
+}
+
+export function acquireStateLock(dir: string, sessionId?: string): (() => void) | null {
+	const lockPath = getAsyncTasksLockPath(dir);
 	const lockDir = path.dirname(lockPath);
 	if (!fs.existsSync(lockDir)) {
 		fs.mkdirSync(lockDir, { recursive: true });
 	}
 
+	const LL = getLeaseLockClass(dir);
+	if (LL) {
+		const lock = new LL({
+			lockFilePath: lockPath,
+			ttlMs: LOCK_TIMEOUT_MS,
+			instanceId: sessionId || "mcp-session",
+		});
+		if (lock.tryAcquire()) {
+			return () => {
+				lock.release();
+			};
+		}
+		return null;
+	}
+
+	// Fallback to naive lock if LeaseLock not available
 	if (fs.existsSync(lockPath)) {
 		try {
 			const raw = fs.readFileSync(lockPath, "utf-8");
@@ -133,20 +185,17 @@ export function acquireStateLock(dir: string, sessionId?: string, worktreeBaseDi
 	};
 }
 
-function acquireStateLockOrThrow(dir: string, sessionId?: string, worktreeBaseDir?: string): () => void {
+function acquireStateLockOrThrow(dir: string, sessionId?: string): () => void {
 	const startedAt = Date.now();
 	const waitBuffer = new Int32Array(new SharedArrayBuffer(4));
 	do {
-		const release = acquireStateLock(dir, sessionId, worktreeBaseDir);
+		const release = acquireStateLock(dir, sessionId);
 		if (release) return release;
 		Atomics.wait(waitBuffer, 0, 0, 10);
 	} while (Date.now() - startedAt < LOCK_ACQUIRE_TIMEOUT_MS);
-	throw new Error(`Timed out acquiring session state lock after ${LOCK_ACQUIRE_TIMEOUT_MS}ms`);
+	throw new Error(`Timed out acquiring state lock after ${LOCK_ACQUIRE_TIMEOUT_MS}ms`);
 }
 
-/**
- * Safely writes JSON content atomically using a temporary file.
- */
 function atomicWriteJson(filePath: string, data: unknown): void {
 	const dir = path.dirname(filePath);
 	if (!fs.existsSync(dir)) {
@@ -160,73 +209,86 @@ function atomicWriteJson(filePath: string, data: unknown): void {
 		fs.writeFileSync(tempPath, content, "utf-8");
 		fs.renameSync(tempPath, filePath);
 	} catch {
-		// Fallback for Windows if rename fails due to transient file locks
 		try {
 			fs.writeFileSync(filePath, content, "utf-8");
 		} finally {
 			if (fs.existsSync(tempPath)) {
 				try {
 					fs.unlinkSync(tempPath);
-				} catch {
-					// Ignore temp cleanup errors
-				}
+				} catch {}
 			}
 		}
 	}
 }
 
 /**
- * Loads persisted session state from disk with crash/restart recovery.
+ * Perform schema migration from legacy session-state.json to ThreadStore
  */
-export function loadPersistedState(dir: string, worktreeBaseDir?: string): PersistedSessionState | null {
-	const statePath = getStatePath(dir, worktreeBaseDir);
-	if (!fs.existsSync(statePath)) {
-		return null;
-	}
-
-	try {
-		const raw = fs.readFileSync(statePath, "utf-8");
-		const parsed = JSON.parse(raw) as PersistedSessionState;
-		if (parsed && typeof parsed.threads === "object") {
-			// Crash/Restart recovery: if state was owned by a dead process or previous process instance
-			const isRecoveredSession =
-				parsed.ownerPid && (parsed.ownerPid !== process.pid || !isProcessAlive(parsed.ownerPid));
-			if (isRecoveredSession) {
-				for (const thread of Object.values(parsed.threads)) {
-					if (thread.status === "running" || thread.phase === "agent_running") {
-						thread.status = "interrupted";
-						thread.phase = "interrupted";
-						thread.error = thread.error || "Thread interrupted by process restart or crash";
-						// Conservative cost retention: do not reset estimatedCostUsd
-					}
-				}
-				if (parsed.asyncTasks) {
-					for (const task of Object.values(parsed.asyncTasks)) {
-						if (task.status === "running") {
-							task.status = "unknown_after_restart";
-						}
-					}
-				}
-			}
-			return parsed;
-		}
-	} catch {
-		// Ignore corrupted state files
-	}
-	return null;
-}
-
-/**
- * Task 2.5d: Reconciles persisted session state with active git worktrees on session startup.
- * Discovers worktrees via `git worktree list --porcelain` and aligns interrupted/running threads.
- */
-export async function reconcileSessionStateWithGit(
-	repoRoot: string,
-	worktreeBaseDir?: string,
-): Promise<PersistedSessionState | null> {
+function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
-	const state = loadPersistedState(canonicalRoot, worktreeBaseDir);
-	if (!state) return null;
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
+		: path.join(canonicalRoot, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const legacyPath = path.join(assertWithinRepository(targetBase, canonicalRoot), "session-state.json");
+
+	if (!fs.existsSync(legacyPath)) {
+		return;
+	}
+
+	const store = getThreadStore(canonicalRoot);
+	try {
+		const raw = fs.readFileSync(legacyPath, "utf-8");
+		const parsed = JSON.parse(raw);
+
+		if (store && parsed && typeof parsed.threads === "object") {
+			for (const [id, thread] of Object.entries(parsed.threads) as [string, any][]) {
+				if (!thread.verification && thread.verificationAttestation?.status) {
+					thread.verification = thread.verificationAttestation.status;
+				}
+				if (!thread.review && thread.reviewAttestation?.llmVerdict) {
+					thread.review = {
+						specCompliance: thread.reviewAttestation.llmVerdict.specCompliance,
+						codeQuality: thread.reviewAttestation.llmVerdict.codeQuality,
+						summary: thread.reviewAttestation.llmVerdict.summary,
+						reviewerId: thread.reviewAttestation.reviewerExecutionId || "reviewer",
+						reviewedAt: thread.completedAt || Date.now(),
+					};
+				}
+				store.save(thread);
+			}
+		}
+
+		if (parsed && parsed.asyncTasks) {
+			const release = acquireStateLockOrThrow(canonicalRoot);
+			try {
+				const tasksPath = getAsyncTasksPath(canonicalRoot);
+				let existingTasks: Record<string, AsyncTaskRecord> = {};
+				if (fs.existsSync(tasksPath)) {
+					existingTasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+				}
+				atomicWriteJson(tasksPath, { ...existingTasks, ...parsed.asyncTasks });
+			} finally {
+				release();
+			}
+		}
+
+		// Mark as migrated
+		fs.renameSync(legacyPath, legacyPath + ".migrated");
+	} catch (e) {
+		console.error("Migration failed:", e);
+	}
+}
+
+export async function reconcileSessionStateWithGit(repoRoot: string, worktreeBaseDir?: string) {
+	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
+
+	// Ensure migration runs before we read states
+	migrateLegacySessionState(canonicalRoot, worktreeBaseDir);
+
+	const store = getThreadStore(canonicalRoot);
+	if (!store) return null;
+
+	const threads = store.list() as ThreadState[];
 
 	const gitWorktrees: Map<string, { branch?: string; bare?: boolean }> = new Map();
 	try {
@@ -257,14 +319,13 @@ export async function reconcileSessionStateWithGit(
 		// Non-fatal if git is unavailable
 	}
 
-	let stateModified = false;
-
-	for (const thread of Object.values(state.threads)) {
+	for (const thread of threads) {
+		let modified = false;
 		if (thread.status === "running" || thread.status === "pending") {
 			thread.status = "interrupted";
 			thread.phase = "interrupted";
 			thread.error = thread.error || "Thread interrupted by process restart or crash";
-			stateModified = true;
+			modified = true;
 		}
 
 		if (thread.worktreePath) {
@@ -277,123 +338,124 @@ export async function reconcileSessionStateWithGit(
 					thread.status = "needs_recovery";
 					thread.phase = "needs_recovery";
 					thread.error = "Worktree directory or git registration missing after restart";
-					stateModified = true;
+					modified = true;
 				}
 			} else {
 				if (registered.branch && !thread.branchName) {
 					thread.branchName = registered.branch;
-					stateModified = true;
+					modified = true;
 				}
 			}
 		}
-	}
 
-	if (stateModified) {
-		try {
-			savePersistedState(canonicalRoot, state, worktreeBaseDir);
-		} catch {
-			// Lock or save error during recovery non-fatal
+		if (modified) {
+			store.save(thread);
 		}
 	}
 
-	return state;
-}
-
-/**
- * Saves or updates entire persisted session state.
- */
-function writePersistedStateUnlocked(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
-	state.lastUpdatedAt = Date.now();
-	state.ownerPid = state.ownerPid || process.pid;
-	state.sequence = (state.sequence || 0) + 1;
-	atomicWriteJson(getStatePath(dir, worktreeBaseDir), state);
-}
-
-export function savePersistedState(dir: string, state: PersistedSessionState, worktreeBaseDir?: string): void {
-	const release = acquireStateLockOrThrow(dir, state.sessionId, worktreeBaseDir);
+	// Reconcile async tasks
+	const release = acquireStateLockOrThrow(canonicalRoot);
 	try {
-		writePersistedStateUnlocked(dir, state, worktreeBaseDir);
+		const tasksPath = getAsyncTasksPath(canonicalRoot);
+		if (fs.existsSync(tasksPath)) {
+			let modified = false;
+			const tasks: Record<string, AsyncTaskRecord> = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+			for (const task of Object.values(tasks)) {
+				if (task.status === "running") {
+					task.status = "unknown_after_restart";
+					modified = true;
+				}
+			}
+			if (modified) {
+				atomicWriteJson(tasksPath, tasks);
+			}
+		}
 	} finally {
 		release();
 	}
+
+	return { threads }; // return some dummy state so callers know we survived
 }
 
-/**
- * Records or updates an individual thread state in the persisted storage.
- */
-export function recordThreadState(dir: string, thread: ThreadState, worktreeBaseDir?: string): void {
-	const release = acquireStateLockOrThrow(dir, undefined, worktreeBaseDir);
-	try {
-		const state = loadPersistedState(dir, worktreeBaseDir) || {
-			dir,
-			createdAt: Date.now(),
-			lastUpdatedAt: Date.now(),
-			sequence: 0,
-			threads: {},
-		};
-		state.threads[thread.id] = thread;
-		writePersistedStateUnlocked(dir, state, worktreeBaseDir);
-	} finally {
-		release();
+export function recordThreadState(dir: string, thread: ThreadState, _worktreeBaseDir?: string): void {
+	const store = getThreadStore(dir);
+	if (store) {
+		store.save(thread);
 	}
 }
 
-/**
- * Records or updates an async task execution in persisted storage.
- */
-export function recordAsyncTask(dir: string, task: AsyncTaskRecord, worktreeBaseDir?: string): void {
-	const release = acquireStateLockOrThrow(dir, undefined, worktreeBaseDir);
-	try {
-		const state = loadPersistedState(dir, worktreeBaseDir) || {
-			dir,
-			createdAt: Date.now(),
-			lastUpdatedAt: Date.now(),
-			sequence: 0,
-			threads: {},
-		};
-		state.asyncTasks ||= {};
-		state.asyncTasks[task.taskId] = task;
-		writePersistedStateUnlocked(dir, state, worktreeBaseDir);
-	} finally {
-		release();
-	}
+export function savePersistedState(dir: string, state: any, worktreeBaseDir: string = DEFAULT_WORKTREE_BASE_DIR): void {
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const targetBase = path.isAbsolute(worktreeBaseDir) ? worktreeBaseDir : path.join(canonicalDir, worktreeBaseDir);
+	const validBase = assertWithinRepository(targetBase, canonicalDir);
+	fs.mkdirSync(validBase, { recursive: true });
+	const legacyPath = path.join(validBase, "session-state.json");
+	fs.writeFileSync(legacyPath, JSON.stringify(state, null, 2), "utf-8");
 }
 
-/**
- * Retrieves all persisted threads for a directory.
- */
-export function getPersistedThreads(dir: string, worktreeBaseDir?: string): ThreadState[] {
-	const state = loadPersistedState(dir, worktreeBaseDir);
-	if (!state) return [];
-	return Object.values(state.threads);
-}
-
-/**
- * Retrieves all persisted async tasks for a directory.
- */
-export function getPersistedAsyncTasks(dir: string, worktreeBaseDir?: string): Record<string, AsyncTaskRecord> {
-	const state = loadPersistedState(dir, worktreeBaseDir);
-	if (!state || !state.asyncTasks) return {};
-	return state.asyncTasks;
-}
-
-/**
- * Clears the persisted state file.
- */
-export function clearPersistedState(dir: string, worktreeBaseDir?: string): void {
-	const statePath = getStatePath(dir, worktreeBaseDir);
-	if (fs.existsSync(statePath)) {
+export function loadPersistedState(dir: string, worktreeBaseDir?: string): any {
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
+		? worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR
+		: path.join(canonicalDir, worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR);
+	const validBase = assertWithinRepository(targetBase, canonicalDir);
+	const legacyPath = path.join(validBase, "session-state.json");
+	if (fs.existsSync(legacyPath)) {
 		try {
-			fs.unlinkSync(statePath);
+			return JSON.parse(fs.readFileSync(legacyPath, "utf-8"));
 		} catch {
-			// Ignore unlink failure
+			return null;
 		}
 	}
+	const store = getThreadStore(canonicalDir);
+	if (store) {
+		const threads = store.list();
+		const threadMap: Record<string, any> = {};
+		for (const t of threads) {
+			threadMap[t.id] = t;
+		}
+		return { threads: threadMap, sequence: threads.length };
+	}
+	return null;
 }
 
-/**
- * Scans for orphan worktrees and git branches created by dead or terminated threads.
- */
+export function recordAsyncTask(dir: string, task: AsyncTaskRecord, _worktreeBaseDir?: string): void {
+	const release = acquireStateLockOrThrow(dir);
+	try {
+		const tasksPath = getAsyncTasksPath(dir);
+		let existingTasks: Record<string, AsyncTaskRecord> = {};
+		if (fs.existsSync(tasksPath)) {
+			existingTasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+		}
+		existingTasks[task.taskId] = task;
+		atomicWriteJson(tasksPath, existingTasks);
+	} finally {
+		release();
+	}
+}
+
+export function getPersistedThreads(dir: string, _worktreeBaseDir?: string): ThreadState[] {
+	const store = getThreadStore(dir);
+	if (store) {
+		return store.list() as ThreadState[];
+	}
+	return [];
+}
+
+export function getPersistedAsyncTasks(dir: string, _worktreeBaseDir?: string): Record<string, AsyncTaskRecord> {
+	const tasksPath = getAsyncTasksPath(dir);
+	if (fs.existsSync(tasksPath)) {
+		try {
+			return JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+		} catch {}
+	}
+	return {};
+}
+
+export function clearPersistedState(_dir: string, _worktreeBaseDir?: string): void {
+	// Not deleting thread store to preserve history. Only delete async tasks lock if needed, or don't delete at all.
+}
+
 export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: string): Promise<OrphanReport> {
 	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
 	const targetBase = path.isAbsolute(worktreeBaseDir || DEFAULT_WORKTREE_BASE_DIR)
@@ -444,89 +506,50 @@ export async function scanOrphanWorktrees(repoRoot: string, worktreeBaseDir?: st
 	return { worktreeDirs, swarmBranches };
 }
 
-/**
- * Purges orphan worktrees and git branches.
- * @param repoRoot - Root of the git repository.
- * @param dryRun - If true, report what would be deleted without actually deleting.
- */
 export async function purgeOrphans(
 	repoRoot: string,
-	dryRun = false,
+	dryRun: boolean = false,
 	worktreeBaseDir?: string,
 ): Promise<{ prunedWorktrees: number; deletedBranches: number; report: string[] }> {
+	const scanReport = await scanOrphanWorktrees(repoRoot, worktreeBaseDir);
 	const canonicalRoot = assertWithinRepository(repoRoot, repoRoot);
+
 	let prunedWorktrees = 0;
 	let deletedBranches = 0;
 	const report: string[] = [];
 
-	// 1. Tell git to prune worktrees first
-	if (!dryRun) {
-		try {
-			await execFileAsync("git", ["worktree", "prune"], { cwd: canonicalRoot });
-		} catch {
-			// Ignore
-		}
-	}
-
-	const { worktreeDirs, swarmBranches } = await scanOrphanWorktrees(canonicalRoot, worktreeBaseDir);
-
-	// 2. Remove lingering directories
-	for (const wtDir of worktreeDirs) {
-		assertWithinRepository(wtDir, canonicalRoot);
-		const sessionMarkerPath = path.join(wtDir, ".contextos-session");
-		if (fs.existsSync(sessionMarkerPath)) {
-			try {
-				const marker = JSON.parse(fs.readFileSync(sessionMarkerPath, "utf-8"));
-				const expectedFingerprint = createRepositoryFingerprint(canonicalRoot);
-				if (marker.repositoryFingerprint && marker.repositoryFingerprint !== expectedFingerprint) {
-					report.push(`[SKIP] Mismatched repository fingerprint: ${wtDir}`);
-					continue;
-				}
-			} catch {}
-		}
-
+	for (const wt of scanReport.worktreeDirs) {
 		if (dryRun) {
-			report.push(`[DRY RUN] Would remove worktree: ${wtDir}`);
+			report.push(`[DRY RUN] Would remove orphan worktree: ${wt}`);
 			prunedWorktrees++;
-			continue;
-		}
-		try {
-			// Try git worktree remove first
-			await execFileAsync("git", ["worktree", "remove", "--force", wtDir], { cwd: canonicalRoot });
-			prunedWorktrees++;
-			report.push(`Removed worktree: ${wtDir}`);
-		} catch {
-			// If git fails, force remove directory
+		} else {
 			try {
-				if (fs.existsSync(wtDir)) {
-					fs.rmSync(wtDir, { recursive: true, force: true });
+				await execFileAsync("git", ["worktree", "remove", "--force", wt], { cwd: canonicalRoot });
+				prunedWorktrees++;
+				report.push(`Removed orphan worktree: ${wt}`);
+			} catch (err: any) {
+				report.push(`Failed to remove worktree ${wt}: ${err.message}`);
+				try {
+					fs.rmSync(wt, { recursive: true, force: true });
 					prunedWorktrees++;
-					report.push(`Force-removed worktree dir: ${wtDir}`);
-				}
-			} catch {
-				// Ignore
+				} catch {}
 			}
 		}
 	}
 
-	// 3. Delete swarm branches
-	for (const branch of swarmBranches) {
+	for (const branch of scanReport.swarmBranches) {
 		if (dryRun) {
-			report.push(`[DRY RUN] Would delete branch: ${branch}`);
+			report.push(`[DRY RUN] Would delete orphan branch: ${branch}`);
 			deletedBranches++;
-			continue;
+		} else {
+			try {
+				await execFileAsync("git", ["branch", "-D", branch], { cwd: canonicalRoot });
+				deletedBranches++;
+				report.push(`Deleted orphan branch: ${branch}`);
+			} catch (err: any) {
+				report.push(`Failed to delete branch ${branch}: ${err.message}`);
+			}
 		}
-		try {
-			await execFileAsync("git", ["branch", "-D", branch], { cwd: canonicalRoot });
-			deletedBranches++;
-			report.push(`Deleted branch: ${branch}`);
-		} catch {
-			// Ignore branch deletion failure
-		}
-	}
-
-	if (!dryRun) {
-		clearPersistedState(repoRoot);
 	}
 
 	return { prunedWorktrees, deletedBranches, report };

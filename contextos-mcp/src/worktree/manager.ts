@@ -21,7 +21,7 @@ import * as path from "node:path";
 import type { WorktreeInfo, WorktreeSessionMarker } from "../core/types.js";
 import { isPathAllowed } from "../security/file-policy.js";
 import { assertWithinRepository } from "../security/repository-boundary.js";
-import { isBlockedPath, redactSecrets, containsSecrets } from "../security/secret-filter.js";
+import { containsSecrets, isBlockedPath, redactSecrets } from "../security/secret-filter.js";
 
 function git(args: string[], cwd: string, extraEnv?: NodeJS.ProcessEnv): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
@@ -82,6 +82,10 @@ export function isWithinWriteScope(file: string, writeScope: readonly string[]):
 		if (allowed === "." || allowed === "") return true;
 		return normalized === allowed || normalized.startsWith(`${allowed}/`);
 	});
+}
+
+export function isDeniedByWriteScope(file: string, denyScope: readonly string[]): boolean {
+	return isWithinWriteScope(file, denyScope);
 }
 
 function parseNameStatus(raw: string): string[] {
@@ -311,6 +315,30 @@ export class WorktreeManager {
 		throw lastErr || new Error("Failed to create worktree");
 	}
 
+	/** Get HEAD commit SHA of a worktree. */
+	async getHeadSha(threadId: string): Promise<string> {
+		const info = this.worktrees.get(threadId);
+		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
+		const { stdout } = await git(["rev-parse", "HEAD"], info.path);
+		return stdout.trim();
+	}
+
+	/** Get diff of candidate worktree commits against baseSha. */
+	async getCandidateDiff(threadId: string, baseSha: string): Promise<string> {
+		const info = this.worktrees.get(threadId);
+		if (!info) throw new Error(`No worktree for thread ${threadId}`);
+		assertWithinRepository(info.path, this.repoRoot);
+		if (!baseSha || !/^[0-9a-fA-F]{7,64}$/.test(baseSha)) {
+			throw new Error("Invalid TaskBrief baseSha");
+		}
+		const { stdout } = await git(
+			["diff", `${baseSha}...HEAD`, "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+			info.path,
+		);
+		return stdout;
+	}
+
 	/** Get the git diff of uncommitted changes in a worktree. */
 	async getDiff(threadId: string): Promise<string> {
 		const info = this.worktrees.get(threadId);
@@ -348,7 +376,7 @@ export class WorktreeManager {
 				{ GIT_INDEX_FILE: tmpIndex },
 			);
 			return redactSecrets(fullDiff || "(no changes)");
-		} catch (err) {
+		} catch {
 			const { stdout: fallbackDiff } = await git(
 				["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
 				info.path,
@@ -396,7 +424,7 @@ export class WorktreeManager {
 				{ GIT_INDEX_FILE: tmpIndex },
 			);
 			return redactSecrets(stdout.trim() || "(no changes)");
-		} catch (err) {
+		} catch {
 			const { stdout: fallbackStats } = await git(
 				["diff", "HEAD", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
 				info.path,
@@ -432,7 +460,12 @@ export class WorktreeManager {
 	 * Detect every worktree change, including untracked, staged, unstaged,
 	 * committed, and both sides of renames, then enforce the immutable scope.
 	 */
-	async assertWriteScope(threadId: string, baseSha: string, writeScope: readonly string[]): Promise<string[]> {
+	async assertWriteScope(
+		threadId: string,
+		baseSha: string,
+		writeScope: readonly string[],
+		denyScope: readonly string[] = [],
+	): Promise<string[]> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
@@ -453,13 +486,20 @@ export class WorktreeManager {
 			.filter((file) => file && !internal.has(file));
 
 		for (const file of touched) assertWithinRepository(path.resolve(info.path, file), info.path);
-		const violations = touched.filter((file) => !isWithinWriteScope(file, writeScope));
+		const violations = touched.filter(
+			(file) => !isWithinWriteScope(file, writeScope) || isDeniedByWriteScope(file, denyScope),
+		);
 		if (violations.length > 0) throw new ScopeViolationError(violations);
 		return touched;
 	}
 
 	/** Commit all changes in a worktree. */
-	async commit(threadId: string, message: string): Promise<boolean> {
+	async commit(
+		threadId: string,
+		message: string,
+		writeScope: readonly string[] = [],
+		denyScope: readonly string[] = [],
+	): Promise<boolean> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
@@ -479,6 +519,9 @@ export class WorktreeManager {
 				}
 				if (isBlockedPath(file)) {
 					throw new Error(`SECURITY_POLICY_FAILED: Attempted commit of blocked sensitive path: "${file}"`);
+				}
+				if (writeScope.length > 0 && (!isWithinWriteScope(file, writeScope) || isDeniedByWriteScope(file, denyScope))) {
+					throw new ScopeViolationError([file]);
 				}
 				if (!isPathAllowed(file, info.path)) {
 					throw new Error(`SECURITY_POLICY_FAILED: Path traversal violation attempt: "${file}"`);
@@ -549,7 +592,9 @@ export class WorktreeManager {
 
 		if (existsSync(info.path)) {
 			if (!this.isContextosWorktree(info.path)) {
-				throw new Error(`Refusing to destroy worktree "${info.path}": invalid, missing, or mismatched ownership marker`);
+				throw new Error(
+					`Refusing to destroy worktree "${info.path}": invalid, missing, or mismatched ownership marker`,
+				);
 			}
 		}
 

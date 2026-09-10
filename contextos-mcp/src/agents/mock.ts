@@ -2,7 +2,7 @@
  * Mock agent backend — for integration testing without real API keys.
  *
  * Simulates a coding agent by writing actual files in the work directory.
- * Registered as "mock" in the agent registry.
+ * Registered as "mock" and "mock-reviewer" in the agent registry.
  */
 
 import * as fs from "node:fs";
@@ -33,8 +33,8 @@ const mockProvider: AgentProvider = {
 			};
 		}
 
-		// Simulate work delay (50ms)
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		// Simulate work delay (20ms)
+		await new Promise((resolve) => setTimeout(resolve, 20));
 
 		// Check for forced failure mode
 		if (task.includes("__FAIL__")) {
@@ -45,6 +45,33 @@ const mockProvider: AgentProvider = {
 				diff: "",
 				durationMs: Date.now() - startTime,
 				error: "Mock agent forced failure",
+			};
+		}
+
+		// Handle review evaluation tasks cleanly if invoked as reviewer
+		if (task.includes("Independent Code Reviewer") || task.includes("specCompliance") || task.includes("codeQuality")) {
+			if (task.includes("__MALFORMED__")) {
+				return {
+					success: true,
+					output: "Unparseable non-json response",
+					filesChanged: [],
+					diff: "",
+					durationMs: Date.now() - startTime,
+				};
+			}
+			const specCompliance = task.includes("__FAIL_SPEC__") ? "FAIL" : "PASS";
+			const codeQuality = task.includes("__FAIL_QUALITY__") ? "FAIL" : "PASS";
+			return {
+				success: true,
+				output: JSON.stringify({
+					specCompliance,
+					codeQuality,
+					summary: `Review completed: spec=${specCompliance}, quality=${codeQuality}`,
+				}),
+				filesChanged: [],
+				diff: "",
+				durationMs: Date.now() - startTime,
+				usage: { inputTokens: 500, outputTokens: 200, totalTokens: 700 },
 			};
 		}
 
@@ -60,7 +87,7 @@ const mockProvider: AgentProvider = {
 		// If task mentions "multi", create additional files
 		if (task.toLowerCase().includes("multi")) {
 			const extraFile = path.join(workDir, "utils.ts");
-			fs.writeFileSync(extraFile, `// Utility module\nexport const VERSION = "1.0.0";\n`, "utf-8");
+			fs.writeFileSync(extraFile, '// Utility module\nexport const VERSION = "1.0.0";\n', "utf-8");
 			filesChanged.push("utils.ts");
 		}
 
@@ -86,5 +113,83 @@ const mockProvider: AgentProvider = {
 	},
 };
 
+export const mockReviewerProvider: AgentProvider = {
+	name: "mock-reviewer",
+
+	async isAvailable(): Promise<boolean> {
+		return true;
+	},
+
+	async run(options: AgentRunOptions): Promise<AgentResult> {
+		const { task, signal } = options;
+		const startTime = Date.now();
+
+		if (signal?.aborted) {
+			return {
+				success: false,
+				output: "Aborted",
+				filesChanged: [],
+				diff: "",
+				durationMs: Date.now() - startTime,
+				error: "Aborted before start",
+			};
+		}
+
+		if (task.includes("__TIMEOUT__")) {
+			await new Promise((resolve) => setTimeout(resolve, 35000));
+		}
+
+		if (task.includes("__MALFORMED__")) {
+			return {
+				success: true,
+				output: "This is completely unparseable non-JSON text from the reviewer.",
+				filesChanged: [],
+				diff: "",
+				durationMs: Date.now() - startTime,
+			};
+		}
+
+		if (task.includes("__ERROR__") || task.includes("__FAIL__")) {
+			return {
+				success: false,
+				output: "",
+				filesChanged: [],
+				diff: "",
+				durationMs: Date.now() - startTime,
+				error: "Independent reviewer model execution failed",
+			};
+		}
+
+		const specCompliance = task.includes("__FAIL_SPEC__") ? "FAIL" : "PASS";
+		const codeQuality = task.includes("__FAIL_QUALITY__") ? "FAIL" : "PASS";
+
+		return {
+			success: true,
+			output: JSON.stringify({
+				specCompliance,
+				codeQuality,
+				summary:
+					specCompliance === "PASS" && codeQuality === "PASS"
+						? "Independent code review passed"
+						: `Independent code review verdict: spec=${specCompliance}, quality=${codeQuality}`,
+			}),
+			filesChanged: [],
+			diff: "",
+			durationMs: Date.now() - startTime,
+			usage: {
+				inputTokens: 600,
+				outputTokens: 250,
+				totalTokens: 850,
+			},
+		};
+	},
+};
+
 registerAgent(mockProvider);
+registerAgent(mockReviewerProvider);
+registerAgent({
+	...mockReviewerProvider,
+	name: "reviewer-independent",
+});
+
 export default mockProvider;

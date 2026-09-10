@@ -9,7 +9,7 @@
  *   - Token budget planner and intent precedence
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 
@@ -25,8 +25,8 @@ export interface SelectedContext {
 }
 
 export interface SelectorOptions {
-	/** Maximum number of skills to activate (default: 4, hard cap at 4). */
-	maxSkills?: number;
+	/** Root directory of the repository. */
+	rootDir?: string;
 	/** File paths touched or relevant to task for file-pattern boosting. */
 	files?: string[];
 	/** Custom token budget for context selection (defaults to 8000). */
@@ -36,10 +36,11 @@ export interface SelectorOptions {
 /**
  * Lazily loads the canonical resolver instance from .agents.
  */
-function getCanonicalResolver(): any {
+function getCanonicalResolver(rootDir?: string): any {
+	const cwd = rootDir || process.cwd();
 	const candidatePaths = [
-		path.join(process.cwd(), ".agents", "resolver", "canonical-resolver.js"),
-		path.join(process.cwd(), "..", ".agents", "resolver", "canonical-resolver.js"),
+		path.join(cwd, ".agents", "resolver", "canonical-resolver.js"),
+		path.join(cwd, "..", ".agents", "resolver", "canonical-resolver.js"),
 	];
 
 	for (const p of candidatePaths) {
@@ -47,8 +48,8 @@ function getCanonicalResolver(): any {
 			try {
 				const mod = require(p);
 				if (mod?.CanonicalResolver) {
-					const rootDir = path.dirname(path.dirname(path.dirname(p)));
-					return new mod.CanonicalResolver({ rootDir });
+					const resolvedRoot = path.dirname(path.dirname(path.dirname(p)));
+					return new mod.CanonicalResolver({ rootDir: resolvedRoot });
 				}
 			} catch {
 				// fall through to fallback
@@ -62,29 +63,28 @@ function getCanonicalResolver(): any {
  * Select relevant rules and skills for a given task description using the unified CanonicalResolver.
  *
  * @param task - The task description text
- * @param options - Optional configuration (maxSkills cap, touched files)
+ * @param options - Optional configuration (touched files and token budget)
  * @returns SelectedContext with lists of relevant rule/skill identifiers
  */
 export function selectContext(task: string, options: SelectorOptions = {}): SelectedContext {
-	const maxSkills = Math.max(1, Math.min(4, options.maxSkills ?? 4));
-
-	const canonical = getCanonicalResolver();
+	const canonical = getCanonicalResolver(options.rootDir);
 	if (!canonical) {
-		console.warn("CanonicalResolver not found, returning empty context.");
-		return { coreRules: ["AGENTS.md"], rules: [], skills: [] };
+		throw new Error("ContextOS CanonicalResolver is unavailable; refusing to produce incomplete context");
 	}
 
 	const res = canonical.resolve({
 		task,
 		files: options.files || [],
-		maxSkills,
 		contextBudgetTokens: options.contextBudgetTokens ?? 8000,
 	});
 
-	const domainSkills: string[] = (res.selected || []).map((s: { id: string }) => s.id);
+	let domainSkills: string[] = (res.selected || []).map((s: { id: string }) => s.id);
+	if (typeof (options as any).maxSkills === "number" && domainSkills.length > (options as any).maxSkills) {
+		domainSkills = domainSkills.slice(0, (options as any).maxSkills);
+	}
 	return {
 		coreRules: ["AGENTS.md"],
 		rules: [],
-		skills: domainSkills.slice(0, maxSkills),
+		skills: domainSkills,
 	};
 }

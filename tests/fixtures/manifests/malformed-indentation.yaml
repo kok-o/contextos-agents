@@ -1,0 +1,4 @@
+id: malformed-indentation
+requires:
+- alpha
+  - beta

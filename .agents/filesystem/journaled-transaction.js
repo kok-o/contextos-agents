@@ -16,6 +16,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { resolveManagedPath, toPosix } = require('./safe-path.js');
 const { computeExactHash } = require('./lockfile-v2.js');
+const { isNetworkOrUNCPath } = require('./platform-hardening.js');
 
 const TX_BASE_SUBPATH = path.join('.agents', '.contextos', 'transactions');
 
@@ -35,6 +36,7 @@ const ERROR_CODES = {
   ROLLBACK_FAILED: 'CTX_TX_ROLLBACK_FAILED',
   RECOVERY_REQUIRED: 'CTX_TX_RECOVERY_REQUIRED',
   INVALID_STATE: 'CTX_TX_INVALID_STATE',
+  UNSUPPORTED: 'UNSUPPORTED',
 };
 
 class TransactionError extends Error {
@@ -142,6 +144,26 @@ class JournaledTransaction {
   }
 
   /**
+   * Plans an empty directory deletion operation.
+   */
+  stageDeleteDir(relativePath, options = {}) {
+    if (this.state !== TX_STATES.PLANNED) {
+      throw new TransactionError(
+        ERROR_CODES.INVALID_STATE,
+        `Cannot stage operations in state '${this.state}' (must be PLANNED)`
+      );
+    }
+
+    const { resolvedPath, relativePosixPath } = resolveManagedPath(this.projectRoot, relativePath);
+
+    this.operations.push({
+      type: 'deleteDir',
+      relativePath: relativePosixPath,
+      resolvedPath,
+    });
+  }
+
+  /**
    * Writes the journal and staged files to disk.
    */
   prepare() {
@@ -220,9 +242,10 @@ class JournaledTransaction {
         const backupFilePath = path.join(this.backupDir, `${i}-${path.basename(op.relativePath)}`);
 
         if (fs.existsSync(op.resolvedPath)) {
-          // Backup existing target
-          fs.copyFileSync(op.resolvedPath, backupFilePath);
-          op.backupFilePath = backupFilePath;
+          if (op.type !== 'deleteDir') {
+            fs.copyFileSync(op.resolvedPath, backupFilePath);
+            op.backupFilePath = backupFilePath;
+          }
           op.hadExisting = true;
         } else {
           op.hadExisting = false;
@@ -233,6 +256,17 @@ class JournaledTransaction {
         } else if (op.type === 'delete') {
           if (fs.existsSync(op.resolvedPath)) {
             fs.unlinkSync(op.resolvedPath);
+          }
+        } else if (op.type === 'deleteDir') {
+          if (fs.existsSync(op.resolvedPath)) {
+            try {
+              fs.rmdirSync(op.resolvedPath);
+            } catch (err) {
+              // Gracefully ignore ENOTEMPTY or ENOENT as per W3.3 safety requirements
+              if (err.code !== 'ENOTEMPTY' && err.code !== 'ENOENT' && err.code !== 'EEXIST') {
+                throw err;
+              }
+            }
           }
         }
 
@@ -276,9 +310,18 @@ class JournaledTransaction {
       try {
         if (op.hadExisting && op.backupFilePath && fs.existsSync(op.backupFilePath)) {
           safeRenameSync(op.backupFilePath, op.resolvedPath);
+        } else if (op.hadExisting && op.type === 'deleteDir') {
+          if (!fs.existsSync(op.resolvedPath)) {
+            fs.mkdirSync(op.resolvedPath, { recursive: true });
+          }
         } else if (!op.hadExisting && fs.existsSync(op.resolvedPath)) {
-          // File was newly created by this tx, remove it
-          fs.unlinkSync(op.resolvedPath);
+          // File or dir was newly created by this tx, remove it
+          if (op.type === 'write' || op.type === 'delete') {
+            fs.unlinkSync(op.resolvedPath);
+          } else if (op.type === 'deleteDir') {
+             // If we didn't have existing deleteDir, but we somehow created it? That's not a thing, but just in case
+             fs.rmdirSync(op.resolvedPath);
+          }
         }
       } catch (err) {
         rollbackError = err;
@@ -335,9 +378,6 @@ class JournaledTransaction {
       if (fs.existsSync(this.backupDir)) {
         fs.rmSync(this.backupDir, { recursive: true, force: true });
       }
-      if (fs.existsSync(this.txDir)) {
-        fs.rmSync(this.txDir, { recursive: true, force: true });
-      }
     } catch {
       // Best effort cleanup of completed transactions
     }
@@ -371,6 +411,34 @@ class JournaledTransaction {
     }
 
     return pending;
+  }
+
+  /**
+   * Loads a transaction from an existing journal.json.
+   */
+  static load(projectRoot, txId) {
+    const tx = new JournaledTransaction(projectRoot, txId);
+    if (!fs.existsSync(tx.journalPath)) {
+      throw new Error(`Transaction ${txId} not found`);
+    }
+
+    const data = JSON.parse(fs.readFileSync(tx.journalPath, 'utf8'));
+    tx.state = data.state;
+    tx.createdAt = data.createdAt;
+    tx.completedAt = data.completedAt;
+
+    tx.operations = data.operations.map(o => ({
+      type: o.type,
+      relativePath: o.relativePath,
+      resolvedPath: resolveManagedPath(projectRoot, o.relativePath).resolvedPath,
+      afterHash: o.afterHash,
+      expectedBeforeHash: o.expectedBeforeHash,
+      hadExisting: o.hadExisting,
+      stagedFilePath: o.stagedFilePath,
+      backupFilePath: o.backupFilePath,
+    }));
+
+    return tx;
   }
 }
 

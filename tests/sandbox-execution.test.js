@@ -118,3 +118,90 @@ test('ExecutionSandbox — adversarial attack validation catches malicious actio
   });
   assert.equal(safeAction.safe, true);
 });
+
+test('ExecutionSandbox — execute API runs mock container and records runner evidence (W5.3)', async () => {
+  const sandbox = new ExecutionSandbox({
+    mode: 'oci-required',
+    containerEngine: 'mock',
+    image: 'node:20-alpine',
+    network: 'deny',
+  });
+
+  const workspace = path.resolve('.');
+  const res = await sandbox.execute(workspace, ['npm', 'test']);
+
+  assert.equal(res.success, true);
+  assert.equal(res.runnerMode, 'oci');
+  assert.equal(res.containerEngine, 'mock');
+  assert.equal(res.autoMergeBlocked, false);
+  assert.ok(res.outputSha256, 'Must compute outputSha256');
+  assert.equal(res.evidence.runnerMode, 'oci');
+  assert.equal(res.evidence.network, 'deny');
+  assert.ok(res.evidence.imageDigest.startsWith('sha256:'));
+});
+
+test('ExecutionSandbox — image digest mismatch throws CTX_SANDBOX_DIGEST_MISMATCH fail-closed (W5.3)', async () => {
+  const sandbox = new ExecutionSandbox({
+    mode: 'oci-required',
+    containerEngine: 'mock',
+    image: 'node:20-alpine',
+    expectedImageDigest: 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
+  });
+
+  await assert.rejects(
+    async () => {
+      await sandbox.execute(path.resolve('.'), ['npm', 'test']);
+    },
+    { code: 'CTX_SANDBOX_DIGEST_MISMATCH' },
+    'Must fail-closed with CTX_SANDBOX_DIGEST_MISMATCH when digest does not match expected'
+  );
+});
+
+test('ExecutionSandbox — repository config cannot authorize host-unsafe auto-merge override (W5.4)', () => {
+  const sandbox = new ExecutionSandbox({ mode: 'oci-preferred' });
+
+  // When override comes from repo config, it is rejected
+  const repoOverride = sandbox.canAutoMerge({
+    runnerMode: 'host-unsafe',
+    userOverride: true,
+    isFromRepoConfig: true,
+  });
+
+  assert.equal(repoOverride.allowed, false);
+  assert.equal(repoOverride.reasonCode, 'REPO_CONFIG_OVERRIDE_PROHIBITED');
+
+  // When override is genuinely user-local, it is accepted
+  const userOverride = sandbox.canAutoMerge({
+    runnerMode: 'host-unsafe',
+    userOverride: true,
+    isFromRepoConfig: false,
+  });
+
+  assert.equal(userOverride.allowed, true);
+  assert.equal(userOverride.reasonCode, 'HOST_UNSAFE_EXPLICIT_OVERRIDE');
+});
+
+test('ExecutionSandbox — host fallback execution blocks auto-merge by default (W5.4)', async () => {
+  const sandbox = new ExecutionSandbox({
+    mode: 'host-unsafe',
+  });
+
+  const res = await sandbox.execute(path.resolve('.'), ['node', '--version']);
+  assert.equal(res.runnerMode, 'host-unsafe');
+  assert.equal(res.autoMergeBlocked, true);
+  assert.equal(res.evidence.runnerMode, 'host-unsafe');
+});
+
+test('ExecutionSandbox — adversarial execution attempt throws security exception before spawning', async () => {
+  const sandbox = new ExecutionSandbox({
+    mode: 'oci-preferred',
+  });
+
+  await assert.rejects(
+    async () => {
+      await sandbox.execute(path.resolve('.'), ['git', 'config', 'core.hooksPath', '/tmp/malicious']);
+    },
+    { code: 'SEC-SANDBOX-004' }
+  );
+});
+

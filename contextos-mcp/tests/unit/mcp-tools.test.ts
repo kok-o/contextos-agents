@@ -130,7 +130,8 @@ describe("swarm_thread tool", () => {
 	it("returns error when files escape repository boundary", async () => {
 		const handler = registeredTools.get("swarm_thread")!;
 		const result = await handler({
-			task: "test", writeScope: ["."],
+			task: "test",
+			writeScope: ["."],
 			files: ["../../../../etc/passwd"],
 		});
 

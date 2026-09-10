@@ -18,7 +18,7 @@ import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildContextPrompt } from "../../contextos/loader.js";
-import { runWorktreeVerification } from "../../orchestration/verification-runner.js";
+import { parseVerificationSpec, runWorktreeVerification } from "../../orchestration/verification-runner.js";
 import { assertWithinRepository } from "../../security/repository-boundary.js";
 import { redactSecrets } from "../../security/secret-filter.js";
 import { isEligibleForMerge, mergeThreadBranch } from "../../worktree/merge.js";
@@ -33,7 +33,7 @@ import {
 } from "../session.js";
 import { recordThreadState } from "../state.js";
 
-export { runWorktreeVerification };
+export { parseVerificationSpec, runWorktreeVerification };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -52,6 +52,26 @@ function jsonResult(data: unknown) {
 function log(msg: string): void {
 	process.stderr.write(`[contextos-mcp] ${msg}\n`);
 }
+
+const repositoryRelativePath = z
+	.string()
+	.min(1)
+	.max(1024)
+	.refine((value) => !value.includes("\0"), "Path cannot contain null bytes")
+	.refine((value) => !isAbsolute(value), "Path must be repository-relative")
+	.refine((value) => !value.replaceAll("\\", "/").split("/").includes(".."), "Path cannot traverse the repository");
+
+const writeScopeSchema = z
+	.object({
+		allow: z.array(repositoryRelativePath).min(1).max(200),
+		deny: z.array(repositoryRelativePath).max(200).optional().default([]),
+		allow_repository_wide: z.boolean().optional().default(false),
+	})
+	.strict()
+	.refine(
+		(scope) => !scope.allow.includes(".") || scope.allow_repository_wide,
+		"Repository-wide write scope ('.') requires allow_repository_wide: true",
+	);
 
 // ── Tool Registration ──────────────────────────────────────────────────────
 
@@ -129,7 +149,16 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					.min(1)
 					.max(5)
 					.describe("List of agents to run in parallel"),
-				files: z.array(z.string()).optional().describe("File paths to focus on"),
+				files: z
+					.array(repositoryRelativePath)
+					.optional()
+					.describe("Deprecated alias for focus_files; never grants write access"),
+				focus_files: z
+					.array(repositoryRelativePath)
+					.max(200)
+					.optional()
+					.describe("Files used only for context ranking"),
+				write_scope: writeScopeSchema.optional().describe("Mandatory mutation policy; absence denies execution"),
 				mode: z
 					.enum(["parallel", "sequential"])
 					.optional()
@@ -142,10 +171,26 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					.describe(
 						"If true, wait for completion. If false, returns immediately with task_id for non-blocking monitoring.",
 					),
+				verification_spec: z
+					.union([
+						z.string(),
+						z.object({
+							schemaVersion: z.number().optional().default(1),
+							executable: z.string().min(1),
+							args: z.array(z.string()).default([]),
+							timeoutMs: z.number().positive().optional().default(60000),
+							required: z.boolean().optional().default(true),
+							network: z.enum(["deny", "allow"]).optional().default("deny"),
+							allowedOutputPaths: z.array(z.string()).optional(),
+							cwd: z.string().optional(),
+						}),
+					])
+					.optional()
+					.describe("Structured verification specification or command string"),
 				verify_command: z
 					.string()
 					.optional()
-					.describe("Command to run inside worktree to verify solution (e.g. 'npm test')"),
+					.describe("Legacy verification command string (deprecated: use verification_spec)"),
 			}),
 		},
 		async (args) => {
@@ -156,10 +201,17 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
 				);
 			}
+			if (!args.write_scope) {
+				return errorResult(
+					"Mutation denied: write_scope is required. Legacy files/focus_files are context hints only.",
+				);
+			}
+			const writeScope = args.write_scope;
 
-			if (args.files) {
+			const focusFiles = args.focus_files || args.files || [];
+			if (focusFiles.length > 0) {
 				try {
-					for (const file of args.files) {
+					for (const file of focusFiles) {
 						assertWithinRepository(resolve(resolvedDir, file), resolvedDir);
 					}
 				} catch (err) {
@@ -169,7 +221,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 
 			try {
 				// Load ContextOS rules with file context ranking
-				const contextPrompt = buildContextPrompt(resolvedDir, args.task, { files: args.files });
+				const contextPrompt = buildContextPrompt(resolvedDir, args.task, { files: focusFiles });
 				log(`ContextOS prompt: ${contextPrompt.length} chars`);
 
 				const session = await getSession(resolvedDir);
@@ -184,21 +236,41 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 					// Enforce unique, safe thread ID without collisions
 					const threadId = threadIds[index];
 
+					const verificationInput = args.verification_spec || args.verify_command;
+					let parsedSpec;
+					if (verificationInput) {
+						try {
+							parsedSpec = parseVerificationSpec(verificationInput);
+						} catch {
+							// will fail closed during execution
+						}
+					}
+
 					try {
 						const result = await spawnThread(session, {
 							id: threadId,
 							task: args.task,
-							files: args.files,
+							files: focusFiles,
+							focusFiles,
+							writeScope: writeScope.allow,
+							writeScopeDeny: writeScope.deny,
+							allowRepositoryWide: writeScope.allow_repository_wide,
 							agent: backend,
 							model: model,
 							context: contextPrompt,
-							testCommand: args.verify_command,
+							testCommand:
+								typeof verificationInput === "string"
+									? verificationInput
+									: parsedSpec
+										? `${parsedSpec.executable} ${parsedSpec.args.join(" ")}`.trim()
+										: undefined,
+							verificationSpec: parsedSpec,
 						});
 
 						const threads = getThreads(session);
 						const currentThread = threads.find((t) => t.id === threadId);
 
-						const verificationResult = args.verify_command
+						const verificationResult = verificationInput
 							? {
 									verified: currentThread?.verification === "PASS",
 									verdict: currentThread?.verification || "PENDING",
@@ -209,15 +281,11 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 								}
 							: undefined;
 
-						const status = result.success
-							? "completed"
-							: currentThread?.status === "verification_failed"
-								? "verification_failed"
-								: "failed";
+						const status = currentThread?.status || (result.success ? "completed" : "failed");
 
 						if (currentThread) {
-							currentThread.status = status;
-							currentThread.phase = status;
+							// We don't overwrite currentThread.status here anymore
+							// because manager.ts already set it to requires_verification, requires_review, etc.
 							recordThreadState(session.dir, currentThread, session.config.worktree_base_dir);
 						}
 

@@ -62,6 +62,57 @@ signals:
     assert.strictEqual(parsed.signals.keywords[1].value, 'server actions');
     assert.strictEqual(parsed.signals.keywords[1].weight, 15);
   });
+
+  await t.test('parser conformance fixtures', async (t) => {
+    const fixturesDir = path.join(__dirname, 'fixtures', 'manifests');
+    const readFixture = (name) => fs.readFileSync(path.join(fixturesDir, name), 'utf8');
+
+    await t.test('quoted-hash', () => {
+      const parsed = parseYaml(readFixture('quoted-hash.yaml'));
+      assert.strictEqual(parsed.name, 'Name with # hash');
+      assert.strictEqual(parsed.description, 'Another # hash');
+    });
+
+    await t.test('colon-in-string', () => {
+      const parsed = parseYaml(readFixture('colon-in-string.yaml'));
+      assert.strictEqual(parsed.name, 'Name with : colon');
+      assert.strictEqual(parsed.url, 'https://example.com');
+    });
+
+    await t.test('empty-collections', () => {
+      const parsed = parseYaml(readFixture('empty-collections.yaml'));
+      assert.deepStrictEqual(parsed.requires, []);
+      assert.deepStrictEqual(parsed.metadata, {});
+    });
+
+    await t.test('escaped-quotes', () => {
+      const parsed = parseYaml(readFixture('escaped-quotes.yaml'));
+      assert.strictEqual(parsed.name, 'Name with "escaped" quotes');
+      assert.strictEqual(parsed.description, "Name with 'escaped' quotes");
+    });
+
+    await t.test('multiline', () => {
+      const parsed = parseYaml(readFixture('multiline.yaml'));
+      assert.strictEqual(parsed.description, 'This is a multiline\nstring.\n');
+      assert.strictEqual(parsed.summary, 'This is a folded string.\n');
+    });
+
+    await t.test('anchors-aliases', () => {
+      const parsed = parseYaml(readFixture('anchors-aliases.yaml'));
+      assert.strictEqual(parsed.env.version, '1.0.0');
+      assert.strictEqual(parsed.env.name, 'prod');
+    });
+
+    await t.test('malformed-indentation', () => {
+      // In YAML 1.2, this is actually parsed as a single multiline plain scalar
+      const parsed = parseYaml(readFixture('malformed-indentation.yaml'));
+      assert.deepStrictEqual(parsed.requires, ['alpha - beta']);
+    });
+
+    await t.test('duplicate-keys', () => {
+      assert.throws(() => parseYaml(readFixture('duplicate-keys.yaml')));
+    });
+  });
 });
 
 test('ManifestCompiler — Production Repository Compilation', async (t) => {

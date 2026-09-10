@@ -1,0 +1,3 @@
+id: escaped-quotes
+name: "Name with \"escaped\" quotes"
+description: 'Name with ''escaped'' quotes'

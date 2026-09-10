@@ -87,7 +87,7 @@ describe('Milestone 8 — Doctor v2 Diagnostics Engine', () => {
     assert.equal(res.status, STATUS.RECOVERY_REQUIRED);
     assert.equal(res.ok, false);
     assert.ok(res.error.includes('RECOVERY_REQUIRED'));
-    assert.ok(res.remediation.includes('recover --rollback'));
+    assert.ok(res.remediation.includes('recover --list'));
   });
 
   test('runDoctor({ json: true }) outputs versioned schema 2.0.0 report', () => {

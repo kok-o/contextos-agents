@@ -1,0 +1,6 @@
+{
+  "task": "Add a new page to the app router",
+  "files": [
+    "app/page.tsx"
+  ]
+}

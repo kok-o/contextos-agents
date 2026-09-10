@@ -37,12 +37,38 @@ class ThreadStore {
     return path.join(this.storeDir, `${safeId}.audit.jsonl`);
   }
 
+  _getLockPath(threadId) {
+    const safeId = threadId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    return path.join(this.storeDir, `${safeId}.lock`);
+  }
+
+  /**
+   * Acquires a lease for a given thread ID.
+   * @param {string} threadId 
+   * @param {string} [instanceId]
+   * @returns {import('./ipc-lock').LeaseLock}
+   */
+  acquireLease(threadId, instanceId) {
+    const { LeaseLock } = require('./ipc-lock.js');
+    return new LeaseLock({
+      lockFilePath: this._getLockPath(threadId),
+      instanceId,
+      ttlMs: 30000
+    });
+  }
+
   /**
    * Saves a thread to disk atomically.
+   * @param {Object} thread
+   * @param {import('./ipc-lock').LeaseLock} [lease] - Optional lease lock to enforce ownership.
    */
-  save(thread) {
+  save(thread, lease = null) {
     if (!thread || !thread.id) {
       throw new Error('Cannot save invalid thread object');
+    }
+
+    if (lease) {
+      lease.assertValid();
     }
 
     const threadPath = this._getThreadPath(thread.id);

@@ -38,6 +38,7 @@ class ExecutionSandbox {
     this.mode = options.mode || 'oci-preferred';
     this.containerEngine = options.containerEngine || null;
     this.image = options.image || 'node:20-alpine';
+    this.expectedImageDigest = options.expectedImageDigest;
     this.network = options.network || 'deny';
     this.limits = {
       cpus: options.limits?.cpus || '2.0',
@@ -60,7 +61,7 @@ class ExecutionSandbox {
    * @returns {{ allowed: boolean, reasonCode: string, reason: string }}
    */
   canAutoMerge(executionRecord = {}) {
-    const { runnerMode = 'host-unsafe', userOverride = false } = executionRecord;
+    const { runnerMode = 'host-unsafe', userOverride = false, isFromRepoConfig = false } = executionRecord;
 
     if (runnerMode === 'oci') {
       return {
@@ -71,6 +72,14 @@ class ExecutionSandbox {
     }
 
     if (userOverride) {
+      if (isFromRepoConfig) {
+        return {
+          allowed: false,
+          reasonCode: 'REPO_CONFIG_OVERRIDE_PROHIBITED',
+          reason:
+            'Repository configuration cannot enable host-unsafe auto-merge override. Only user-local safety override is permitted.',
+        };
+      }
       return {
         allowed: true,
         reasonCode: 'HOST_UNSAFE_EXPLICIT_OVERRIDE',
@@ -248,6 +257,209 @@ class ExecutionSandbox {
       runner: 'host-unsafe',
       autoMergeBlocked: true,
       warning: 'Running in host-unsafe mode. Auto-merge is blocked by default.',
+    };
+  }
+
+  /**
+   * Detects whether a functional container engine (docker/podman/mock) is available.
+   *
+   * @returns {'docker'|'podman'|'mock'|null}
+   */
+  detectContainerEngine() {
+    if (this.containerEngine === 'mock') {
+      return 'mock';
+    }
+
+    if (this.containerEngine === 'docker' || this.containerEngine === 'podman') {
+      try {
+        const { execFileSync } = require('child_process');
+        execFileSync(this.containerEngine, ['--version'], { stdio: 'ignore' });
+        return this.containerEngine;
+      } catch {
+        return null;
+      }
+    }
+
+    const { execFileSync } = require('child_process');
+    try {
+      execFileSync('docker', ['--version'], { stdio: 'ignore' });
+      return 'docker';
+    } catch {
+      try {
+        execFileSync('podman', ['--version'], { stdio: 'ignore' });
+        return 'podman';
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Resolves image digest for evidence and pin verification.
+   *
+   * @param {'docker'|'podman'|'mock'} engine
+   * @param {string} image
+   * @returns {string|null}
+   */
+  getImageDigest(engine, image) {
+    if (engine === 'mock') {
+      return `sha256:${crypto.createHash('sha256').update(image).digest('hex')}`;
+    }
+
+    try {
+      const { execFileSync } = require('child_process');
+      const out = execFileSync(
+        engine,
+        ['image', 'inspect', '--format', '{{range .RepoDigests}}{{.}}{{end}}', image],
+        {
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'ignore'],
+          timeout: 5000,
+        }
+      ).trim();
+
+      if (out && out.includes('@sha256:')) {
+        return out.split('@')[1] || null;
+      }
+      return out || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Executes a command inside the hardened sandbox or host fallback according to policy.
+   *
+   * @param {string} workspacePath
+   * @param {string[]} commandArgs
+   * @param {Object} [options]
+   * @returns {Promise<Object>}
+   */
+  async execute(workspacePath, commandArgs, options = {}) {
+    const advCheck = this.validateAdversarialAttempt({
+      targetPath: workspacePath,
+      commandArgs,
+    });
+    if (!advCheck.safe) {
+      const secErr = new Error(`Sandbox security violation: ${advCheck.violation}`);
+      secErr.code = advCheck.rule || 'CTX_SECURITY_VIOLATION';
+      throw secErr;
+    }
+
+    const engine = this.detectContainerEngine();
+    const plan = this.planExecution(Boolean(engine));
+    const startTime = Date.now();
+
+    if (plan.runner === 'oci' && engine) {
+      const digest = this.getImageDigest(engine, this.image);
+      if (this.expectedImageDigest && digest) {
+        const normExpected = this.expectedImageDigest.replace(/^sha256:/, '');
+        const normActual = digest.replace(/^sha256:/, '');
+        if (normExpected !== normActual) {
+          const err = new Error(
+            `Image digest mismatch for image "${this.image}": expected "${this.expectedImageDigest}", got "${digest}". Execution aborted fail-closed.`
+          );
+          err.code = 'CTX_SANDBOX_DIGEST_MISMATCH';
+          throw err;
+        }
+      }
+
+      const containerArgs = this.buildContainerArgs(workspacePath, commandArgs, {
+        network: options.network || this.network,
+      });
+
+      let stdout = '';
+      let stderr = '';
+      let exitCode = 0;
+
+      if (engine === 'mock') {
+        stdout = `[mock-oci-container: ${this.image}] executed: ${commandArgs.join(' ')}\n`;
+      } else {
+        const { spawnSync } = require('child_process');
+        const res = spawnSync(engine, containerArgs, {
+          cwd: workspacePath,
+          shell: false,
+          timeout: options.timeoutMs || this.limits.timeoutMs,
+          encoding: 'utf8',
+        });
+        stdout = res.stdout || '';
+        stderr = res.stderr || '';
+        exitCode = res.status !== null ? res.status : 1;
+      }
+
+      const durationMs = Date.now() - startTime;
+      const rawCombined = stdout + (stderr ? `\n${stderr}` : '');
+      const outputSha256 = crypto.createHash('sha256').update(rawCombined).digest('hex');
+
+      return {
+        success: exitCode === 0,
+        exitCode,
+        durationMs,
+        stdout,
+        stderr,
+        outputSha256,
+        runnerMode: 'oci',
+        containerEngine: engine,
+        image: this.image,
+        imageDigest: digest || undefined,
+        autoMergeBlocked: false,
+        evidence: {
+          engine,
+          image: this.image,
+          imageDigest: digest || undefined,
+          exitCode,
+          durationMs,
+          outputSha256,
+          runnerMode: 'oci',
+          network: options.network || this.network,
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    // Host-unsafe fallback
+    const { spawnSync } = require('child_process');
+    const res = spawnSync(commandArgs[0], commandArgs.slice(1), {
+      cwd: workspacePath,
+      shell: false,
+      timeout: options.timeoutMs || this.limits.timeoutMs,
+      encoding: 'utf8',
+    });
+    const stdout = res.stdout || '';
+    const stderr = res.stderr || '';
+    const exitCode = res.status !== null ? res.status : 1;
+    const durationMs = Date.now() - startTime;
+    const rawCombined = stdout + (stderr ? `\n${stderr}` : '');
+    const outputSha256 = crypto.createHash('sha256').update(rawCombined).digest('hex');
+
+    const decision = this.canAutoMerge({
+      runnerMode: 'host-unsafe',
+      userOverride: options.userOverride,
+      isFromRepoConfig: options.isFromRepoConfig,
+    });
+
+    return {
+      success: exitCode === 0,
+      exitCode,
+      durationMs,
+      stdout,
+      stderr,
+      outputSha256,
+      runnerMode: 'host-unsafe',
+      containerEngine: 'none',
+      image: 'host',
+      autoMergeBlocked: !decision.allowed,
+      warning: plan.warning,
+      evidence: {
+        engine: 'none',
+        image: 'host',
+        exitCode,
+        durationMs,
+        outputSha256,
+        runnerMode: 'host-unsafe',
+        network: 'allow',
+        timestamp: Date.now(),
+      },
     };
   }
 }

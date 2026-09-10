@@ -1,0 +1,7 @@
+{
+  "task": "Build the whole app",
+  "files": [
+    "app/page.tsx"
+  ],
+  "contextBudgetTokens": 1000
+}

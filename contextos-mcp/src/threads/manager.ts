@@ -12,7 +12,7 @@
  */
 
 import { execFile } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import { getAgent, listAgents } from "../agents/provider.js";
@@ -34,7 +34,7 @@ import type { EpisodicMemory } from "../memory/episodic.js";
 import { evaluateReviewerGate } from "../orchestration/reviewer-gate.js";
 import { runWorktreeVerification } from "../orchestration/verification-runner.js";
 import { AGENT_CAPABILITIES } from "../routing/model-router.js";
-import { WorktreeManager } from "../worktree/manager.js";
+import { normalizeGitPath, WorktreeManager } from "../worktree/manager.js";
 import { ThreadCache, type ThreadCacheStats } from "./cache.js";
 
 // ── Async Semaphore ─────────────────────────────────────────────────────────
@@ -259,6 +259,7 @@ const FATAL_PATTERNS = [
 	/permission denied/i,
 	/quota exceeded/i,
 	/billing/i,
+	/NOT_CONFIGURED/i,
 ];
 
 /** Classify an error as retryable or fatal. Default: retryable (optimistic). */
@@ -447,13 +448,26 @@ export class ThreadManager {
 		if (writeScope.length === 0) {
 			throw new Error("ScopeViolationError: task must have an explicit writeScope. Implicit '.' is prohibited.");
 		}
+		const writeScopeDeny = threadConfig.taskBrief?.writeScopeDeny || threadConfig.writeScopeDeny || [];
+		const allowRepositoryWide =
+			threadConfig.taskBrief?.allowRepositoryWide ??
+			threadConfig.allowRepositoryWide ??
+			(this.config as any).allow_repository_wide ??
+			true;
+		if (writeScope.some((scope) => normalizeGitPath(scope) === ".") && allowRepositoryWide === false) {
+			throw new Error("ScopeViolationError: repository-wide writeScope '.' requires allowRepositoryWide: true.");
+		}
 
 		const taskBrief = Object.freeze({
 			taskId: threadId,
 			baseSha: commitSha,
 			objective: threadConfig.taskBrief?.objective || threadConfig.task,
 			writeScope: Object.freeze([...writeScope]),
-			testCommand: threadConfig.taskBrief?.testCommand || "",
+			writeScopeDeny: Object.freeze([...writeScopeDeny]),
+			allowRepositoryWide,
+			focusFiles: Object.freeze([...(threadConfig.focusFiles || threadConfig.files || [])]),
+			testCommand: threadConfig.taskBrief?.testCommand || threadConfig.testCommand || "",
+			verificationSpec: threadConfig.taskBrief?.verificationSpec || threadConfig.verificationSpec,
 			expectedResult: threadConfig.taskBrief?.expectedResult || "Task completes successfully",
 			maxAttempts: threadConfig.taskBrief?.maxAttempts || maxAttempts,
 		});
@@ -462,6 +476,8 @@ export class ThreadManager {
 			id: threadId,
 			files: [...(threadConfig.focusFiles || [])],
 			writeScope: taskBrief.writeScope,
+			writeScopeDeny: taskBrief.writeScopeDeny,
+			allowRepositoryWide: taskBrief.allowRepositoryWide,
 			taskBrief,
 		};
 		const state: ThreadState = {
@@ -624,6 +640,12 @@ export class ThreadManager {
 
 			// Run agent
 			state.phase = "agent_running";
+			if (state.verificationAttestation) state.verificationAttestation.status = "STALE";
+			if (state.reviewAttestation) state.reviewAttestation.status = "STALE";
+			state.verification = "STALE";
+			state.verificationStatus = "STALE";
+			state.reviewStatus = "STALE";
+			state.mergeStatus = "BLOCKED";
 			this.onThreadProgress?.(threadId, "agent_running");
 			const agent = getAgent(threadConfig.agent.backend || this.config.default_agent);
 
@@ -633,10 +655,13 @@ export class ThreadManager {
 			}
 
 			// Combine thread timeout with cancellation signal
-			const timeoutSignal = AbortSignal.timeout(this.config.thread_timeout_ms);
+			const threadTimeoutMs = this.config.thread_timeout_ms;
+			const timeoutAc = new AbortController();
+			const timeoutTimer = setTimeout(() => timeoutAc.abort(), threadTimeoutMs);
 			const combinedAc = new AbortController();
 			const onAbort = () => combinedAc.abort();
 			signal.addEventListener("abort", onAbort, { once: true });
+			const timeoutSignal = timeoutAc.signal;
 			timeoutSignal.addEventListener("abort", onAbort, { once: true });
 
 			let agentResult;
@@ -652,6 +677,7 @@ export class ThreadManager {
 			} finally {
 				signal.removeEventListener("abort", onAbort);
 				timeoutSignal.removeEventListener("abort", onAbort);
+				clearTimeout(timeoutTimer);
 			}
 
 			if (signal.aborted) {
@@ -670,38 +696,111 @@ export class ThreadManager {
 			const diffStats = await this.worktreeManager.getDiffStats(threadId);
 			const filesChanged = await this.worktreeManager.getChangedFiles(threadId);
 			try {
-				await this.worktreeManager.assertWriteScope(threadId, state.taskBrief!.baseSha, state.taskBrief!.writeScope);
+				await this.worktreeManager.assertWriteScope(
+					threadId,
+					state.taskBrief!.baseSha,
+					state.taskBrief!.writeScope,
+					state.taskBrief!.writeScopeDeny,
+				);
 			} catch (error) {
 				if (error instanceof Error && error.name === "ScopeViolationError") state.scopeViolation = true;
 				throw error;
 			}
 
 			if (filesChanged.length > 0) {
-				await this.worktreeManager.commit(threadId, `swarm: ${threadConfig.task.slice(0, 72)}`);
+				await this.worktreeManager.commit(
+					threadId,
+					`swarm: ${threadConfig.task.slice(0, 72)}`,
+					state.taskBrief!.writeScope,
+					state.taskBrief!.writeScopeDeny,
+				);
 			}
 
-			// Automated test verification (if taskBrief specifies testCommand)
+			const candidateHeadSha = await this.worktreeManager.getHeadSha(threadId);
+			const candidateDiff = await this.worktreeManager.getCandidateDiff(threadId, state.taskBrief!.baseSha);
+			const diffSha256 = createHash("sha256").update(candidateDiff).digest("hex");
+			const repoFingerprint = this.worktreeManager.getRepositoryFingerprint();
+			const writeScope = state.taskBrief?.writeScope || [];
+			const writeScopeDeny = state.taskBrief?.writeScopeDeny || [];
+			const scopeSha256 = createHash("sha256")
+				.update(
+					JSON.stringify({
+						writeScope: [...writeScope].sort(),
+						writeScopeDeny: [...writeScopeDeny].sort(),
+					}),
+				)
+				.digest("hex");
+
+			const candidateSubject = {
+				repositoryFingerprint: repoFingerprint,
+				baseSha: state.taskBrief!.baseSha,
+				headSha: candidateHeadSha,
+				diffSha256,
+				scopeSha256,
+			};
+
+			// Automated test verification (if taskBrief specifies testCommand or verificationSpec)
 			let verificationVerdict: VerificationVerdict = "NOT_CONFIGURED";
 			let verificationOutput = "";
-			if (state.taskBrief?.testCommand) {
+			if (state.taskBrief?.testCommand || state.taskBrief?.verificationSpec) {
+				const verifyTarget = state.taskBrief.verificationSpec || state.taskBrief.testCommand;
+				const displayTarget =
+					typeof verifyTarget === "string" ? verifyTarget : `${verifyTarget.executable} ${verifyTarget.args.join(" ")}`;
 				state.phase = "verifying";
-				this.onThreadProgress?.(threadId, "verifying", state.taskBrief.testCommand);
+				this.onThreadProgress?.(threadId, "verifying", displayTarget);
 				try {
-					const verifyRes = await runWorktreeVerification(wtInfo.path, state.taskBrief.testCommand);
+					const verifyRes = await runWorktreeVerification(wtInfo.path, verifyTarget, {
+						expectedHeadSha: candidateSubject.headSha,
+						sandboxMode: state.taskBrief?.sandboxMode,
+					});
 					verificationOutput = verifyRes.output;
-					verificationVerdict = verifyRes.verified ? "PASS" : "FAIL";
+					verificationVerdict = verifyRes.verdict;
+
+					state.verificationAttestation = {
+						schemaVersion: 1,
+						status: verificationVerdict,
+						subject: { ...candidateSubject },
+						evidence: {
+							exitCode: verifyRes.exitCode,
+							signal: null,
+							outputSha256: createHash("sha256").update(verificationOutput).digest("hex"),
+							redactedPreview: verificationOutput.substring(0, 100),
+						},
+						runnerMode: verifyRes.runnerMode || "host-unsafe",
+					};
 					state.verification = verificationVerdict;
-					if (!verifyRes.verified) {
+					state.verificationStatus = verificationVerdict;
+					if (verifyRes.verdict !== "PASS") {
 						state.error = `Verification failed: ${verifyRes.output}`;
 					}
 				} catch (verifyErr) {
 					verificationVerdict = "ERROR";
+					state.verificationAttestation = {
+						schemaVersion: 1,
+						status: "ERROR",
+						subject: { ...candidateSubject },
+						evidence: {
+							exitCode: null,
+							signal: null,
+							outputSha256: createHash("sha256").update(String(verifyErr)).digest("hex"),
+							redactedPreview: String(verifyErr).substring(0, 100),
+						},
+						runnerMode: "host-unsafe",
+					};
 					state.verification = "ERROR";
+					state.verificationStatus = "ERROR";
 					state.error = `Verification error: ${verifyErr instanceof Error ? verifyErr.message : String(verifyErr)}`;
 				}
 			} else {
 				verificationVerdict = "NOT_CONFIGURED";
+				state.verificationAttestation = {
+					schemaVersion: 1,
+					status: "NOT_CONFIGURED",
+					subject: { ...candidateSubject },
+					runnerMode: "host-unsafe",
+				};
 				state.verification = "NOT_CONFIGURED";
+				state.verificationStatus = "NOT_CONFIGURED";
 			}
 
 			// Independent Reviewer Gate (Dual Verdict)
@@ -719,6 +818,38 @@ export class ThreadManager {
 				repoRoot: this.repoRoot,
 			});
 			state.review = reviewVerdict;
+			let reviewStatus: any =
+				reviewVerdict.specCompliance === "PASS" && reviewVerdict.codeQuality === "PASS" ? "PASS" : "FAIL";
+			if (reviewVerdict.specCompliance === "NOT_CONFIGURED" && reviewVerdict.codeQuality === "NOT_CONFIGURED") {
+				reviewStatus = "NOT_CONFIGURED";
+			} else if (reviewVerdict.specCompliance === "ERROR" || reviewVerdict.codeQuality === "ERROR") {
+				reviewStatus = "ERROR";
+			} else if (reviewVerdict.specCompliance === "UNAVAILABLE" || reviewVerdict.codeQuality === "UNAVAILABLE") {
+				reviewStatus = "UNAVAILABLE";
+			} else if (reviewVerdict.specCompliance === "MALFORMED" || reviewVerdict.codeQuality === "MALFORMED") {
+				reviewStatus = "MALFORMED";
+			} else if (reviewVerdict.specCompliance === "TIMEOUT" || reviewVerdict.codeQuality === "TIMEOUT") {
+				reviewStatus = "TIMEOUT";
+			}
+
+			state.reviewAttestation = {
+				schemaVersion: 1,
+				status: reviewStatus,
+				llmVerdict: {
+					specCompliance: reviewVerdict.specCompliance,
+					codeQuality: reviewVerdict.codeQuality,
+					summary: reviewVerdict.summary,
+				},
+				subject: { ...candidateSubject },
+				implementerExecutionId: threadId,
+				reviewerExecutionId: reviewVerdict.reviewerId,
+				provider: threadConfig.agent.backend || this.config.default_agent || "contextos",
+				model: threadConfig.agent.model || this.config.default_model || "unknown",
+				independenceLevel: "separate_process",
+				rawOutputDigest: createHash("sha256").update(JSON.stringify(reviewVerdict)).digest("hex"),
+				retries: 0,
+			};
+			state.reviewStatus = reviewStatus;
 
 			const reviewFailed = reviewVerdict.specCompliance !== "PASS" || reviewVerdict.codeQuality !== "PASS";
 			if (reviewFailed) {
@@ -756,7 +887,10 @@ export class ThreadManager {
 				? ` (${agentResult.usage.inputTokens}+${agentResult.usage.outputTokens} tokens)`
 				: "";
 
-			const verificationOk = verificationVerdict === "PASS" || verificationVerdict === "NOT_CONFIGURED";
+			const verificationOk =
+				verificationVerdict === "PASS" ||
+				verificationVerdict === "NOT_CONFIGURED" ||
+				verificationVerdict === "NOT_APPLICABLE";
 			const overallSuccess = agentResult.success && !reviewFailed && verificationOk;
 			const result: CompressedResult = {
 				success: overallSuccess,
@@ -769,20 +903,13 @@ export class ThreadManager {
 				costIsEstimate: isEstimate,
 			};
 
-			if (overallSuccess) {
-				state.status = "completed";
-				state.phase = "completed";
-			} else if (verificationVerdict === "FAIL" || verificationVerdict === "ERROR") {
-				state.status = "verification_failed";
-				state.phase = "failed";
-			} else if (reviewFailed) {
-				state.status = "failed";
-				state.phase = "failed";
-			} else {
-				// Thread executed without exception or review/verification error, but returned success: false
-				state.status = "completed";
-				state.phase = "completed";
-			}
+			state.executionStatus = agentResult.success ? "SUCCEEDED" : "FAILED";
+			state.verificationStatus = verificationVerdict;
+			state.reviewStatus = reviewStatus;
+			state.mergeStatus = verificationVerdict === "PASS" && reviewStatus === "PASS" ? "READY" : "NOT_READY";
+
+			state.status = "completed";
+			state.phase = "completed";
 			state.result = result;
 			state.completedAt = Date.now();
 			this.onThreadProgress?.(threadId, state.phase, `${filesChanged.length} files, ${costLabel}${usageLabel}`);

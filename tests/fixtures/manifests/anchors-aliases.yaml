@@ -1,0 +1,6 @@
+id: anchors-aliases
+defaults: &defaults
+  version: 1.0.0
+env:
+  <<: *defaults
+  name: prod

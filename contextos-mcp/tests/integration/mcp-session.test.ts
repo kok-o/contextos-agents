@@ -144,7 +144,8 @@ describe("MCP Session: spawnThread", () => {
 
 		// Still uses mock agent (backend override would fail for non-existent agents)
 		const result = await spawnThread(session, {
-			task: "add a utility", writeScope: ["."],
+			task: "add a utility",
+			writeScope: ["."],
 			agent: "mock",
 			model: "custom-model",
 			context: "extra context",
@@ -205,7 +206,7 @@ describe("MCP Session: mergeThreads", () => {
 		const dir = makeTempRepo();
 		const session = await getSession(dir);
 
-		await spawnThread(session, { task: "add feature A", writeScope: ["."] });
+		await spawnThread(session, { task: "add feature A", writeScope: ["."], testCommand: "node --version" });
 
 		const results = await mergeThreads(session);
 

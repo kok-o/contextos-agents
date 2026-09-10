@@ -244,7 +244,7 @@ export interface BuildPromptOptions extends SelectorOptions {
  *
  * @param projectRoot - Absolute path to the project root
  * @param task - The task description (used for selective loading)
- * @param options - Optional configuration (maxSkills, maxTotalSkillsChars, files)
+ * @param options - Optional configuration (token/character budgets and files)
  * @returns The assembled system prompt string, or empty string if no .agents/ found
  */
 export function buildContextPrompt(projectRoot: string, task: string, options: BuildPromptOptions = {}): string {
@@ -257,10 +257,11 @@ export function buildContextPrompt(projectRoot: string, task: string, options: B
 	// 1. Profile exclusions
 	const excludedSkills = getExcludedSkills(agentsDir);
 
-	// 2. Select relevant context based on task (capped to max 4 skills)
+	// 2. Select relevant context using dependency-safe token budgeting.
 	const selection: SelectedContext = selectContext(task, {
-		maxSkills: options.maxSkills,
+		rootDir: projectRoot,
 		files: options.files,
+		contextBudgetTokens: options.contextBudgetTokens,
 	});
 	log(`Task analysis → skills: [${selection.skills.join(", ")}]`);
 

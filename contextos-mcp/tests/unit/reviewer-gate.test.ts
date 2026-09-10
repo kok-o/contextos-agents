@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { TaskBrief } from "../../src/core/types.js";
+import "../../src/agents/mock.js";
 import {
 	evaluateReviewerGate,
 	resolveReviewerAgent,
@@ -117,6 +118,7 @@ describe("Independent Reviewer Gate (Task 2.3)", () => {
 			diff: "+ export function add(a: number, b: number): number { return a + b; }",
 			filesChanged: ["src/calc.ts"],
 			verificationVerdict: "PASS",
+			implementerAgent: "mock",
 		});
 
 		expect(verdict.specCompliance).toBe("PASS");

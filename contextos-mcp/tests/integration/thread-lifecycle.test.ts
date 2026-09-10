@@ -21,7 +21,9 @@ import { ThreadManager } from "../../src/threads/manager.js";
 function makeThreadConfig(overrides?: Partial<ThreadConfig>): ThreadConfig {
 	return {
 		id: `t-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-		task: "add hello function", writeScope: ["."],
+		task: "add hello function",
+		writeScope: ["."],
+		allowRepositoryWide: true,
 		context: "",
 		agent: { backend: "mock", model: "mock-model" },
 		...overrides,
@@ -54,7 +56,14 @@ describe("ThreadManager lifecycle", () => {
 	// ── 1. Basic lifecycle ──────────────────────────────────────────────────
 
 	it("spawnThread succeeds and returns CompressedResult with success:true", async () => {
-		const result = await tm.spawnThread(makeThreadConfig({ id: "lifecycle-ok", task: "add hello function", writeScope: ["."] }));
+		const result = await tm.spawnThread(
+			makeThreadConfig({
+				id: "lifecycle-ok",
+				task: "add hello function",
+				writeScope: ["."],
+				allowRepositoryWide: true,
+			}),
+		);
 
 		expect(result.success).toBe(true);
 		expect(result.summary).toContain("SUCCESS");
@@ -67,8 +76,12 @@ describe("ThreadManager lifecycle", () => {
 	// ── 2. Thread tracking ──────────────────────────────────────────────────
 
 	it("getThreads() returns spawned threads, getThread() finds by ID", async () => {
-		await tm.spawnThread(makeThreadConfig({ id: "track-a", task: "task A", writeScope: ["."] }));
-		await tm.spawnThread(makeThreadConfig({ id: "track-b", task: "task B", writeScope: ["."] }));
+		await tm.spawnThread(
+			makeThreadConfig({ id: "track-a", task: "task A", writeScope: ["."], allowRepositoryWide: true }),
+		);
+		await tm.spawnThread(
+			makeThreadConfig({ id: "track-b", task: "task B", writeScope: ["."], allowRepositoryWide: true }),
+		);
 
 		const threads = tm.getThreads();
 		expect(threads).toHaveLength(2);
@@ -92,7 +105,9 @@ describe("ThreadManager lifecycle", () => {
 		const budgetBefore = tm.getBudgetState();
 		expect(budgetBefore.totalSpentUsd).toBe(0);
 
-		await tm.spawnThread(makeThreadConfig({ id: "budget-1", task: "do something", writeScope: ["."] }));
+		await tm.spawnThread(
+			makeThreadConfig({ id: "budget-1", task: "do something", writeScope: ["."], allowRepositoryWide: true }),
+		);
 
 		const budgetAfter = tm.getBudgetState();
 		expect(budgetAfter.totalSpentUsd).toBeGreaterThan(0);
@@ -110,7 +125,9 @@ describe("ThreadManager lifecycle", () => {
 	it("spawning identical thread twice returns cached result on second call", async () => {
 		const sharedConfig = makeThreadConfig({
 			id: "cache-first",
-			task: "identical task for caching", writeScope: ["."],
+			task: "identical task for caching",
+			writeScope: ["."],
+			allowRepositoryWide: true,
 		});
 
 		const first = await tm.spawnThread(sharedConfig);
@@ -126,7 +143,9 @@ describe("ThreadManager lifecycle", () => {
 		const second = await tm.spawnThread(
 			makeThreadConfig({
 				id: "cache-second",
-				task: "identical task for caching", writeScope: ["."],
+				task: "identical task for caching",
+				writeScope: ["."],
+				allowRepositoryWide: true,
 			}),
 		);
 		expect(second.success).toBe(true);
@@ -141,7 +160,9 @@ describe("ThreadManager lifecycle", () => {
 		const result = await tm.spawnThread(
 			makeThreadConfig({
 				id: "fail-thread",
-				task: "this should __FAIL__ on purpose", writeScope: ["."],
+				task: "this should __FAIL__ on purpose",
+				writeScope: ["."],
+				allowRepositoryWide: true,
 			}),
 		);
 
@@ -160,7 +181,9 @@ describe("ThreadManager lifecycle", () => {
 
 	it("cancelThread returns true for running thread, false for completed", async () => {
 		// Completed thread: cancelThread should return false (no abort controller left)
-		await tm.spawnThread(makeThreadConfig({ id: "cancel-done", task: "quick task", writeScope: ["."] }));
+		await tm.spawnThread(
+			makeThreadConfig({ id: "cancel-done", task: "quick task", writeScope: ["."], allowRepositoryWide: true }),
+		);
 		const cancelDone = tm.cancelThread("cancel-done");
 		expect(cancelDone).toBe(false);
 
@@ -182,7 +205,9 @@ describe("ThreadManager lifecycle", () => {
 		// Abort before spawning so the thread fails immediately
 		ac.abort();
 
-		const result = await tmCancel.spawnThread(makeThreadConfig({ id: "cancel-all-1", task: "should be aborted", writeScope: ["."] }));
+		const result = await tmCancel.spawnThread(
+			makeThreadConfig({ id: "cancel-all-1", task: "should be aborted", writeScope: ["."], allowRepositoryWide: true }),
+		);
 
 		expect(result.success).toBe(false);
 		expect(result.summary.toLowerCase()).toContain("abort");
@@ -200,7 +225,9 @@ describe("ThreadManager lifecycle", () => {
 		});
 		await tmProgress.init();
 
-		await tmProgress.spawnThread(makeThreadConfig({ id: "progress-1", task: "tracked task", writeScope: ["."] }));
+		await tmProgress.spawnThread(
+			makeThreadConfig({ id: "progress-1", task: "tracked task", writeScope: ["."], allowRepositoryWide: true }),
+		);
 
 		// Should have progressed through at least queued -> agent_running -> completed
 		expect(phases.length).toBeGreaterThanOrEqual(2);
@@ -212,8 +239,12 @@ describe("ThreadManager lifecycle", () => {
 	// ── 8. Concurrency stats ────────────────────────────────────────────────
 
 	it("getConcurrencyStats() reflects total spawned threads", async () => {
-		await tm.spawnThread(makeThreadConfig({ id: "conc-1", task: "task 1", writeScope: ["."] }));
-		await tm.spawnThread(makeThreadConfig({ id: "conc-2", task: "task 2", writeScope: ["."] }));
+		await tm.spawnThread(
+			makeThreadConfig({ id: "conc-1", task: "task 1", writeScope: ["."], allowRepositoryWide: true }),
+		);
+		await tm.spawnThread(
+			makeThreadConfig({ id: "conc-2", task: "task 2", writeScope: ["."], allowRepositoryWide: true }),
+		);
 
 		const stats = tm.getConcurrencyStats();
 		expect(stats.total).toBe(2);

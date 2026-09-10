@@ -317,8 +317,25 @@ function executeInit(projectRoot, distributionAgentsDir, options = {}) {
     // 4. VALIDATE
     const validation = validateStagedFiles(stagedFiles);
     if (!validation.valid && !options.allowPartial) {
+      const diagRelPath = '.agents/init-diagnostics.json';
+      const diagPath = path.join(targetRoot, diagRelPath);
+      const diagnosticsData = {
+        timestamp: new Date().toISOString(),
+        profile: plan.summary.detectedProfile,
+        stage: 'VALIDATE',
+        errors: validation.errors,
+        stagedFilesCount: stagedFiles.length,
+      };
+      
       tx.rollback();
-      const err = new Error(`Init validation failed with ${validation.errors.length} error(s):\n${validation.errors.join('\n')}`);
+      
+      try {
+        const diagTx = new JournaledTransaction(targetRoot);
+        diagTx.stageWrite(diagRelPath, JSON.stringify(diagnosticsData, null, 2));
+        diagTx.commit();
+      } catch {}
+
+      const err = new Error(`Init validation failed with ${validation.errors.length} error(s):\n${validation.errors.join('\n')}\nDiagnostics saved to ${diagPath}`);
       err.code = 'CTX_INIT_VALIDATION_FAILED';
       throw err;
     }

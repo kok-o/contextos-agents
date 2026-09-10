@@ -266,7 +266,8 @@ describe("Thread Manager — Single Thread", () => {
 	it("should spawn a thread and get compressed result", async () => {
 		const result = await tm.spawnThread({
 			id: "thread-1",
-			task: "add hello function", writeScope: ["."],
+			task: "add hello function",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -280,7 +281,8 @@ describe("Thread Manager — Single Thread", () => {
 	it("should track thread state", async () => {
 		const resultPromise = tm.spawnThread({
 			id: "thread-state",
-			task: "add hello function", writeScope: ["."],
+			task: "add hello function",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -295,7 +297,8 @@ describe("Thread Manager — Single Thread", () => {
 	it("should handle failed threads", async () => {
 		const result = await tm.spawnThread({
 			id: "thread-fail",
-			task: "__FAIL__ this task", writeScope: ["."],
+			task: "__FAIL__ this task",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -311,14 +314,16 @@ describe("Thread Manager — Single Thread", () => {
 
 		await tmLimited.spawnThread({
 			id: "limit-1",
-			task: "first task", writeScope: ["."],
+			task: "first task",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
 
 		const result = await tmLimited.spawnThread({
 			id: "limit-2",
-			task: "second task", writeScope: ["."],
+			task: "second task",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -351,19 +356,22 @@ describe("Thread Manager — Parallel Threads", () => {
 		const results = await Promise.all([
 			tm.spawnThread({
 				id: "par-1",
-				task: "task one", writeScope: ["."],
+				task: "task one",
+				writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "par-2",
-				task: "task two", writeScope: ["."],
+				task: "task two",
+				writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "par-3",
-				task: "task three", writeScope: ["."],
+				task: "task three",
+				writeScope: ["."],
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
@@ -442,13 +450,33 @@ describe("Merge Pipeline", () => {
 				maxAttempts: 1,
 				estimatedCostUsd: 0,
 				completedAt: 1000,
-				verification: "PASS",
-				review: {
-					reviewerId: "rev-test",
-					specCompliance: "PASS",
-					codeQuality: "PASS",
-					summary: "ok",
-					reviewedAt: 1000,
+				verificationAttestation: {
+					status: "PASS",
+					evidence: {
+						exitCode: 0,
+						outputSha256: "",
+						redactedPreview: "",
+						totalTests: 1,
+						passedTests: 1,
+						failedTests: 0,
+						signal: null,
+					},
+					subject: { repositoryFingerprint: "", baseSha: "", headSha: "", diffSha256: "", scopeSha256: "" },
+					runnerMode: "host-unsafe",
+					schemaVersion: 1,
+				},
+				reviewAttestation: {
+					status: "PASS",
+					llmVerdict: { specCompliance: "PASS", codeQuality: "PASS", summary: "" },
+					subject: { repositoryFingerprint: "", baseSha: "", headSha: "", diffSha256: "", scopeSha256: "" },
+					implementerExecutionId: "",
+					reviewerExecutionId: "",
+					provider: "",
+					model: "",
+					independenceLevel: "same_process",
+					rawOutputDigest: "",
+					retries: 0,
+					schemaVersion: 1,
 				},
 				scopeViolation: false,
 			},
@@ -470,13 +498,33 @@ describe("Merge Pipeline", () => {
 				maxAttempts: 1,
 				estimatedCostUsd: 0,
 				completedAt: 2000,
-				verification: "PASS",
-				review: {
-					reviewerId: "rev-test",
-					specCompliance: "PASS",
-					codeQuality: "PASS",
-					summary: "ok",
-					reviewedAt: 2000,
+				verificationAttestation: {
+					status: "PASS",
+					evidence: {
+						exitCode: 0,
+						outputSha256: "",
+						redactedPreview: "",
+						totalTests: 1,
+						passedTests: 1,
+						failedTests: 0,
+						signal: null,
+					},
+					subject: { repositoryFingerprint: "", baseSha: "", headSha: "", diffSha256: "", scopeSha256: "" },
+					runnerMode: "host-unsafe",
+					schemaVersion: 1,
+				},
+				reviewAttestation: {
+					status: "PASS",
+					llmVerdict: { specCompliance: "PASS", codeQuality: "PASS", summary: "" },
+					subject: { repositoryFingerprint: "", baseSha: "", headSha: "", diffSha256: "", scopeSha256: "" },
+					implementerExecutionId: "",
+					reviewerExecutionId: "",
+					provider: "",
+					model: "",
+					independenceLevel: "same_process",
+					rawOutputDigest: "",
+					retries: 0,
+					schemaVersion: 1,
 				},
 				scopeViolation: false,
 			},
@@ -539,7 +587,8 @@ describe("Full Pipeline — End-to-End", () => {
 		// 1. Spawn thread
 		const result = await tm.spawnThread({
 			id: "e2e-1",
-			task: "add hello function", writeScope: ["."],
+			task: "add hello function",
+			writeScope: ["."],
 			context: "Working on a TypeScript project",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -577,19 +626,25 @@ describe("Full Pipeline — End-to-End", () => {
 		const results = await Promise.all([
 			tm.spawnThread({
 				id: "e2e-par-1",
-				task: "add feature alpha", writeScope: ["."],
+				task: "add feature alpha",
+				writeScope: ["."],
+				testCommand: "node --version",
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "e2e-par-2",
-				task: "add feature beta", writeScope: ["."],
+				task: "add feature beta",
+				writeScope: ["."],
+				testCommand: "node --version",
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
 			tm.spawnThread({
 				id: "e2e-par-3",
-				task: "add feature gamma", writeScope: ["."],
+				task: "add feature gamma",
+				writeScope: ["."],
+				testCommand: "node --version",
 				context: "",
 				agent: { backend: "mock", model: "mock-model" },
 			}),
@@ -625,7 +680,8 @@ describe("Full Pipeline — End-to-End", () => {
 
 		const result = await tmAbort.spawnThread({
 			id: "abort-1",
-			task: "should not run", writeScope: ["."],
+			task: "should not run",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "mock-model" },
 		});
@@ -658,7 +714,8 @@ describe("Budget Enforcement", () => {
 		// But since even the minimum estimate exceeds 0.001, this should fail
 		const result = await tm.spawnThread({
 			id: "budget-1",
-			task: "task", writeScope: ["."],
+			task: "task",
+			writeScope: ["."],
 			context: "",
 			agent: { backend: "mock", model: "claude-sonnet-4-6" },
 		});

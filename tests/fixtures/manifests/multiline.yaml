@@ -1,0 +1,7 @@
+id: multiline
+description: |
+  This is a multiline
+  string.
+summary: >
+  This is a
+  folded string.
