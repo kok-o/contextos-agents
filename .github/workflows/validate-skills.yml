@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         node: ["18", "20", "22"]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +54,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -221,8 +221,11 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-contextos-mcp:
-    name: contextos-mcp (Lint, Test, Build, Pack Smoke-Test)
-    runs-on: ubuntu-latest
+    name: contextos-mcp (${{ matrix.os }}, Lint, Test, Build, Pack Smoke-Test)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -252,4 +255,26 @@ jobs:
         run: |
           npm pack --dry-run
           node bin/mcp.mjs --help
+  # ---------------------------------------------------------------------------
+  oci-integration:
+    name: OCI Sandbox Integration Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Start mock OCI environment (Docker is pre-installed on ubuntu-latest)
+        run: docker --version
+
+      - name: Run verification integration tests
+        run: npm test
+        env:
+          CONTEXTOS_REQUIRE_OCI: "1"

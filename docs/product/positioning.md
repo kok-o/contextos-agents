@@ -1,6 +1,6 @@
 # ContextOS Product Positioning & ICP Governance
 
-Status: STABLE  
+Status: CORE STABLE / RUNTIME BETA  
 Version: 2.0  
 Last Updated: 2026-09-10
 
@@ -40,7 +40,7 @@ Last Updated: 2026-09-10
 | Layer | Responsibility | State & Mutability |
 |---|---|---|
 | **ContextOS Core** | Manifest compilation, canonical skill registry, context resolution, workspace discovery, adapter export. | Pure functions, zero network, zero host execution, deterministic outputs. |
-| **ContextOS Runtime** | Task orchestration, process isolation, OCI sandbox, attestation collection, transactional git merge. | Optional, stateful event store, lease locks, isolated worktrees. |
+| **ContextOS Runtime** | Task orchestration, worktree isolation, verification/reviewer gates, and experimental OCI execution components. | Optional beta. Host execution is explicitly unsafe; production OCI integration is not yet a stable guarantee. |
 | **ContextOS Catalog** | Built-in skills, references, scripts, validation checklists, third-party plugins. | Versioned manifests, pinned digests, integrity verification. |
 
 ---

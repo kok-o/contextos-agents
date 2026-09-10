@@ -32,6 +32,8 @@ const profiles = require('./profiles.js');
 const {
   LockfileV2Manager,
   JournaledTransaction,
+  ProjectMutationLock,
+  isPidAlive,
   toPosix,
 } = require('./filesystem/index.js');
 
@@ -380,7 +382,7 @@ function checkTransactions(projectDir) {
         ok: false,
         error: `RECOVERY_REQUIRED: Found ${pending.length} incomplete transaction(s).`,
         pending,
-        remediation: 'Run: node .agents/ctx.js recover --rollback',
+        remediation: 'Run: contextos recover --list',
       };
     }
   } catch {
@@ -513,6 +515,133 @@ function checkMcpHandshake(projectDir) {
   }
 }
 
+function checkSandboxAvailability() {
+  try {
+    const stdout = execFileSync('docker', ['--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    return {
+      id: 'sandbox_availability',
+      status: STATUS.PASS,
+      ok: true,
+      message: `OCI Sandbox available (${stdout.trim()})`,
+      remediation: null,
+    };
+  } catch (err) {
+    try {
+      const podmanOut = execFileSync('podman', ['--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      return {
+        id: 'sandbox_availability',
+        status: STATUS.PASS,
+        ok: true,
+        message: `OCI Sandbox available (${podmanOut.trim()})`,
+        remediation: null,
+      };
+    } catch {
+      return {
+        id: 'sandbox_availability',
+        status: STATUS.WARN,
+        ok: true,
+        message: 'OCI Sandbox (Docker/Podman) not found. Executions will fallback to host-unsafe mode.',
+        remediation: 'Install Docker or Podman to enable secure isolated execution',
+      };
+    }
+  }
+}
+
+function checkClaimEvidence(projectDir) {
+  const claimsPath = path.join(projectDir, 'benchmarks', 'claims.json');
+  if (!fs.existsSync(claimsPath)) {
+    return {
+      id: 'claim_evidence',
+      status: STATUS.SKIP,
+      ok: true,
+      message: 'No claims.json found (benchmarks/claims.json)',
+      remediation: null,
+    };
+  }
+
+  try {
+    const claimsData = JSON.parse(fs.readFileSync(claimsPath, 'utf8'));
+    let missingEvidence = 0;
+    const claims = claimsData.claims || [];
+    for (const claim of claims) {
+      if (claim.evidenceArtifact) {
+        const artifactPath = path.join(projectDir, claim.evidenceArtifact);
+        if (!fs.existsSync(artifactPath)) {
+          missingEvidence++;
+        }
+      }
+    }
+    
+    if (missingEvidence > 0) {
+      return {
+        id: 'claim_evidence',
+        status: STATUS.FAIL,
+        ok: false,
+        message: `${missingEvidence} claim(s) missing evidence artifact(s)`,
+        remediation: 'Run Benchmark v2 protocol to regenerate claim evidence',
+      };
+    }
+
+    return {
+      id: 'claim_evidence',
+      status: STATUS.PASS,
+      ok: true,
+      message: `All ${claims.length} claim(s) have verified evidence artifacts`,
+      remediation: null,
+    };
+  } catch (e) {
+    return {
+      id: 'claim_evidence',
+      status: STATUS.FAIL,
+      ok: false,
+      message: `Failed to parse claims.json: ${e.message}`,
+      remediation: 'Fix JSON syntax in benchmarks/claims.json',
+    };
+  }
+}
+
+function checkProjectLock(projectDir) {
+  try {
+    const lock = new ProjectMutationLock(projectDir);
+    const payload = lock.inspect();
+    
+    if (payload) {
+      const isAlive = isPidAlive(payload.pid);
+      if (!isAlive) {
+        return {
+          id: 'project_lock',
+          status: STATUS.WARN,
+          ok: true,
+          message: `Stale project mutation lock found (PID ${payload.pid} is dead)`,
+          remediation: 'Run `contextos doctor --fix` to clear stale locks',
+        };
+      }
+      return {
+        id: 'project_lock',
+        status: STATUS.WARN,
+        ok: true,
+        message: `Project mutation lock is currently held (PID ${payload.pid})`,
+        remediation: 'Wait for the current operation to finish',
+      };
+    }
+    return {
+      id: 'project_lock',
+      status: STATUS.PASS,
+      ok: true,
+      message: 'Project mutation lock is clean',
+      remediation: null,
+    };
+  } catch (e) {
+    return {
+      id: 'project_lock',
+      status: STATUS.UNVERIFIED,
+      ok: true,
+      message: `Project lock status unverified: ${e.message}`,
+      remediation: null,
+    };
+  }
+}
+
 function checkDriftStatus(projectDir) {
   try {
     const { detectDrift } = require('./adapters/drift-detector.js');
@@ -622,7 +751,20 @@ function applyDoctorFix(projectDir = process.cwd(), options = {}) {
     }
   } catch {}
 
-  // 3. Clear temporary probe/error files
+  // 3. Clear stale project mutation locks
+  try {
+    const { ProjectMutationLock, isPidAlive } = require('./filesystem/index.js');
+    const lock = new ProjectMutationLock(projectDir);
+    const payload = lock.inspect();
+    if (payload && !isPidAlive(payload.pid)) {
+      if (fs.existsSync(lock.lockPath)) {
+        fs.unlinkSync(lock.lockPath);
+        results.push(`✓ Pruned stale project mutation lock (PID ${payload.pid})`);
+      }
+    }
+  } catch {}
+
+  // 4. Clear temporary probe/error files
   try {
     const errLog = path.join(projectDir, '.agents', '.contextos', 'watch-error.json');
     if (fs.existsSync(errLog)) {
@@ -722,6 +864,19 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
     else errors.push(secretCheck.message);
   }
 
+  const sandboxCheck = checkSandboxAvailability();
+  checks.push(sandboxCheck);
+  if (sandboxCheck.status === STATUS.WARN) warnings.push(sandboxCheck.message);
+
+  const claimCheck = checkClaimEvidence(projectDir);
+  checks.push(claimCheck);
+  if (!claimCheck.ok) errors.push(claimCheck.message);
+  else if (claimCheck.status === STATUS.SKIP) warnings.push(claimCheck.message);
+
+  const projectLockCheck = checkProjectLock(projectDir);
+  checks.push(projectLockCheck);
+  if (projectLockCheck.status === STATUS.WARN) warnings.push(projectLockCheck.message);
+
   const stack = profiles.detectStack(projectDir);
 
   // Determine overall status
@@ -762,6 +917,9 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
       adapterCheck,
       symlinkCheck,
       driftCheck,
+      sandboxCheck,
+      claimCheck,
+      projectLockCheck,
       stack,
       summary: {
         total: checks.length,
@@ -845,6 +1003,21 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
   const secretStr = `Secret scanner: ${secretCheck.message}`;
   console.log(`│  ${secretIcon} ${secretStr.padEnd(58)}│`);
 
+  // Sandbox
+  const sandboxIcon = sandboxCheck.status === STATUS.PASS ? '✓' : '•';
+  const sandboxStr = `Sandbox: ${sandboxCheck.message}`;
+  console.log(`│  ${sandboxIcon} ${sandboxStr.slice(0, 58).padEnd(58)}│`);
+
+  // Claims Evidence
+  const claimIcon = claimCheck.status === STATUS.PASS ? '✓' : (claimCheck.status === STATUS.SKIP ? '•' : '✗');
+  const claimStr = `Claims evidence: ${claimCheck.message}`;
+  console.log(`│  ${claimIcon} ${claimStr.slice(0, 58).padEnd(58)}│`);
+
+  // Project Mutation Lock
+  const lockStateIcon = projectLockCheck.status === STATUS.PASS ? '✓' : (projectLockCheck.status === STATUS.WARN ? '•' : '✗');
+  const lockStateStr = `Mutation lock: ${projectLockCheck.message}`;
+  console.log(`│  ${lockStateIcon} ${lockStateStr.slice(0, 58).padEnd(58)}│`);
+
   console.log('│                                                             │');
   console.log('├─────────────────────────────────────────────────────────────┤');
   console.log('│  Project Stack & Profile Recommendations                    │');
@@ -899,6 +1072,9 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
     adapterCheck,
     symlinkCheck,
     driftCheck,
+    sandboxCheck,
+    claimCheck,
+    projectLockCheck,
     stack,
   };
 
@@ -930,5 +1106,8 @@ module.exports = {
   checkSymlinks,
   checkMcpHandshake,
   checkDriftStatus,
+  checkSandboxAvailability,
+  checkClaimEvidence,
+  checkProjectLock,
   inspectSkills,
 };

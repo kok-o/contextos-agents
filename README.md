@@ -42,8 +42,8 @@ Most AI coding assistants suffer from two extremes: they either operate in a vac
 
 | Without ContextOS (Everyday AI Frustrations) | With ContextOS (Engineering Discipline) |
 |---|---|
-| **Prompt Bloat & Token Waste:** Pasting giant system prompts burns tokens, slows responses, and degrades reasoning. | **Dynamic Context Resolution:** Dynamically resolves only 2–3 required skills per task (`ctx.js resolve`), saving up to 70–80% in prompt tokens. |
-| **Lazy Code & Slop:** Output full of `// TODO: implement later`, missing imports, and broken refactorings. | **Zero-Placeholder Invariant:** Strict guardrails enforce 100% complete, drop-in ready code with verified syntax and error boundaries. |
+| **Prompt Bloat & Token Waste:** Pasting giant system prompts burns tokens, slows responses, and degrades reasoning. | **Dynamic Context Resolution:** Selects a dependency-closed set of relevant skills within a configurable token budget (`ctx.js resolve`). Quantitative savings are not claimed until Benchmark v2 evidence is available. |
+| **Lazy Code & Slop:** Output full of `// TODO: implement later`, missing imports, and broken refactorings. | **Verification gates:** ContextOS can reject changes that lack configured verification evidence; prompts alone do not guarantee complete or correct code. |
 | **Tool Zoo Fragmentation:** Inconsistent rules across Cursor (`.cursorrules`), Zed (`.zed/`), Aider, and Claude Code. | **Single Source of Truth:** Author skills once in markdown; ContextOS exports optimized configurations for all major AI editors (`ctx.js export all`). |
 | **Destructive File Rewrites:** Agents overwrite hundreds of lines without reading existing code first. | **Surgical Blast Radius & Sandboxing:** Changes are confined to planned lines or executed safely in isolated Git worktrees via ContextOS MCP. |
 | **"Black Box" Hallucinations:** You only see the start and end, with no insight into the agent's decisions. | **Transparent Pair Programming:** The agent outlines technical decisions, adheres to strict phases (DEFINE → PLAN → BUILD → VERIFY), and proves work with test runs. |
