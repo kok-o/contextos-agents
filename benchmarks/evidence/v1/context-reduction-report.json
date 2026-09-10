@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "claimId": "claim-context-reduction-v1",
+  "status": "invalidated",
+  "reason": "The repository does not contain the raw task-level records needed to reproduce the historical aggregate. The numerical claim must not be presented as validated until Benchmark v2 produces a complete evidence bundle.",
+  "supersededBy": "benchmark-v2-pending"
+}

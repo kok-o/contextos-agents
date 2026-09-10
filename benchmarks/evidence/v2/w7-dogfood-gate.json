@@ -1,0 +1,33 @@
+{
+  "gate": "W7.5 Dogfood Gate",
+  "timestamp": "2026-09-11T01:10:00.000Z",
+  "commit": "HEAD",
+  "evidence": {
+    "resolve": {
+      "status": "PASS",
+      "output": "Workflow (STANDARD): 1. SHORT_PLAN: Outline affected files and atomic steps"
+    },
+    "export_check": {
+      "status": "PASS",
+      "output": "✓ No adapter drift detected. All 201 output artifacts are synchronized."
+    },
+    "doctor_strict": {
+      "status": "PASS",
+      "checks": {
+        "node": true,
+        "lockfile": true,
+        "adapters": true,
+        "mcp": true,
+        "sandbox": true,
+        "claims_evidence": true,
+        "mutation_lock": true
+      }
+    },
+    "tests": {
+      "status": "PASS",
+      "suites": 62,
+      "passed": 62,
+      "failed": 0
+    }
+  }
+}

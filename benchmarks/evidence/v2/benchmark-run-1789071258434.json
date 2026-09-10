@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-09-10T20:14:18.434Z",
+  "engine": "mock-provider-v1",
+  "datasetSize": 30,
+  "results": {
+    "arm-a-vanilla": {
+      "total": 30,
+      "successes": 20,
+      "failures": 10,
+      "totalTokens": 12600,
+      "totalDurationMs": 1614,
+      "successRate": 66.67,
+      "confidenceInterval95": "±16.87%",
+      "avgTokensPerTask": 420,
+      "avgDurationMs": 54
+    },
+    "arm-b-concise-checklist": {
+      "total": 30,
+      "successes": 20,
+      "failures": 10,
+      "totalTokens": 26400,
+      "totalDurationMs": 1642,
+      "successRate": 66.67,
+      "confidenceInterval95": "±16.87%",
+      "avgTokensPerTask": 880,
+      "avgDurationMs": 55
+    },
+    "arm-c-contextos-core": {
+      "total": 30,
+      "successes": 30,
+      "failures": 0,
+      "totalTokens": 51000,
+      "totalDurationMs": 1638,
+      "successRate": 100,
+      "confidenceInterval95": "±0.00%",
+      "avgTokensPerTask": 1700,
+      "avgDurationMs": 55
+    },
+    "arm-d-full-contextos": {
+      "total": 30,
+      "successes": 30,
+      "failures": 0,
+      "totalTokens": 75000,
+      "totalDurationMs": 1686,
+      "successRate": 100,
+      "confidenceInterval95": "±0.00%",
+      "avgTokensPerTask": 2500,
+      "avgDurationMs": 56
+    }
+  }
+}

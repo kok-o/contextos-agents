@@ -1,0 +1,392 @@
+[
+  {
+    "id": "task-01-mock-task",
+    "description": "This is mock task 1 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-01.js"
+      ],
+      "filesToContain": {
+        "output-01.js": "console.log('mock 1');"
+      }
+    },
+    "hash": "sha256:7afaa346b4bf92bf9dc21e9ae809887412a86beb766842e99df7fee6573a4781"
+  },
+  {
+    "id": "task-02-mock-task",
+    "description": "This is mock task 2 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-02.js"
+      ],
+      "filesToContain": {
+        "output-02.js": "console.log('mock 2');"
+      }
+    },
+    "hash": "sha256:78686d2704d4d6900bb73f4941aa661a26a09f4346ab5e83281c0a18830ad1dd"
+  },
+  {
+    "id": "task-03-mock-task",
+    "description": "This is mock task 3 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-03.js"
+      ],
+      "filesToContain": {
+        "output-03.js": "console.log('mock 3');"
+      }
+    },
+    "hash": "sha256:1724980aa084bbaa16a8a69b664b783799bc75f8abe13ffc65b76843564fbbff"
+  },
+  {
+    "id": "task-04-mock-task",
+    "description": "This is mock task 4 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-04.js"
+      ],
+      "filesToContain": {
+        "output-04.js": "console.log('mock 4');"
+      }
+    },
+    "hash": "sha256:8f9ba36d8e59dd863b941cf6aba8709674901dba17f3e9c904e4da733538e38a"
+  },
+  {
+    "id": "task-05-mock-task",
+    "description": "This is mock task 5 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-05.js"
+      ],
+      "filesToContain": {
+        "output-05.js": "console.log('mock 5');"
+      }
+    },
+    "hash": "sha256:e7c08de777760acda054e9e20c19133287d1c245ef5efb6abaea6ec1ee3020e9"
+  },
+  {
+    "id": "task-06-mock-task",
+    "description": "This is mock task 6 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-06.js"
+      ],
+      "filesToContain": {
+        "output-06.js": "console.log('mock 6');"
+      }
+    },
+    "hash": "sha256:98c4ca9fa7207111d5816fe81f22b0e0cd27dc2b9d78ee9deb626d0a901f6921"
+  },
+  {
+    "id": "task-07-mock-task",
+    "description": "This is mock task 7 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-07.js"
+      ],
+      "filesToContain": {
+        "output-07.js": "console.log('mock 7');"
+      }
+    },
+    "hash": "sha256:014e4ceaa5a9e5112150d2536f78ecab3801305b5e95ceabf1de359314f9274f"
+  },
+  {
+    "id": "task-08-mock-task",
+    "description": "This is mock task 8 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-08.js"
+      ],
+      "filesToContain": {
+        "output-08.js": "console.log('mock 8');"
+      }
+    },
+    "hash": "sha256:f0470f4ad3dcb981ec0447de20036801ec638a0b7b32ae4dd8e6d1c94c08257e"
+  },
+  {
+    "id": "task-09-mock-task",
+    "description": "This is mock task 9 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-09.js"
+      ],
+      "filesToContain": {
+        "output-09.js": "console.log('mock 9');"
+      }
+    },
+    "hash": "sha256:e34d3152baeb112c9bd77f2381ea0cf9b902613c95d5ae2660b51a4e7ede2785"
+  },
+  {
+    "id": "task-10-mock-task",
+    "description": "This is mock task 10 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-10.js"
+      ],
+      "filesToContain": {
+        "output-10.js": "console.log('mock 10');"
+      }
+    },
+    "hash": "sha256:8bfdd14ef40300544ba24d517506314c6b8fd3075ecad82341f15eb2715692e0"
+  },
+  {
+    "id": "task-11-mock-task",
+    "description": "This is mock task 11 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-11.js"
+      ],
+      "filesToContain": {
+        "output-11.js": "console.log('mock 11');"
+      }
+    },
+    "hash": "sha256:555ada841ff8a3cc6b4ce15165f2d214f818bde82cdb71d942137ab132d499e6"
+  },
+  {
+    "id": "task-12-mock-task",
+    "description": "This is mock task 12 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-12.js"
+      ],
+      "filesToContain": {
+        "output-12.js": "console.log('mock 12');"
+      }
+    },
+    "hash": "sha256:712690d9849664fd0adbfeb295d9e47618024ad8c4be52adfa314e3d31481e50"
+  },
+  {
+    "id": "task-13-mock-task",
+    "description": "This is mock task 13 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-13.js"
+      ],
+      "filesToContain": {
+        "output-13.js": "console.log('mock 13');"
+      }
+    },
+    "hash": "sha256:aa050d240a6c17ad68f304685f77782bbb8ab5cc6dae23d3cbd845de6cf87304"
+  },
+  {
+    "id": "task-14-mock-task",
+    "description": "This is mock task 14 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-14.js"
+      ],
+      "filesToContain": {
+        "output-14.js": "console.log('mock 14');"
+      }
+    },
+    "hash": "sha256:ec88ecb7025218c79945d70e568f358e61452ab70d9c434b337411f6a8f468fc"
+  },
+  {
+    "id": "task-15-mock-task",
+    "description": "This is mock task 15 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-15.js"
+      ],
+      "filesToContain": {
+        "output-15.js": "console.log('mock 15');"
+      }
+    },
+    "hash": "sha256:5f1f6caf37ba31b3b91b876e5e592717abc9c97e0349c15e7ff3c2da2d133947"
+  },
+  {
+    "id": "task-16-mock-task",
+    "description": "This is mock task 16 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-16.js"
+      ],
+      "filesToContain": {
+        "output-16.js": "console.log('mock 16');"
+      }
+    },
+    "hash": "sha256:e8e6bfe60cd69b3373e667336d41d3c95fdbc5008f9c0eb99b1b94460e7ad0fd"
+  },
+  {
+    "id": "task-17-mock-task",
+    "description": "This is mock task 17 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-17.js"
+      ],
+      "filesToContain": {
+        "output-17.js": "console.log('mock 17');"
+      }
+    },
+    "hash": "sha256:3a41c6b074a0770e0fb6822ed252c69a77c05fa7bd97fcd9bf9b16f6cf193dd8"
+  },
+  {
+    "id": "task-18-mock-task",
+    "description": "This is mock task 18 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-18.js"
+      ],
+      "filesToContain": {
+        "output-18.js": "console.log('mock 18');"
+      }
+    },
+    "hash": "sha256:dbd6cc88cb73c805eef95f0cea09e09927f6b13e33fad1e69c049d174eab537f"
+  },
+  {
+    "id": "task-19-mock-task",
+    "description": "This is mock task 19 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-19.js"
+      ],
+      "filesToContain": {
+        "output-19.js": "console.log('mock 19');"
+      }
+    },
+    "hash": "sha256:b844124ce8543a3863a82699dd4cefb5e9b9391547934546974419be2b069895"
+  },
+  {
+    "id": "task-20-mock-task",
+    "description": "This is mock task 20 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-20.js"
+      ],
+      "filesToContain": {
+        "output-20.js": "console.log('mock 20');"
+      }
+    },
+    "hash": "sha256:ad1eb8063f7138e9fb193982a6bc4db5eed1e8fb4af21ddbda75270cb2c06d51"
+  },
+  {
+    "id": "task-21-mock-task",
+    "description": "This is mock task 21 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-21.js"
+      ],
+      "filesToContain": {
+        "output-21.js": "console.log('mock 21');"
+      }
+    },
+    "hash": "sha256:2dd74021abc2bb10e9bed627b7fb072311ed8e86b95526b8a57149cd4f89a7df"
+  },
+  {
+    "id": "task-22-mock-task",
+    "description": "This is mock task 22 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-22.js"
+      ],
+      "filesToContain": {
+        "output-22.js": "console.log('mock 22');"
+      }
+    },
+    "hash": "sha256:4865211d3986fbea264350c8965dba461d6eb5dec27beceaebd247c49b7f6fff"
+  },
+  {
+    "id": "task-23-mock-task",
+    "description": "This is mock task 23 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-23.js"
+      ],
+      "filesToContain": {
+        "output-23.js": "console.log('mock 23');"
+      }
+    },
+    "hash": "sha256:168e4241ee5aee2f186f0aab6856178a11fef6399d27f17f62cc25cb695aac0e"
+  },
+  {
+    "id": "task-24-mock-task",
+    "description": "This is mock task 24 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-24.js"
+      ],
+      "filesToContain": {
+        "output-24.js": "console.log('mock 24');"
+      }
+    },
+    "hash": "sha256:1b7f1e388d8f3e020f6f33a61f29bf40f9e56f203f1b634c47b36e70a5493f01"
+  },
+  {
+    "id": "task-25-mock-task",
+    "description": "This is mock task 25 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-25.js"
+      ],
+      "filesToContain": {
+        "output-25.js": "console.log('mock 25');"
+      }
+    },
+    "hash": "sha256:2ad0d0c64bbc6d5fc6bb10e398ce1e62ae9a6c73b4a13390646d94f90830ee04"
+  },
+  {
+    "id": "task-26-mock-task",
+    "description": "This is mock task 26 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-26.js"
+      ],
+      "filesToContain": {
+        "output-26.js": "console.log('mock 26');"
+      }
+    },
+    "hash": "sha256:b4eaa7cfe62d917b87a0311079eadd9a7c2488676f84b3bad540425c5d52ed5c"
+  },
+  {
+    "id": "task-27-mock-task",
+    "description": "This is mock task 27 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-27.js"
+      ],
+      "filesToContain": {
+        "output-27.js": "console.log('mock 27');"
+      }
+    },
+    "hash": "sha256:1d571536957594de46fbd9fe0710eefcc66d849ea53dde9ad61ee483941349e1"
+  },
+  {
+    "id": "task-28-mock-task",
+    "description": "This is mock task 28 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-28.js"
+      ],
+      "filesToContain": {
+        "output-28.js": "console.log('mock 28');"
+      }
+    },
+    "hash": "sha256:765672c715bfb9813a05949c7e9eff2a8cd91eed05b0ee026d177561b77411eb"
+  },
+  {
+    "id": "task-29-mock-task",
+    "description": "This is mock task 29 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-29.js"
+      ],
+      "filesToContain": {
+        "output-29.js": "console.log('mock 29');"
+      }
+    },
+    "hash": "sha256:7209b936824e13b1ec6eeec1503b0ef2ffd0698378ab5739857130773ebf743c"
+  },
+  {
+    "id": "task-30-mock-task",
+    "description": "This is mock task 30 for the benchmark pilot.",
+    "expectedState": {
+      "filesToExist": [
+        "output-30.js"
+      ],
+      "filesToContain": {
+        "output-30.js": "console.log('mock 30');"
+      }
+    },
+    "hash": "sha256:872fd6ef064d17a4315293952bf4d8704c47d3d94affa903695dfd7e2f9461e8"
+  }
+]

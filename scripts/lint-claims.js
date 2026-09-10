@@ -85,6 +85,21 @@ function lintClaims() {
     if (!claim.evidenceArtifact) {
       console.error(`[ERROR] Claim "${claim.id}" missing evidenceArtifact link.`);
       errors++;
+    } else {
+      const evidencePath = path.resolve(ROOT, claim.evidenceArtifact);
+      const relativeEvidencePath = path.relative(ROOT, evidencePath);
+      if (relativeEvidencePath.startsWith('..') || path.isAbsolute(relativeEvidencePath)) {
+        console.error(`[ERROR] Claim "${claim.id}" evidenceArtifact escapes the repository.`);
+        errors++;
+      } else if (!fs.existsSync(evidencePath)) {
+        console.error(`[ERROR] Claim "${claim.id}" evidenceArtifact does not exist: ${claim.evidenceArtifact}`);
+        errors++;
+      }
+    }
+
+    if (claim.validUntil && Number.isNaN(Date.parse(claim.validUntil))) {
+      console.error(`[ERROR] Claim "${claim.id}" has invalid validUntil date: ${claim.validUntil}`);
+      errors++;
     }
   }
 
