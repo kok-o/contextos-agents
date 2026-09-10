@@ -1,14 +1,12 @@
+schemaVersion: 2
 id: security
 name: Application Security
 category: backend
 type: instruction-only
-tags: [backend, security, auth, owasp, jwt, encryption]
 requires: []
 optional: [node, fastapi, nestjs]
 conflicts: []
 weight: 9
-documents:
-  - security.md
 resources:
   - EXAMPLES.md
   - SKILL.md

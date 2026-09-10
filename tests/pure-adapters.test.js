@@ -71,7 +71,7 @@ describe('pure-compiler.js — Pure Adapter Contract & Multi-Adapter Rendering',
       describe: () => ({ name: 'mock-collision' }),
       render: () => [
         {
-          path: '.cursorrules', // Collides with cursor adapter
+          path: '.cursor/rules/00-project-rules.mdc', // Collides with cursor adapter
           content: 'collision content',
           generator: 'mock-collision@2',
         },
@@ -86,7 +86,7 @@ describe('pure-compiler.js — Pure Adapter Contract & Multi-Adapter Rendering',
     const result = renderAdapters(projectRoot, ['cursor', 'mock-collision']);
 
     assert.ok(result.collisions.length > 0);
-    const collision = result.collisions.find(c => c.path === '.cursorrules');
+    const collision = result.collisions.find(c => c.path === '.cursor/rules/00-project-rules.mdc');
     assert.ok(collision);
     assert.strictEqual(collision.firstAdapter, 'cursor@2');
     assert.strictEqual(collision.secondAdapter, 'mock-collision@2');
@@ -141,13 +141,13 @@ describe('drift-detector.js — Adapter Output Drift Detection', () => {
     applyArtifacts(tmpRoot, rendered.artifacts, { context: rendered.context });
 
     // Simulate user editing .cursorrules on disk
-    const targetFile = path.join(tmpRoot, '.cursorrules');
+    const targetFile = path.join(tmpRoot, '.cursor', 'rules', '00-project-rules.mdc');
     fs.writeFileSync(targetFile, '# USER MODIFIED CONTENT THAT DRIFTED\n', 'utf8');
 
     const report = detectDrift(tmpRoot, ['cursor']);
     assert.strictEqual(report.hasDrift, true);
     assert.ok(
-      report.findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].some(f => f.path === '.cursorrules')
+      report.findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].some(f => f.path === '.cursor/rules/00-project-rules.mdc')
     );
   });
 

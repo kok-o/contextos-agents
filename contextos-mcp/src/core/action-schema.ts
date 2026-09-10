@@ -24,9 +24,17 @@ export const SpawnActionSchema = z
 		action: z.literal("spawn"),
 		task: z.string().min(1).max(20_000),
 		writeScope: z.array(repositoryRelativePath).min(1).max(200),
+		focusFiles: z.array(repositoryRelativePath).max(200).optional(),
+		allowRepositoryWide: z.boolean().optional(),
 		model: z.string().min(1).max(200).optional(),
 	})
-	.strict();
+	.strict()
+	.refine((data) => {
+		if (data.writeScope.includes(".")) {
+			return data.allowRepositoryWide === true;
+		}
+		return true;
+	}, "Repository-wide write scope ('.') requires allowRepositoryWide to be true");
 
 export const WaitActionSchema = z
 	.object({

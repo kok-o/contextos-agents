@@ -126,7 +126,7 @@ function validate(artifacts) {
 
 function run(options = {}) {
   const { loadCompilerContext } = require('../pure-compiler.js');
-  const projectRoot = process.cwd();
+  const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
   const result = applyArtifacts(projectRoot, artifacts, { command: 'export gemini', context });

@@ -1,11 +1,7 @@
+schemaVersion: 2
 name: vercel-optimize
 type: runtime
 description: Observability-first Vercel performance and cost reduction optimization skill.
-tags:
-  - vercel
-  - nextjs
-  - performance
-  - cost
 version: 1.2.0
 requires:
   - nextjs

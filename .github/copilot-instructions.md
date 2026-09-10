@@ -38,45 +38,45 @@ ContextOS uses on-demand progressive disclosure. Read the relevant `SKILL.md` fi
 
 | Trigger / Domain | Skill | Path |
 | --- | --- | --- |
-| `- adapters - agents - configuration - devops` | **adapters** | `.agents/core/skills/adapters/SKILL.md` |
-| `- architecture - diagrams - system-design - visualization` | **architecture-diagrams** | `.agents/core/skills/architecture-diagrams/SKILL.md` |
-| `- ui - design - brutalist - typography` | **brutalist-design** | `.agents/core/skills/brutalist-design/SKILL.md` |
-| `- context - optimization - tokens - architecture` | **context-manager** | `.agents/core/skills/context-manager/SKILL.md` |
-| `- workflow - orchestration - architecture - context` | **context-os** | `.agents/core/skills/context-os/SKILL.md` |
+| `adapters` | **adapters** | `.agents/core/skills/adapters/SKILL.md` |
+| `architecture-diagrams` | **architecture-diagrams** | `.agents/core/skills/architecture-diagrams/SKILL.md` |
+| `brutalist-design` | **brutalist-design** | `.agents/core/skills/brutalist-design/SKILL.md` |
+| `context-manager` | **context-manager** | `.agents/core/skills/context-manager/SKILL.md` |
+| `context-os` | **context-os** | `.agents/core/skills/context-os/SKILL.md` |
 | `database` | **database** | `.agents/core/skills/database/SKILL.md` |
-| `architecture, ddd, domain, bounded-context, aggregate` | **ddd** | `.agents/core/skills/ddd/SKILL.md` |
-| `- architecture - adr - decisions - documentation` | **decisions** | `.agents/core/skills/decisions/SKILL.md` |
+| `ddd` | **ddd** | `.agents/core/skills/ddd/SKILL.md` |
+| `decisions` | **decisions** | `.agents/core/skills/decisions/SKILL.md` |
 | `docker` | **docker** | `.agents/core/skills/docker/SKILL.md` |
-| `- workflow - engineering - tdd - planning - review` | **engineering-workflow** | `.agents/core/skills/engineering-workflow/SKILL.md` |
-| `backend, python, api, async, pydantic` | **fastapi** | `.agents/core/skills/fastapi/SKILL.md` |
-| `- gemini - precision - quality - workflow - antigravity` | **gemini-precision** | `.agents/core/skills/gemini-precision/SKILL.md` |
-| `- documentation - generators - architecture - templates` | **generators** | `.agents/core/skills/generators/SKILL.md` |
-| `- knowledge-graph - ast - tree-sitter - dependencies - context-optimization - architecture` | **graphify** | `.agents/core/skills/graphify/SKILL.md` |
-| `- roles - management - workflow - planning` | **gstack-roles** | `.agents/core/skills/gstack-roles/SKILL.md` |
-| `- ui - design - frontend - visual - anti-patterns` | **impeccable-design** | `.agents/core/skills/impeccable-design/SKILL.md` |
-| `- workflow - requirements - planning - interview` | **interview-me** | `.agents/core/skills/interview-me/SKILL.md` |
-| `architecture, microservices, distributed, event-driven, cqrs` | **microservices** | `.agents/core/skills/microservices/SKILL.md` |
-| `- ui - design - minimalist - editorial` | **minimalist-design** | `.agents/core/skills/minimalist-design/SKILL.md` |
-| `backend, nodejs, typescript, enterprise, di, decorators` | **nestjs** | `.agents/core/skills/nestjs/SKILL.md` |
-| `frontend, ssr, ssg, fullstack, react, app-router` | **nextjs** | `.agents/core/skills/nextjs/SKILL.md` |
-| `backend, javascript, runtime, server, express, fastify` | **node** | `.agents/core/skills/node/SKILL.md` |
-| `frontend, performance, core-web-vitals, optimization` | **performance** | `.agents/core/skills/performance/SKILL.md` |
-| `- minimalism - efficiency - quality - yagni - refactoring` | **ponytail-mindset** | `.agents/core/skills/ponytail-mindset/SKILL.md` |
-| `frontend, spa, jsx, components, hooks` | **react** | `.agents/core/skills/react/SKILL.md` |
-| `- react - nextjs - performance - vercel` | **react-best-practices** | `.agents/core/skills/react-best-practices/SKILL.md` |
-| `- ui - design - audit - refactor` | **redesign-audit** | `.agents/core/skills/redesign-audit/SKILL.md` |
-| `backend, security, auth, owasp, jwt, encryption` | **security** | `.agents/core/skills/security/SKILL.md` |
-| `- ui - design - premium - motion` | **soft-design** | `.agents/core/skills/soft-design/SKILL.md` |
+| `engineering-workflow` | **engineering-workflow** | `.agents/core/skills/engineering-workflow/SKILL.md` |
+| `fastapi` | **fastapi** | `.agents/core/skills/fastapi/SKILL.md` |
+| `gemini-precision` | **gemini-precision** | `.agents/core/skills/gemini-precision/SKILL.md` |
+| `generators` | **generators** | `.agents/core/skills/generators/SKILL.md` |
+| `graphify` | **graphify** | `.agents/core/skills/graphify/SKILL.md` |
+| `gstack-roles` | **gstack-roles** | `.agents/core/skills/gstack-roles/SKILL.md` |
+| `impeccable-design` | **impeccable-design** | `.agents/core/skills/impeccable-design/SKILL.md` |
+| `interview-me` | **interview-me** | `.agents/core/skills/interview-me/SKILL.md` |
+| `microservices` | **microservices** | `.agents/core/skills/microservices/SKILL.md` |
+| `minimalist-design` | **minimalist-design** | `.agents/core/skills/minimalist-design/SKILL.md` |
+| `nestjs` | **nestjs** | `.agents/core/skills/nestjs/SKILL.md` |
+| `nextjs` | **nextjs** | `.agents/core/skills/nextjs/SKILL.md` |
+| `node` | **node** | `.agents/core/skills/node/SKILL.md` |
+| `performance` | **performance** | `.agents/core/skills/performance/SKILL.md` |
+| `ponytail-mindset` | **ponytail-mindset** | `.agents/core/skills/ponytail-mindset/SKILL.md` |
+| `react` | **react** | `.agents/core/skills/react/SKILL.md` |
+| `react-best-practices` | **react-best-practices** | `.agents/core/skills/react-best-practices/SKILL.md` |
+| `redesign-audit` | **redesign-audit** | `.agents/core/skills/redesign-audit/SKILL.md` |
+| `security` | **security** | `.agents/core/skills/security/SKILL.md` |
+| `soft-design` | **soft-design** | `.agents/core/skills/soft-design/SKILL.md` |
 | `state-management` | **state-management** | `.agents/core/skills/state-management/SKILL.md` |
-| `- subagents - orchestration - multi-agent - workflow` | **subagent-orchestrator** | `.agents/core/skills/subagent-orchestrator/SKILL.md` |
-| `- architecture - backend - scalability - database - microservices` | **system-design** | `.agents/core/skills/system-design/SKILL.md` |
+| `subagent-orchestrator` | **subagent-orchestrator** | `.agents/core/skills/subagent-orchestrator/SKILL.md` |
+| `system-design` | **system-design** | `.agents/core/skills/system-design/SKILL.md` |
 | `testing` | **testing** | `.agents/core/skills/testing/SKILL.md` |
-| `frontend, backend, types, static-analysis` | **typescript** | `.agents/core/skills/typescript/SKILL.md` |
-| `design, ui, components, design-system, visual` | **ui-design** | `.agents/core/skills/ui-design/SKILL.md` |
-| `- ui - ux - design - accessibility - frontend` | **ui-ux-pro** | `.agents/core/skills/ui-ux-pro/SKILL.md` |
-| `design, ux, user-flows, usability, information-architecture` | **ux-design** | `.agents/core/skills/ux-design/SKILL.md` |
-| `- vercel - nextjs - performance - cost` | **vercel-optimize** | `.agents/core/skills/vercel-optimize/SKILL.md` |
-| `frontend, a11y, wcag, aria, accessibility` | **web-accessibility** | `.agents/core/skills/web-accessibility/SKILL.md` |
+| `typescript` | **typescript** | `.agents/core/skills/typescript/SKILL.md` |
+| `ui-design` | **ui-design** | `.agents/core/skills/ui-design/SKILL.md` |
+| `ui-ux-pro` | **ui-ux-pro** | `.agents/core/skills/ui-ux-pro/SKILL.md` |
+| `ux-design` | **ux-design** | `.agents/core/skills/ux-design/SKILL.md` |
+| `vercel-optimize` | **vercel-optimize** | `.agents/core/skills/vercel-optimize/SKILL.md` |
+| `web-accessibility` | **web-accessibility** | `.agents/core/skills/web-accessibility/SKILL.md` |
 
 ---
 

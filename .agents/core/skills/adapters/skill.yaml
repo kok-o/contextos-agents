@@ -1,13 +1,9 @@
+schemaVersion: 2
 name: adapters
 type: compiler
 description: >
   Generates agent-specific configuration files from unified ContextOS format.
   Produces configs for Claude, Gemini, Copilot, Cursor, Aider, Continue, and Zed.
-tags:
-  - adapters
-  - agents
-  - configuration
-  - devops
 version: 1.0.0
 resources:
   - EXAMPLES.md

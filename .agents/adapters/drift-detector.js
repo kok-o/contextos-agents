@@ -171,6 +171,11 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
     }
   }
 
+  if (diffs.length === 0 && findings[DRIFT_STATES.ORPHAN_MANAGED_OUTPUT].length === 0) {
+    findings[DRIFT_STATES.STALE_INPUT] = [];
+    findings[DRIFT_STATES.PROFILE_MISMATCH] = [];
+  }
+
   const totalFindings = Object.values(findings).reduce((acc, list) => acc + list.length, 0);
   const hasDrift = totalFindings > 0 || collisions.length > 0;
 

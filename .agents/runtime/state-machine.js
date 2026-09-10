@@ -402,17 +402,7 @@ function evaluateMergeReadiness(thread, options = {}) {
   let revReason = '';
 
   // If review is configured, it must PASS with an attestation
-  if (revStatus === REVIEW_STATUS.NOT_CONFIGURED) {
-    // If not configured, check whether high-risk requires review
-    const requiresReview = thread.config?.requiresReview === true || (thread.config?.riskLevel === 'high');
-    if (requiresReview) {
-      revReason = 'Review is NOT_CONFIGURED but required by task risk level';
-      revPassed = false;
-    } else {
-      revPassed = true;
-      revReason = 'Review is NOT_CONFIGURED (task risk allows single-agent verify)';
-    }
-  } else if (revStatus !== REVIEW_STATUS.PASS) {
+  if (revStatus !== REVIEW_STATUS.PASS) {
     revReason = `Review status is ${revStatus}, expected PASS`;
   } else if (!revAtt) {
     revReason = 'Review marked PASS but lacks ReviewAttestation';

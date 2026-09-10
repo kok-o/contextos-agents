@@ -126,26 +126,6 @@ describe('ctx.js — context compiler', () => {
       execSync(`node "${CTX_PATH}" export cursor`, { cwd: ROOT });
     });
 
-    test('creates .cursorrules at project root', () => {
-      assert.ok(fs.existsSync(CURSOR_FILE), '.cursorrules should exist at project root');
-    });
-
-    test('.cursorrules contains the ContextOS header', () => {
-      const content = fs.readFileSync(CURSOR_FILE, 'utf8');
-      assert.ok(content.includes('ContextOS'), 'Should include ContextOS reference');
-    });
-
-    test('.cursorrules includes skill sections', () => {
-      const content = fs.readFileSync(CURSOR_FILE, 'utf8');
-      assert.ok(content.includes('## Skill:'), 'Should contain skill sections');
-    });
-
-    test('.cursorrules contains at least 5 skills', () => {
-      const content = fs.readFileSync(CURSOR_FILE, 'utf8');
-      const matches = content.match(/^## Skill:/gm) || [];
-      assert.ok(matches.length >= 5, `Expected ≥5 skill sections, got ${matches.length}`);
-    });
-
     test('creates .cursor/rules/ directory with .mdc files', () => {
       assert.ok(fs.existsSync(CURSOR_RULES_DIR), '.cursor/rules/ directory should exist');
       const mdcFiles = fs.readdirSync(CURSOR_RULES_DIR).filter(f => f.endsWith('.mdc'));
@@ -276,7 +256,7 @@ describe('ctx.js — context compiler', () => {
     test('includes installed plugins in every adapter output', () => {
       assert.ok(fs.existsSync(path.join(GENERATED_GEMINI, 'export-test-plugin', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(GENERATED_CLAUDE, 'export-test-plugin', 'SKILL.md')));
-      assert.ok(fs.readFileSync(CURSOR_FILE, 'utf8').includes('unique-marker-export-test'));
+      assert.ok(fs.readFileSync(path.join(ROOT, '.cursor', 'rules', 'export-test-plugin.mdc'), 'utf8').includes('unique-marker-export-test'));
       assert.ok(fs.readFileSync(COPILOT_FILE, 'utf8').includes('unique-marker-export-test'));
       assert.ok(fs.readFileSync(CONVENTIONS, 'utf8').includes('unique-marker-export-test'));
       assert.ok(fs.readFileSync(ZED_RULES, 'utf8').includes('unique-marker-export-test'));

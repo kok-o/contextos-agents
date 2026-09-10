@@ -1,3 +1,4 @@
+schemaVersion: 2
 name: state-management
 description: Client and server state management standards using Zustand and TanStack Query. Enforces minimal global state, optimistic updates, and clean query invalidation.
 version: 1.0.0
@@ -6,21 +7,6 @@ type: instruction-only
 requires:
   - react
   - typescript
-triggers:
-  files:
-    - "*store*"
-    - "*state*"
-    - "use*Query.ts"
-    - "use*Mutation.ts"
-  keywords:
-    - "zustand"
-    - "tanstack"
-    - "react-query"
-    - "state"
-    - "store"
-    - "optimistic"
-    - "mutation"
-    - "cache"
 resources:
   - EXAMPLES.md
   - SKILL.md

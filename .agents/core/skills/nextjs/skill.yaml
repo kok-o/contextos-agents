@@ -1,14 +1,12 @@
+schemaVersion: 2
 id: nextjs
 name: Next.js
 category: frontend
 type: instruction-only
-tags: [frontend, ssr, ssg, fullstack, react, app-router]
 requires: [react, typescript]
 optional: [tailwind, prisma, next-auth, react-query]
 conflicts: [vue, angular, remix]
 weight: 9
-documents:
-  - nextjs.md
 resources:
   - EXAMPLES.md
   - SKILL.md

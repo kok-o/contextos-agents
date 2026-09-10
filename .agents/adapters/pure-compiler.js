@@ -340,15 +340,16 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
       }
     }
 
-    // Commit all file modifications atomically
-    const txResult = tx.commit();
-
     // Persist updated v1 lockfile if present
     if (v1Data && fs.existsSync(v1LockPath)) {
       try {
-        fs.writeFileSync(v1LockPath, JSON.stringify(v1Data, null, 2) + '\n', 'utf8');
+        const relV1LockPath = toPosix(path.relative(absRoot, v1LockPath));
+        tx.stageWrite(relV1LockPath, JSON.stringify(v1Data, null, 2) + '\n');
       } catch {}
     }
+
+    // Commit all file modifications atomically
+    const txResult = tx.commit();
 
     // Clean up empty/orphan skill directories in generated paths
     const cleanupDirs = [

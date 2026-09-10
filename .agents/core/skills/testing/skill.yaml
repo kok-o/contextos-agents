@@ -1,3 +1,4 @@
+schemaVersion: 2
 name: testing
 description: Vitest, React Testing Library, and Playwright testing standards. Enforces TDD/BDD, test pyramid, zero brittle mocks, and complete assertion coverage.
 version: 1.0.0
@@ -6,25 +7,6 @@ type: instruction-only
 requires:
   - engineering-workflow
   - typescript
-triggers:
-  files:
-    - "*.test.ts"
-    - "*.test.tsx"
-    - "*.test.js"
-    - "*.spec.ts"
-    - "*.spec.tsx"
-    - "vitest.config.*"
-    - "playwright.config.*"
-    - "jest.config.*"
-  keywords:
-    - "test"
-    - "vitest"
-    - "playwright"
-    - "unit test"
-    - "e2e"
-    - "mock"
-    - "assert"
-    - "coverage"
 resources:
   - EXAMPLES.md
   - SKILL.md

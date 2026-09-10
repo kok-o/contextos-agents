@@ -71,6 +71,8 @@ export interface WorktreeSessionMarker {
 	repositoryFingerprint: string;
 	worktreePath: string;
 	branchName: string;
+	threadId: string;
+	ownerToken: string;
 	createdAt: number;
 }
 
@@ -83,6 +85,7 @@ export interface ThreadConfig {
 		model: string;
 	};
 	files?: string[];
+	focusFiles?: string[];
 	taskBrief?: TaskBrief;
 }
 
@@ -92,6 +95,7 @@ export interface TaskBrief {
 	readonly baseSha: string;
 	readonly objective: string;
 	readonly writeScope: readonly string[];
+	readonly focusFiles?: readonly string[];
 	readonly testCommand: string;
 	readonly expectedResult: string;
 	readonly maxAttempts: number;

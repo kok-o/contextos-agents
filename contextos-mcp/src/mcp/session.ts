@@ -59,6 +59,7 @@ export interface ThreadSpawnParams {
 	id?: string;
 	task: string;
 	files?: string[];
+	focusFiles?: string[];
 	agent?: string;
 	model?: string;
 	context?: string;
@@ -213,6 +214,7 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 			model: params.model || session.config.default_model,
 		},
 		files: params.files || [],
+		focusFiles: params.focusFiles || [],
 		taskBrief:
 			params.testCommand || params.expectedResult || params.maxAttempts
 				? {
@@ -220,6 +222,7 @@ export async function spawnThread(session: SwarmSession, params: ThreadSpawnPara
 						baseSha: "",
 						objective: params.task,
 						writeScope: params.files?.length ? params.files : ["."],
+						focusFiles: params.focusFiles || [],
 						testCommand: params.testCommand || "",
 						expectedResult: params.expectedResult || "Task completes successfully",
 						maxAttempts: params.maxAttempts || session.config.thread_retries + 1,
@@ -365,6 +368,7 @@ export function createSessionDispatcher(session: SwarmSession): ActionDispatcher
 				id: threadId,
 				task: action.task,
 				files: action.writeScope,
+				focusFiles: action.focusFiles,
 				model: action.model,
 			});
 			return {

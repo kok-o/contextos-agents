@@ -1,3 +1,4 @@
+schemaVersion: 2
 name: database
 description: Database architecture, schema design, Prisma, Drizzle ORM, indexing strategies, migrations, and N+1 query resolution.
 version: 1.0.0
@@ -6,24 +7,6 @@ type: instruction-only
 requires:
   - system-design
   - typescript
-triggers:
-  files:
-    - "*.prisma"
-    - "schema.prisma"
-    - "drizzle.config.*"
-    - "migrations/*"
-    - "*.sql"
-  keywords:
-    - "database"
-    - "prisma"
-    - "drizzle"
-    - "postgres"
-    - "postgresql"
-    - "sql"
-    - "migration"
-    - "index"
-    - "transaction"
-    - "orm"
 resources:
   - EXAMPLES.md
   - SKILL.md

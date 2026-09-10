@@ -219,12 +219,16 @@ if (command === 'export') {
   } else {
     const adapter = pureCompiler.getAdapter(rawTarget);
     if (!adapter) {
-      console.error(`Adapter for '${rawTarget}' not implemented yet.`);
-      console.error(`Supported agents: ${pureCompiler.listAdapters().join(', ')}, all`);
+      if (asJson) {
+        console.error(JSON.stringify({ success: false, error: `Adapter for '${rawTarget}' not implemented yet.` }));
+      } else {
+        console.error(`Adapter for '${rawTarget}' not implemented yet.`);
+        console.error(`Supported agents: ${pureCompiler.listAdapters().join(', ')}, all`);
+      }
       process.exit(1);
     }
 
-    const result = adapter.run({ profile: overrideProfile });
+    const result = adapter.run({ profile: overrideProfile, projectRoot: process.cwd() });
     if (asJson) {
       console.log(JSON.stringify(result, null, 2));
     }
@@ -689,7 +693,11 @@ if (command === 'export') {
 // ── doctor ────────────────────────────────────────────────────────────────────
 } else if (command === 'doctor') {
   const doctorModule = require('./doctor.js');
-  const res = doctorModule.runDoctor(process.cwd(), { json: args.includes('--json') });
+  const res = doctorModule.runDoctor(process.cwd(), { 
+    json: args.includes('--json'),
+    fix: args.includes('--fix'),
+    strict: args.includes('--strict')
+  });
   if (res && res.ok === false) {
     process.exit(1);
   }

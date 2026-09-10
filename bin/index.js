@@ -649,7 +649,12 @@ try {
       version,
     });
   } catch (err) {
-    if (!flags.json) console.warn(`[WARN] Could not generate lockfile: ${err.message}`);
+    if (flags.json) {
+      console.error(JSON.stringify({ success: false, error: `Could not generate lockfile: ${err.message}` }));
+    } else {
+      console.error(`[ERROR] Could not generate lockfile: ${err.message}`);
+    }
+    process.exit(1);
   }
 
   if (!flags.json) {
@@ -690,7 +695,12 @@ try {
       const applied = profiles.applyProfile(selectedProfile, process.cwd());
       if (!flags.json) console.log(`[OK] Applied profile '${applied.name}' (excluded: ${(applied.exclude_skills || []).join(', ') || 'none'})`);
     } catch (e) {
-      if (!flags.json) console.warn(`[WARN] Could not apply profile '${selectedProfile}': ${e.message}`);
+      if (flags.json) {
+        console.error(JSON.stringify({ success: false, error: `Could not apply profile '${selectedProfile}': ${e.message}` }));
+      } else {
+        console.error(`[ERROR] Could not apply profile '${selectedProfile}': ${e.message}`);
+      }
+      process.exit(1);
     }
   }
 
@@ -711,10 +721,12 @@ try {
             stdio: flags.json ? 'ignore' : 'inherit',
           });
         } catch (e) {
-          if (!flags.json) {
-            console.warn(`[WARN] Skill compilation for '${ag}' failed — run manually:`);
-            console.warn(`       contextos export ${ag}`);
+          if (flags.json) {
+            console.error(JSON.stringify({ success: false, error: `Skill compilation for '${ag}' failed` }));
+          } else {
+            console.error(`[ERROR] Skill compilation for '${ag}' failed — run manually: contextos export ${ag}`);
           }
+          process.exit(1);
         }
       }
     }
@@ -734,10 +746,12 @@ try {
           stdio: flags.json ? 'ignore' : 'inherit',
         });
       } catch (e) {
-        if (!flags.json) {
-          console.warn(`[WARN] Skill install failed — run manually:`);
-          console.warn(`       node .agents/ctx.js skill add ${flags.addSkill}`);
+        if (flags.json) {
+          console.error(JSON.stringify({ success: false, error: `Skill install failed for ${flags.addSkill}` }));
+        } else {
+          console.error(`[ERROR] Skill install failed — run manually: node .agents/ctx.js skill add ${flags.addSkill}`);
         }
+        process.exit(1);
       }
     }
   }

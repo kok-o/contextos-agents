@@ -1,16 +1,14 @@
+schemaVersion: 2
 id: ux-design
 name: UX Design
 category: design
 type: instruction-only
-tags: [design, ux, user-flows, usability, information-architecture]
 requires: []
 optional: [ui-design, web-accessibility]
 conflicts: []
 weight: 7
 deprecated: true
 canonical: ui-ux-pro
-documents:
-  - ux.md
 resources:
   - EXAMPLES.md
   - SKILL.md

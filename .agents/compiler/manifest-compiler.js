@@ -513,6 +513,25 @@ class ManifestCompiler {
   validateSingleManifest(skillDir, manifest, manifestFile) {
     const relManifestPath = path.relative(this.rootDir, manifestFile);
 
+    // 0. Strict Schema Validation (additionalProperties: false)
+    const allowedKeys = new Set([
+      'schemaVersion', 'id', 'name', 'displayName', 'entrypoint', 'version', 
+      'description', 'type', 'category', 'dependencies', 'requires', 'optional', 
+      'conflicts', 'signals', 'context', 'weight', 'resources', 'deprecated', 
+      'canonical', 'rules'
+    ]);
+    if (manifest._raw) {
+      for (const key of Object.keys(manifest._raw)) {
+        if (!allowedKeys.has(key)) {
+          this.addDiagnostic(
+            CODES.SCHEMA_ERROR,
+            `Strict Schema Validation Failed: Unknown property '${key}' is not allowed in schemaVersion 2.`,
+            { file: relManifestPath, path: `/${key}` }
+          );
+        }
+      }
+    }
+
     // 1. Check ID format
     if (!manifest.id || !/^[a-z0-9-]+$/.test(manifest.id)) {
       this.addDiagnostic(
@@ -951,7 +970,6 @@ class ManifestCompiler {
       schemaVersion: 2,
       compilerVersion: '2.0.0',
       sourceGraphHash,
-      generatedAt: new Date().toISOString(),
       skills: compiledSkills,
       aliases: sortObjectKeys(aliases),
       deprecatedAliases: sortObjectKeys(deprecatedAliases),

@@ -1,14 +1,12 @@
+schemaVersion: 2
 id: node
 name: Node.js
 category: backend
 type: instruction-only
-tags: [backend, javascript, runtime, server, express, fastify]
 requires: [typescript]
 optional: [postgres, redis, docker]
 conflicts: []
 weight: 7
-documents:
-  - node.md
 resources:
   - EXAMPLES.md
   - SKILL.md

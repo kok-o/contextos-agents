@@ -1,13 +1,9 @@
+schemaVersion: 2
 name: context-os
 type: compiler
 description: >
   AI Project Operating System context compiler that transforms user intent into
   minimal, relevant context for any AI agent across the full development lifecycle.
-tags:
-  - workflow
-  - orchestration
-  - architecture
-  - context
 version: 1.0.0
 resources:
   - EXAMPLES.md

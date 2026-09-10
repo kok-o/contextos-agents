@@ -1,3 +1,4 @@
+schemaVersion: 2
 name: ponytail-mindset
 type: instruction-only
 description: >
@@ -5,14 +6,7 @@ description: >
   Teaches the AI to write only what is strictly necessary.
   Uses a 7-rung ladder: YAGNI → reuse → stdlib → platform → deps → one-liner → minimum.
   Minimizes unnecessary boilerplate and over-engineering while keeping all safety, validation and security guards.
-tags:
-  - minimalism
-  - efficiency
-  - quality
-  - yagni
-  - refactoring
 version: 1.0.0
-source: https://github.com/DietrichGebert/ponytail
 resources:
   - EXAMPLES.md
   - SKILL.md

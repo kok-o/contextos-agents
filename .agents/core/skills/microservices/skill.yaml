@@ -1,14 +1,12 @@
+schemaVersion: 2
 id: microservices
 name: Microservices
 category: architecture
 type: instruction-only
-tags: [architecture, microservices, distributed, event-driven, cqrs]
 requires: [system-design]
 optional: [docker, security]
 conflicts: []
 weight: 6
-documents:
-  - microservices.md
 resources:
   - EXAMPLES.md
   - SKILL.md

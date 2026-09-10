@@ -131,13 +131,12 @@ ${body}
 }
 
 function render(context) {
-  const projectRoot = context?.projectRoot || process.cwd();
+  const projectRoot = context?.projectRoot || '.';
   const agentsMdPath = fs.existsSync(path.join(projectRoot, '.agents', 'AGENTS.md'))
     ? path.join(projectRoot, '.agents', 'AGENTS.md')
     : AGENTS_MD_PATH;
 
   const artifacts = [];
-  const sections = [];
 
   const prov = createProvenanceHeader({
     generator: GENERATOR_ID,
@@ -145,14 +144,6 @@ function render(context) {
     profileId: context?.profileId,
     profileHash: context?.profileHash,
   });
-
-  sections.push(
-    prov +
-    `# ContextOS — AI Rules for Cursor\n\n` +
-    `> **Core law: Do not read everything. Read only what the current task requires.**\n\n` +
-    `Detailed rules are modularized in \`.cursor/rules/*.mdc\` with file-glob activation.\n` +
-    `Core orchestration is handled by \`.cursor/rules/00-project-rules.mdc\`.\n`
-  );
 
   // 1. 00-project-rules.mdc
   if (fs.existsSync(agentsMdPath)) {
@@ -179,15 +170,8 @@ ${agentsMd}
     });
   }
 
-  // 2. Individual .mdc files
-  sections.push('\n---\n\n# Skills Index (Loaded On-Demand)\n\n' +
-    'The following specialist skills are configured as `.cursor/rules/<skill>.mdc`:\n');
-
   const skills = collectSkillDirectories(context?.profile);
   for (const skill of skills) {
-    const section = buildSkillSection(skill);
-    if (section) sections.push(section);
-
     const mdc = generateCursorMdc(skill);
     if (mdc) {
       const fullMdc = mdc.mdcContent.replace(/\r\n/g, '\n');
@@ -202,17 +186,6 @@ ${agentsMd}
       });
     }
   }
-
-  // 3. Flat .cursorrules
-  artifacts.push({
-    path: '.cursorrules',
-    content: sections.join('\n').replace(/\r\n/g, '\n'),
-    mediaType: 'text/markdown',
-    kind: 'generated-adapter',
-    generator: GENERATOR_ID,
-    sourceSkillIds: skills.map(s => path.basename(s)),
-    inputsHash: context?.sourceGraphHash || 'none',
-  });
 
   return artifacts;
 }
@@ -229,7 +202,7 @@ function validate(artifacts) {
 
 function run(options = {}) {
   const { loadCompilerContext } = require('../pure-compiler.js');
-  const projectRoot = process.cwd();
+  const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
   const result = applyArtifacts(projectRoot, artifacts, { command: 'export cursor', context });

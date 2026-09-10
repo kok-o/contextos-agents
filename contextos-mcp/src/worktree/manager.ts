@@ -153,7 +153,16 @@ export class WorktreeManager {
 			try {
 				const raw = readFileSync(sessionMarkerPath, "utf-8");
 				const marker: WorktreeSessionMarker = JSON.parse(raw);
-				return marker.schemaVersion === 1 && marker.repositoryFingerprint === this.repoFingerprint;
+				return (
+					marker.schemaVersion === 1 &&
+					marker.repositoryFingerprint === this.repoFingerprint &&
+					typeof marker.sessionId === "string" &&
+					typeof marker.threadId === "string" &&
+					typeof marker.worktreePath === "string" &&
+					typeof marker.branchName === "string" &&
+					typeof marker.ownerToken === "string" &&
+					typeof marker.createdAt === "number"
+				);
 			} catch {
 				return false;
 			}
@@ -260,6 +269,8 @@ export class WorktreeManager {
 						repositoryFingerprint: this.repoFingerprint,
 						worktreePath: wtPath,
 						branchName: branch,
+						threadId,
+						ownerToken: randomUUID(),
 						createdAt: Date.now(),
 					};
 					writeFileSync(path.join(wtPath, ".contextos-session"), JSON.stringify(sessionMarker, null, 2));
@@ -309,22 +320,40 @@ export class WorktreeManager {
 		// Use an isolated temporary index file so the real Git index is NEVER modified by getDiff
 		const tmpIndex = path.join(os.tmpdir(), `ctx-idx-${randomUUID()}`);
 		try {
-			try {
-				await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
-				await git(["add", "-A"], info.path, { GIT_INDEX_FILE: tmpIndex });
-				const { stdout: fullDiff } = await git(
-					["diff", "--cached", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-					info.path,
-					{ GIT_INDEX_FILE: tmpIndex },
-				);
-				return redactSecrets(fullDiff || "(no changes)");
-			} catch {
-				const { stdout: fallbackDiff } = await git(
-					["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-					info.path,
-				);
-				return redactSecrets(fallbackDiff || "(no changes)");
+			// Read current HEAD into tmp index
+			await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
+
+			// Find untracked files using porcelain
+			const { stdout: status } = await git(["status", "--porcelain", "-z"], info.path);
+			const untracked = status
+				.split("\0")
+				.filter(Boolean)
+				.filter((s) => s.startsWith("?? "))
+				.map((s) => s.slice(3))
+				.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session");
+
+			if (untracked.length > 0) {
+				// Add untracked files as intent-to-add so they appear in diff
+				const chunkSize = 100;
+				for (let i = 0; i < untracked.length; i += chunkSize) {
+					await git(["add", "-N", "--", ...untracked.slice(i, i + chunkSize)], info.path, {
+						GIT_INDEX_FILE: tmpIndex,
+					});
+				}
 			}
+
+			const { stdout: fullDiff } = await git(
+				["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+				info.path,
+				{ GIT_INDEX_FILE: tmpIndex },
+			);
+			return redactSecrets(fullDiff || "(no changes)");
+		} catch (err) {
+			const { stdout: fallbackDiff } = await git(
+				["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+				info.path,
+			);
+			return redactSecrets(fallbackDiff || "(no changes)");
 		} finally {
 			try {
 				if (existsSync(tmpIndex)) unlinkSync(tmpIndex);
@@ -342,22 +371,37 @@ export class WorktreeManager {
 
 		const tmpIndex = path.join(os.tmpdir(), `ctx-idx-${randomUUID()}`);
 		try {
-			try {
-				await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
-				await git(["add", "-A"], info.path, { GIT_INDEX_FILE: tmpIndex });
-				const { stdout } = await git(
-					["diff", "--cached", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-					info.path,
-					{ GIT_INDEX_FILE: tmpIndex },
-				);
-				return redactSecrets(stdout.trim() || "(no changes)");
-			} catch {
-				const { stdout: fallbackStats } = await git(
-					["diff", "HEAD", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-					info.path,
-				);
-				return redactSecrets(fallbackStats.trim() || "(no changes)");
+			await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
+
+			const { stdout: status } = await git(["status", "--porcelain", "-z"], info.path);
+			const untracked = status
+				.split("\0")
+				.filter(Boolean)
+				.filter((s) => s.startsWith("?? "))
+				.map((s) => s.slice(3))
+				.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session");
+
+			if (untracked.length > 0) {
+				const chunkSize = 100;
+				for (let i = 0; i < untracked.length; i += chunkSize) {
+					await git(["add", "-N", "--", ...untracked.slice(i, i + chunkSize)], info.path, {
+						GIT_INDEX_FILE: tmpIndex,
+					});
+				}
 			}
+
+			const { stdout } = await git(
+				["diff", "HEAD", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+				info.path,
+				{ GIT_INDEX_FILE: tmpIndex },
+			);
+			return redactSecrets(stdout.trim() || "(no changes)");
+		} catch (err) {
+			const { stdout: fallbackStats } = await git(
+				["diff", "HEAD", "--stat", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+				info.path,
+			);
+			return redactSecrets(fallbackStats.trim() || "(no changes)");
 		} finally {
 			try {
 				if (existsSync(tmpIndex)) unlinkSync(tmpIndex);
@@ -420,57 +464,69 @@ export class WorktreeManager {
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
 		assertWithinRepository(info.path, this.repoRoot);
 
+		const tmpIndex = path.join(os.tmpdir(), `ctx-idx-${randomUUID()}`);
 		try {
 			// 1. Check porcelain status to inspect changed & untracked files
-			const { stdout: statusRaw } = await git(["status", "--porcelain"], info.path);
+			const { stdout: statusRaw } = await git(["status", "--porcelain=v2", "-z", "--untracked-files=all"], info.path);
 			if (!statusRaw.trim()) return false;
 
 			// 2. Validate changed paths against security policies
-			const lines = statusRaw
-				.split("\n")
-				.map((l) => l.trim())
-				.filter(Boolean);
+			const changedFiles = parsePorcelainV2(statusRaw);
 			const pathsToStage: string[] = [];
-			for (const line of lines) {
-				const rawPathPart = line.slice(2).trim();
-				const cleanPath = rawPathPart.includes("->") ? rawPathPart.split("->")[1].trim() : rawPathPart;
-				const unquoted = cleanPath.replace(/^"(.*)"$/, "$1");
-
-				if (unquoted === ".contextos-owner" || unquoted === ".contextos-session") {
+			for (const file of changedFiles) {
+				if (file === ".contextos-owner" || file === ".contextos-session") {
 					continue; // Do not commit internal ownership markers
 				}
-				if (isBlockedPath(unquoted)) {
-					throw new Error(`SECURITY_POLICY_FAILED: Attempted commit of blocked sensitive path: "${unquoted}"`);
+				if (isBlockedPath(file)) {
+					throw new Error(`SECURITY_POLICY_FAILED: Attempted commit of blocked sensitive path: "${file}"`);
 				}
-				if (!isPathAllowed(unquoted, info.path)) {
-					throw new Error(`SECURITY_POLICY_FAILED: Path traversal violation attempt: "${unquoted}"`);
+				if (!isPathAllowed(file, info.path)) {
+					throw new Error(`SECURITY_POLICY_FAILED: Path traversal violation attempt: "${file}"`);
 				}
-				pathsToStage.push(unquoted);
+				pathsToStage.push(file);
 			}
 
 			if (pathsToStage.length === 0) {
 				return false;
 			}
 
-			// 3. Reset index first to ensure no previously staged sensitive files leak into commit
-			await git(["reset"], info.path);
+			// 3. Read current HEAD into tmp index
+			await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
 
-			// 4. Stage only verified paths
-			await git(["add", "--", ...pathsToStage], info.path);
+			// 4. Stage only verified paths in temporary index
+			const chunkSize = 100;
+			for (let i = 0; i < pathsToStage.length; i += chunkSize) {
+				await git(["add", "--", ...pathsToStage.slice(i, i + chunkSize)], info.path, {
+					GIT_INDEX_FILE: tmpIndex,
+				});
+			}
 
 			// 5. Verify staged inventory strictly against blocked paths
-			const { stdout: stagedStatus } = await git(["diff", "--cached", "--name-only", "-z"], info.path);
+			const { stdout: stagedStatus } = await git(["diff", "--cached", "--name-only", "-z"], info.path, {
+				GIT_INDEX_FILE: tmpIndex,
+			});
 			const stagedFiles = stagedStatus.split("\0").filter(Boolean);
 			for (const file of stagedFiles) {
 				if (isBlockedPath(file) || !isPathAllowed(file, info.path)) {
-					await git(["reset"], info.path);
 					throw new Error(`SECURITY_POLICY_FAILED: Sensitive or disallowed path detected in staged index: "${file}"`);
 				}
 			}
 
 			if (stagedFiles.length === 0) return false;
 
-			await git(["commit", "-m", message], info.path);
+			// 6. Write tree and commit
+			const { stdout: treeShaRaw } = await git(["write-tree"], info.path, { GIT_INDEX_FILE: tmpIndex });
+			const treeSha = treeShaRaw.trim();
+
+			const { stdout: commitShaRaw } = await git(["commit-tree", treeSha, "-p", "HEAD", "-m", message], info.path, {
+				GIT_INDEX_FILE: tmpIndex,
+			});
+			const commitSha = commitShaRaw.trim();
+
+			// 7. Update HEAD and working tree
+			await git(["update-ref", "HEAD", commitSha], info.path);
+			await git(["reset", "--hard", "HEAD"], info.path);
+
 			return true;
 		} catch (err) {
 			if (String(err).includes("nothing to commit")) return false;
@@ -484,9 +540,9 @@ export class WorktreeManager {
 		if (!info) return;
 		assertWithinRepository(info.path, this.repoRoot);
 
-		if (existsSync(info.path) && existsSync(path.join(info.path, ".contextos-session"))) {
+		if (existsSync(info.path)) {
 			if (!this.isContextosWorktree(info.path)) {
-				throw new Error(`Refusing to destroy worktree "${info.path}": invalid or mismatched ownership marker`);
+				throw new Error(`Refusing to destroy worktree "${info.path}": invalid, missing, or mismatched ownership marker`);
 			}
 		}
 

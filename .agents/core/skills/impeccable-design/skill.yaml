@@ -1,3 +1,4 @@
+schemaVersion: 2
 name: impeccable-design
 type: instruction-only
 description: >
@@ -5,14 +6,7 @@ description: >
   46 deterministic anti-pattern rules that prevent AI design slop.
   Bans overused fonts, pure black/gray, nested cards, bounce animations,
   and all generic AI-generated design clichés.
-tags:
-  - ui
-  - design
-  - frontend
-  - visual
-  - anti-patterns
 version: 1.0.0
-source: https://github.com/pbakaus/impeccable
 resources:
   - EXAMPLES.md
   - SKILL.md

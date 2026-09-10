@@ -247,7 +247,8 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
           stdio: 'inherit',
         });
       } catch (err) {
-        console.warn(`[WARN] Post-update compilation failed: ${err.message}`);
+        console.error(`[ERROR] Post-update compilation failed: ${err.message}`);
+        process.exit(1);
       }
     }
   }

@@ -1,12 +1,7 @@
+schemaVersion: 2
 name: gemini-precision
 type: instruction-only
 description: High-precision engineering and execution guardrails optimized for Google Gemini models. Enforces zero-assumption file inspection, complete non-lazy implementations, surgical blast-radius containment, and mandatory proof-of-work execution.
-tags:
-  - gemini
-  - precision
-  - quality
-  - workflow
-  - antigravity
 version: 1.0.0
 resources:
   - SKILL.md
