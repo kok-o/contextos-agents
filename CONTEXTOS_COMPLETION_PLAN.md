@@ -1,6 +1,6 @@
 # ContextOS — план закрытия оставшихся работ
 
-Статус: READY FOR APPROVAL  
+Статус: IMPLEMENTATION  
 Дата baseline: 2026-09-10  
 Источник требований: `CONTEXTOS_IMPLEMENTATION_PLAN.md`
 
