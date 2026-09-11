@@ -1,83 +1,87 @@
 {
-  "name": "contextos-agents",
-  "version": "2.0.0-beta.1",
-  "description": "ContextOS — Deterministic context compiler and policy engine for AI agents.",
-  "bin": {
-    "contextos": "./bin/index.js",
-    "contextos-agents": "./bin/index.js",
-    "koko-contextos-agents": "./bin/index.js"
-  },
-  "files": [
-    "bin",
-    "registry.json",
-    "registry.schema.json",
-    "registry.v2.schema.json",
-    ".agents/AGENTS.md",
-    ".agents/skills.json",
-    ".agents/ctx.js",
-    ".agents/validate.js",
-    ".agents/plugins.js",
-    ".agents/profiles.js",
-    ".agents/resolver.js",
-    ".agents/doctor.js",
-    ".agents/stats.js",
-    ".agents/watch.js",
-    ".agents/skills-index.json",
-    ".agents/adapters",
-    ".agents/core",
-    ".agents/generated",
-    ".agents/plugins/contextos",
-    ".agents/compiled",
-    ".agents/compiler",
-    ".agents/schemas",
-    ".agents/workspace",
-    ".agents/filesystem",
-    ".agents/transaction-core",
-    ".agents/customization-dx.js",
-    "benchmarks/v2"
-  ],
-  "scripts": {
-    "build": "node .agents/ctx.js compile && node .agents/ctx.js export all",
-    "compile": "node .agents/ctx.js compile",
-    "export": "node .agents/ctx.js export gemini",
-    "validate": "node .agents/ctx.js validate",
-    "benchmark": "node benchmarks/gemini-issues.js",
-    "benchmark:live": "node benchmarks/run-live-benchmark.js",
-    "benchmark:runtime": "node benchmarks/run-runtime-benchmark.js",
-    "lint:md": "markdownlint README.md CONTRIBUTING.md .agents/core/skills/**/*.md --ignore .agents/generated/** --config .markdownlint.json",
-    "check:secrets": "node scripts/check-secrets.js --all",
-    "setup:hooks": "node scripts/install-hooks.js",
-    "watch": "node .agents/watch.js",
-    "test": "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js",
-    "prepublishOnly": "npm run validate && npm run build"
-  },
-  "keywords": [
-    "context-compiler",
-    "ai-coding-agents",
-    "cursor",
-    "claude",
-    "copilot",
-    "mcp",
-    "prompt-engineering",
-    "context-governance",
-    "coding-assistant"
-  ],
-  "author": "koko-o",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kok-o/contextos-agents.git"
-  },
-  "homepage": "https://github.com/kok-o/contextos-agents#readme",
-  "bugs": {
-    "url": "https://github.com/kok-o/contextos-agents/issues"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "devDependencies": {
-    "esbuild": "^0.28.2",
-    "markdownlint-cli": "^0.43.0",
-    "yaml": "^2.9.0"
-  }
+    "name":  "contextos-agents",
+    "version":  "2.0.0-beta.1",
+    "description":  "ContextOS — Deterministic context compiler and policy engine for AI agents.",
+    "bin":  {
+                "contextos":  "./bin/index.js",
+                "contextos-agents":  "./bin/index.js",
+                "koko-contextos-agents":  "./bin/index.js"
+            },
+    "files":  [
+                  "bin",
+                  "registry.json",
+                  "registry.schema.json",
+                  "registry.v2.schema.json",
+                  ".agents/AGENTS.md",
+                  ".agents/skills.json",
+                  ".agents/ctx.js",
+                  ".agents/validate.js",
+                  ".agents/plugins.js",
+                  ".agents/profiles.js",
+                  ".agents/resolver.js",
+                  ".agents/doctor.js",
+                  ".agents/stats.js",
+                  ".agents/watch.js",
+                  ".agents/skills-index.json",
+                  ".agents/adapters",
+                  ".agents/core",
+                  ".agents/generated",
+                  ".agents/plugins/contextos",
+                  ".agents/compiled",
+                  ".agents/compiler",
+                  ".agents/schemas",
+                  ".agents/workspace",
+                  ".agents/filesystem",
+                  ".agents/transaction-core",
+                  ".agents/customization-dx.js",
+                  "benchmarks/v2"
+              ],
+    "scripts":  {
+                    "build":  "node .agents/ctx.js compile \u0026\u0026 node .agents/ctx.js export all",
+                    "compile":  "node .agents/ctx.js compile",
+                    "export":  "node .agents/ctx.js export gemini",
+                    "validate":  "node .agents/ctx.js validate",
+                    "benchmark":  "node benchmarks/gemini-issues.js",
+                    "benchmark:live":  "node benchmarks/run-live-benchmark.js",
+                    "benchmark:runtime":  "node benchmarks/run-runtime-benchmark.js",
+                    "lint:md":  "markdownlint README.md CONTRIBUTING.md .agents/core/skills/**/*.md --ignore .agents/generated/** --config .markdownlint.json",
+                    "check:secrets":  "node scripts/check-secrets.js --all",
+                    "setup:hooks":  "node scripts/install-hooks.js",
+                    "watch":  "node .agents/watch.js",
+                    "test":  "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js",
+                    "prepublishOnly":  "npm run validate \u0026\u0026 npm run build"
+                },
+    "keywords":  [
+                     "context-compiler",
+                     "context-governance",
+                     "policy-as-code",
+                     "ai-agents",
+                     "coding-agents",
+                     "developer-tools",
+                     "cursor",
+                     "claude-code",
+                     "github-copilot",
+                     "gemini",
+                     "zed",
+                     "mcp",
+                     "contextos"
+                 ],
+    "author":  "koko-o",
+    "license":  "MIT",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "https://github.com/kok-o/contextos-agents.git"
+                   },
+    "homepage":  "https://github.com/kok-o/contextos-agents#readme",
+    "bugs":  {
+                 "url":  "https://github.com/kok-o/contextos-agents/issues"
+             },
+    "engines":  {
+                    "node":  "\u003e=18.0.0"
+                },
+    "devDependencies":  {
+                            "esbuild":  "^0.28.2",
+                            "markdownlint-cli":  "^0.43.0",
+                            "yaml":  "^2.9.0"
+                        }
 }
