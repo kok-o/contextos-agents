@@ -236,19 +236,47 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
       enabledAdapters: options.enabledAdapters || listAdapters(),
     });
 
-    for (const art of artifacts) {
-      tx.stageWrite(art.path, art.content, { mode: art.mode || 420 });
+    let hasModifications = false;
 
-      // Record in lockfile in-memory
-      lockfileManager.recordManagedFile(lockfileData, art.path, {
-        exactSha256: computeExactHash(art.content),
-        semanticTextSha256: computeSemanticHash(art.content),
-        kind: art.kind,
-        generator: art.generator,
-        inputsHash: art.inputsHash,
-        mode: art.mode || 420,
-        lastTransaction: tx.txId,
-      });
+    for (const art of artifacts) {
+      const exactSha256 = computeExactHash(art.content);
+      const semanticTextSha256 = computeSemanticHash(art.content);
+      const existingRecord = lockfileData?.managedFiles?.[art.path];
+      
+      let needsWrite = true;
+      let needsLockfileUpdate = true;
+      
+      if (existingRecord) {
+        if (existingRecord.exactSha256 === exactSha256 && existingRecord.inputsHash === art.inputsHash) {
+          needsLockfileUpdate = false;
+        }
+      }
+      
+      const absPath = path.resolve(absRoot, art.path);
+      if (fs.existsSync(absPath)) {
+         const diskBuf = fs.readFileSync(absPath);
+         if (computeExactHash(diskBuf) === exactSha256) {
+           needsWrite = false;
+         }
+      }
+
+      if (needsWrite) {
+        tx.stageWrite(art.path, art.content, { mode: art.mode || 420 });
+        hasModifications = true;
+      }
+
+      if (needsLockfileUpdate || needsWrite || !existingRecord) {
+        lockfileManager.recordManagedFile(lockfileData, art.path, {
+          exactSha256,
+          semanticTextSha256,
+          kind: art.kind,
+          generator: art.generator,
+          inputsHash: art.inputsHash,
+          mode: art.mode || 420,
+          lastTransaction: needsWrite ? tx.txId : existingRecord?.lastTransaction,
+        });
+        if (needsLockfileUpdate) hasModifications = true;
+      }
     }
 
     const activePaths = new Set(artifacts.map(a => toPosix(a.path)));
@@ -270,8 +298,10 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
           const absRecPath = path.resolve(absRoot, recordedPath);
           if (fs.existsSync(absRecPath)) {
             tx.stageDelete(recordedPath);
+            hasModifications = true;
           }
           lockfileManager.removeManagedFile(lockfileData, recordedPath);
+          hasModifications = true;
         }
       }
     }
@@ -298,9 +328,10 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
 
               if (isManagedInV1 || isManagedInV2 || hasContextosMarker) {
                 tx.stageDelete(relPath);
-                if (v1Data?.files?.[relPath]) delete v1Data.files[relPath];
-                if (v1Data?.managedFiles?.[relPath]) delete v1Data.managedFiles[relPath];
-                if (lockfileData?.managedFiles?.[relPath]) lockfileManager.removeManagedFile(lockfileData, relPath);
+                hasModifications = true;
+                if (v1Data?.files?.[relPath]) { delete v1Data.files[relPath]; hasModifications = true; }
+                if (v1Data?.managedFiles?.[relPath]) { delete v1Data.managedFiles[relPath]; hasModifications = true; }
+                if (lockfileData?.managedFiles?.[relPath]) { lockfileManager.removeManagedFile(lockfileData, relPath); hasModifications = true; }
               }
             }
           }
@@ -330,22 +361,15 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
 
               if (isManagedInV1 || isManagedInV2 || hasContextosMarker) {
                 tx.stageDelete(relPath);
-                if (v1Data?.files?.[relPath]) delete v1Data.files[relPath];
-                if (v1Data?.managedFiles?.[relPath]) delete v1Data.managedFiles[relPath];
-                if (lockfileData?.managedFiles?.[relPath]) lockfileManager.removeManagedFile(lockfileData, relPath);
+                hasModifications = true;
+                if (v1Data?.files?.[relPath]) { delete v1Data.files[relPath]; hasModifications = true; }
+                if (v1Data?.managedFiles?.[relPath]) { delete v1Data.managedFiles[relPath]; hasModifications = true; }
+                if (lockfileData?.managedFiles?.[relPath]) { lockfileManager.removeManagedFile(lockfileData, relPath); hasModifications = true; }
               }
             }
           }
         }
       }
-    }
-
-    // Persist updated v1 lockfile if present
-    if (v1Data && fs.existsSync(v1LockPath)) {
-      try {
-        const relV1LockPath = toPosix(path.relative(absRoot, v1LockPath));
-        tx.stageWrite(relV1LockPath, JSON.stringify(v1Data, null, 2) + '\n');
-      } catch {}
     }
 
     // Clean up empty/orphan skill directories in generated paths
@@ -363,27 +387,43 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
               // Delete orphaned files inside the directory, if any. The generator writes SKILL.md and optional references.
               for (const child of fs.readdirSync(entryPath)) {
                 tx.stageDelete(toPosix(path.relative(absRoot, path.join(entryPath, child))));
+                hasModifications = true;
               }
               const relDir = toPosix(path.relative(absRoot, entryPath));
               tx.stageDeleteDir(relDir);
+              hasModifications = true;
             }
           }
         }
       }
     }
 
-    // Stage lockfile v2 update
-    lockfileData.revision += 1;
-    const relLockPath = toPosix(path.relative(absRoot, lockfileManager.lockfilePath));
-    tx.stageWrite(relLockPath, JSON.stringify(lockfileData, null, 2) + '\n');
+    // ONLY commit and bump revision if modifications occurred
+    let txResult = { txId: tx.txId, appliedCount: 0 };
+    
+    if (hasModifications) {
+      // Persist updated v1 lockfile if present
+      if (v1Data && fs.existsSync(v1LockPath)) {
+        try {
+          const relV1LockPath = toPosix(path.relative(absRoot, v1LockPath));
+          tx.stageWrite(relV1LockPath, JSON.stringify(v1Data, null, 2) + '\n');
+        } catch {}
+      }
+    
+      // Stage lockfile v2 update
+      lockfileData.revision += 1;
+      const relLockPath = toPosix(path.relative(absRoot, lockfileManager.lockfilePath));
+      tx.stageWrite(relLockPath, JSON.stringify(lockfileData, null, 2) + '\n');
 
-    // Commit all file modifications atomically
-    const txResult = tx.commit();
+      // Commit all file modifications atomically
+      txResult = tx.commit();
+    }
 
     return {
       success: true,
       txId: txResult.txId,
-      appliedCount: artifacts.length,
+      appliedCount: hasModifications ? artifacts.length : 0,
+      skipped: !hasModifications
     };
   } finally {
     if (ownLock && lockToken && lock) {

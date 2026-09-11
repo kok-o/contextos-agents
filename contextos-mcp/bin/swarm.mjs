@@ -7,9 +7,9 @@
  * then falls back to tsx for development.
  */
 
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { dirname, join } from "node:path";
 import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distEntry = join(__dirname, "..", "dist", "main.js");

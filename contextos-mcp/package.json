@@ -14,9 +14,8 @@
   "scripts": {
     "dev": "tsx src/main.ts",
     "build": "tsc && npm run build:bundle && node -e \"require('fs').mkdirSync('dist/core', {recursive: true}); require('fs').copyFileSync('src/core/runtime.py', 'dist/core/runtime.py')\"",
-    "build:bundle": "esbuild src/mcp/server.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/mcp/server.js && esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
+    "build:bundle": "esbuild src/mcp/server.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/mcp/server.js --banner:js=\"import { createRequire as topLevelCreateRequire } from 'module'; const require = topLevelCreateRequire(import.meta.url);\" && esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
     "build:supply-chain": "esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
-
     "start": "node dist/main.js",
     "cli": "tsx src/labs/cli.ts",
     "swarm": "tsx src/main.ts",

@@ -9,16 +9,11 @@
  *   5. Report results on the originating issue
  */
 
-import * as fs from "node:fs";
 import { execFileSync, execSync } from "node:child_process";
-import { parseTrigger, type TriggerContext } from "./parse-trigger.js";
-import { validateTrigger, sanitizeBudget } from "./security.js";
-import {
-	createPullRequest,
-	postIssueComment,
-	postFailureComment,
-	type SwarmJsonOutput,
-} from "./pr.js";
+import * as fs from "node:fs";
+import { parseTrigger } from "./parse-trigger.js";
+import { createPullRequest, postFailureComment, postIssueComment, type SwarmJsonOutput } from "./pr.js";
+import { sanitizeBudget, validateTrigger } from "./security.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -123,9 +118,18 @@ async function main(): Promise<void> {
 	const openaiKey = getInput("openai_api_key");
 	const geminiKey = getInput("gemini_api_key");
 
-	if (anthropicKey) { maskSecret(anthropicKey); process.env.ANTHROPIC_API_KEY = anthropicKey; }
-	if (openaiKey) { maskSecret(openaiKey); process.env.OPENAI_API_KEY = openaiKey; }
-	if (geminiKey) { maskSecret(geminiKey); process.env.GEMINI_API_KEY = geminiKey; }
+	if (anthropicKey) {
+		maskSecret(anthropicKey);
+		process.env.ANTHROPIC_API_KEY = anthropicKey;
+	}
+	if (openaiKey) {
+		maskSecret(openaiKey);
+		process.env.OPENAI_API_KEY = openaiKey;
+	}
+	if (geminiKey) {
+		maskSecret(geminiKey);
+		process.env.GEMINI_API_KEY = geminiKey;
+	}
 
 	if (!anthropicKey && !openaiKey && !geminiKey) {
 		fail("At least one API key is required (anthropic_api_key, openai_api_key, or gemini_api_key).");
@@ -209,27 +213,15 @@ function ensureSwarmInstalled(): void {
 		try {
 			execSync("npm install -g swarm-code", { stdio: "pipe" });
 			info("swarm-code installed globally.");
-		} catch (err) {
+		} catch (_err) {
 			// Fall back to npx (it will download on first use)
 			info("Will use npx to run swarm-code.");
 		}
 	}
 }
 
-function runSwarm(
-	task: string,
-	agent: string,
-	model: string,
-	maxBudget: number,
-): SwarmJsonOutput {
-	const args = [
-		"swarm-code",
-		"--dir", ".",
-		"--json",
-		"--quiet",
-		"--agent", agent,
-		"--max-budget", String(maxBudget),
-	];
+function runSwarm(task: string, agent: string, model: string, maxBudget: number): SwarmJsonOutput {
+	const args = ["swarm-code", "--dir", ".", "--json", "--quiet", "--agent", agent, "--max-budget", String(maxBudget)];
 
 	if (model) {
 		args.push("--orchestrator", model);
@@ -261,7 +253,9 @@ function runSwarm(
 				if ("success" in parsed && "threads" in parsed) {
 					return parsed;
 				}
-			} catch { /* not single-line JSON, try multi-line below */ }
+			} catch {
+				/* not single-line JSON, try multi-line below */
+			}
 		}
 	}
 
@@ -274,7 +268,9 @@ function runSwarm(
 			if ("success" in parsed && "threads" in parsed) {
 				return parsed;
 			}
-		} catch { /* give up */ }
+		} catch {
+			/* give up */
+		}
 	}
 
 	throw new Error(`Could not parse swarm JSON output: ${stdout.slice(0, 500)}`);

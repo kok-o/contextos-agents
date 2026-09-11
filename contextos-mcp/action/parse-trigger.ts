@@ -139,8 +139,8 @@ export function parseTrigger(eventPayload: Record<string, unknown>): TriggerCont
 			task: task || "",
 			eventType: "issue_comment",
 			issueNumber: (issue?.number as number) || undefined,
-			actor: (comment?.user as Record<string, unknown>)?.login as string || actor,
-			commentId: comment?.id as number || undefined,
+			actor: ((comment?.user as Record<string, unknown>)?.login as string) || actor,
+			commentId: (comment?.id as number) || undefined,
 			repo,
 		};
 	}

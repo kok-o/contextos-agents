@@ -8,6 +8,8 @@
  */
 
 import { execFile } from "node:child_process";
+// @ts-ignore
+import { ThreadStore } from "../runtime/thread-store.cjs";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { promisify } from "node:util";
@@ -50,32 +52,9 @@ export function isProcessAlive(pid: number): boolean {
 	}
 }
 
-let ThreadStoreClass: any = null;
-
 function getThreadStore(dir: string) {
 	const canonicalDir = assertWithinRepository(dir, dir);
-	if (!ThreadStoreClass) {
-		const candidatePaths = [
-			path.join(canonicalDir, ".agents", "runtime", "thread-store.js"),
-			path.join(process.cwd(), ".agents", "runtime", "thread-store.js"),
-			path.join(process.cwd(), "..", ".agents", "runtime", "thread-store.js"),
-			path.join(canonicalDir, "..", "..", ".agents", "runtime", "thread-store.js"), // For tests
-			path.join(canonicalDir, "..", "..", "..", ".agents", "runtime", "thread-store.js"), // For tests in deeply nested dirs
-			path.join(canonicalDir, "..", "..", "..", "..", ".agents", "runtime", "thread-store.js"), // For tests in deeply nested dirs
-		];
-		for (const p of candidatePaths) {
-			if (fs.existsSync(p)) {
-				try {
-					ThreadStoreClass = require(p).ThreadStore;
-					break;
-				} catch {
-					// ignore
-				}
-			}
-		}
-	}
-	if (!ThreadStoreClass) return null;
-	return new ThreadStoreClass({ baseDir: canonicalDir });
+	return new ThreadStore({ baseDir: canonicalDir });
 }
 
 function getAsyncTasksPath(dir: string): string {
@@ -241,7 +220,7 @@ function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 		const parsed = JSON.parse(raw);
 
 		if (store && parsed && typeof parsed.threads === "object") {
-			for (const [id, thread] of Object.entries(parsed.threads) as [string, any][]) {
+			for (const [_id, thread] of Object.entries(parsed.threads) as [string, any][]) {
 				if (!thread.verification && thread.verificationAttestation?.status) {
 					thread.verification = thread.verificationAttestation.status;
 				}
@@ -258,7 +237,7 @@ function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 			}
 		}
 
-		if (parsed && parsed.asyncTasks) {
+		if (parsed?.asyncTasks) {
 			const release = acquireStateLockOrThrow(canonicalRoot);
 			try {
 				const tasksPath = getAsyncTasksPath(canonicalRoot);
@@ -273,7 +252,7 @@ function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 		}
 
 		// Mark as migrated
-		fs.renameSync(legacyPath, legacyPath + ".migrated");
+		fs.renameSync(legacyPath, `${legacyPath}.migrated`);
 	} catch (e) {
 		console.error("Migration failed:", e);
 	}

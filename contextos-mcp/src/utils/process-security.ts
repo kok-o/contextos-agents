@@ -35,10 +35,7 @@ export function getSanitizedEnv(customEnv: Record<string, string> = {}): NodeJS.
 		}
 	}
 	for (const [k, v] of Object.entries(customEnv)) {
-		if (
-			!/TOKEN|SECRET|KEY|PASSWORD|AUTH|CREDENTIAL/i.test(k) &&
-			!/^(GIT_|NODE_OPTIONS|LD_PRELOAD|DYLD_)/i.test(k)
-		) {
+		if (!/TOKEN|SECRET|KEY|PASSWORD|AUTH|CREDENTIAL/i.test(k) && !/^(GIT_|NODE_OPTIONS|LD_PRELOAD|DYLD_)/i.test(k)) {
 			sanitized[k] = v;
 		}
 	}

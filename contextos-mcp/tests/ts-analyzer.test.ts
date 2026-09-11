@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	analyzeSourceCode,
-	buildDependencyGraph,
-	queryBlastRadius,
-	queryDependents,
-} from "../src/labs/ts-analyzer.js";
+import { analyzeSourceCode, buildDependencyGraph, queryBlastRadius, queryDependents } from "../src/labs/ts-analyzer.js";
 
 describe("ts-analyzer — AST Symbol Extraction", () => {
 	it("extracts functions, classes, interfaces, and variables", () => {
