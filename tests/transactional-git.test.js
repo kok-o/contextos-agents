@@ -19,7 +19,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { TransactionalGitPipeline, execGit } = require('../.agents/runtime/transactional-git');
+const { TransactionalGitPipeline, execGit } = require('../contextos-mcp/src/runtime/transactional-git.cjs');
 
 function createTempDir(prefix = 'ctx-git-test-') {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

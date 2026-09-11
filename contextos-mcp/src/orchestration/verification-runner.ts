@@ -189,9 +189,9 @@ export function verifyCandidateImmutability(
 		}
 
 		return { clean: true };
-	} catch {
-		// Non-git directory or git failure: treat as clean
-		return { clean: true };
+	} catch (e: any) {
+		// Non-git directory or git failure: fail closed
+		return { clean: false, mutatedHead: false, dirtyFiles: [`git-failure: ${e.message || "unknown"}`] };
 	}
 }
 
@@ -246,6 +246,16 @@ export async function runWorktreeVerification(
 	const exePath = await resolveExecutablePath(spec.executable);
 	const targetExecutable = exePath || spec.executable;
 	const executionCwd = spec.cwd ? path.resolve(worktreePath, spec.cwd) : worktreePath;
+
+	if (!executionCwd.startsWith(path.resolve(worktreePath))) {
+		return {
+			verdict: "ERROR",
+			verified: false,
+			output: `Security Violation: execution cwd "${executionCwd}" escapes worktree root.`,
+			exitCode: null,
+			runnerMode: "host-unsafe",
+		};
+	}
 
 	// OCI Execution Sandbox Path (Milestones W5.3 and W5.4)
 	if (options.sandbox || options.sandboxMode || options.runnerMode === "oci") {

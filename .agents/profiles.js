@@ -303,15 +303,21 @@ function validateProfile(profile, registry = null) {
  * @returns {ProfileConfig[]} Array of profile configurations
  */
 function listProfiles() {
-  if (!fs.existsSync(PROFILES_DIR)) return [];
-  const files = fs.readdirSync(PROFILES_DIR).filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
-  return files.map(file => {
-    const content = fs.readFileSync(path.join(PROFILES_DIR, file), 'utf8');
-    const parsed = parseYamlProfile(content);
-    if (!parsed.id) parsed.id = path.basename(file, path.extname(file));
-    if (!parsed.name) parsed.name = parsed.id;
-    return parsed;
-  });
+  const profiles = [];
+  const searchDirs = [PROFILES_DIR, path.join(AGENTS_DIR, 'catalog', 'presets')];
+
+  for (const dir of searchDirs) {
+    if (!fs.existsSync(dir)) continue;
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
+    for (const file of files) {
+      const content = fs.readFileSync(path.join(dir, file), 'utf8');
+      const parsed = parseYamlProfile(content);
+      if (!parsed.id) parsed.id = path.basename(file, path.extname(file));
+      if (!parsed.name) parsed.name = parsed.id;
+      profiles.push(parsed);
+    }
+  }
+  return profiles;
 }
 
 /**
@@ -697,17 +703,9 @@ function detectStack(projectDir = process.cwd()) {
   }
 
   // Infer recommended profile
-  let recommendedProfile = 'startup';
+  let recommendedProfile = 'init';
   const hasFrontend = detected.some(d => ['React', 'Next.js', 'Tailwind CSS'].includes(d));
   const hasBackend = detected.some(d => ['Node.js Backend', 'NestJS', 'Python'].includes(d));
-
-  if (hasFrontend && !hasBackend) {
-    recommendedProfile = 'frontend';
-  } else if (!hasFrontend && hasBackend) {
-    recommendedProfile = 'backend';
-  } else if (hasFrontend && hasBackend) {
-    recommendedProfile = 'startup';
-  }
 
   return {
     detected,

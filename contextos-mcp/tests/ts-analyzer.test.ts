@@ -4,7 +4,7 @@ import {
 	buildDependencyGraph,
 	queryBlastRadius,
 	queryDependents,
-} from "../src/graph/ts-analyzer.js";
+} from "../src/labs/ts-analyzer.js";
 
 describe("ts-analyzer — AST Symbol Extraction", () => {
 	it("extracts functions, classes, interfaces, and variables", () => {

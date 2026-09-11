@@ -139,7 +139,7 @@ async function main() {
 			await runSwarmMode(args);
 		} else {
 			// Interactive swarm mode — no query provided, launch REPL
-			const { runInteractiveSwarm } = await import("./interactive-swarm.js");
+			const { runInteractiveSwarm } = await import("./labs/interactive-swarm.js");
 			await runInteractiveSwarm(args);
 		}
 		return;
@@ -149,7 +149,7 @@ async function main() {
 
 	// Default: no command → interactive swarm mode using current directory
 	if (!command || command === "interactive" || command === "i") {
-		const { runInteractiveSwarm } = await import("./interactive-swarm.js");
+		const { runInteractiveSwarm } = await import("./labs/interactive-swarm.js");
 		await runInteractiveSwarm(["--dir", process.cwd(), ...args.slice(command ? 1 : 0)]);
 		return;
 	}
@@ -158,7 +158,7 @@ async function main() {
 		case "viewer":
 		case "view": {
 			process.argv = [process.argv[0], process.argv[1], ...args.slice(1)];
-			await import("./viewer.js");
+			await import("./labs/viewer.js");
 			break;
 		}
 
@@ -170,7 +170,7 @@ async function main() {
 
 		case "run": {
 			process.argv = [process.argv[0], process.argv[1], ...args.slice(1)];
-			await import("./cli.js");
+			await import("./labs/cli.js");
 			break;
 		}
 
@@ -246,13 +246,13 @@ async function main() {
 						const { runSwarmMode } = await import("./swarm.js");
 						await runSwarmMode(args);
 					} else {
-						const { runInteractiveSwarm } = await import("./interactive-swarm.js");
+						const { runInteractiveSwarm } = await import("./labs/interactive-swarm.js");
 						await runInteractiveSwarm(args);
 					}
 				} else {
 					// Assume "run" mode, pass all args through
 					process.argv = [process.argv[0], process.argv[1], ...args];
-					await import("./cli.js");
+					await import("./labs/cli.js");
 				}
 			} else {
 				console.error(`Unknown command: ${command}`);

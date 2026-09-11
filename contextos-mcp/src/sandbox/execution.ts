@@ -213,8 +213,9 @@ export class ExecutionSandbox {
 			args.push("--network=none");
 		}
 
+		const mountPath = process.platform === "win32" ? resolvedWorkspace.replace(/\\/g, "/") : resolvedWorkspace;
 		// Mount workspace directory read-write
-		args.push("-v", `${resolvedWorkspace}:/workspace:rw`);
+		args.push("-v", `${mountPath}:/workspace:rw`);
 		args.push("-w", "/workspace");
 
 		args.push(this.image);

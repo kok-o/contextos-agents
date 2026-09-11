@@ -32,7 +32,7 @@ await import("./agents/aider.js");
 import { randomBytes } from "node:crypto";
 // Api/Model types used via resolveModel from model-resolver
 import { loadHooks, runHooks } from "./hooks/runner.js";
-import { EpisodicMemory } from "./memory/episodic.js";
+import { EpisodicMemory } from "./labs/episodic-memory.js";
 import { buildSwarmSystemPrompt } from "./prompts/orchestrator.js";
 import { resolveModel } from "./routing/model-resolver.js";
 import { classifyTaskComplexity, describeAvailableAgents, FailureTracker, routeTask } from "./routing/model-router.js";

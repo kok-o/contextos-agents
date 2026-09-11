@@ -75,7 +75,7 @@ const writeScopeSchema = z
 
 // ── Tool Registration ──────────────────────────────────────────────────────
 
-export function registerContextosTools(server: McpServer, defaultDir?: string): void {
+export function registerContextosTools(server: McpServer, defaultDir?: string, enableRuntime = false): void {
 	function findGitRoot(startDir: string): string | null {
 		let current = startDir;
 		while (true) {
@@ -122,8 +122,9 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 	// Spawn parallel coding agents, each in its own worktree.
 	// Loads ContextOS rules before sending the task to agents.
 
-	server.registerTool(
-		"contextos_delegate",
+	if (enableRuntime) {
+		server.registerTool(
+			"contextos_delegate",
 		{
 			title: "Delegate Task to Agents",
 			description:
@@ -368,6 +369,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}
 		},
 	);
+	}
 
 	// ── contextos_status ───────────────────────────────────────────────────
 	// Get status of all threads and budget for a session.
@@ -566,9 +568,10 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 	// ── contextos_merge ────────────────────────────────────────────────────
 	// Dumb merge: Antigravity decides, ContextOS just executes git merge.
 
-	server.registerTool(
-		"contextos_merge",
-		{
+	if (enableRuntime) {
+		server.registerTool(
+			"contextos_merge",
+			{
 			title: "Merge Thread Branch",
 			description:
 				"Merge a specific thread's branch into the main branch. This is a 'dumb' merge — " +
@@ -620,12 +623,14 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}
 		},
 	);
+	}
 
 	// ── contextos_cleanup ──────────────────────────────────────────────────
 	// Destroy session and worktrees.
 
-	server.registerTool(
-		"contextos_cleanup",
+	if (enableRuntime) {
+		server.registerTool(
+			"contextos_cleanup",
 		{
 			title: "Cleanup Session",
 			description:
@@ -663,6 +668,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string): 
 			}
 		},
 	);
+	}
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

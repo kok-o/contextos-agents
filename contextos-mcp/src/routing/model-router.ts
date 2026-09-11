@@ -26,7 +26,7 @@
 import { getAvailableAgents } from "../agents/provider.js";
 import type { ModelSlots } from "../config.js";
 import type { SwarmConfig } from "../core/types.js";
-import type { EpisodicMemory } from "../memory/episodic.js";
+import type { EpisodicMemory } from "../labs/episodic-memory.js";
 
 // ── Agent capabilities ─────────────────────────────────────────────────────
 

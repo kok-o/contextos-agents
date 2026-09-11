@@ -7,7 +7,7 @@ describe("MCP Protocol Handshake & CLI Smoke Test", () => {
 		const mcpBin = path.resolve(__dirname, "..", "bin", "mcp.mjs");
 		const projectDir = path.resolve(__dirname, "..");
 
-		const child = spawn(process.execPath, [mcpBin, "--dir", projectDir], {
+		const child = spawn(process.execPath, [mcpBin, "--dir", projectDir, "--enable-runtime"], {
 			stdio: ["pipe", "pipe", "pipe"],
 			env: {
 				...process.env,

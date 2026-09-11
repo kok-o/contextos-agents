@@ -1,5 +1,5 @@
 {
-  "name": "contextos-mcp",
+  "name": "@contextos/mcp",
   "version": "0.3.1",
   "description": "ContextOS Execution Layer and MCP Server",
   "type": "module",
@@ -16,9 +16,9 @@
     "build": "tsc && npm run build:bundle && node -e \"require('fs').mkdirSync('dist/core', {recursive: true}); require('fs').copyFileSync('src/core/runtime.py', 'dist/core/runtime.py')\"",
     "build:bundle": "esbuild src/mcp/server.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/mcp/server.js && esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
     "build:supply-chain": "esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
-    "build:root-sync": "node -e \"require('fs').mkdirSync('../.agents/mcp', {recursive: true}); require('fs').copyFileSync('dist/mcp/server.js', '../.agents/mcp/server.mjs'); require('fs').copyFileSync('src/core/runtime.py', '../.agents/mcp/runtime.py')\"",
+
     "start": "node dist/main.js",
-    "cli": "tsx src/cli.ts",
+    "cli": "tsx src/labs/cli.ts",
     "swarm": "tsx src/main.ts",
     "bench:oolong": "tsx benchmarks/oolong_synth.ts",
     "bench:longbench": "tsx benchmarks/longbench_narrativeqa.ts",
@@ -29,18 +29,14 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [
-    "swarm",
+    "mcp",
+    "model-context-protocol",
+    "contextos",
     "coding-agent",
-    "orchestrator",
-    "rlm",
-    "recursive-language-model",
-    "llm",
-    "cli",
-    "agent",
-    "opencode",
-    "worktree",
-    "parallel",
-    "ai"
+    "execution-runtime",
+    "ai",
+    "subagents",
+    "worktree"
   ],
   "license": "MIT",
   "homepage": "https://github.com/kok-o/contextos-agents#readme",

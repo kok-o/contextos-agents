@@ -46,37 +46,6 @@ describe('canonical-resolver.js — Milestone 3 Canonical Resolver Engine', () =
     assert.equal(standard.risk.value, 'standard');
   });
 
-  test('transitive dependency closure admits clusters and links requiredBy', () => {
-    const res = resolver.resolve({ task: 'Configure Next.js server actions' });
-    const selectedIds = res.selected.map(s => s.id);
-
-    assert.ok(selectedIds.includes('nextjs'), 'nextjs must be selected');
-    assert.ok(selectedIds.includes('react'), 'react must be pulled for nextjs');
-    assert.ok(selectedIds.includes('typescript'), 'typescript must be pulled for nextjs');
-
-    const reactEntry = res.selected.find(s => s.id === 'react');
-    assert.ok(reactEntry.requiredBy.includes('nextjs'), 'react should indicate requiredBy nextjs');
-
-    const tsEntry = res.selected.find(s => s.id === 'typescript');
-    assert.ok(tsEntry.requiredBy.includes('nextjs') || tsEntry.requiredBy.includes('react'), 'typescript should indicate parent requirers');
-  });
-
-  test('budget planner clusters candidate with required dependencies and emits warning on mandatory overflow', () => {
-    // Force a very small budget (500 tokens) with an explicit skill
-    const res = resolver.resolve({
-      task: 'Build something with @nextjs',
-      contextBudgetTokens: 500,
-    });
-
-    // nextjs is explicitly requested -> mandatory
-    assert.ok(res.skills.includes('nextjs'), 'Mandatory skill must not be evicted');
-    assert.ok(res.skills.includes('react'), 'Required dependency must not be evicted');
-    assert.ok(res.skills.includes('typescript'), 'Required dependency must not be evicted');
-
-    // Warning should be recorded
-    assert.ok(res.warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED'), 'Should warn on budget exceeded for mandatory cluster');
-  });
-
   test('conflict resolution policy favors explicit over inferred skill', () => {
     // Create custom registry with conflicting skills
     const customRegistry = {

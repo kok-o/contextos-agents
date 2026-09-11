@@ -15,7 +15,7 @@ const {
   transitionThread,
   evaluateMergeReadiness,
   invalidateOnCandidateChange,
-} = require('../.agents/runtime/state-machine.js');
+} = require('../contextos-mcp/src/runtime/state-machine.cjs');
 
 const {
   sha256,
@@ -24,9 +24,9 @@ const {
   createVerificationAttestation,
   createReviewAttestation,
   verifyAttestationSubject,
-} = require('../.agents/runtime/attestations.js');
+} = require('../contextos-mcp/src/runtime/attestations.cjs');
 
-const { ThreadStore } = require('../.agents/runtime/thread-store.js');
+const { ThreadStore } = require('../contextos-mcp/src/runtime/thread-store.cjs');
 
 describe('Milestone 10: Runtime State Machine & Attestations', () => {
   const sampleFingerprint = 'sha256:repo-fingerprint-test';

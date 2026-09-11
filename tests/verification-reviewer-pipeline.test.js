@@ -12,19 +12,19 @@ const {
   getSanitizedEnvironment,
   redactSensitiveOutput,
   executeVerification,
-} = require('../.agents/runtime/verification-pipeline.js');
+} = require('../contextos-mcp/src/runtime/verification-pipeline.cjs');
 
 const {
   runStaticReviewChecks,
   parseReviewVerdict,
   evaluateReview,
-} = require('../.agents/runtime/reviewer-pipeline.js');
+} = require('../contextos-mcp/src/runtime/reviewer-pipeline.cjs');
 
 const {
   sha256,
   computeScopeSha256,
   computeDiffSha256,
-} = require('../.agents/runtime/attestations.js');
+} = require('../contextos-mcp/src/runtime/attestations.cjs');
 
 describe('Milestone 11: Verification & Reviewer Pipeline', () => {
   const sampleFingerprint = 'sha256:pipeline-fingerprint-test';

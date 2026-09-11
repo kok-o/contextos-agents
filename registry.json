@@ -37,7 +37,7 @@
       "tags": ["ui", "design", "frontend", "anti-patterns"],
       "npm": null,
       "github": "kok-o/contextos-agents",
-      "path": ".agents/core/skills/impeccable-design",
+      "path": "catalog/skills/impeccable-design",
       "builtin": true,
       "type": "instruction-only",
       "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
@@ -50,7 +50,7 @@
       "tags": ["knowledge-graph", "ast", "tree-sitter", "dependencies", "architecture"],
       "npm": null,
       "github": "kok-o/contextos-agents",
-      "path": ".agents/core/skills/graphify",
+      "path": "catalog/skills/graphify",
       "builtin": true,
       "type": "instruction-only",
       "resources": ["EXAMPLES.md", "SKILL.md", "VALIDATION.json"]

@@ -1,0 +1,25 @@
+schemaVersion: 2
+id: init
+name: Neutral Bootstrap
+description: Minimalist core workflow, context management, and security guardrails.
+skills:
+  required:
+    - engineering-workflow
+    - ponytail-mindset
+    - gstack-roles
+    - gemini-precision
+    - context-os
+    - context-manager
+    - security
+  preferred: []
+  excluded: []
+policy:
+  verification: recommended
+  review: recommended
+  security: required
+  adr: off
+  testing: recommended
+  accessibility: off
+technologyDefaults: {}
+generation:
+  documents: []

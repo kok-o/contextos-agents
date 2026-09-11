@@ -56,7 +56,7 @@ describe('Milestone 8 — Init State Machine Engine', () => {
 
     assert.equal(disc.packagesCount, 1);
     assert.ok(disc.detectedStack.includes('React'));
-    assert.equal(disc.recommendedProfile, 'frontend');
+    assert.equal(disc.recommendedProfile, 'init');
     assert.ok(disc.confidence > 0.8);
     assert.ok(Array.isArray(disc.adapters));
   });

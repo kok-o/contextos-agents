@@ -30,7 +30,7 @@ import type {
 	VerificationVerdict,
 } from "../core/types.js";
 import { MODEL_PRICING as PRICING } from "../core/types.js";
-import type { EpisodicMemory } from "../memory/episodic.js";
+import type { EpisodicMemory } from "../labs/episodic-memory.js";
 import { evaluateReviewerGate } from "../orchestration/reviewer-gate.js";
 import { runWorktreeVerification } from "../orchestration/verification-runner.js";
 import { AGENT_CAPABILITIES } from "../routing/model-router.js";
@@ -470,6 +470,7 @@ export class ThreadManager {
 			verificationSpec: threadConfig.taskBrief?.verificationSpec || threadConfig.verificationSpec,
 			expectedResult: threadConfig.taskBrief?.expectedResult || "Task completes successfully",
 			maxAttempts: threadConfig.taskBrief?.maxAttempts || maxAttempts,
+			sandboxMode: threadConfig.taskBrief?.sandboxMode || threadConfig.sandboxMode || "host-unsafe",
 		});
 		const normalizedConfig: ThreadConfig = {
 			...threadConfig,

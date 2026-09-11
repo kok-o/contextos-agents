@@ -14,7 +14,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const { ExecutionSandbox } = require('../.agents/runtime/sandbox');
+const { ExecutionSandbox } = require('../contextos-mcp/src/runtime/sandbox.cjs');
 
 test('ExecutionSandbox — hardened container profile arguments generation', () => {
   const sandbox = new ExecutionSandbox({

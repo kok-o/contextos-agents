@@ -95,6 +95,7 @@ export interface ThreadConfig {
 	testCommand?: string;
 	verificationSpec?: VerificationSpec;
 	taskBrief?: TaskBrief;
+	sandboxMode?: "oci-required" | "oci-preferred" | "host-unsafe";
 }
 
 /** Structured specification for automated verification (Section 16.1). */

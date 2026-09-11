@@ -67,3 +67,4 @@ website/
 # Local scratch and temporary scripts
 scratch/
 
+*.tgz

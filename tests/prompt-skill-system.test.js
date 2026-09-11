@@ -196,8 +196,8 @@ describe('Milestone 9: Prompt & Skill System Quality Guardrails', () => {
 
     test('explicit user budget overrides tiered default budget', () => {
       const res = resolver.resolve({
-        task: 'Build something with @nextjs',
-        contextBudgetTokens: 1500,
+        task: 'Manage context using @context-os',
+        contextBudgetTokens: 500,
       });
 
       // Budget limit is respected

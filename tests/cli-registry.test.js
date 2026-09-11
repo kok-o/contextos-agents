@@ -23,7 +23,6 @@ describe('bin/commands.js — CLI Command Registry & Status', () => {
       'init', 'status', 'update', 'uninstall', 'doctor',
       'validate', 'audit', 'export', 'profile', 'resolve',
       'stats', 'watch', 'detect', 'install-skill', 'skill',
-      'setup-mcp', 'clean-worktrees',
     ];
 
     for (const cmd of requiredCommands) {
@@ -58,7 +57,7 @@ describe('bin/commands.js — CLI Command Registry & Status', () => {
     assert.ok(status.version, 'Should report semver version');
     assert.equal(status.initialized, true);
     assert.ok(typeof status.skillsCount === 'number');
-    assert.ok(status.skillsCount >= 24);
+    assert.ok(status.skillsCount >= 7);
     assert.equal(typeof status.mcpInstalled, 'boolean');
     assert.equal(status.mcpInstalled, fs.existsSync(path.join(ROOT_DIR, '.agents', 'mcp', 'server.mjs')));
     assert.ok(Array.isArray(status.compiledAdapters));
@@ -95,7 +94,7 @@ describe('bin/index.js — CLI dispatch & flags', () => {
     const parsed = JSON.parse(raw);
     assert.equal(parsed.package, 'contextos-agents');
     assert.equal(parsed.initialized, true);
-    assert.ok(parsed.skillsCount >= 24);
+    assert.ok(parsed.skillsCount >= 7);
     assert.equal(typeof parsed.mcpInstalled, 'boolean');
     assert.equal(parsed.mcpInstalled, fs.existsSync(path.join(ROOT_DIR, '.agents', 'mcp', 'server.mjs')));
   });

@@ -40,6 +40,9 @@ export async function startMcpServer(args: string[]): Promise<void> {
 		defaultDir = args[dirIdx + 1];
 	}
 
+	// Parse --enable-runtime from args
+	const enableRuntime = args.includes("--enable-runtime");
+
 	// Create MCP server
 	const server = new McpServer(
 		{
@@ -54,7 +57,7 @@ export async function startMcpServer(args: string[]): Promise<void> {
 	);
 
 	// Register ContextOS tools
-	registerContextosTools(server, defaultDir);
+	registerContextosTools(server, defaultDir, enableRuntime);
 
 	// Handle graceful shutdown
 	const shutdown = async () => {

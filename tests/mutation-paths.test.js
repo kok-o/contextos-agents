@@ -27,17 +27,15 @@ describe('W3.1: Mutation Inventory Enforcement', () => {
     path.join(agentsDir, 'ctx.js'),
     path.join(agentsDir, 'doctor.js'),
     path.join(agentsDir, 'plugins.js'),
-    path.join(agentsDir, 'runtime', 'plugin-supply-chain-bundle.js'),
     path.join(agentsDir, 'profiles.js'),
     path.join(agentsDir, 'customization-dx.js'),
     path.join(agentsDir, 'watch.js'),
 
-    // Runtime tracking primitives
-    path.join(agentsDir, 'runtime', 'state-machine.js'),
-    path.join(agentsDir, 'runtime', 'event-store.js'),
-    path.join(agentsDir, 'runtime', 'idempotency.js'),
-    path.join(agentsDir, 'runtime', 'ipc-lock.js'),
-    path.join(agentsDir, 'runtime', 'thread-store.js')
+    // Core transaction and lock primitives
+    path.join(agentsDir, 'transaction-core', 'event-store.js'),
+    path.join(agentsDir, 'transaction-core', 'idempotency.js'),
+    path.join(agentsDir, 'transaction-core', 'ipc-lock.js'),
+    path.join(agentsDir, 'transaction-core', 'plugin-supply-chain-bundle.js')
   ].map(p => p.toLowerCase());
 
   // Patterns that indicate a filesystem mutation

@@ -13,19 +13,12 @@ const CORE_SKILLS_PATH = path.join(__dirname, '..', '.agents', 'core', 'skills')
 
 const REQUIRED_SKILLS = [
   'gstack-roles',
-  'ui-ux-pro',
-  'system-design',
   'engineering-workflow',
-  'impeccable-design',
   'ponytail-mindset',
-  'react',
-  'typescript',
-  'nextjs',
-  'security',
-  'interview-me',
-  'architecture-diagrams',
-  'subagent-orchestrator',
   'gemini-precision',
+  'context-os',
+  'context-manager',
+  'security',
 ];
 
 describe('core/skills/ — skill source validation', () => {

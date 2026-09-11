@@ -29,25 +29,18 @@ describe('profiles.js — profile management & detection', () => {
 
   test('listProfiles returns available profiles', () => {
     const list = profiles.listProfiles();
-    assert.ok(list.length >= 4, `Expected at least 4 profiles, got ${list.length}`);
+    assert.ok(list.length >= 1, `Expected at least 1 profile, got ${list.length}`);
     const ids = list.map(p => p.id);
-    assert.ok(ids.includes('mvp'), 'Should include mvp profile');
-    assert.ok(ids.includes('startup'), 'Should include startup profile');
-    assert.ok(ids.includes('enterprise'), 'Should include enterprise profile');
-    assert.ok(ids.includes('frontend'), 'Should include frontend profile');
-    assert.ok(ids.includes('backend'), 'Should include backend profile');
+    assert.ok(ids.includes('init'), 'Should include init profile');
   });
 
   test('getProfile returns expected profile structure', () => {
-    const mvp = profiles.getProfile('mvp');
-    assert.ok(mvp, 'MVP profile should exist');
-    assert.equal(mvp.id, 'mvp');
-    assert.ok(Array.isArray(mvp.exclude_skills), 'MVP should have exclude_skills array');
-    assert.ok(mvp.exclude_skills.includes('microservices'), 'MVP should exclude microservices');
-    assert.ok(mvp.exclude_skills.includes('ddd'), 'MVP should exclude ddd');
+    const initProf = profiles.getProfile('init');
+    assert.ok(initProf, 'Init profile should exist');
+    assert.equal(initProf.id, 'init');
   });
 
-  test('detectStack identifies React/Next.js and suggests frontend profile', () => {
+  test('detectStack identifies React/Next.js and suggests init profile', () => {
     const projectDir = path.join(tmpDir, 'next-project');
     fs.mkdirSync(projectDir, { recursive: true });
     fs.writeFileSync(path.join(projectDir, 'package.json'), JSON.stringify({
@@ -61,9 +54,7 @@ describe('profiles.js — profile management & detection', () => {
     const result = profiles.detectStack(projectDir);
     assert.ok(result.detected.includes('Next.js'));
     assert.ok(result.detected.includes('Tailwind CSS'));
-    assert.equal(result.recommendedProfile, 'frontend');
-    assert.ok(result.recommendedSkills.includes('nextjs'));
-    assert.ok(result.recommendedSkills.includes('react'));
+    assert.equal(result.recommendedProfile, 'init');
   });
 
   test('detectStack identifies Python stack', () => {
@@ -73,36 +64,22 @@ describe('profiles.js — profile management & detection', () => {
 
     const result = profiles.detectStack(projectDir);
     assert.ok(result.detected.includes('Python'));
-    assert.equal(result.recommendedProfile, 'backend');
-    assert.ok(result.recommendedSkills.includes('fastapi'));
+    assert.equal(result.recommendedProfile, 'init');
   });
 
   test('applyProfile and removeActiveProfile manage .agents/profile.json lock', () => {
     const targetProject = path.join(tmpDir, 'lock-project');
     fs.mkdirSync(targetProject, { recursive: true });
 
-    const applied = profiles.applyProfile('mvp', targetProject);
-    assert.equal(applied.profile, 'mvp');
-    assert.ok(applied.exclude_skills.includes('microservices'));
+    const applied = profiles.applyProfile('init', targetProject);
+    assert.equal(applied.profile, 'init');
 
     const active = profiles.getActiveProfile(targetProject);
     assert.ok(active, 'Active profile should exist');
-    assert.equal(active.profile, 'mvp');
+    assert.equal(active.profile, 'init');
 
     const removed = profiles.removeActiveProfile(targetProject);
     assert.equal(removed, true);
     assert.equal(profiles.getActiveProfile(targetProject), null);
-  });
-
-  test('collectSkillDirectories filters skills based on active profile exclusion', () => {
-    const allSkills = collectSkillDirectories();
-    const mvpProfile = profiles.getProfile('mvp');
-    const mvpSkills = collectSkillDirectories(mvpProfile);
-
-    assert.ok(mvpSkills.length < allSkills.length, 'MVP skills should be fewer than all skills');
-    const mvpNames = mvpSkills.map(s => path.basename(s));
-    assert.ok(!mvpNames.includes('microservices'), 'microservices should be excluded under MVP');
-    assert.ok(!mvpNames.includes('ddd'), 'ddd should be excluded under MVP');
-    assert.ok(mvpNames.includes('ponytail-mindset'), 'ponytail-mindset should be included');
   });
 });

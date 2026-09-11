@@ -21,9 +21,9 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
-const { LeaseLock } = require('../.agents/runtime/ipc-lock');
-const { DurableEventStore } = require('../.agents/runtime/event-store');
-const { IdempotencyRegistry } = require('../.agents/runtime/idempotency');
+const { LeaseLock } = require('../.agents/transaction-core/ipc-lock');
+const { DurableEventStore } = require('../.agents/transaction-core/event-store');
+const { IdempotencyRegistry } = require('../.agents/transaction-core/idempotency');
 
 function createTempDir(prefix = 'ctx-durable-test-') {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

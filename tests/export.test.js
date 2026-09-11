@@ -52,9 +52,9 @@ describe('ctx.js — context compiler', () => {
       assert.ok(fs.existsSync(GENERATED_GEMINI), 'generated/gemini/skills/ should exist');
     });
 
-    test('generates at least 10 skill directories', () => {
+    test('generates exactly 7 skill directories', () => {
       const skills = fs.readdirSync(GENERATED_GEMINI);
-      assert.ok(skills.length >= 10, `Expected ≥10 skills, got ${skills.length}`);
+      assert.equal(skills.length, 7, `Expected 7 skills, got ${skills.length}`);
     });
 
     test('each skill directory contains SKILL.md', () => {

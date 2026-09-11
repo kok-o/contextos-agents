@@ -61,10 +61,10 @@ Options:
   --agent <name>      Target AI agent or IDE (gemini, claude, cursor, auto)
   --dry-run           Preview what will be copied without making changes
   --force             Overwrite an existing .agents/ folder
-  --minimal           Install only 5 core skills (lightweight footprint)
+  --minimal           Install only 7 core skills (lightweight footprint)
   --profile <name>    Install a specific profile (mvp, startup, enterprise, frontend, backend)
   --auto              Auto-detect tech stack and apply recommended profile
-  --with-mcp, --mcp   Install with MCP execution server enabled (.agents/mcp/ & mcp_config.json)
+  --with-mcp, --mcp   [DEPRECATED] Use the separate @contextos/mcp package instead
   --skip-compile      Skip running ctx.js export after installation
   --add-skill <ref>   Install a community plugin skill after setup
 
@@ -84,7 +84,7 @@ Commands:
   watch               Start continuous file watcher and auto-sync daemon
   detect              Analyze project and display detected tech stack & IDE
   install-skill       Interactive skill installer (or pass <ref> / --from-repo)
-  setup-mcp           Add MCP execution server to an existing .agents/ project
+  setup-mcp           [DEPRECATED] Add MCP execution server to an existing .agents/ project
 
 Profiles:
   mvp                 Fastest shipping, minimalist monolith, excludes microservices & DDD
@@ -104,7 +104,7 @@ Plugin ref formats:
 Examples:
   npx contextos-agents init                     Install .agents/ with auto-detected stack
   npx contextos-agents init --agent auto        Install and configure for detected stack & IDE
-  npx contextos-agents init --minimal           Install only 5 core essential skills
+  npx contextos-agents init --minimal           Install only 7 core essential skills
   npx contextos status                          Show project configuration and lockfile status
   npx contextos doctor                          Run project health check
   npx contextos export gemini                   Compile skills for Gemini
@@ -430,46 +430,10 @@ if (mainCommand === 'install-skill') {
     })();
   }
 } else if (mainCommand === 'setup-mcp') {
-  const targetPath = path.join(process.cwd(), '.agents');
-  if (!fs.existsSync(targetPath)) {
-    console.error('[ERROR] .agents/ folder not found in current directory.');
-    console.error('        Run `npx contextos-agents` first or `npx contextos-agents --with-mcp`.');
-    process.exit(1);
-  }
-
-  const sourceMcp = path.join(__dirname, '..', '.agents', 'mcp');
-  const targetMcp = path.join(targetPath, 'mcp');
-  if (!fs.existsSync(sourceMcp)) {
-    console.error('[ERROR] Source MCP server bundle not found in package.');
-    process.exit(1);
-  }
-
-  try {
-    fs.cpSync(sourceMcp, targetMcp, { recursive: true, force: true });
-    console.log('[OK] Installed ContextOS MCP execution server into .agents/mcp/');
-
-    const mcpConfigPath = path.join(targetPath, 'mcp_config.json');
-    if (!fs.existsSync(mcpConfigPath) || flags.force) {
-      const defaultMcpConfig = {
-        mcpServers: {
-          "contextos": {
-            command: "node",
-            args: ["./.agents/mcp/server.mjs", "--dir", "."]
-          }
-        }
-      };
-      fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
-      console.log('[OK] Created MCP configuration (.agents/mcp_config.json)');
-    } else {
-      console.log('[INFO] Existing .agents/mcp_config.json retained.');
-    }
-    console.log('\n[SUCCESS] ContextOS MCP execution layer is configured.');
-    console.log('You can now use parallel subagents and git worktrees in your MCP-compatible IDE.\n');
-  } catch (err) {
-    console.error('[ERROR] Failed to configure MCP:', err.message);
-    process.exit(1);
-  }
-  process.exit(0);
+  console.error('[DEPRECATED] The bundled MCP server has been moved to a separate package in v2.0.');
+  console.error('             To use the MCP Bridge or execution runtime, install @contextos/mcp:');
+  console.error('             npm install @contextos/mcp --save-dev');
+  process.exit(1);
 } else {
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
@@ -481,7 +445,9 @@ const MINIMAL_SKILLS = new Set([
   'ponytail-mindset',
   'gstack-roles',
   'gemini-precision',
-  'react',
+  'context-os',
+  'context-manager',
+  'security',
 ]);
 
 function uniqueSiblingPath(basePath, suffix) {
@@ -507,10 +473,8 @@ function installAtomically(source, target, options = {}) {
       force: true,
       filter: (src) => {
         const norm = src.replace(/\\/g, '/');
-        if (!options.withMcp) {
-          if (norm.endsWith('/mcp') || norm.includes('/mcp/') || norm.endsWith('/mcp_config.json')) {
-            return false;
-          }
+        if (norm.endsWith('/mcp') || norm.includes('/mcp/') || norm.endsWith('/mcp_config.json')) {
+          return false;
         }
         if (options.minimal) {
           const skillMatch = norm.match(/\/core\/skills\/([^/]+)/);
@@ -679,21 +643,11 @@ try {
     }
   }
 
-  // ── Create mcp_config.json only if --with-mcp ────────────────────────────────
+  // ── Deprecation warning for --with-mcp ────────────────────────────────────────────────
   if (flags.withMcp) {
-    const mcpConfigPath = path.join(targetPath, 'mcp_config.json');
-    if (!fs.existsSync(mcpConfigPath)) {
-      const defaultMcpConfig = {
-        mcpServers: {
-          "contextos": {
-            command: "node",
-            args: ["./.agents/mcp/server.mjs", "--dir", "."]
-          }
-        }
-      };
-      fs.writeFileSync(mcpConfigPath, JSON.stringify(defaultMcpConfig, null, 2));
-      if (!flags.json) console.log('[OK] Created default MCP configuration (.agents/mcp_config.json)');
-    }
+    console.warn('\n[DEPRECATED] The --with-mcp flag is no longer supported in ContextOS v2.0.');
+    console.warn('             The MCP execution runtime has been moved to a separate package.');
+    console.warn('             To enable the MCP server, run: npm install @contextos/mcp --save-dev\n');
   }
 
   // ── Apply profile if requested or auto ──────────────────────────────────────
@@ -792,10 +746,7 @@ try {
   console.log('  6. Add community skills (plugins):');
   console.log('       contextos skill add   username/my-skill');
   console.log('       contextos skill list');
-  if (!flags.withMcp) {
-    console.log('  7. Enable MCP parallel subagents & worktrees (optional):');
-    console.log('       contextos setup-mcp');
-  }
+
   console.log('');
 
 } catch (error) {

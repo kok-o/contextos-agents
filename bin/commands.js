@@ -103,15 +103,14 @@ function formatStatusText(status) {
 const COMMAND_REGISTRY = {
   init: {
     name: 'init',
-    description: 'Install and configure .agents/ in target project',
+    description: 'Compile and govern engineering context across AI coding agents.',
     usage: 'npx contextos-agents init [options]',
     requiresProject: false,
     options: [
       { flag: '--agent <target>', desc: 'Target agent (gemini, claude, cursor, auto)' },
       { flag: '--profile <name>', desc: 'Apply specific profile (mvp, startup, enterprise, etc.)' },
       { flag: '--auto', desc: 'Auto-detect tech stack and recommended profile' },
-      { flag: '--minimal', desc: 'Install only 5 core essential skills' },
-      { flag: '--with-mcp', desc: 'Install with MCP execution server enabled' },
+      { flag: '--minimal', desc: 'Install the 7-skill neutral bootstrap.' },
       { flag: '--force', desc: 'Overwrite existing installation' },
       { flag: '--dry-run', desc: 'Preview installation actions without writing' },
       { flag: '--skip-compile', desc: 'Skip auto-compiling skills after install' },
@@ -283,22 +282,6 @@ const COMMAND_REGISTRY = {
     requiresProject: true,
     options: [],
   },
-  'setup-mcp': {
-    name: 'setup-mcp',
-    description: 'Add MCP execution server to an existing .agents/ project',
-    usage: 'contextos setup-mcp [--force]',
-    requiresProject: true,
-    options: [
-      { flag: '--force', desc: 'Overwrite existing .agents/mcp_config.json' },
-    ],
-  },
-  'clean-worktrees': {
-    name: 'clean-worktrees',
-    description: 'Clean up lingering .swarm-worktrees and swarm/* branches',
-    usage: 'contextos clean-worktrees',
-    requiresProject: false,
-    options: [],
-  },
   recover: {
     name: 'recover',
     description: 'Recover from interrupted or failed multi-file transactions',
@@ -308,15 +291,6 @@ const COMMAND_REGISTRY = {
       { flag: '--status', desc: 'Inspect pending uncommitted transaction journals' },
       { flag: '--rollback [txId]', desc: 'Roll back uncommitted or failed transaction' },
       { flag: '--continue [txId]', desc: 'Attempt to resume and complete prepared transaction' },
-    ],
-  },
-  thread: {
-    name: 'thread',
-    description: 'Inspect runtime execution threads, attestations, and merge readiness',
-    usage: 'contextos thread <list|get|readiness> [id] [--json]',
-    requiresProject: true,
-    options: [
-      { flag: '--json', desc: 'Output in structured JSON format' },
     ],
   },
 };

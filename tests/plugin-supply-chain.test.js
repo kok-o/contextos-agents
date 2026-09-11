@@ -25,7 +25,7 @@ const {
   AtomicPluginUpdater,
   THREAT_CODES,
   verifyNpmTarballIntegrity,
-} = require('../.agents/runtime/plugin-supply-chain-bundle');
+} = require('../.agents/transaction-core/plugin-supply-chain-bundle');
 
 function createTempDir(prefix = 'ctx-supply-test-') {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

@@ -35,7 +35,7 @@ const {
   AtomicPluginUpdater,
   THREAT_CODES,
   verifyNpmTarballIntegrity,
-} = require('./runtime/plugin-supply-chain-bundle.js');
+} = require('./transaction-core/plugin-supply-chain-bundle.js');
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 const ROOT           = process.cwd();

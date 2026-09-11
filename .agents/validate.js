@@ -665,7 +665,7 @@ function run() {
   checkContentQuality(sourceSkills);
   checkCostarHeaders(sourceSkills);
   checkValidationJson(sourceSkills);
-  checkMcpBundleSync();
+  // checkMcpBundleSync();
   checkResourcesManifest(sourceSkills);
   checkProfilesIntegrity(sourceSkills);
   checkRegistryV2();

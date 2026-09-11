@@ -77,33 +77,6 @@ describe('bin/index.js — installer', () => {
     assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should NOT be created by default');
   });
 
-  test('--with-mcp flag installs .agents/mcp and mcp_config.json', () => {
-    const testDir = path.join(tmpDir, 'with-mcp-test');
-    fs.mkdirSync(testDir, { recursive: true });
-
-    execSync(`node "${BIN_PATH}" --with-mcp --skip-compile`, { cwd: testDir });
-
-    const agentsDir = path.join(testDir, '.agents');
-    assert.ok(fs.existsSync(agentsDir), '.agents/ should be created');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should exist with --with-mcp');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should exist with --with-mcp');
-  });
-
-  test('setup-mcp configures MCP in an existing .agents/ folder', () => {
-    const testDir = path.join(tmpDir, 'setup-mcp-test');
-    fs.mkdirSync(testDir, { recursive: true });
-
-    // Step 1: Install without MCP
-    execSync(`node "${BIN_PATH}" --skip-compile`, { cwd: testDir });
-    const agentsDir = path.join(testDir, '.agents');
-    assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should not exist yet');
-
-    // Step 2: Configure MCP
-    const output = execSync(`node "${BIN_PATH}" setup-mcp`, { cwd: testDir }).toString();
-    assert.ok(output.includes('Installed ContextOS MCP'), 'Should confirm MCP installation');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should be installed after setup-mcp');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should be created after setup-mcp');
-  });
 
   test('refuses to overwrite an existing .agents/ folder without --force', () => {
     const testDir = path.join(tmpDir, 'preserve-existing-test');
@@ -140,7 +113,7 @@ describe('bin/index.js — installer', () => {
     );
   });
 
-  test('--minimal flag installs only the 5 core essential skills', () => {
+  test('--minimal flag installs only the 7 core essential skills', () => {
     const testDir = path.join(tmpDir, 'minimal-test');
     fs.mkdirSync(testDir, { recursive: true });
 
@@ -149,9 +122,9 @@ describe('bin/index.js — installer', () => {
     const skillsDir = path.join(testDir, '.agents', 'core', 'skills');
     assert.ok(fs.existsSync(skillsDir), 'skills directory should exist');
     const installedSkills = fs.readdirSync(skillsDir);
-    assert.equal(installedSkills.length, 5, 'Should install exactly 5 skills in minimal mode');
-    const expected = ['engineering-workflow', 'gemini-precision', 'gstack-roles', 'ponytail-mindset', 'react'];
-    assert.deepEqual(installedSkills.sort(), expected.sort(), 'Installed skills must match 5 core essential skills');
+    assert.equal(installedSkills.length, 7, 'Should install exactly 7 skills in minimal mode');
+    const expected = ['engineering-workflow', 'gemini-precision', 'gstack-roles', 'ponytail-mindset', 'context-os', 'context-manager', 'security'];
+    assert.deepEqual(installedSkills.sort(), expected.sort(), 'Installed skills must match 7 core essential skills');
   });
 
   test('contextos doctor runs successfully and outputs diagnostic report', () => {

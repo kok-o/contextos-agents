@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 function getLeaseLockClass(dir: string) {
 	let current = dir;
 	while (current !== path.dirname(current)) {
-		const p = path.join(current, ".agents", "runtime", "ipc-lock.js");
+		const p = path.join(current, ".agents", "transaction-core", "ipc-lock.js");
 		if (fs.existsSync(p)) {
 			return require(p).LeaseLock;
 		}
