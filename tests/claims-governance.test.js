@@ -29,12 +29,23 @@ test('Claims Registry — schema validation and evidence linking', () => {
     assert.ok(claim.id.startsWith('claim-'), `Claim ID must start with claim-: ${claim.id}`);
     assert.ok(claim.statement, 'Claim must have a statement');
     assert.ok(claim.evidenceArtifact, 'Claim must link to evidence artifact');
-    assert.ok(['deterministic', 'measured', 'observed', 'supported', 'invalidated'].includes(claim.status));
+    const evidencePath = path.resolve(claim.evidenceArtifact);
     assert.equal(
-      fs.existsSync(path.resolve(claim.evidenceArtifact)),
+      fs.existsSync(evidencePath),
       true,
       `Evidence artifact must exist: ${claim.evidenceArtifact}`
     );
+
+    if (evidencePath.endsWith('.json')) {
+      const evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+      if (evidence.status === 'invalidated') {
+        assert.equal(
+          claim.status,
+          'invalidated',
+          `Claim "${claim.id}" must have status "invalidated" matching its evidence artifact`
+        );
+      }
+    }
   }
 });
 

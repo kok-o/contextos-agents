@@ -2,59 +2,19 @@
   "version": "1.0.0",
   "skills": [
     {
-      "name": "adapters",
-      "description": "Generates agent-specific configuration files from the unified ContextOS format.",
-      "path": ".agents/core/skills/adapters/SKILL.md"
-    },
-    {
-      "name": "architecture-diagrams",
-      "description": "Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained",
-      "path": ".agents/core/skills/architecture-diagrams/SKILL.md"
-    },
-    {
-      "name": "brutalist-design",
-      "description": "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics. Rigid grids, extreme type scale contrast, utilitarian color, analog degradation effects. For data-heavy dashboards, portfolios, or editorial sites that need to feel like declassified blueprints.",
-      "path": ".agents/core/skills/brutalist-design/SKILL.md"
-    },
-    {
       "name": "context-manager",
-      "description": "Smart context selection engine. Analyzes the current task, consults the",
+      "description": "Smart context selection engine. Analyzes the current task, consults the Project Graph, and returns only the documents and skills needed to prevent token overflow.",
       "path": ".agents/core/skills/context-manager/SKILL.md"
     },
     {
       "name": "context-os",
-      "description": "AI Project Operating System — Context Compiler that transforms user intent",
+      "description": "Deterministic context compiler and policy engine for AI coding agents.",
       "path": ".agents/core/skills/context-os/SKILL.md"
     },
     {
-      "name": "database",
-      "description": "Database architecture, schema design, Prisma, Drizzle ORM, indexing strategies, migrations, and N+1 query resolution.",
-      "path": ".agents/core/skills/database/SKILL.md"
-    },
-    {
-      "name": "ddd",
-      "description": "ContextOS skill for Domain-Driven Design",
-      "path": ".agents/core/skills/ddd/SKILL.md"
-    },
-    {
-      "name": "decisions",
-      "description": "Architecture Decision Records (ADR) management. Creates, tracks, and queries",
-      "path": ".agents/core/skills/decisions/SKILL.md"
-    },
-    {
-      "name": "docker",
-      "description": "Docker containerization, multi-stage builds, non-root security, layer caching optimization, and docker-compose standards.",
-      "path": ".agents/core/skills/docker/SKILL.md"
-    },
-    {
       "name": "engineering-workflow",
-      "description": "Senior engineering workflow skill. Enforces spec → plan → build → test → review → ship.",
+      "description": "Senior engineering workflow skill. Enforces the full development lifecycle: spec → plan → build → test → review → ship.",
       "path": ".agents/core/skills/engineering-workflow/SKILL.md"
-    },
-    {
-      "name": "fastapi",
-      "description": "ContextOS skill for FastAPI",
-      "path": ".agents/core/skills/fastapi/SKILL.md"
     },
     {
       "name": "gemini-precision",
@@ -62,139 +22,19 @@
       "path": ".agents/core/skills/gemini-precision/SKILL.md"
     },
     {
-      "name": "generators",
-      "description": "Generates project documentation from a single idea. Creates PRD, Architecture,",
-      "path": ".agents/core/skills/generators/SKILL.md"
-    },
-    {
-      "name": "graphify",
-      "description": "Transforms entire codebases into structured knowledge graphs via Tree-sitter AST parsing.",
-      "path": ".agents/core/skills/graphify/SKILL.md"
-    },
-    {
       "name": "gstack-roles",
-      "description": "Role-based AI specialist system. Defines 23 specialist roles and teaches the AI",
+      "description": "Role-based AI specialist system. Defines specialist roles and teaches the AI to adopt the correct role before each task phase.",
       "path": ".agents/core/skills/gstack-roles/SKILL.md"
     },
     {
-      "name": "impeccable-design",
-      "description": "Visual design quality enforcement. 50 deterministic anti-pattern rules preventing",
-      "path": ".agents/core/skills/impeccable-design/SKILL.md"
-    },
-    {
-      "name": "interview-me",
-      "description": "Interactive requirements elicitation skill. Interrogates ambiguous, complex, or high-blast-radius",
-      "path": ".agents/core/skills/interview-me/SKILL.md"
-    },
-    {
-      "name": "microservices",
-      "description": "ContextOS skill for Microservices",
-      "path": ".agents/core/skills/microservices/SKILL.md"
-    },
-    {
-      "name": "minimalist-design",
-      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
-      "path": ".agents/core/skills/minimalist-design/SKILL.md"
-    },
-    {
-      "name": "nestjs",
-      "description": "ContextOS skill for NestJS",
-      "path": ".agents/core/skills/nestjs/SKILL.md"
-    },
-    {
-      "name": "nextjs",
-      "description": "ContextOS skill for Next.js App Router, Server Components, Server Actions, performance optimization, and Vercel best practices.",
-      "path": ".agents/core/skills/nextjs/SKILL.md"
-    },
-    {
-      "name": "node",
-      "description": "ContextOS skill for Node.js",
-      "path": ".agents/core/skills/node/SKILL.md"
-    },
-    {
-      "name": "performance",
-      "description": "ContextOS skill for Web Performance, Core Web Vitals, waterfall elimination, bundle size optimization, and caching strategies.",
-      "path": ".agents/core/skills/performance/SKILL.md"
-    },
-    {
       "name": "ponytail-mindset",
-      "description": "Minimalist coding mindset. Write only what is strictly necessary for the task.",
+      "description": "Minimalist coding mindset. Teaches the AI to write only what is strictly necessary using the 7-rung ladder.",
       "path": ".agents/core/skills/ponytail-mindset/SKILL.md"
     },
     {
-      "name": "react",
-      "description": "ContextOS skill for modern React (v18/v19), component architecture, state colocation, render optimization, and Vercel performance rules.",
-      "path": ".agents/core/skills/react/SKILL.md"
-    },
-    {
-      "name": "react-best-practices",
-      "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.",
-      "path": ".agents/core/skills/react-best-practices/SKILL.md"
-    },
-    {
-      "name": "redesign-audit",
-      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.",
-      "path": ".agents/core/skills/redesign-audit/SKILL.md"
-    },
-    {
       "name": "security",
-      "description": "Application and AI agent security skill. Enforces zero-trust defense-in-depth,",
+      "description": "ContextOS skill for Application Security.",
       "path": ".agents/core/skills/security/SKILL.md"
-    },
-    {
-      "name": "soft-design",
-      "description": "Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.",
-      "path": ".agents/core/skills/soft-design/SKILL.md"
-    },
-    {
-      "name": "state-management",
-      "description": "Client and server state management standards using Zustand and TanStack Query. Enforces minimal global state, optimistic updates, and clean query invalidation.",
-      "path": ".agents/core/skills/state-management/SKILL.md"
-    },
-    {
-      "name": "subagent-orchestrator",
-      "description": "Subagent delegation and parallel coordination skill. Implements task decomposition,",
-      "path": ".agents/core/skills/subagent-orchestrator/SKILL.md"
-    },
-    {
-      "name": "system-design",
-      "description": "Scalable architecture skill based on the System Design Primer.",
-      "path": ".agents/core/skills/system-design/SKILL.md"
-    },
-    {
-      "name": "testing",
-      "description": "Vitest, React Testing Library, and Playwright testing standards. Enforces TDD/BDD, test pyramid, zero brittle mocks, and complete assertion coverage.",
-      "path": ".agents/core/skills/testing/SKILL.md"
-    },
-    {
-      "name": "typescript",
-      "description": "ContextOS skill for TypeScript",
-      "path": ".agents/core/skills/typescript/SKILL.md"
-    },
-    {
-      "name": "ui-design",
-      "description": "ContextOS skill for UI Design",
-      "path": ".agents/core/skills/ui-design/SKILL.md"
-    },
-    {
-      "name": "ui-ux-pro",
-      "description": "Professional UI/UX design skill. Enforces accessibility, semantic color palettes,",
-      "path": ".agents/core/skills/ui-ux-pro/SKILL.md"
-    },
-    {
-      "name": "ux-design",
-      "description": "ContextOS skill for UX Design",
-      "path": ".agents/core/skills/ux-design/SKILL.md"
-    },
-    {
-      "name": "vercel-optimize",
-      "description": "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps. Collect Vercel metrics, usage, project config, and code scan results first; investigate only metric-backed candidates; produce ranked recommendations grounded in verified files and version-aware Vercel/framework docs. Trigger for Vercel bill reduction, slow or expensive routes, caching opportunities, Function Invocations, Build Minutes, Fast Data Transfer, Core Web Vitals, Bot Management, Fluid compute, or cost breakdown requests.",
-      "path": ".agents/core/skills/vercel-optimize/SKILL.md"
-    },
-    {
-      "name": "web-accessibility",
-      "description": "ContextOS skill for Web Accessibility (WCAG 2.1 AA/AAA), ARIA dialog patterns, keyboard focus traps, and Web Interface Guidelines.",
-      "path": ".agents/core/skills/web-accessibility/SKILL.md"
     }
   ]
 }

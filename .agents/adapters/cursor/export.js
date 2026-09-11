@@ -19,10 +19,27 @@ function describe() {
   };
 }
 
-function getSkillGlobsAndFlags(skillName) {
-  const ALWAYS_APPLY_SKILLS = ['engineering-workflow', 'gstack-roles', 'ponytail-mindset'];
+function getSkillGlobsAndFlags(skillName, skillDir = null) {
+  const ALWAYS_APPLY_SKILLS = ['engineering-workflow', 'gstack-roles', 'ponytail-mindset', 'gemini-precision'];
   if (ALWAYS_APPLY_SKILLS.includes(skillName)) {
     return { globs: '', alwaysApply: true };
+  }
+
+  // 1. Dynamic extraction from skill.yaml if available
+  if (skillDir) {
+    const yamlPath = path.join(skillDir, 'skill.yaml');
+    if (fs.existsSync(yamlPath)) {
+      try {
+        const yamlContent = fs.readFileSync(yamlPath, 'utf8');
+        const match = yamlContent.match(/(?:fileGlobs|triggers\s*:\s*(?:files|globs)|globs)\s*:\s*\[?([^\r\n\]]+)\]?/i);
+        if (match && match[1]) {
+          const globsVal = match[1].replace(/['"]/g, '').trim();
+          if (globsVal) {
+            return { globs: globsVal, alwaysApply: false };
+          }
+        }
+      } catch {}
+    }
   }
 
   const GLOB_MAP = {
@@ -110,7 +127,7 @@ function generateCursorMdc(skillDir) {
   if (troubleshooting) raw += '\n\n' + troubleshooting;
 
   const body = stripFrontmatter(raw);
-  const { globs, alwaysApply } = getSkillGlobsAndFlags(skillName);
+  const { globs, alwaysApply } = getSkillGlobsAndFlags(skillName, skillDir);
 
   let cleanDescription = description.replace(/\r?\n+/g, ' ').replace(/"/g, "'").trim();
   if (!globs && !alwaysApply) {

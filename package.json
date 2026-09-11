@@ -1,6 +1,6 @@
 {
     "name":  "contextos-agents",
-    "version":  "2.0.0-beta.1",
+    "version":  "2.0.0-beta.3",
     "description":  "ContextOS — Deterministic context compiler and policy engine for AI agents.",
     "bin":  {
                 "contextos":  "./bin/index.js",
@@ -19,6 +19,8 @@
                   ".agents/plugins.js",
                   ".agents/profiles.js",
                   ".agents/resolver.js",
+                  ".agents/resolver",
+                  ".agents/rules",
                   ".agents/doctor.js",
                   ".agents/stats.js",
                   ".agents/watch.js",
@@ -48,7 +50,7 @@
                     "check:secrets":  "node scripts/check-secrets.js --all",
                     "setup:hooks":  "node scripts/install-hooks.js",
                     "watch":  "node .agents/watch.js",
-                    "test":  "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js tests/init-engine.test.js tests/mutation-paths.test.js",
+                    "test":  "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js tests/init-engine.test.js tests/mutation-paths.test.js tests/tarball-smoke.test.js",
                     "prepublishOnly":  "npm run validate \u0026\u0026 npm run build"
                 },
     "keywords":  [

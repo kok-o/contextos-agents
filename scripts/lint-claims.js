@@ -94,6 +94,19 @@ function lintClaims() {
       } else if (!fs.existsSync(evidencePath)) {
         console.error(`[ERROR] Claim "${claim.id}" evidenceArtifact does not exist: ${claim.evidenceArtifact}`);
         errors++;
+      } else if (evidencePath.endsWith('.json')) {
+        try {
+          const evidenceContent = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+          if (evidenceContent.status === 'invalidated' && claim.status !== 'invalidated') {
+            console.error(
+              `[ERROR] Claim "${claim.id}" has status "${claim.status}" but its evidence artifact status is "invalidated".`
+            );
+            errors++;
+          }
+        } catch (e) {
+          console.error(`[ERROR] Failed to read/parse evidence artifact ${evidencePath}: ${e.message}`);
+          errors++;
+        }
       }
     }
 

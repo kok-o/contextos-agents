@@ -167,6 +167,15 @@ function checkFilesystemPermissions(projectDir) {
 function checkPreCommitHook(projectDir) {
   const hookPath = path.join(projectDir, '.git', 'hooks', 'pre-commit');
   if (!fs.existsSync(hookPath)) {
+    if (!isContextOSDevRepo(projectDir)) {
+      return {
+        id: 'pre_commit_hook',
+        status: STATUS.SKIP,
+        ok: true,
+        message: 'optional (not installed in workspace)',
+        remediation: null,
+      };
+    }
     return {
       id: 'pre_commit_hook',
       status: STATUS.WARN,
@@ -207,6 +216,15 @@ function checkPreCommitHook(projectDir) {
 function checkSecretScanner(projectDir) {
   const scriptPath = path.join(projectDir, 'scripts', 'check-secrets.js');
   if (!fs.existsSync(scriptPath)) {
+    if (!isContextOSDevRepo(projectDir)) {
+      return {
+        id: 'secret_scanner',
+        status: STATUS.SKIP,
+        ok: true,
+        message: 'optional (not configured in workspace)',
+        remediation: null,
+      };
+    }
     // Per Milestone 8 spec: "doctor не считает отсутствующий scanner PASS"
     return {
       id: 'secret_scanner',
@@ -680,6 +698,85 @@ function checkDriftStatus(projectDir) {
   }
 }
 
+function isContextOSDevRepo(projectDir) {
+  try {
+    const pkgPath = path.join(projectDir, 'package.json');
+    if (!fs.existsSync(pkgPath)) return false;
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    return pkg.name === 'contextos-agents' || pkg.name === 'contextos';
+  } catch {
+    return false;
+  }
+}
+
+function checkModuleExecution(projectDir) {
+  const errors = [];
+
+  // Check CanonicalResolver
+  try {
+    const resolverPath = path.join(projectDir, '.agents', 'resolver', 'canonical-resolver.js');
+    if (fs.existsSync(resolverPath)) {
+      const resolver = require(resolverPath);
+      if (!resolver || typeof resolver.CanonicalResolver !== 'function') {
+        errors.push('CanonicalResolver is not exported correctly');
+      }
+    } else {
+      errors.push('.agents/resolver/canonical-resolver.js missing');
+    }
+  } catch (err) {
+    errors.push(`CanonicalResolver import failed: ${err.message}`);
+  }
+
+  // Check RuleCatalog
+  try {
+    const rulesPath = path.join(projectDir, '.agents', 'rules', 'rule-catalog.js');
+    if (fs.existsSync(rulesPath)) {
+      const rules = require(rulesPath);
+      if (!rules || typeof rules.RuleCatalog !== 'function') {
+        errors.push('RuleCatalog is not exported correctly');
+      }
+    } else {
+      errors.push('.agents/rules/rule-catalog.js missing');
+    }
+  } catch (err) {
+    errors.push(`RuleCatalog import failed: ${err.message}`);
+  }
+
+  // Check ManifestCompiler
+  try {
+    const compilerPath = path.join(projectDir, '.agents', 'compiler', 'manifest-compiler.js');
+    if (fs.existsSync(compilerPath)) {
+      const compiler = require(compilerPath);
+      if (!compiler || typeof compiler.ManifestCompiler !== 'function') {
+        errors.push('ManifestCompiler is not exported correctly');
+      }
+    } else {
+      errors.push('.agents/compiler/manifest-compiler.js missing');
+    }
+  } catch (err) {
+    errors.push(`ManifestCompiler import failed: ${err.message}`);
+  }
+
+  if (errors.length > 0) {
+    return {
+      id: 'module_execution',
+      status: STATUS.FAIL,
+      ok: false,
+      message: errors.join('; '),
+      errors,
+      remediation: 'Reinstall package via `npx contextos-agents init --force` to restore core modules',
+    };
+  }
+
+  return {
+    id: 'module_execution',
+    status: STATUS.PASS,
+    ok: true,
+    message: 'all core modules verified (resolver, rules, compiler)',
+    remediation: null,
+  };
+}
+
 function inspectSkills(projectDir, activeProfile) {
   const skillsDir = path.join(projectDir, '.agents', 'core', 'skills');
   if (!fs.existsSync(skillsDir)) return { total: 0, active: 0, excluded: 0, byDomain: { frontend: [], backend: [], cross: [] } };
@@ -782,9 +879,27 @@ function applyDoctorFix(projectDir = process.cwd(), options = {}) {
 function runDoctor(projectDir = process.cwd(), options = {}) {
   const version = (() => {
     try {
-      return require('../package.json').version;
+      const parentPkgPath = path.join(__dirname, '..', 'package.json');
+      if (fs.existsSync(parentPkgPath)) {
+        const parentPkg = JSON.parse(fs.readFileSync(parentPkgPath, 'utf8'));
+        if (parentPkg.name === 'contextos-agents' || parentPkg.name === 'contextos') {
+          return parentPkg.version;
+        }
+      }
+      const lockfileV2Path = path.join(projectDir, '.agents', 'lockfile.v2.json');
+      if (fs.existsSync(lockfileV2Path)) {
+        const lf = JSON.parse(fs.readFileSync(lockfileV2Path, 'utf8'));
+        if (lf.package && lf.package.compilerVersion) return lf.package.compilerVersion;
+      }
+      const lockfilePath = path.join(projectDir, '.agents', 'lockfile.json');
+      if (fs.existsSync(lockfilePath)) {
+        const lf = JSON.parse(fs.readFileSync(lockfilePath, 'utf8'));
+        if (lf.generator && lf.generator.version) return lf.generator.version;
+        if (lf.version) return lf.version;
+      }
+      return '2.0.0';
     } catch {
-      return '1.7.1';
+      return '2.0.0';
     }
   })();
 
@@ -809,6 +924,18 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
   const hasAgents = fs.existsSync(agentsDir);
   if (!hasAgents) {
     errors.push('.agents/ directory missing (run: npx contextos-agents init)');
+  }
+
+  const moduleExecCheck = hasAgents ? checkModuleExecution(projectDir) : {
+    id: 'module_execution',
+    status: STATUS.FAIL,
+    ok: false,
+    message: '.agents directory missing',
+    remediation: 'Run: npx contextos-agents init',
+  };
+  checks.push(moduleExecCheck);
+  if (!moduleExecCheck.ok) {
+    errors.push(moduleExecCheck.message);
   }
 
   const nodeCheck = checkNodeVersion();
@@ -947,6 +1074,11 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
     console.log('│  ✗ .agents/ directory missing (run: npx contextos-agents)    │');
   }
 
+  // Execution check
+  const execIcon = moduleExecCheck.ok ? '✓' : '✗';
+  const execStr = `Core modules: ${moduleExecCheck.message}`;
+  console.log(`│  ${execIcon} ${execStr.slice(0, 58).padEnd(58)}│`);
+
   // Node version
   const nodeIcon = nodeCheck.ok ? '✓' : '✗';
   console.log(`│  ${nodeIcon} ${nodeCheck.message.padEnd(58)}│`);
@@ -990,7 +1122,7 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
   if (mcpCheck.status === STATUS.PASS) {
     console.log('│  ✓ MCP server: installed (.agents/mcp/server.mjs)           │');
   } else {
-    console.log('│  • MCP server: not installed (run: contextos setup-mcp)     │');
+    console.log('│  • MCP server: not installed (run: npm i -D @contextos/mcp) │');
   }
 
   // Pre-commit hook
@@ -1109,5 +1241,7 @@ module.exports = {
   checkSandboxAvailability,
   checkClaimEvidence,
   checkProjectLock,
+  checkModuleExecution,
+  isContextOSDevRepo,
   inspectSkills,
 };

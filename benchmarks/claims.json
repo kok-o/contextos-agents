@@ -4,7 +4,7 @@
   "claims": [
     {
       "id": "claim-context-reduction-v1",
-      "status": "deterministic",
+      "status": "invalidated",
       "statement": "ContextOS selective compilation reduces token payload by 65-80% compared to monolithic all-skill concatenation.",
       "population": "Standard TypeScript/React/Node workspace tasks",
       "comparator": "monolithic-all-skills-v1",

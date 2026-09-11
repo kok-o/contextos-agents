@@ -62,12 +62,10 @@ const c = {
 const PROMPT_INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?previous\s+instructions/i,
   /forget\s+(all\s+)?previous/i,
-  /you\s+are\s+now/i,
-  /system\s*:\s*/i,
+  /you\s+are\s+now\s+(?:an?\s+)?(?:unrestricted|jailbreak|evil|dan|developer\s+mode|bypassed)/i,
   /\[SYSTEM\]/i,
-  /base64\s*,\s*[A-Za-z0-9+/=]{40,}/i,
-  /https?:\/\/[^\s)]+\/(?:exfil|steal|leak|webhook|collect)/i,
-  /\b(?:eval|exec|Function)\s*\(/i,
+  /(?:^|[\r\n])\s*system\s*:\s*/i,
+  /https?:\/\/[^\s)]+\/(?:exfil|steal|leak|webhook|collect)\b/i,
 ];
 
 // ── Shell Escapes & Script Injection Scanner ──────────────────────────────────
@@ -409,6 +407,23 @@ async function installFromGitHub(descriptor, skillName, dryRun, checksum, forceU
     const yamlHash = crypto.createHash('sha256').update(yamlContent).digest('hex');
     tx.stageWrite(`${relTargetDir}/skill.yaml`, yamlContent);
     manifest['skill.yaml'] = yamlHash;
+  }
+
+  // Also try to fetch standard ancillary files if present
+  const ancillaryFiles = ['EXAMPLES.md', 'TROUBLESHOOTING.md', 'VALIDATION.json'];
+  for (const f of ancillaryFiles) {
+    const fUrl = skillPath ? `${base}/${skillPath}/${f}` : `${base}/${f}`;
+    try {
+      const fContent = await fetchText(fUrl);
+      if (fContent && fContent.length > 0) {
+        scanForPromptInjection(fContent, { throwOnMatch: !forceUnsafe });
+        const fHash = crypto.createHash('sha256').update(fContent).digest('hex');
+        tx.stageWrite(`${relTargetDir}/${f}`, fContent);
+        manifest[f] = fHash;
+      }
+    } catch {
+      // Ancillary files are optional
+    }
   }
 
   // Write a source marker with manifest

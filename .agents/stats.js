@@ -65,24 +65,24 @@ function calculateContextStats(projectDir = process.cwd()) {
   }
 
   // Resolved context: dynamically resolved skills for this project's stack
-  let typicalResolvedSkills = ['engineering-workflow', 'ponytail-mindset'];
+  let candidateResolvedSkills = ['engineering-workflow', 'ponytail-mindset'];
   try {
     const resolver = require('./resolver.js');
     const resolved = resolver.resolveSkills({ prompt: 'Implement standard feature', projectDir });
-    if (resolved && Array.isArray(resolved.skills)) {
-      typicalResolvedSkills = resolved.skills;
+    if (resolved && Array.isArray(resolved.skills) && resolved.skills.length > 0) {
+      candidateResolvedSkills = resolved.skills;
     }
   } catch (_) {
-    typicalResolvedSkills = ['engineering-workflow', 'ponytail-mindset', 'react', 'ui-ux-pro'];
+    candidateResolvedSkills = ['engineering-workflow', 'ponytail-mindset'];
   }
 
+  // Only consider skills physically present on disk
+  const typicalResolvedSkills = candidateResolvedSkills.filter(s => skillCharMap.has(s));
+
   let resolvedChars = agentsMdChars;
-  let resolvedSkillCount = 0;
+  let resolvedSkillCount = typicalResolvedSkills.length;
   for (const s of typicalResolvedSkills) {
-    if (skillCharMap.has(s)) {
-      resolvedChars += skillCharMap.get(s);
-      resolvedSkillCount++;
-    }
+    resolvedChars += skillCharMap.get(s);
   }
 
   const fullTokens = estimateTokens({ length: fullChars });

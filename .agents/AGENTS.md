@@ -37,71 +37,37 @@ Skills are loaded on-demand. To keep the agent context window efficient:
 
 ## Skill Registry
 
-All skills live in `.agents/core/skills/`. Here is what each does and when to use it:
+### Built-in Core Skills (Bundled in `.agents/core/skills/`)
 
-### Core Skills (Always Considered)
+These 7 skills are always present in ContextOS Core:
 
 | Skill | File | Activate When |
 |-------|------|--------------|
 | **engineering-workflow** | `engineering-workflow/SKILL.md` | **Every task** — defines the DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline |
 | **gstack-roles** | `gstack-roles/SKILL.md` | **Every task** — declare your specialist role before each phase |
 | **ponytail-mindset** | `ponytail-mindset/SKILL.md` | **Every BUILD phase** — run the 7-rung ladder before writing any code |
-| **interview-me** | `interview-me/SKILL.md` | **Before /spec** — when requirements are ambiguous or need interactive clarification |
-| **subagent-orchestrator** | `subagent-orchestrator/SKILL.md` | **Parallel tasks** — decompose and delegate work across isolated subagents |
 | **gemini-precision** | `gemini-precision/SKILL.md` | **All Gemini tasks** — zero assumptions, zero placeholders, surgical blast radius, test proof |
+| **security** | `security/SKILL.md` | Any feature with auth, data access, user input, external integration |
+| **context-os** | `context-os/SKILL.md` | Managing context rules, compiler pipelines, project policies |
+| **context-manager** | `context-manager/SKILL.md` | Context selection, dynamic skill resolution, project graph traversal |
 
-### Frontend Skills
+### Extended Catalog Skills (Installed on Demand via `contextos skill add <name>`)
 
-| Skill | File | Activate When |
-|-------|------|--------------|
-| **ui-ux-pro** | `ui-ux-pro/SKILL.md` | Any UI task — planning guide, design decisions, color systems |
-| **brutalist-design** | `brutalist-design/SKILL.md` | When explicitly asked for brutalist, high contrast, industrial, or sharp UI |
-| **minimalist-design** | `minimalist-design/SKILL.md` | When explicitly asked for clean, minimal, editorial, or Notion-like UI |
-| **soft-design** | `soft-design/SKILL.md` | When explicitly asked for calm, soft, premium, or low-contrast UI |
-| **redesign-audit** | `redesign-audit/SKILL.md` | When tasked to audit or redesign an existing complex UI codebase without breaking it |
-| **impeccable-design** | `impeccable-design/SKILL.md` | REVIEW phase for UI — run as hard QA checklist before shipping |
-| **react** | `react/SKILL.md` | React component work |
-| **react-best-practices** | `react-best-practices/SKILL.md` | Deep React component refactoring, hooks, and strict pattern enforcement |
-| **nextjs** | `nextjs/SKILL.md` | Next.js App Router, Server Actions, routing |
-| **typescript** | `typescript/SKILL.md` | Type-safe code, generics, config |
-| **state-management** | `state-management/SKILL.md` | Zustand, TanStack Query, client/server state |
-| **ui-design** | `ui-design/SKILL.md` | Component library design, tokens |
-| **ux-design** | `ux-design/SKILL.md` | User flow design, interaction patterns |
-| **web-accessibility** | `web-accessibility/SKILL.md` | ARIA, WCAG compliance |
+The following domain skills are available in the extended catalog and can be added to your project on demand:
 
-### Backend Skills
-
-| Skill | File | Activate When |
-|-------|------|--------------|
-| **system-design** | `system-design/SKILL.md` | Any backend architecture — mandatory pre-design checklist |
-| **node** | `node/SKILL.md` | Node.js server code |
-| **fastapi** | `fastapi/SKILL.md` | FastAPI / Python backend |
-| **nestjs** | `nestjs/SKILL.md` | NestJS framework |
-| **microservices** | `microservices/SKILL.md` | Service decomposition |
-| **ddd** | `ddd/SKILL.md` | Domain modeling, bounded contexts |
-| **database** | `database/SKILL.md` | PostgreSQL, Prisma, Drizzle, migrations, indexing |
-
-### Cross-Cutting Skills
-
-| Skill | File | Activate When |
-|-------|------|--------------|
-| **security** | `security/SKILL.md` | Any feature with auth, data access, user input |
-| **performance** | `performance/SKILL.md` | Optimization tasks, Core Web Vitals |
-| **vercel-optimize** | `vercel-optimize/SKILL.md` | Edge caching, Vercel deployments, Next.js optimization |
-| **testing** | `testing/SKILL.md` | Vitest, RTL, Playwright, TDD/BDD testing |
-| **docker** | `docker/SKILL.md` | Dockerfiles, multi-stage, container security, compose |
-| **decisions** | `decisions/SKILL.md` | Making architectural choices |
-| **architecture-diagrams** | `architecture-diagrams/SKILL.md` | Interactive animated SVG/HTML architecture and sequence diagrams |
-| **adapters** | `adapters/SKILL.md` | Building system integrations |
-| **generators** | `generators/SKILL.md` | Code generation patterns |
-| **graphify** | `graphify/SKILL.md` | Codebase mapping, AST dependency knowledge graph, blast-radius analysis |
+| Domain | Skills | Install Command |
+|--------|--------|-----------------|
+| **Frontend** | `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `ui-design`, `ux-design`, `web-accessibility`, `brutalist-design`, `minimalist-design`, `soft-design`, `redesign-audit` | `contextos skill add <name>` |
+| **Backend** | `system-design`, `node`, `fastapi`, `nestjs`, `microservices`, `ddd`, `database` | `contextos skill add <name>` |
+| **Cross-Cutting** | `testing`, `docker`, `decisions`, `architecture-diagrams`, `adapters`, `generators`, `graphify`, `performance`, `vercel-optimize` | `contextos skill add <name>` |
 
 ---
 
 ## Automatic Skill Activation Rules (Proactive Routing)
 
-The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded. 
-**PROACTIVE ROUTING RULE**: If a user request matches a skill trigger, DO NOT simply answer them ad-hoc. You must proactively load the skill and follow its workflow. Skills contain multi-step workflows, checklists, and quality gates that always produce better results than an unstructured response.
+The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded.
+
+> **Availability Guard**: Load only skills that are physically installed in `.agents/core/skills/`. For uninstalled catalog skills, rely on core skills (`engineering-workflow`, `ponytail-mindset`, `gemini-precision`, `security`) and recommend `contextos skill add <name>` when deep domain checklists are needed.
 
 ### By Task Type
 
