@@ -30,6 +30,7 @@ describe('W3.1: Mutation Inventory Enforcement', () => {
     path.join(agentsDir, 'profiles.js'),
     path.join(agentsDir, 'customization-dx.js'),
     path.join(agentsDir, 'watch.js'),
+    path.join(agentsDir, 'init', 'init-engine.js'),
 
     // Core transaction and lock primitives
     path.join(agentsDir, 'transaction-core', 'event-store.js'),

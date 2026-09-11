@@ -363,6 +363,9 @@ function executeInit(projectRoot, distributionAgentsDir, options = {}) {
     }
     lockfileManager.write(lockfileData);
 
+    // 7. PROTECT REPOSITORY: Ensure local runtime files & mcp_config are gitignored
+    ensureGitignore(targetRoot);
+
     return {
       success: true,
       txId: txResult.txId,
@@ -374,9 +377,39 @@ function executeInit(projectRoot, distributionAgentsDir, options = {}) {
   }
 }
 
+const CONTEXTOS_GITIGNORE_ENTRIES = [
+  '# ContextOS local runtime & machine configs',
+  '.agents/mcp_config.json',
+  '.agents/.contextos/',
+  '.agents/cache/',
+  '.agents/state/',
+  '.agents/transactions/',
+  '.agents/mcp/',
+  '.contextos-worktrees/',
+  '.swarm-worktrees/',
+];
+
+function ensureGitignore(targetRoot) {
+  const gitignorePath = path.join(targetRoot, '.gitignore');
+  try {
+    if (!fs.existsSync(gitignorePath)) {
+      fs.writeFileSync(gitignorePath, `${CONTEXTOS_GITIGNORE_ENTRIES.join('\n')}\n`, 'utf8');
+      return true;
+    }
+    const content = fs.readFileSync(gitignorePath, 'utf8');
+    if (!content.includes('.agents/mcp_config.json')) {
+      const sep = content.endsWith('\n') ? '' : '\n';
+      fs.writeFileSync(gitignorePath, `${content}${sep}\n${CONTEXTOS_GITIGNORE_ENTRIES.join('\n')}\n`, 'utf8');
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
 module.exports = {
   discover,
   planInit,
   validateStagedFiles,
   executeInit,
+  ensureGitignore,
 };

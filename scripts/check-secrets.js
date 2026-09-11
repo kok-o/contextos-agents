@@ -25,6 +25,7 @@ const BLOCKED_EXACT_NAMES = new Set([
   'serviceaccountkey.json',
   'id_rsa',
   'id_ed25519',
+  'mcp_config.json',
 ]);
 
 const BLOCKED_EXTENSIONS = new Set([
@@ -38,6 +39,10 @@ const BLOCKED_EXTENSIONS = new Set([
 // ── Secret Content Patterns ──────────────────────────────────────────────────
 
 const SECRET_PATTERNS = [
+  {
+    name: 'Hardcoded User Home Path Leak',
+    pattern: /(?:[a-zA-Z]:[/\\]Users[/\\]|\/(?:home|Users)\/)[a-zA-Z0-9_-]+[/\\](?:Desktop|Documents|Downloads|code|projects|repos)\b/i,
+  },
   {
     name: 'Private Key Header',
     pattern: /-----BEGIN\s+(?:RSA|OPENSSH|EC|DSA|PGP)?\s*PRIVATE\s+KEY-----/,

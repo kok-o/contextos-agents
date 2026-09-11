@@ -161,4 +161,15 @@ describe('Milestone 8 — Init State Machine Engine', () => {
       }
     );
   });
+
+  test('executeInit() automatically ensures .gitignore protects .agents/mcp_config.json', () => {
+    // 1. Initial execution on clean directory
+    executeInit(tmpDir, distDir);
+
+    const gitignorePath = path.join(tmpDir, '.gitignore');
+    assert.ok(fs.existsSync(gitignorePath), '.gitignore should be created or updated');
+    const content = fs.readFileSync(gitignorePath, 'utf8');
+    assert.ok(content.includes('.agents/mcp_config.json'), 'Must ignore mcp_config.json');
+    assert.ok(content.includes('.agents/.contextos/'), 'Must ignore .agents/.contextos/');
+  });
 });

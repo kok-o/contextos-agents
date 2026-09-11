@@ -43,8 +43,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Benchmark Run Outputs & Reports (tracked so test results are visible to collaborators)
-!benchmarks/results/
+# Benchmark Run Outputs & Reports (only latest summaries and gitkeep tracked)
+benchmarks/results/*
+!benchmarks/results/.gitkeep
+!benchmarks/results/*latest*
 
 # ContextOS Runtime, Caches & Transactions
 .agents/cache/
