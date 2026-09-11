@@ -1,5 +1,5 @@
 ---
-description: "Agent-requested: invoke when working on context-os. AI Project Operating System context compiler that transforms user intent into minimal, relevant context for any AI agent across the full development lifecycle."
+description: "Agent-requested: invoke when working on context-os. Deterministic context compiler and policy engine for AI coding agents."
 globs: ""
 alwaysApply: false
 ---
@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Overview
 
-Operating system and context orchestration layer for AI coding assistants. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
+Deterministic context compiler and policy engine for AI coding agents. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
 
 ## When to Use
 

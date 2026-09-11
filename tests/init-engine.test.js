@@ -79,7 +79,7 @@ describe('Milestone 8 — Init State Machine Engine', () => {
 
     assert.equal(res.success, true);
     assert.equal(res.dryRun, true);
-    assert.ok(res.report.includes('Detected profile: frontend'));
+    assert.ok(res.report.includes('Detected profile: init'));
     assert.ok(res.report.includes('Create: 3'));
     assert.equal(fs.existsSync(path.join(tmpDir, '.agents')), false, 'Dry run must not create files on disk');
   });

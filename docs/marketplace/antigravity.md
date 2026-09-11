@@ -31,7 +31,7 @@ The native plugin lives in `.agents/plugins/contextos/`:
 {
   "name": "contextos",
   "version": "1.7.1",
-  "description": "Deterministic AI Project Operating System context compiler, MCP runtime, and high-precision engineering skills for Antigravity.",
+  "description": "Deterministic context compiler and policy engine for AI coding agents.",
   "author": {
     "name": "ContextOS Team",
     "url": "https://github.com/kok-o/contextos-agents"
