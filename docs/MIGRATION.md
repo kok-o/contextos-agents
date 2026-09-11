@@ -38,4 +38,4 @@ In v1.x, a standard installation included ~39 skills ranging from `react` to `br
   ```bash
   contextos profile prune
   ```
-* **Adding them back:** If you are setting up a new project and want the React or UI skills, you must install them explicitly from the catalog (documentation coming soon).
+* **Adding them back:** If you are setting up a new project and want the React or UI skills, you must install them explicitly from the catalog.

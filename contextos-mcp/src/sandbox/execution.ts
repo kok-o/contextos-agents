@@ -384,7 +384,7 @@ export class ExecutionSandbox {
 				timeout: 5000,
 			}).trim();
 
-			if (out && out.includes("@sha256:")) {
+			if (out?.includes("@sha256:")) {
 				const digestPart = out.split("@")[1];
 				return digestPart || null;
 			}

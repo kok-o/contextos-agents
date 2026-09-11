@@ -11,7 +11,7 @@ import { WorktreeManager } from "../../src/worktree/manager.js";
 
 /** Create a real temporary git repo with an initial commit. */
 function createTempRepo(): string {
-	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "swarm-wt-test-"));
+	const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "swarm-wt-test-")));
 	execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.email", "test@swarm.dev"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.name", "Swarm Test"], { cwd: tmpDir });
@@ -37,7 +37,7 @@ afterEach(() => {
 describe("WorktreeManager", () => {
 	describe("init()", () => {
 		it("verifies it is a git repo", async () => {
-			const notARepo = fs.mkdtempSync(path.join(os.tmpdir(), "swarm-wt-norepo-"));
+			const notARepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "swarm-wt-norepo-")));
 			tempDirs.push(notARepo);
 
 			const mgr = new WorktreeManager(notARepo);

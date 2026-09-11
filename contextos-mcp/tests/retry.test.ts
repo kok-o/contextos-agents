@@ -17,7 +17,7 @@ import { ThreadManager } from "../src/threads/manager.js";
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function createTempRepo(): string {
-	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "swarm-retry-test-"));
+	const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "swarm-retry-test-")));
 	execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.email", "test@swarm.dev"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.name", "Swarm Test"], { cwd: tmpDir });

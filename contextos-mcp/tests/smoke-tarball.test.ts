@@ -14,7 +14,7 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 		const pkgJson = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
 		expectedVersion = pkgJson.version;
 
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-mcp-smoke-"));
+		tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-mcp-smoke-")));
 
 		// 1. Build and pack into tempDir
 		execSync("npm run build", { cwd: pkgDir, stdio: "pipe" });

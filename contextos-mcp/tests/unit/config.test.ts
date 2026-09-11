@@ -34,7 +34,7 @@ import { loadConfig } from "../../src/config.js";
 let tempDirs: string[] = [];
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "swarm-cfg-test-"));
+	const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "swarm-cfg-test-")));
 	tempDirs.push(dir);
 	return dir;
 }

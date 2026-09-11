@@ -10,7 +10,7 @@ describe("SwarmSession ActionDispatcher wiring (Task 0.2c)", () => {
 	let testDir: string;
 
 	beforeEach(() => {
-		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-session-dispatcher-test-"));
+		testDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-session-dispatcher-test-")));
 		execFileSync("git", ["init"], { cwd: testDir, stdio: "ignore" });
 		execFileSync("git", ["config", "user.name", "Test Runner"], { cwd: testDir, stdio: "ignore" });
 		execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: testDir, stdio: "ignore" });

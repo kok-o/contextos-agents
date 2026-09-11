@@ -10,7 +10,7 @@ describe("Worktree Git Index Safety & Sensitive File Protection (P0 Trust Patch)
 	let wm: WorktreeManager;
 
 	beforeEach(async () => {
-		repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "ctx-safety-repo-"));
+		repoDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ctx-safety-repo-")));
 		execFileSync("git", ["init", "--initial-branch", "main"], { cwd: repoDir });
 		execFileSync("git", ["config", "user.email", "test@contextos.dev"], { cwd: repoDir });
 		execFileSync("git", ["config", "user.name", "ContextOS Test"], { cwd: repoDir });

@@ -1,13 +1,13 @@
 ---
 name: context-os
 description: >
-  AI Project Operating System context compiler that transforms user intent into minimal, relevant context for any AI agent across the full development lifecycle.
+  Deterministic context compiler and policy engine for AI coding agents.
 ---
 # context-os
 
 ## Overview
 
-Operating system and context orchestration layer for AI coding assistants. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
+Deterministic context compiler and policy engine for AI coding agents. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
 
 ## When to Use
 

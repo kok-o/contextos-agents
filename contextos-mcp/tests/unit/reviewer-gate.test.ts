@@ -129,7 +129,7 @@ describe("Independent Reviewer Gate (Task 2.3)", () => {
 
 describe("Combined Staging Review (Task 2.5f)", () => {
 	it("audits clean combined staging branch", async () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "staging-review-"));
+		const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "staging-review-")));
 		try {
 			execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 			execFileSync("git", ["config", "user.email", "audit@test.dev"], { cwd: tmpDir });
@@ -159,7 +159,7 @@ describe("Combined Staging Review (Task 2.5f)", () => {
 	});
 
 	it("rejects staging branch containing placeholders", async () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "staging-reject-"));
+		const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "staging-reject-")));
 		try {
 			execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 			execFileSync("git", ["config", "user.email", "audit@test.dev"], { cwd: tmpDir });

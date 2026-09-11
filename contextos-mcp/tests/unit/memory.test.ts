@@ -8,7 +8,7 @@ import { EpisodicMemory } from "../../src/labs/episodic-memory.js";
 
 /** Create a unique temp directory for each test. */
 function makeTmpDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "episodic-memory-test-"));
+	return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "episodic-memory-test-")));
 }
 
 /** Remove a directory recursively. */

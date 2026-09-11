@@ -125,250 +125,250 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 	if (enableRuntime) {
 		server.registerTool(
 			"contextos_delegate",
-		{
-			title: "Delegate Task to Agents",
-			description:
-				"Delegate a coding task to multiple AI agents running in parallel. " +
-				"Each agent works in an isolated git worktree. ContextOS rules from " +
-				".agents/ are automatically injected into agent prompts. " +
-				"Supports async (non-blocking) and sync execution, in-worktree test verification, " +
-				"and selectable agent backends.",
-			inputSchema: z.object({
-				dir: z.string().optional().describe("Path to the git repository"),
-				task: z.string().describe("The coding task to accomplish"),
-				agents: z
-					.array(
-						z.object({
-							provider: z.string().describe("LLM provider: 'openai', 'anthropic', or 'gemini'"),
-							model: z.string().optional().describe("Model ID override (e.g., 'gpt-4o', 'claude-sonnet-4-6')"),
-							backend: z
-								.enum(["direct-llm", "opencode", "claude-code", "codex", "aider"])
-								.optional()
-								.describe("Agent backend (default: direct-llm)"),
-						}),
-					)
-					.min(1)
-					.max(5)
-					.describe("List of agents to run in parallel"),
-				files: z
-					.array(repositoryRelativePath)
-					.optional()
-					.describe("Deprecated alias for focus_files; never grants write access"),
-				focus_files: z
-					.array(repositoryRelativePath)
-					.max(200)
-					.optional()
-					.describe("Files used only for context ranking"),
-				write_scope: writeScopeSchema.optional().describe("Mandatory mutation policy; absence denies execution"),
-				mode: z
-					.enum(["parallel", "sequential"])
-					.optional()
-					.default("parallel")
-					.describe("Execution mode (default: parallel)"),
-				wait: z
-					.boolean()
-					.optional()
-					.default(true)
-					.describe(
-						"If true, wait for completion. If false, returns immediately with task_id for non-blocking monitoring.",
-					),
-				verification_spec: z
-					.union([
-						z.string(),
-						z.object({
-							schemaVersion: z.number().optional().default(1),
-							executable: z.string().min(1),
-							args: z.array(z.string()).default([]),
-							timeoutMs: z.number().positive().optional().default(60000),
-							required: z.boolean().optional().default(true),
-							network: z.enum(["deny", "allow"]).optional().default("deny"),
-							allowedOutputPaths: z.array(z.string()).optional(),
-							cwd: z.string().optional(),
-						}),
-					])
-					.optional()
-					.describe("Structured verification specification or command string"),
-				verify_command: z
-					.string()
-					.optional()
-					.describe("Legacy verification command string (deprecated: use verification_spec)"),
-			}),
-		},
-		async (args) => {
-			const resolvedDir = resolveDir(args.dir);
-			if (!resolvedDir) {
-				if (!args.dir && !defaultDir) return errorResult("'dir' is required — specify the repo path");
-				return errorResult(
-					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
-				);
-			}
-			if (!args.write_scope) {
-				return errorResult(
-					"Mutation denied: write_scope is required. Legacy files/focus_files are context hints only.",
-				);
-			}
-			const writeScope = args.write_scope;
-
-			const focusFiles = args.focus_files || args.files || [];
-			if (focusFiles.length > 0) {
-				try {
-					for (const file of focusFiles) {
-						assertWithinRepository(resolve(resolvedDir, file), resolvedDir);
-					}
-				} catch (err) {
-					return errorResult(`File path security violation: ${err instanceof Error ? err.message : String(err)}`);
+			{
+				title: "Delegate Task to Agents",
+				description:
+					"Delegate a coding task to multiple AI agents running in parallel. " +
+					"Each agent works in an isolated git worktree. ContextOS rules from " +
+					".agents/ are automatically injected into agent prompts. " +
+					"Supports async (non-blocking) and sync execution, in-worktree test verification, " +
+					"and selectable agent backends.",
+				inputSchema: z.object({
+					dir: z.string().optional().describe("Path to the git repository"),
+					task: z.string().describe("The coding task to accomplish"),
+					agents: z
+						.array(
+							z.object({
+								provider: z.string().describe("LLM provider: 'openai', 'anthropic', or 'gemini'"),
+								model: z.string().optional().describe("Model ID override (e.g., 'gpt-4o', 'claude-sonnet-4-6')"),
+								backend: z
+									.enum(["direct-llm", "opencode", "claude-code", "codex", "aider"])
+									.optional()
+									.describe("Agent backend (default: direct-llm)"),
+							}),
+						)
+						.min(1)
+						.max(5)
+						.describe("List of agents to run in parallel"),
+					files: z
+						.array(repositoryRelativePath)
+						.optional()
+						.describe("Deprecated alias for focus_files; never grants write access"),
+					focus_files: z
+						.array(repositoryRelativePath)
+						.max(200)
+						.optional()
+						.describe("Files used only for context ranking"),
+					write_scope: writeScopeSchema.optional().describe("Mandatory mutation policy; absence denies execution"),
+					mode: z
+						.enum(["parallel", "sequential"])
+						.optional()
+						.default("parallel")
+						.describe("Execution mode (default: parallel)"),
+					wait: z
+						.boolean()
+						.optional()
+						.default(true)
+						.describe(
+							"If true, wait for completion. If false, returns immediately with task_id for non-blocking monitoring.",
+						),
+					verification_spec: z
+						.union([
+							z.string(),
+							z.object({
+								schemaVersion: z.number().optional().default(1),
+								executable: z.string().min(1),
+								args: z.array(z.string()).default([]),
+								timeoutMs: z.number().positive().optional().default(60000),
+								required: z.boolean().optional().default(true),
+								network: z.enum(["deny", "allow"]).optional().default("deny"),
+								allowedOutputPaths: z.array(z.string()).optional(),
+								cwd: z.string().optional(),
+							}),
+						])
+						.optional()
+						.describe("Structured verification specification or command string"),
+					verify_command: z
+						.string()
+						.optional()
+						.describe("Legacy verification command string (deprecated: use verification_spec)"),
+				}),
+			},
+			async (args) => {
+				const resolvedDir = resolveDir(args.dir);
+				if (!resolvedDir) {
+					if (!args.dir && !defaultDir) return errorResult("'dir' is required — specify the repo path");
+					return errorResult(
+						`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+					);
 				}
-			}
+				if (!args.write_scope) {
+					return errorResult(
+						"Mutation denied: write_scope is required. Legacy files/focus_files are context hints only.",
+					);
+				}
+				const writeScope = args.write_scope;
 
-			try {
-				// Load ContextOS rules with file context ranking
-				const contextPrompt = buildContextPrompt(resolvedDir, args.task, { files: focusFiles });
-				log(`ContextOS prompt: ${contextPrompt.length} chars`);
-
-				const session = await getSession(resolvedDir);
-				const taskId = `ctx_${randomUUID()}`;
-				const threadIds = args.agents.map(
-					(agentConfig, index) => `${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}`,
-				);
-
-				const executeAgent = async (agentConfig: (typeof args.agents)[number], index: number) => {
-					const model = agentConfig.model || getDefaultModel(agentConfig.provider);
-					const backend = agentConfig.backend || "direct-llm";
-					// Enforce unique, safe thread ID without collisions
-					const threadId = threadIds[index];
-
-					const verificationInput = args.verification_spec || args.verify_command;
-					let parsedSpec;
-					if (verificationInput) {
-						try {
-							parsedSpec = parseVerificationSpec(verificationInput);
-						} catch {
-							// will fail closed during execution
-						}
-					}
-
+				const focusFiles = args.focus_files || args.files || [];
+				if (focusFiles.length > 0) {
 					try {
-						const result = await spawnThread(session, {
-							id: threadId,
-							task: args.task,
-							files: focusFiles,
-							focusFiles,
-							writeScope: writeScope.allow,
-							writeScopeDeny: writeScope.deny,
-							allowRepositoryWide: writeScope.allow_repository_wide,
-							agent: backend,
-							model: model,
-							context: contextPrompt,
-							testCommand:
-								typeof verificationInput === "string"
-									? verificationInput
-									: parsedSpec
-										? `${parsedSpec.executable} ${parsedSpec.args.join(" ")}`.trim()
-										: undefined,
-							verificationSpec: parsedSpec,
-						});
+						for (const file of focusFiles) {
+							assertWithinRepository(resolve(resolvedDir, file), resolvedDir);
+						}
+					} catch (err) {
+						return errorResult(`File path security violation: ${err instanceof Error ? err.message : String(err)}`);
+					}
+				}
 
-						const threads = getThreads(session);
-						const currentThread = threads.find((t) => t.id === threadId);
+				try {
+					// Load ContextOS rules with file context ranking
+					const contextPrompt = buildContextPrompt(resolvedDir, args.task, { files: focusFiles });
+					log(`ContextOS prompt: ${contextPrompt.length} chars`);
 
-						const verificationResult = verificationInput
-							? {
-									verified: currentThread?.verification === "PASS",
-									verdict: currentThread?.verification || "PENDING",
-									output:
-										currentThread?.verification === "PASS"
-											? "Verification passed"
-											: currentThread?.error || "Verification failed",
-								}
-							: undefined;
+					const session = await getSession(resolvedDir);
+					const taskId = `ctx_${randomUUID()}`;
+					const threadIds = args.agents.map(
+						(agentConfig, index) => `${taskId}_${agentConfig.provider.replace(/[^a-zA-Z0-9_-]/g, "")}_${index}`,
+					);
 
-						const status = currentThread?.status || (result.success ? "completed" : "failed");
+					const executeAgent = async (agentConfig: (typeof args.agents)[number], index: number) => {
+						const model = agentConfig.model || getDefaultModel(agentConfig.provider);
+						const backend = agentConfig.backend || "direct-llm";
+						// Enforce unique, safe thread ID without collisions
+						const threadId = threadIds[index];
 
-						if (currentThread) {
-							// We don't overwrite currentThread.status here anymore
-							// because manager.ts already set it to requires_verification, requires_review, etc.
-							recordThreadState(session.dir, currentThread, session.config.worktree_base_dir);
+						const verificationInput = args.verification_spec || args.verify_command;
+						let parsedSpec;
+						if (verificationInput) {
+							try {
+								parsedSpec = parseVerificationSpec(verificationInput);
+							} catch {
+								// will fail closed during execution
+							}
 						}
 
-						return {
-							thread_id: threadId,
-							provider: agentConfig.provider,
-							model: model,
-							backend: backend,
-							status: status,
-							summary: result.summary,
-							files_changed: result.filesChanged,
-							duration_ms: result.durationMs,
-							cost_usd: result.estimatedCostUsd,
-							verification: verificationResult,
-						};
-					} catch (err) {
-						return {
-							thread_id: threadId,
-							provider: agentConfig.provider,
-							model: model,
-							backend: backend,
-							status: "failed",
-							error: err instanceof Error ? err.message : String(err),
-						};
-					}
-				};
+						try {
+							const result = await spawnThread(session, {
+								id: threadId,
+								task: args.task,
+								files: focusFiles,
+								focusFiles,
+								writeScope: writeScope.allow,
+								writeScopeDeny: writeScope.deny,
+								allowRepositoryWide: writeScope.allow_repository_wide,
+								agent: backend,
+								model: model,
+								context: contextPrompt,
+								testCommand:
+									typeof verificationInput === "string"
+										? verificationInput
+										: parsedSpec
+											? `${parsedSpec.executable} ${parsedSpec.args.join(" ")}`.trim()
+											: undefined,
+								verificationSpec: parsedSpec,
+							});
 
-				// Non-blocking async mode
-				if (args.wait === false) {
-					recordAsyncJob(session, taskId, args.agents.length, "running");
-					const asyncPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
-					// Run in background without blocking MCP response
-					Promise.allSettled(asyncPromises)
-						.then((results) => {
-							const allSucceeded = results.every((r) => r.status === "fulfilled" && r.value.status === "completed");
-							recordAsyncJob(session, taskId, args.agents.length, allSucceeded ? "completed" : "failed");
-						})
-						.catch((err) => {
-							log(`Background delegation error: ${err}`);
-							recordAsyncJob(session, taskId, args.agents.length, "failed");
+							const threads = getThreads(session);
+							const currentThread = threads.find((t) => t.id === threadId);
+
+							const verificationResult = verificationInput
+								? {
+										verified: currentThread?.verification === "PASS",
+										verdict: currentThread?.verification || "PENDING",
+										output:
+											currentThread?.verification === "PASS"
+												? "Verification passed"
+												: currentThread?.error || "Verification failed",
+									}
+								: undefined;
+
+							const status = currentThread?.status || (result.success ? "completed" : "failed");
+
+							if (currentThread) {
+								// We don't overwrite currentThread.status here anymore
+								// because manager.ts already set it to requires_verification, requires_review, etc.
+								recordThreadState(session.dir, currentThread, session.config.worktree_base_dir);
+							}
+
+							return {
+								thread_id: threadId,
+								provider: agentConfig.provider,
+								model: model,
+								backend: backend,
+								status: status,
+								summary: result.summary,
+								files_changed: result.filesChanged,
+								duration_ms: result.durationMs,
+								cost_usd: result.estimatedCostUsd,
+								verification: verificationResult,
+							};
+						} catch (err) {
+							return {
+								thread_id: threadId,
+								provider: agentConfig.provider,
+								model: model,
+								backend: backend,
+								status: "failed",
+								error: err instanceof Error ? err.message : String(err),
+							};
+						}
+					};
+
+					// Non-blocking async mode
+					if (args.wait === false) {
+						recordAsyncJob(session, taskId, args.agents.length, "running");
+						const asyncPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
+						// Run in background without blocking MCP response
+						Promise.allSettled(asyncPromises)
+							.then((results) => {
+								const allSucceeded = results.every((r) => r.status === "fulfilled" && r.value.status === "completed");
+								recordAsyncJob(session, taskId, args.agents.length, allSucceeded ? "completed" : "failed");
+							})
+							.catch((err) => {
+								log(`Background delegation error: ${err}`);
+								recordAsyncJob(session, taskId, args.agents.length, "failed");
+							});
+
+						return jsonResult({
+							task_id: taskId,
+							status: "running",
+							contextos_rules_loaded: contextPrompt.length > 0,
+							mode: args.mode || "parallel",
+							agents: args.agents.map((a, i) => ({
+								thread_id: threadIds[i],
+								provider: a.provider,
+								model: a.model || getDefaultModel(a.provider),
+								backend: a.backend || "direct-llm",
+								status: "running",
+							})),
+							message: "Agents spawned in isolated worktrees. Poll status with contextos_status.",
 						});
+					}
+
+					// Synchronous waiting mode
+					let threadResults;
+					if (args.mode === "sequential") {
+						threadResults = [];
+						for (let i = 0; i < args.agents.length; i++) {
+							threadResults.push(await executeAgent(args.agents[i], i));
+						}
+					} else {
+						const parallelPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
+						threadResults = await Promise.all(parallelPromises);
+					}
 
 					return jsonResult({
 						task_id: taskId,
-						status: "running",
+						status: "completed",
 						contextos_rules_loaded: contextPrompt.length > 0,
-						mode: args.mode || "parallel",
-						agents: args.agents.map((a, i) => ({
-							thread_id: threadIds[i],
-							provider: a.provider,
-							model: a.model || getDefaultModel(a.provider),
-							backend: a.backend || "direct-llm",
-							status: "running",
-						})),
-						message: "Agents spawned in isolated worktrees. Poll status with contextos_status.",
+						agents: threadResults,
 					});
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					return errorResult(`Delegation failed: ${msg}`);
 				}
-
-				// Synchronous waiting mode
-				let threadResults;
-				if (args.mode === "sequential") {
-					threadResults = [];
-					for (let i = 0; i < args.agents.length; i++) {
-						threadResults.push(await executeAgent(args.agents[i], i));
-					}
-				} else {
-					const parallelPromises = args.agents.map((agentConfig, i) => executeAgent(agentConfig, i));
-					threadResults = await Promise.all(parallelPromises);
-				}
-
-				return jsonResult({
-					task_id: taskId,
-					status: "completed",
-					contextos_rules_loaded: contextPrompt.length > 0,
-					agents: threadResults,
-				});
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				return errorResult(`Delegation failed: ${msg}`);
-			}
-		},
-	);
+			},
+		);
 	}
 
 	// ── contextos_status ───────────────────────────────────────────────────
@@ -572,57 +572,57 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 		server.registerTool(
 			"contextos_merge",
 			{
-			title: "Merge Thread Branch",
-			description:
-				"Merge a specific thread's branch into the main branch. This is a 'dumb' merge — " +
-				"ContextOS does not decide which agent is better. Antigravity (you) make that decision " +
-				"and tell ContextOS which thread to merge.",
-			inputSchema: z.object({
-				dir: z.string().optional().describe("Path to the git repository"),
-				thread_id: z.string().describe("Thread ID whose branch to merge"),
-			}),
-		},
-		async (args) => {
-			const resolvedDir = resolveDir(args.dir);
-			if (!resolvedDir) {
-				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
-				return errorResult(
-					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
-				);
-			}
-
-			try {
-				const session = await getSession(resolvedDir);
-				const threads = getThreads(session);
-				const thread = threads.find((t) => t.id === args.thread_id);
-
-				if (!thread) {
-					return errorResult(`Thread ${args.thread_id} not found`);
+				title: "Merge Thread Branch",
+				description:
+					"Merge a specific thread's branch into the main branch. This is a 'dumb' merge — " +
+					"ContextOS does not decide which agent is better. Antigravity (you) make that decision " +
+					"and tell ContextOS which thread to merge.",
+				inputSchema: z.object({
+					dir: z.string().optional().describe("Path to the git repository"),
+					thread_id: z.string().describe("Thread ID whose branch to merge"),
+				}),
+			},
+			async (args) => {
+				const resolvedDir = resolveDir(args.dir);
+				if (!resolvedDir) {
+					if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+					return errorResult(
+						`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+					);
 				}
 
-				if (!thread.branchName) {
-					return errorResult(`Thread ${args.thread_id} has no branch (status: ${thread.status})`);
+				try {
+					const session = await getSession(resolvedDir);
+					const threads = getThreads(session);
+					const thread = threads.find((t) => t.id === args.thread_id);
+
+					if (!thread) {
+						return errorResult(`Thread ${args.thread_id} not found`);
+					}
+
+					if (!thread.branchName) {
+						return errorResult(`Thread ${args.thread_id} has no branch (status: ${thread.status})`);
+					}
+
+					const eligibility = isEligibleForMerge(thread);
+					if (!eligibility.eligible) {
+						return errorResult(`Thread ${args.thread_id} cannot be merged: ${eligibility.reason}`);
+					}
+
+					const result = await mergeThreadBranch(session.dir, thread.branchName, thread.id, thread);
+
+					return jsonResult({
+						merged: result.success,
+						branch: result.branch,
+						message: result.message,
+						conflicts: result.conflicts,
+					});
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					return errorResult(`Merge failed: ${msg}`);
 				}
-
-				const eligibility = isEligibleForMerge(thread);
-				if (!eligibility.eligible) {
-					return errorResult(`Thread ${args.thread_id} cannot be merged: ${eligibility.reason}`);
-				}
-
-				const result = await mergeThreadBranch(session.dir, thread.branchName, thread.id, thread);
-
-				return jsonResult({
-					merged: result.success,
-					branch: result.branch,
-					message: result.message,
-					conflicts: result.conflicts,
-				});
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				return errorResult(`Merge failed: ${msg}`);
-			}
-		},
-	);
+			},
+		);
 	}
 
 	// ── contextos_cleanup ──────────────────────────────────────────────────
@@ -631,43 +631,43 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 	if (enableRuntime) {
 		server.registerTool(
 			"contextos_cleanup",
-		{
-			title: "Cleanup Session",
-			description:
-				"Clean up a ContextOS session — cancels all running threads, removes " +
-				"worktrees, and frees resources. Call this when done with a task.",
-			inputSchema: z.object({
-				dir: z.string().optional().describe("Path to the git repository"),
-				purge_orphans: z
-					.boolean()
-					.optional()
-					.describe(
-						"Whether to deeply scan and purge all stale worktree directories and swarm/* branches left by dead processes",
-					),
-				dry_run: z
-					.boolean()
-					.optional()
-					.describe("If true, report what would be cleaned without actually deleting. Default: false."),
-			}),
-		},
-		async (args) => {
-			const resolvedDir = resolveDir(args.dir);
-			if (!resolvedDir) {
-				if (!args.dir && !defaultDir) return errorResult("'dir' is required");
-				return errorResult(
-					`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
-				);
-			}
+			{
+				title: "Cleanup Session",
+				description:
+					"Clean up a ContextOS session — cancels all running threads, removes " +
+					"worktrees, and frees resources. Call this when done with a task.",
+				inputSchema: z.object({
+					dir: z.string().optional().describe("Path to the git repository"),
+					purge_orphans: z
+						.boolean()
+						.optional()
+						.describe(
+							"Whether to deeply scan and purge all stale worktree directories and swarm/* branches left by dead processes",
+						),
+					dry_run: z
+						.boolean()
+						.optional()
+						.describe("If true, report what would be cleaned without actually deleting. Default: false."),
+				}),
+			},
+			async (args) => {
+				const resolvedDir = resolveDir(args.dir);
+				if (!resolvedDir) {
+					if (!args.dir && !defaultDir) return errorResult("'dir' is required");
+					return errorResult(
+						`Directory does not exist or is not a git repository: ${resolve(args.dir || defaultDir || "")}`,
+					);
+				}
 
-			try {
-				const message = await cleanupSession(resolvedDir, args.purge_orphans, args.dry_run);
-				return jsonResult({ cleaned_up: !args.dry_run, dry_run: !!args.dry_run, message });
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				return errorResult(`Cleanup failed: ${msg}`);
-			}
-		},
-	);
+				try {
+					const message = await cleanupSession(resolvedDir, args.purge_orphans, args.dry_run);
+					return jsonResult({ cleaned_up: !args.dry_run, dry_run: !!args.dry_run, message });
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					return errorResult(`Cleanup failed: ${msg}`);
+				}
+			},
+		);
 	}
 }
 

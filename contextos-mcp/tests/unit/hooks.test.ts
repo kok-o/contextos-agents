@@ -9,7 +9,7 @@ describe("Task 0.5: Opt-in Repository Hooks Security", () => {
 	let testDir: string;
 
 	beforeEach(() => {
-		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-hooks-test-"));
+		testDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-hooks-test-")));
 	});
 
 	afterEach(() => {

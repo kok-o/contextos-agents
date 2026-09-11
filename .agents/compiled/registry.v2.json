@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:1585686b32808219047e4d05b608b5b0b8dbf04cc7ddcd37dd41e6126fc80a50",
+  "sourceGraphHash": "sha256:c15f3691d9ed833630152b65959fdef465d88a7cf5bb27d44a086621e20c89c1",
   "skills": {
     "context-manager": {
       "id": "context-manager",
@@ -62,13 +62,13 @@
       "id": "context-os",
       "displayName": "context-os",
       "version": "1.0.0",
-      "description": "AI Project Operating System context compiler that transforms user intent into minimal, relevant context for any AI agent across the full development lifecycle.\n",
+      "description": "Deterministic context compiler and policy engine for AI coding agents.",
       "category": "general",
       "type": "compiler",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:8d30afd9ab49451c0a86fb6a0068fea3a891513b4a6ed87e6df57977eec601f3",
-      "resourceTreeHash": "sha256:41d203147ed4d90285e2ce35bc5c945b9a117bba6f5224f43f459464acd597c7",
-      "estimatedTokens": 1275,
+      "entrypointHash": "sha256:f28a8b6df5cf6d0dc8b32d8e4149f866b59ee11da0c1c050f766a0009674ca86",
+      "resourceTreeHash": "sha256:697cd51226283b147f719e2f4074acb058be1f3fe42714a3babb771e52e26a73",
+      "estimatedTokens": 1227,
       "source": ".agents/core/skills/context-os/skill.yaml",
       "signals": {
         "aliases": [
@@ -85,7 +85,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 1275
+        "estimatedTokens": 1227
       },
       "resources": [
         {

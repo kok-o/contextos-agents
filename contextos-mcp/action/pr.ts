@@ -83,21 +83,18 @@ function gitExec(args: string[]): string {
 /**
  * Create a branch with all current changes, push it, and open a PR.
  */
-export function createPullRequest(
-	task: string,
-	output: SwarmJsonOutput,
-	issueNumber?: number,
-): PrResult {
+export function createPullRequest(task: string, output: SwarmJsonOutput, issueNumber?: number): PrResult {
 	if (!hasChanges()) {
 		return { created: false, error: "No file changes to commit" };
 	}
 
 	// Generate branch name from task
-	const slug = task
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-|-$/g, "")
-		.slice(0, 40) || "task";
+	const slug =
+		task
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "")
+			.slice(0, 40) || "task";
 	const branchName = `swarm/${slug}-${Date.now().toString(36)}`;
 
 	try {
@@ -106,27 +103,16 @@ export function createPullRequest(
 
 		// Stage and commit all changes
 		gitExec(["add", "-A"]);
-		gitExec([
-			"commit",
-			"-m",
-			`swarm: ${task.slice(0, 72)}`,
-			"-m",
-			buildCommitBody(output),
-		]);
+		gitExec(["commit", "-m", `swarm: ${task.slice(0, 72)}`, "-m", buildCommitBody(output)]);
 
 		// Push
 		gitExec(["push", "origin", branchName]);
 
 		// Create PR
 		const prBody = buildPrBody(task, output, issueNumber);
-		const prTitle = `swarm: ${task.length > 65 ? task.slice(0, 62) + "..." : task}`;
+		const prTitle = `swarm: ${task.length > 65 ? `${task.slice(0, 62)}...` : task}`;
 
-		const prUrl = gh([
-			"pr", "create",
-			"--title", prTitle,
-			"--body", prBody,
-			"--head", branchName,
-		]);
+		const prUrl = gh(["pr", "create", "--title", prTitle, "--body", prBody, "--head", branchName]);
 
 		return { created: true, url: prUrl };
 	} catch (err) {
@@ -160,11 +146,7 @@ export function postIssueComment(
 /**
  * Post a failure comment when swarm encounters an error.
  */
-export function postFailureComment(
-	issueNumber: number,
-	task: string,
-	error: string,
-): CommentResult {
+export function postFailureComment(issueNumber: number, task: string, error: string): CommentResult {
 	const body = [
 		`### Swarm Failed`,
 		"",
@@ -200,11 +182,7 @@ function buildCommitBody(output: SwarmJsonOutput): string {
 	return lines.join("\n");
 }
 
-function buildPrBody(
-	task: string,
-	output: SwarmJsonOutput,
-	issueNumber?: number,
-): string {
+function buildPrBody(task: string, output: SwarmJsonOutput, issueNumber?: number): string {
 	const lines: string[] = [];
 
 	lines.push("## Summary");
@@ -235,7 +213,9 @@ function buildPrBody(
 	lines.push(`| Iterations | ${output.iterations} |`);
 	if (output.tokens) {
 		const totalK = (output.tokens.total / 1000).toFixed(1);
-		lines.push(`| Tokens | ${totalK}K (${output.tokens.input.toLocaleString()} in + ${output.tokens.output.toLocaleString()} out) |`);
+		lines.push(
+			`| Tokens | ${totalK}K (${output.tokens.input.toLocaleString()} in + ${output.tokens.output.toLocaleString()} out) |`,
+		);
 	}
 	lines.push("");
 
@@ -250,11 +230,7 @@ function buildPrBody(
 	return lines.join("\n");
 }
 
-function buildIssueComment(
-	task: string,
-	output: SwarmJsonOutput,
-	prResult?: PrResult,
-): string {
+function buildIssueComment(_task: string, output: SwarmJsonOutput, prResult?: PrResult): string {
 	const lines: string[] = [];
 
 	const icon = output.success ? "white_check_mark" : "warning";
@@ -275,9 +251,7 @@ function buildIssueComment(
 
 	// Brief answer
 	if (output.answer) {
-		const answerPreview = output.answer.length > 500
-			? output.answer.slice(0, 497) + "..."
-			: output.answer;
+		const answerPreview = output.answer.length > 500 ? `${output.answer.slice(0, 497)}...` : output.answer;
 		lines.push("<details>");
 		lines.push("<summary>Answer</summary>");
 		lines.push("");

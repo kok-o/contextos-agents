@@ -12,7 +12,7 @@ import { THREAT_CODES } from "../../src/plugins/core/types.js";
 import { PluginLoader } from "../../src/plugins/loader.js";
 
 function createTempDir(prefix = "vitest-supply-"): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+	return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
 
 describe("W6.1: Source Grammar and Pinning", () => {

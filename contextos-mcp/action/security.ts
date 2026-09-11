@@ -23,11 +23,7 @@ export interface SecurityResult {
  * Author associations considered trusted.
  * See: https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
  */
-const TRUSTED_ASSOCIATIONS = new Set([
-	"OWNER",
-	"MEMBER",
-	"COLLABORATOR",
-]);
+const TRUSTED_ASSOCIATIONS = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
 
 /** Maximum budget cap (USD) to prevent runaway costs. */
 const MAX_BUDGET_HARD_CAP = 50.0;
@@ -101,7 +97,7 @@ export function sanitizeBudget(rawBudget: string | number | undefined): number {
 
 	const parsed = typeof rawBudget === "number" ? rawBudget : parseFloat(String(rawBudget));
 
-	if (!isFinite(parsed) || parsed <= 0) return DEFAULT_BUDGET;
+	if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_BUDGET;
 	if (parsed > MAX_BUDGET_HARD_CAP) return MAX_BUDGET_HARD_CAP;
 
 	return parsed;
@@ -116,11 +112,11 @@ export function sanitizeBudget(rawBudget: string | number | undefined): number {
  */
 function isForkPr(prNumber: number): boolean {
 	try {
-		const result = execFileSync("gh", [
-			"pr", "view", String(prNumber),
-			"--json", "isCrossRepository",
-			"--jq", ".isCrossRepository",
-		], { encoding: "utf-8", timeout: 10000 }).trim();
+		const result = execFileSync(
+			"gh",
+			["pr", "view", String(prNumber), "--json", "isCrossRepository", "--jq", ".isCrossRepository"],
+			{ encoding: "utf-8", timeout: 10000 },
+		).trim();
 
 		return result === "true";
 	} catch {

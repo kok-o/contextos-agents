@@ -16,7 +16,7 @@ describe("RepositoryBoundary (Task 0.3a)", () => {
 	let outsideDir: string;
 
 	beforeEach(() => {
-		const tempBase = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-repo-boundary-"));
+		const tempBase = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-repo-boundary-")));
 		repoDir = path.join(tempBase, "repo");
 		outsideDir = path.join(tempBase, "outside");
 		fs.mkdirSync(repoDir, { recursive: true });
@@ -127,7 +127,7 @@ describe("Universal RepositoryBoundary Wiring (Task 0.3b)", () => {
 	let outsideDir: string;
 
 	beforeEach(() => {
-		const tempBase = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-repo-boundary-03b-"));
+		const tempBase = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-repo-boundary-03b-")));
 		repoDir = path.join(tempBase, "repo");
 		outsideDir = path.join(tempBase, "outside");
 		fs.mkdirSync(repoDir, { recursive: true });

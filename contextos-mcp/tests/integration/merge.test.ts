@@ -11,7 +11,7 @@ import { mergeAllThreads, mergeThreadBranch } from "../../src/worktree/merge.js"
 
 /** Create a real temporary git repo with an initial commit. */
 function createTempRepo(): string {
-	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "swarm-merge-test-"));
+	const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "swarm-merge-test-")));
 	execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.email", "test@swarm.dev"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.name", "Swarm Test"], { cwd: tmpDir });

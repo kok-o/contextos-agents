@@ -488,8 +488,8 @@ function checkMcpHandshake(projectDir) {
       id: 'mcp_handshake',
       status: STATUS.SKIP,
       ok: true,
-      message: 'MCP execution server not installed',
-      remediation: 'Run `contextos setup-mcp` to enable MCP server capabilities',
+      message: 'Optional MCP Bridge not installed.',
+      remediation: 'Install separately: npm install --save-dev @contextos/mcp',
     };
   }
 

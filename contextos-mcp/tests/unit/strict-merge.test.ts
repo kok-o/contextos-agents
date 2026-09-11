@@ -324,7 +324,7 @@ describe("Strict Merge Predicate (Task 2.4)", () => {
 
 	describe("Git Integration (mergeThreadBranch & mergeAllThreads)", () => {
 		it("blocks mergeThreadBranch when ineligible threadState is passed", async () => {
-			const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strict-merge-"));
+			const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "strict-merge-")));
 			try {
 				execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 				execFileSync("git", ["config", "user.email", "test@strict.dev"], { cwd: tmpDir });
@@ -366,7 +366,7 @@ describe("Strict Merge Predicate (Task 2.4)", () => {
 		});
 
 		it("detects live candidate amend in branch and blocks merge in mergeThreadBranch", async () => {
-			const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strict-merge-live-"));
+			const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "strict-merge-live-")));
 			try {
 				execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 				execFileSync("git", ["config", "user.email", "test@strict.dev"], { cwd: tmpDir });
@@ -440,7 +440,7 @@ describe("Strict Merge Predicate (Task 2.4)", () => {
 		});
 
 		it("filters out ineligible threads in mergeAllThreads", async () => {
-			const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strict-merge-all-"));
+			const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "strict-merge-all-")));
 			try {
 				execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 				execFileSync("git", ["config", "user.email", "test@strict.dev"], { cwd: tmpDir });

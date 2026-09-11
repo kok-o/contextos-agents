@@ -14,7 +14,7 @@ function git(args: string[], cwd = repoDir): string {
 
 describe("WorktreeManager writeScope enforcement", () => {
 	beforeEach(async () => {
-		repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "contextos-scope-"));
+		repoDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-scope-")));
 		git(["init", "-b", "main"]);
 		git(["config", "user.email", "tests@example.com"]);
 		git(["config", "user.name", "ContextOS Tests"]);

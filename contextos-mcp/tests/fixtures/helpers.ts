@@ -15,7 +15,8 @@ import type { BudgetState, CompressedResult, ThreadConfig, ThreadState } from ".
  * Returns the absolute path to the repo.
  */
 export function createTempGitRepo(name: string = "swarm-test"): string {
-	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
+	const realpath = fs.realpathSync.native ? fs.realpathSync.native : fs.realpathSync;
+	const tmpDir = realpath(fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`)));
 	execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.email", "test@swarm.dev"], { cwd: tmpDir });
 	execFileSync("git", ["config", "user.name", "Swarm Test"], { cwd: tmpDir });
@@ -125,7 +126,8 @@ export function mockBudgetState(overrides?: Partial<BudgetState>): BudgetState {
 
 /** Create a temporary directory and return its path. */
 export function createTempDir(prefix: string = "swarm-test-"): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+	const realpath = fs.realpathSync.native ? fs.realpathSync.native : fs.realpathSync;
+	return realpath(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
 
 /** Write a file in a temp repo and stage it. */

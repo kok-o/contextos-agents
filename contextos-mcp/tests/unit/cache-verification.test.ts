@@ -18,7 +18,7 @@ function createDummyResult(): CompressedResult {
 
 describe("Cache Artifact & Context Hash Verification (Task 2.5e)", () => {
 	it("returns cached result when context files match recorded hashes", () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cache-test-"));
+		const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "cache-test-")));
 		try {
 			const filePath = path.join(tmpDir, "context.txt");
 			fs.writeFileSync(filePath, "initial context content\n");
@@ -38,7 +38,7 @@ describe("Cache Artifact & Context Hash Verification (Task 2.5e)", () => {
 	});
 
 	it("invalidates cached result when context file content drifts", () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cache-drift-"));
+		const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "cache-drift-")));
 		try {
 			const filePath = path.join(tmpDir, "context.txt");
 			fs.writeFileSync(filePath, "version 1 of context\n");
@@ -64,7 +64,7 @@ describe("Cache Artifact & Context Hash Verification (Task 2.5e)", () => {
 	});
 
 	it("preserves context file hashes across disk reload and detects drift", async () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cache-disk-"));
+		const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "cache-disk-")));
 		const cacheDir = path.join(tmpDir, ".cache");
 		try {
 			const filePath = path.join(tmpDir, "context.txt");

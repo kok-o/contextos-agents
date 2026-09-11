@@ -12,6 +12,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ThreadState } from "../core/types.js";
+// @ts-expect-error
+import { ThreadStore } from "../runtime/thread-store.cjs";
 import { assertWithinRepository } from "../security/repository-boundary.js";
 import { createRepositoryFingerprint } from "../worktree/manager.js";
 
@@ -50,32 +52,9 @@ export function isProcessAlive(pid: number): boolean {
 	}
 }
 
-let ThreadStoreClass: any = null;
-
 function getThreadStore(dir: string) {
 	const canonicalDir = assertWithinRepository(dir, dir);
-	if (!ThreadStoreClass) {
-		const candidatePaths = [
-			path.join(canonicalDir, ".agents", "runtime", "thread-store.js"),
-			path.join(process.cwd(), ".agents", "runtime", "thread-store.js"),
-			path.join(process.cwd(), "..", ".agents", "runtime", "thread-store.js"),
-			path.join(canonicalDir, "..", "..", ".agents", "runtime", "thread-store.js"), // For tests
-			path.join(canonicalDir, "..", "..", "..", ".agents", "runtime", "thread-store.js"), // For tests in deeply nested dirs
-			path.join(canonicalDir, "..", "..", "..", "..", ".agents", "runtime", "thread-store.js"), // For tests in deeply nested dirs
-		];
-		for (const p of candidatePaths) {
-			if (fs.existsSync(p)) {
-				try {
-					ThreadStoreClass = require(p).ThreadStore;
-					break;
-				} catch {
-					// ignore
-				}
-			}
-		}
-	}
-	if (!ThreadStoreClass) return null;
-	return new ThreadStoreClass({ baseDir: canonicalDir });
+	return new ThreadStore({ baseDir: canonicalDir });
 }
 
 function getAsyncTasksPath(dir: string): string {
@@ -241,7 +220,7 @@ function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 		const parsed = JSON.parse(raw);
 
 		if (store && parsed && typeof parsed.threads === "object") {
-			for (const [id, thread] of Object.entries(parsed.threads) as [string, any][]) {
+			for (const [_id, thread] of Object.entries(parsed.threads) as [string, any][]) {
 				if (!thread.verification && thread.verificationAttestation?.status) {
 					thread.verification = thread.verificationAttestation.status;
 				}
@@ -258,7 +237,7 @@ function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 			}
 		}
 
-		if (parsed && parsed.asyncTasks) {
+		if (parsed?.asyncTasks) {
 			const release = acquireStateLockOrThrow(canonicalRoot);
 			try {
 				const tasksPath = getAsyncTasksPath(canonicalRoot);
@@ -273,7 +252,7 @@ function migrateLegacySessionState(repoRoot: string, worktreeBaseDir?: string) {
 		}
 
 		// Mark as migrated
-		fs.renameSync(legacyPath, legacyPath + ".migrated");
+		fs.renameSync(legacyPath, `${legacyPath}.migrated`);
 	} catch (e) {
 		console.error("Migration failed:", e);
 	}
@@ -290,21 +269,42 @@ export async function reconcileSessionStateWithGit(repoRoot: string, worktreeBas
 
 	const threads = store.list() as ThreadState[];
 
-	const gitWorktrees: Map<string, { branch?: string; bare?: boolean }> = new Map();
+	interface GitWorktreeEntry {
+		rawPath: string;
+		normPath: string;
+		branch?: string;
+		bare?: boolean;
+		ino?: number;
+		dev?: number;
+	}
+
+	const gitWorktrees: GitWorktreeEntry[] = [];
+	const normalizePath = (p: string) => {
+		try {
+			const real = fs.realpathSync.native ? fs.realpathSync.native(p) : fs.realpathSync(p);
+			return path.resolve(real).toLowerCase();
+		} catch {
+			return path.resolve(p).toLowerCase();
+		}
+	};
+
 	try {
 		const { stdout } = await execFileAsync("git", ["worktree", "list", "--porcelain"], {
 			cwd: canonicalRoot,
 			maxBuffer: 10 * 1024 * 1024,
 		});
-		const entries = stdout.trim().split("\n\n").filter(Boolean);
+		const entries = stdout
+			.trim()
+			.split(/\r?\n\r?\n/)
+			.filter(Boolean);
 		for (const entry of entries) {
-			const lines = entry.split("\n");
+			const lines = entry.split(/\r?\n/);
 			let worktreePath = "";
 			let branch = "";
 			let bare = false;
 			for (const line of lines) {
 				if (line.startsWith("worktree ")) {
-					worktreePath = path.normalize(line.slice("worktree ".length).trim());
+					worktreePath = line.slice("worktree ".length).trim();
 				} else if (line.startsWith("branch refs/heads/")) {
 					branch = line.slice("branch refs/heads/".length).trim();
 				} else if (line === "bare") {
@@ -312,7 +312,15 @@ export async function reconcileSessionStateWithGit(repoRoot: string, worktreeBas
 				}
 			}
 			if (worktreePath) {
-				gitWorktrees.set(worktreePath.toLowerCase(), { branch, bare });
+				const norm = normalizePath(worktreePath);
+				let ino: number | undefined;
+				let dev: number | undefined;
+				try {
+					const stat = fs.statSync(worktreePath);
+					ino = stat.ino;
+					dev = stat.dev;
+				} catch {}
+				gitWorktrees.push({ rawPath: worktreePath, normPath: norm, branch, bare, ino, dev });
 			}
 		}
 	} catch {
@@ -329,9 +337,25 @@ export async function reconcileSessionStateWithGit(repoRoot: string, worktreeBas
 		}
 
 		if (thread.worktreePath) {
-			const normWt = path.normalize(thread.worktreePath).toLowerCase();
-			const registered = gitWorktrees.get(normWt);
 			const existsOnDisk = fs.existsSync(thread.worktreePath);
+			const normWt = normalizePath(thread.worktreePath);
+			let wtIno: number | undefined;
+			let wtDev: number | undefined;
+			if (existsOnDisk) {
+				try {
+					const stat = fs.statSync(thread.worktreePath);
+					wtIno = stat.ino;
+					wtDev = stat.dev;
+				} catch {}
+			}
+
+			const registered = gitWorktrees.find((w) => {
+				if (w.normPath === normWt) return true;
+				if (existsOnDisk && w.ino !== undefined && wtIno !== undefined && w.ino === wtIno && w.dev === wtDev) {
+					return true;
+				}
+				return false;
+			});
 
 			if (!existsOnDisk || !registered) {
 				if (thread.status === "interrupted") {

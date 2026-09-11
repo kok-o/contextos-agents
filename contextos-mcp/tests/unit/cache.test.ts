@@ -26,7 +26,7 @@ function makeResult(overrides: Partial<CompressedResult> = {}): CompressedResult
 let tempDirs: string[] = [];
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "swarm-cache-test-"));
+	const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "swarm-cache-test-")));
 	tempDirs.push(dir);
 	return dir;
 }

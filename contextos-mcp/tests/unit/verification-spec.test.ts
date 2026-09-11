@@ -178,7 +178,7 @@ describe("Milestone W5.2: Process Lifecycle Hardening & Output Redaction", () =>
 		let repoDir: string;
 
 		beforeEach(() => {
-			repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "ctx-verify-spec-test-"));
+			repoDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ctx-verify-spec-test-")));
 			execFileSync("git", ["init"], { cwd: repoDir, stdio: "ignore" });
 			execFileSync("git", ["config", "user.name", "TestUser"], { cwd: repoDir, stdio: "ignore" });
 			execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoDir, stdio: "ignore" });

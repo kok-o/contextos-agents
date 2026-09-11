@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#testing)
+[![CI](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml/badge.svg)](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml)
 
 **One source of truth for every coding agent.**
 
@@ -43,6 +43,29 @@ Most AI coding assistants suffer from two extremes: they either operate in a vac
 1. **Portable:** Define your engineering rules once. ContextOS exports optimized configurations for all major AI editors (Cursor, Claude Code, Copilot, Aider, Zed).
 2. **Minimal:** The dynamic resolver selects only the relevant skills and rules needed for a specific task, eliminating prompt bloat and token waste.
 3. **Verifiable:** Lockfiles, provenance, drift detection, and CI gates make generated agent configuration reproducible and auditable.
+
+## How it works
+
+1. Define version-controlled engineering policies once.
+2. Resolve only the policies relevant to the current task.
+3. Compile native configuration for each coding agent.
+4. Detect configuration drift in CI.
+
+```bash
+contextos resolve "review authentication changes" \
+  --files src/auth/session.ts \
+  --explain
+```
+
+Selected:
+  security              explicit task match
+  engineering-workflow  required dependency
+
+Excluded:
+  context-manager       context budget
+
+Risk: high
+Estimated context: 2,840 tokens
 
 ## Dynamic Skill Resolution & Unified CLI (`contextos` / `ctx.js`)
 
@@ -108,7 +131,15 @@ ContextOS provides a read-only **Model Context Protocol (MCP)** server to allow 
 > [!WARNING]
 > **Separation of Concerns:** The MCP Bridge and experimental runtime orchestration tools are distributed separately in the `@contextos/mcp` package (Beta). The `--with-mcp` flag in the Core CLI is deprecated.
 
-To use the MCP Bridge, please install the runtime package separately (documentation coming soon).
+Install the optional MCP Bridge:
+
+`ash
+npm install --save-dev @contextos/mcp
+npx contextos-mcp --dir .
+`
+
+The MCP Bridge is read-only by default. Experimental execution tools require
+the explicit --enable-runtime flag and should only be used in trusted repositories.
 
 ## Security — Third-Party Skills
 

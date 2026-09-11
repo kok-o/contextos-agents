@@ -1,4 +1,4 @@
-# ContextOS — AI Project Operating System
+# ContextOS — Deterministic context compiler and policy engine for AI coding agents.
 
 You are working inside a project managed by **ContextOS**. This file is the **single source of truth** for how you must behave, think, and which skills to activate for every task.
 

@@ -23,7 +23,7 @@ ContextOS provides a validated plugin configuration for Claude Code workspaces:
   "$schema": "https://json.schemastore.org/claude-plugin.json",
   "name": "contextos",
   "version": "1.7.1",
-  "description": "Deterministic AI Project Operating System context compiler, MCP runtime, and high-precision engineering skills for Claude Code.",
+  "description": "Deterministic context compiler and policy engine for AI coding agents.",
   "author": {
     "name": "ContextOS Team",
     "url": "https://github.com/kok-o/contextos-agents"

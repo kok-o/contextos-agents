@@ -58,7 +58,9 @@ function createMockThread(id: string, overrides: Partial<ThreadState> = {}): Thr
 
 describe("Crash Recovery for Session State (Task 2.5d)", () => {
 	it("reconciles running threads and preserves completed thread merge eligibility across restart", async () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crash-recov-"));
+		const tmpDir = (fs.realpathSync.native ? fs.realpathSync.native : fs.realpathSync)(
+			fs.mkdtempSync(path.join(os.tmpdir(), "crash-recov-")),
+		);
 		try {
 			execFileSync("git", ["init", "--initial-branch", "main"], { cwd: tmpDir });
 			execFileSync("git", ["config", "user.email", "recov@test.dev"], { cwd: tmpDir });

@@ -68,3 +68,9 @@ website/
 scratch/
 
 *.tgz
+
+# Internal planning, roadmaps, and scratch scenarios
+CONTEXTOS_IMPLEMENTATION_PLAN.md
+CONTEXTOS_COMPLETION_PLAN.md
+ENTERPRISE_ROADMAP.md
+VIDEO_DEMO_SCENARIO.md
