@@ -8,12 +8,12 @@
  */
 
 import { execFile } from "node:child_process";
-// @ts-ignore
-import { ThreadStore } from "../runtime/thread-store.cjs";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ThreadState } from "../core/types.js";
+// @ts-expect-error
+import { ThreadStore } from "../runtime/thread-store.cjs";
 import { assertWithinRepository } from "../security/repository-boundary.js";
 import { createRepositoryFingerprint } from "../worktree/manager.js";
 
