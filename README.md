@@ -1,7 +1,7 @@
 # <img src="./Frame%202.png" height="40" align="absmiddle" /> contextos-agents
 
 [![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![CI](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml/badge.svg)](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml)
 
@@ -154,4 +154,4 @@ We are open to pull requests! See [CONTRIBUTING.md](./CONTRIBUTING.md) for a ste
 
 ## License
 
-Distributed under the MIT License. You can freely use, modify, and distribute this code.
+Distributed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE) for details.
