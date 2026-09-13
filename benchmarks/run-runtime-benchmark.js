@@ -18,12 +18,20 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const { LLMClient, sleep } = require('./lib/llm-client');
+const { sumUsage } = require('./lib/usage');
 const { loadSkillContext } = require('./lib/tasks');
 const { extractCodeBlocks } = require('./lib/evaluator');
 const { RUNTIME_SUITES } = require('./lib/runtime-suites');
 const { runRuntimeSuite } = require('./lib/runtime-runner');
 
 const ROOT = path.resolve(__dirname, '..');
+
+function formatUsage(usage) {
+  if (!usage || usage.totalTokens === null || usage.totalTokens === undefined) {
+    return usage ? `unavailable (${usage.source}; known ${usage.knownTotalTokens || 0})` : 'unavailable';
+  }
+  return `${usage.totalTokens} total (${usage.promptTokens ?? 'n/a'} input / ${usage.completionTokens ?? 'n/a'} output; ${usage.source})`;
+}
 
 function parseArgs(argv) {
   const options = {
@@ -35,7 +43,7 @@ function parseArgs(argv) {
     maxTokens: 4096,
     html: true,
     open: false,
-    output: path.join(ROOT, 'benchmarks', 'results'),
+    output: path.join(ROOT, 'benchmarks', 'results', 'legacy', 'runtime'),
     help: false,
   };
 
@@ -96,6 +104,8 @@ function generateMarkdownReport(report) {
   md += `| **Runtime Test Pass Rate** | ${summary.baselinePassRate}% | **${summary.skillPassRate}%** | **${summary.passRateDelta >= 0 ? '+' : ''}${summary.passRateDelta}%** |\n`;
   md += `| **Compilation / Syntax Success** | ${summary.baselineCompilationRate}% | **${summary.skillCompilationRate}%** | **${summary.skillCompilationRate - summary.baselineCompilationRate >= 0 ? '+' : ''}${summary.skillCompilationRate - summary.baselineCompilationRate}%** |\n`;
   md += `| **Average Tests Passed** | ${summary.baselineAvgPassed} / ${summary.avgTotalTests} | **${summary.skillAvgPassed} / ${summary.avgTotalTests}** | **+${(summary.skillAvgPassed - summary.baselineAvgPassed).toFixed(1)} tests** |\n\n`;
+  md += `| **API Tokens (input / output / total)** | ${formatUsage(summary.baselineUsage)} | **${formatUsage(summary.skillUsage)}** | Provider reported; missing counts remain unavailable |\n`;
+  md += `| **Scenario coverage** | ${summary.suitesCount}/${summary.requestedSuites ?? summary.suitesCount} completed | ${summary.failedSuites || 0} failed |\n\n`;
   md += `---\n\n## Scenario Details\n\n`;
 
   for (const r of results) {
@@ -173,6 +183,8 @@ function generateHtmlReport(report) {
       <div class="card"><div class="val" style="color:#4ade80">${summary.skillPassRate}%</div><div class="label">ContextOS Pass Rate</div></div>
       <div class="card"><div class="val" style="color:#38bdf8">+${summary.passRateDelta}%</div><div class="label">Net Improvement</div></div>
       <div class="card"><div class="val">${summary.skillCompilationRate}%</div><div class="label">Syntax & Compilation</div></div>
+      <div class="card"><div class="val">${formatUsage(summary.baselineUsage)}</div><div class="label">Tokens Without Skills</div></div>
+      <div class="card"><div class="val">${formatUsage(summary.skillUsage)}</div><div class="label">Tokens With ContextOS</div></div>
     </div>
     <table>
       <thead>
@@ -232,18 +244,21 @@ async function runBenchmark() {
   console.log(`══════════════════════════════════════════════════════════════════\n`);
 
   const results = [];
+  const suiteErrors = [];
 
   for (let i = 0; i < suitesToRun.length; i++) {
     const suite = suitesToRun[i];
     console.log(`\n[Suite ${i + 1}/${suitesToRun.length}] ${suite.title} (${suite.category})`);
 
+    let baselineResponse = null;
+    let skillResponse = null;
     try {
       // 1. Generate Baseline
       console.log(`  → [Scenario 1] Generating Baseline (Vanilla prompt)...`);
       const contractSection = suite.contract ? `\n=== Required TypeScript Interface & Class Contract ===\n${suite.contract.trim()}\n` : '';
       const concisenessRule = '\nREQUIREMENTS:\n- Keep implementation self-contained. Use internal Maps or arrays for in-memory storage. Do NOT create separate auxiliary store, repository, or logger classes.\n- Keep code concise, direct, and under 150 lines so it never truncates.\n- Output pure code inside exactly ONE ```typescript ... ``` code block without commentary or introductions.\n';
       const baselinePrompt = `Task: ${suite.title}\nCategory: ${suite.category}${contractSection}${concisenessRule}\nProvide the complete, self-contained production-ready implementation in TypeScript/JavaScript with all necessary types, classes, interfaces, and function exports.\n\nCRITICAL REQUIREMENT: Output EXACTLY ONE single self-contained TypeScript file inside a single \`\`\`typescript ... \`\`\` code block. Output pure code immediately without essay introductions or conversational text before/after the code block. All functions and classes must be 100% implemented without placeholders.`;
-      const baseResult = await llmClient.generate({
+      const baseResult = baselineResponse = await llmClient.generate({
         prompt: baselinePrompt,
         maxTokens: options.maxTokens,
         systemInstruction: 'You are an expert software engineer. Output EXACTLY ONE single self-contained, working production code file inside a single markdown code block (```typescript ... ```). Keep code concise and under 220 lines. Do NOT write introductions, essays, or commentary. All functions and classes must be 100% implemented without placeholders or comments replacing implementation.',
@@ -257,7 +272,7 @@ async function runBenchmark() {
       console.log(`  → [Scenario 2] Generating With ContextOS Skills (${suite.skills.join(', ')})...`);
       const skillRules = suite.skills.map(loadSkillContext).join('\n');
       const skillPrompt = `Task: ${suite.title}\nCategory: ${suite.category}${contractSection}\n=== ContextOS Authoritative Skills & Architecture Guidelines ===\n${skillRules}\n${concisenessRule}\nStrictly implement the complete, self-contained production code adhering to the loaded ContextOS technical rules, invariants, and architecture guidelines above.\n\nCRITICAL REQUIREMENT: Output EXACTLY ONE single self-contained TypeScript file inside a single \`\`\`typescript ... \`\`\` code block. Output pure code immediately without essay introductions or conversational text before/after the code block. All functions and classes must be 100% implemented without placeholders.`;
-      const skillResult = await llmClient.generate({
+      const skillResult = skillResponse = await llmClient.generate({
         prompt: skillPrompt,
         maxTokens: options.maxTokens,
         systemInstruction: '[PHASE: Build] [ROLE: Senior Developer] You are an elite principal engineer executing the approved plan. Apply all ContextOS technical rules, zero-placeholder discipline, and domain guidelines. Keep code concise and under 220 lines. Output EXACTLY ONE single self-contained production code file inside a single markdown code block (```typescript ... ```). Do NOT write introductions or commentary. All functions and classes must be 100% implemented.',
@@ -271,6 +286,10 @@ async function runBenchmark() {
       const skillRun = await runRuntimeSuite(suite, skillCode);
       baselineRun.code = baselineCode;
       skillRun.code = skillCode;
+      baselineRun.generationUsage = baseResult.usage;
+      baselineRun.usage = sumUsage([baseResult.usage]);
+      skillRun.generationUsage = skillResult.usage;
+      skillRun.usage = sumUsage([skillResult.usage]);
 
       const delta = skillRun.passRate - baselineRun.passRate;
       console.log(`     Baseline:  ${baselineRun.passRate}% passed (${baselineRun.totalPassed}/${baselineRun.totalTests} tests) [Compiled: ${baselineRun.compiled}]`);
@@ -290,6 +309,12 @@ async function runBenchmark() {
       });
     } catch (suiteErr) {
       console.error(`  [Suite Error] ${suite.id} failed: ${suiteErr.message}`);
+      suiteErrors.push({
+        taskId: suite.id,
+        error: String(suiteErr.message || suiteErr),
+        baselineUsage: sumUsage([baselineResponse?.usage].filter(Boolean)),
+        withSkillsUsage: sumUsage([skillResponse?.usage].filter(Boolean)),
+      });
     }
 
     await sleep(1000);
@@ -297,7 +322,26 @@ async function runBenchmark() {
 
   if (results.length === 0) {
     console.error('[ERROR] No suites completed successfully.');
-    process.exit(1);
+    const failureReport = {
+      timestamp: new Date().toISOString(),
+      provider: llmClient.provider,
+      model: llmClient.model,
+      summary: {
+        suitesCount: 0,
+        requestedSuites: suitesToRun.length,
+        failedSuites: suiteErrors.length,
+        baselineUsage: sumUsage(suiteErrors.map(error => error.baselineUsage)),
+        skillUsage: sumUsage(suiteErrors.map(error => error.withSkillsUsage)),
+      },
+      suiteErrors,
+      results: [],
+    };
+    fs.mkdirSync(options.output, { recursive: true });
+    const failurePath = path.join(options.output, `runtime-report-failed-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+    fs.writeFileSync(failurePath, JSON.stringify(failureReport, null, 2), 'utf8');
+    console.error(`Token usage/error telemetry saved to ${failurePath}`);
+    process.exitCode = 1;
+    return;
   }
 
   const baselinePassRate = Math.round(results.reduce((s, r) => s + r.baseline.passRate, 0) / results.length);
@@ -314,6 +358,8 @@ async function runBenchmark() {
     model: llmClient.model,
     summary: {
       suitesCount: results.length,
+      requestedSuites: suitesToRun.length,
+      failedSuites: suiteErrors.length,
       baselinePassRate,
       skillPassRate,
       passRateDelta: skillPassRate - baselinePassRate,
@@ -322,7 +368,16 @@ async function runBenchmark() {
       baselineAvgPassed,
       skillAvgPassed,
       avgTotalTests,
+      baselineUsage: sumUsage([
+        ...results.map(r => r.baseline.usage),
+        ...suiteErrors.map(error => error.baselineUsage),
+      ]),
+      skillUsage: sumUsage([
+        ...results.map(r => r.withSkills.usage),
+        ...suiteErrors.map(error => error.withSkillsUsage),
+      ]),
     },
+    suiteErrors,
     results,
   };
 
@@ -341,6 +396,8 @@ async function runBenchmark() {
   console.log(`  Baseline Pass Rate:   ${baselinePassRate}%`);
   console.log(`  ContextOS Pass Rate:  ${skillPassRate}%`);
   console.log(`  Net Quality Delta:    ${skillPassRate - baselinePassRate >= 0 ? '+' : ''}${skillPassRate - baselinePassRate}%`);
+  console.log(`  Tokens without skills: ${formatUsage(report.summary.baselineUsage)}`);
+  console.log(`  Tokens with ContextOS: ${formatUsage(report.summary.skillUsage)}`);
   console.log(`══════════════════════════════════════════════════════════════════════`);
   console.log(`  HTML Dashboard: ${htmlPath}`);
   console.log(`  Markdown Summary: ${mdPath}\n`);

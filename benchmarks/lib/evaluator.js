@@ -1,5 +1,7 @@
 'use strict';
 
+const { normalizeUsage, sumUsage } = require('./usage');
+
 /**
  * Extracts clean code snippets from model output markdown.
  */
@@ -171,6 +173,7 @@ Respond ONLY with a valid JSON object without surrounding commentary:
   "weaknesses": ["<weakness 1>", "<weakness 2>"]
 }`;
 
+  const usages = [];
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const res = await llmClient.generate({
@@ -179,6 +182,7 @@ Respond ONLY with a valid JSON object without surrounding commentary:
         temperature: 0.0,
         maxTokens: 1200,
       });
+      usages.push(res.usage || normalizeUsage({}, 'unavailable'));
 
       const parsed = parseJudgeJson(res.text);
       if (parsed && !isNaN(parsed.score)) {
@@ -189,9 +193,12 @@ Respond ONLY with a valid JSON object without surrounding commentary:
           strengths: parsed.strengths.length > 0 ? parsed.strengths : ['Code evaluated'],
           weaknesses: parsed.weaknesses,
           judgeLatencyMs: res.latencyMs,
+          judgeUsage: sumUsage(usages),
+          judgeSource: 'llm',
         };
       }
     } catch (err) {
+      usages.push(normalizeUsage({}, 'unavailable'));
       if (attempt === 2) {
         console.warn(`    [Judge Warning] ${err.message}`);
       }
@@ -207,6 +214,8 @@ Respond ONLY with a valid JSON object without surrounding commentary:
     strengths: ['Deterministic code invariants verified'],
     weaknesses: ['Qualitative review parsing fallback used'],
     judgeLatencyMs: 0,
+    judgeUsage: sumUsage(usages),
+    judgeSource: 'static-fallback',
   };
 }
 
@@ -225,6 +234,8 @@ async function evaluateSubmission({ llmClient, task, responseText, mode }) {
     strengths: staticResult.checks.filter(c => c.passed).map(c => c.name),
     weaknesses: staticResult.checks.filter(c => !c.passed).map(c => c.name),
     judgeLatencyMs: 0,
+    judgeUsage: sumUsage([]),
+    judgeSource: 'static-checks',
   };
 
   if (llmClient) {
@@ -246,6 +257,8 @@ async function evaluateSubmission({ llmClient, task, responseText, mode }) {
     summary: judgeResult.summary,
     strengths: judgeResult.strengths,
     weaknesses: judgeResult.weaknesses,
+    judgeUsage: judgeResult.judgeUsage || sumUsage([]),
+    judgeSource: judgeResult.judgeSource || 'static-checks',
     compositeScore,
     isPassing: compositeScore >= 80,
   };

@@ -2,11 +2,8 @@
  * benchmarks/v2/arms/arm-definitions.js
  * ContextOS Benchmark v2 — Evaluation Arms Specification
  *
- * Implements Section 24.2 of CONTEXTOS_IMPLEMENTATION_PLAN.md:
- *   - Arm A (Vanilla): Neutral baseline system prompt without artificial debuffing
- *   - Arm B (Concise Checklist): 10-15 universal engineering rules (~600 tokens) — Primary Comparator
- *   - Arm C (ContextOS Core): Dynamic canonical skill resolver without ceremony
- *   - Arm D (Full ContextOS): Resolver + risk workflow + isolated runtime verification + review
+ * Current pilot arms. Arm C is the ContextOS product-context treatment; Arm D
+ * adds prompt-only workflow/risk guidance without executing the agent pipeline.
  */
 
 'use strict';
@@ -16,7 +13,6 @@ const ARMS = {
     id: 'arm-a-vanilla',
     name: 'Vanilla Baseline',
     description: 'Neutral baseline system prompt without ContextOS rules or checklists.',
-    tokenBudgetEstimate: 120,
     buildSystemPrompt: () => {
       return 'You are an expert software engineer. Write clean, complete, working production code that solves the user request.';
     },
@@ -25,8 +21,7 @@ const ARMS = {
   ARM_B_CONCISE_CHECKLIST: {
     id: 'arm-b-concise-checklist',
     name: 'Concise Checklist',
-    description: 'High-density 12-rule engineering checklist (~600 tokens). Primary comparator.',
-    tokenBudgetEstimate: 580,
+    description: 'Generic 12-rule engineering checklist; comparator for product-specific context.',
     buildSystemPrompt: () => {
       return [
         'You are a Senior Staff Engineer.',
@@ -49,9 +44,8 @@ const ARMS = {
 
   ARM_C_CONTEXTOS_CORE: {
     id: 'arm-c-contextos-core',
-    name: 'ContextOS Core (Dynamic Context Selection)',
-    description: 'Dynamic canonical resolver selecting exact skills and rules without ceremony.',
-    tokenBudgetEstimate: 1400,
+    name: 'ContextOS Resolver + Installed Skills',
+    description: 'Prompt context produced from the canonical resolver and installed skill documents.',
     buildSystemPrompt: (resolvedSkills = []) => {
       const skillsHeader = resolvedSkills.length > 0
         ? `[ContextOS Resolved Skills: ${resolvedSkills.join(', ')}]`
@@ -60,15 +54,14 @@ const ARMS = {
     },
   },
 
-  ARM_D_FULL_CONTEXTOS: {
-    id: 'arm-d-full-contextos',
-    name: 'Full ContextOS (Core + Runtime Verification)',
-    description: 'Dynamic resolver + risk-based workflow + isolated runtime verification + reviewer pipeline.',
-    tokenBudgetEstimate: 2200,
+  ARM_D_EXPANDED_GUIDANCE: {
+    id: 'arm-d-expanded-guidance',
+    name: 'Expanded ContextOS Guidance (Prompt-only)',
+    description: 'Arm C context plus additional risk and workflow instructions; no separate agent, worktree, or reviewer runs.',
     buildSystemPrompt: (resolvedSkills = [], riskLevel = 'STANDARD') => {
       return [
-        `[ContextOS Full Runtime] [RISK: ${riskLevel}] [Skills: ${resolvedSkills.join(', ')}]`,
-        'Execution gated by isolated worktree and mandatory verification attestations before merge readiness.',
+        `[Expanded ContextOS Guidance] [RISK: ${riskLevel}] [Skills: ${resolvedSkills.join(', ')}]`,
+        'Classify risk, follow the applicable workflow, and check the implementation against the task contract before responding.',
       ].join('\n');
     },
   },

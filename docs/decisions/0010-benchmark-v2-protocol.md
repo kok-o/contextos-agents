@@ -1,26 +1,30 @@
 # ADR-010: Benchmark v2 Protocol and Verifiable Evaluation Harness
 
 ## Status
-Accepted
+Superseded as a description of the implemented benchmark. The current pilot is documented in [BENCHMARK_PROTOCOL.md](../BENCHMARK_PROTOCOL.md).
 
 ## Context
-Early benchmarks for ContextOS relied on synthetic static token counts or manual sampling, leaving claims regarding token savings (up to 70-80%), context compression, and routing accuracy unverifiable across real-world workloads. Furthermore, without reproducible evaluation datasets and verifiable execution harnesses, regressions in skill resolution and prompt efficiency could not be systematically caught.
+This decision recorded a target protocol. Historical numerical claims about token savings and routing accuracy were not supported by reproducible task-level evidence and have been invalidated in `benchmarks/claims.json`.
 
 ## Decision
-Establish the **Benchmark v2 Protocol** as an automated, reproducible evaluation system:
-1. **Verifiable Corpus**: Standardized task suites across diverse project architectures (monorepos, polyglot backends, modern frontend frameworks).
-2. **Deterministic Baseline vs ContextOS Comparison**: Execute identical tasks with unmanaged raw context versus ContextOS manifest-driven compiled context.
-3. **Automated Metric Instrumentation**: Directly measure token consumption (input/output/cache hits), context bloat ratio, resolution latency, and test pass rate.
-4. **Reproducible CLI Harness**: Expose benchmark execution via `contextos benchmark run` with output artifacts formatted for automated regression checks in CI.
+The repository now implements a narrower pilot through `npm run benchmark`:
+
+1. It sends paired prompts to a selected model API, or exports the prompts for a manual chat comparison.
+2. Its three TypeScript tasks are evaluated by local compile/runtime checks.
+3. ContextOS arms use the actual canonical resolver and installed skill documents from a fixed empty-workspace fixture.
+4. API token usage is read from provider responses; manual chat counts are only imported when the UI exposes them.
+
+The pilot does not implement the original broad corpus, multi-repository agent execution, context-bloat study, complete product runtime, CI claim validation, or an independently audited evaluator. See `docs/BENCHMARK_PROTOCOL.md` for the exact current scope and limitations.
 
 ## Alternatives Considered
 - *Synthetic Token Math*: Calculating theoretical token limits without running actual agent workflows. Rejected because it fails to capture LLM degradation and hallucination rates.
 - *Third-party Benchmark Suites Only (e.g. SWE-bench)*: Valuable for high-level problem solving, but SWE-bench does not measure context optimization or skill selection efficiency directly.
 
 ## Trade-offs
-- Running real LLM agent benchmarks in CI incurs compute and API token costs.
-- Provides mathematically sound, auditable proof for enterprise claims regarding cost reduction and prompt accuracy.
+- API runs incur model costs and require an operator-supplied key.
+- The current fixed task set is small and exploratory; repeated generations do not add task diversity.
+- Prompt-context comparisons include the token overhead of the added ContextOS instructions.
 
 ## Impact
-- Powers automated claim validation in `ENTERPRISE_ROADMAP.md` and marketing materials.
-- Ensures performance and prompt compression invariants are maintained across releases.
+- Current reports are run-level evidence for this pilot only. They do not automatically validate claims or establish broad product effects.
+- The invalidated historical evidence remains only as a governance tombstone so unsupported claims are not silently reintroduced.

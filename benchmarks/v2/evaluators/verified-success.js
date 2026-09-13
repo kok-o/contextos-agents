@@ -2,17 +2,9 @@
  * benchmarks/v2/evaluators/verified-success.js
  * ContextOS Benchmark v2 — Primary Outcome Evaluator
  *
- * Implements Section 24.8 of CONTEXTOS_IMPLEMENTATION_PLAN.md:
- *   - Primary metric: independently_verified_success
- *   - Evaluates:
- *     1. Patch application / syntax correctness
- *     2. Typecheck / build status
- *     3. Public unit test pass rate
- *     4. Hidden test suite pass rate (isolated oracle)
- *     5. Zero regression on baseline suites
- *     6. Zero P0/P1 security findings or leaked credentials
- *     7. Zero placeholder stubs (TODO, mock placeholders)
- *     8. Budget constraints (tokens, time, turns)
+ * The primary outcome is harness_verified_success: code extraction, compilation,
+ * every registered runtime-oracle assertion, placeholder checks, and configured
+ * budget checks must pass.
  */
 
 'use strict';
@@ -30,11 +22,9 @@ class BenchmarkEvaluator {
    *
    * @param {Object} runEvidence
    * @param {boolean} runEvidence.patchApplied
-   * @param {boolean} runEvidence.buildPass
-   * @param {number} runEvidence.publicTestsTotal
-   * @param {number} runEvidence.publicTestsPassed
-   * @param {number} runEvidence.hiddenTestsTotal
-   * @param {number} runEvidence.hiddenTestsPassed
+   * @param {boolean} runEvidence.compilationPassed
+   * @param {number} runEvidence.oracleTestsTotal
+   * @param {number} runEvidence.oracleTestsPassed
    * @param {boolean} [runEvidence.regressions=false]
    * @param {Array<string>} [runEvidence.securityFindings=[]]
    * @param {string} [runEvidence.generatedCode='']
@@ -48,11 +38,9 @@ class BenchmarkEvaluator {
   static evaluate(runEvidence) {
     const {
       patchApplied = false,
-      buildPass = false,
-      publicTestsTotal = 0,
-      publicTestsPassed = 0,
-      hiddenTestsTotal = 0,
-      hiddenTestsPassed = 0,
+      compilationPassed = false,
+      oracleTestsTotal = 0,
+      oracleTestsPassed = 0,
       regressions = false,
       securityFindings = [],
       generatedCode = '',
@@ -63,14 +51,15 @@ class BenchmarkEvaluator {
 
     // 1. Patch & build
     if (!patchApplied) failures.push('Patch was not successfully applied');
-    if (!buildPass) failures.push('Compilation or typecheck failed');
+    if (!compilationPassed) failures.push('Compilation failed');
 
-    // 2. Tests
-    if (publicTestsTotal > 0 && publicTestsPassed < publicTestsTotal) {
-      failures.push(`Public tests failed: ${publicTestsPassed}/${publicTestsTotal}`);
-    }
-    if (hiddenTestsTotal > 0 && hiddenTestsPassed < hiddenTestsTotal) {
-      failures.push(`Hidden test oracle failed: ${hiddenTestsPassed}/${hiddenTestsTotal}`);
+    // 2. Registered runtime oracle
+    if (!Number.isInteger(oracleTestsTotal) || oracleTestsTotal < 1) {
+      failures.push('Runtime oracle results are missing');
+    } else if (!Number.isInteger(oracleTestsPassed) || oracleTestsPassed < 0 || oracleTestsPassed > oracleTestsTotal) {
+      failures.push('Runtime oracle result counts are invalid');
+    } else if (oracleTestsPassed < oracleTestsTotal) {
+      failures.push(`Runtime oracle failed: ${oracleTestsPassed}/${oracleTestsTotal}`);
     }
     if (regressions) {
       failures.push('Regression detected in existing test baseline');
@@ -92,19 +81,26 @@ class BenchmarkEvaluator {
     }
 
     // 5. Budget constraints
-    if (budget.tokensUsed && budget.tokenLimit && budget.tokensUsed > budget.tokenLimit) {
+    if (Number.isFinite(budget.tokensUsed) && Number.isFinite(budget.tokenLimit) && budget.tokensUsed > budget.tokenLimit) {
       failures.push(`Token budget exceeded: ${budget.tokensUsed} > ${budget.tokenLimit}`);
     }
-    if (budget.durationMs && budget.timeoutMs && budget.durationMs > budget.timeoutMs) {
+    if (budget.requireTokenUsage === true && !Number.isFinite(budget.tokensUsed)) {
+      failures.push('Token usage unavailable; token budget could not be verified');
+    }
+    if (budget.requireTimeUsage === true && !Number.isFinite(budget.durationMs)) {
+      failures.push('Generation time unavailable; time budget could not be verified');
+    }
+    if (Number.isFinite(budget.durationMs) && Number.isFinite(budget.timeoutMs) && budget.durationMs > budget.timeoutMs) {
       failures.push(`Time budget exceeded: ${budget.durationMs}ms > ${budget.timeoutMs}ms`);
     }
 
     const isSuccess = failures.length === 0;
 
     return {
-      independently_verified_success: isSuccess,
-      publicTestRate: publicTestsTotal > 0 ? publicTestsPassed / publicTestsTotal : 1.0,
-      hiddenTestRate: hiddenTestsTotal > 0 ? hiddenTestsPassed / hiddenTestsTotal : 1.0,
+      harness_verified_success: isSuccess,
+      compilationPassed: Boolean(compilationPassed),
+      oracleTestsTotal: Number.isInteger(oracleTestsTotal) && oracleTestsTotal > 0 ? oracleTestsTotal : null,
+      oracleTestsPassed: Number.isInteger(oracleTestsPassed) && oracleTestsTotal > 0 ? oracleTestsPassed : null,
       failureCount: failures.length,
       failures,
     };

@@ -2,11 +2,8 @@
  * benchmarks/v2/analysis/statistics.js
  * ContextOS Benchmark v2 — Statistical Analysis Engine
  *
- * Implements Section 24 of CONTEXTOS_IMPLEMENTATION_PLAN.md:
- *   - Primary metric: cost per independently verified successful task
- *   - Wilson score 95% confidence intervals for binomial success proportions
- *   - Pairwise delta comparison between Arm C/D and Arm B (Concise Checklist comparator)
- *   - Structured tabular summary generation
+ * Descriptive statistics for the small fixed-task pilot. Intervals describe
+ * generated-run outcomes; they do not model variation across new tasks.
  */
 
 'use strict';
@@ -44,21 +41,28 @@ class BenchmarkStatistics {
     const armsMap = {};
 
     for (const run of runs) {
-      const { armId, success, totalCost = 0, durationMs = 0 } = run;
+      const { armId, success, totalCost, durationMs = 0 } = run;
       if (!armsMap[armId]) {
         armsMap[armId] = {
           armId,
           totalRuns: 0,
           successfulRuns: 0,
           totalCost: 0,
+          knownCostRuns: 0,
           totalDurationMs: 0,
+          costComplete: true,
         };
       }
 
       const item = armsMap[armId];
       item.totalRuns++;
       if (success) item.successfulRuns++;
-      item.totalCost += totalCost;
+      if (Number.isFinite(totalCost)) {
+        item.totalCost += totalCost;
+        item.knownCostRuns++;
+      } else {
+        item.costComplete = false;
+      }
       item.totalDurationMs += durationMs;
     }
 
@@ -66,7 +70,8 @@ class BenchmarkStatistics {
     for (const [armId, d] of Object.entries(armsMap)) {
       const successRate = d.totalRuns > 0 ? (d.successfulRuns / d.totalRuns) * 100 : 0;
       const ci95 = calculateWilsonInterval(d.successfulRuns, d.totalRuns);
-      const costPerSuccess = d.successfulRuns > 0 ? d.totalCost / d.successfulRuns : null;
+      const knownTotalCost = d.costComplete && d.knownCostRuns === d.totalRuns ? d.totalCost : null;
+      const costPerSuccess = knownTotalCost !== null && d.successfulRuns > 0 ? knownTotalCost / d.successfulRuns : null;
       const avgDurationMs = d.totalRuns > 0 ? d.totalDurationMs / d.totalRuns : 0;
 
       armStats[armId] = {
@@ -75,7 +80,8 @@ class BenchmarkStatistics {
         successfulRuns: d.successfulRuns,
         successRate: parseFloat(successRate.toFixed(1)),
         ci95,
-        totalCost: parseFloat(d.totalCost.toFixed(4)),
+        totalCost: knownTotalCost !== null ? parseFloat(knownTotalCost.toFixed(4)) : null,
+        costKnown: knownTotalCost !== null,
         costPerVerifiedSuccess: costPerSuccess !== null ? parseFloat(costPerSuccess.toFixed(4)) : null,
         avgDurationMs: Math.round(avgDurationMs),
       };
@@ -91,7 +97,7 @@ class BenchmarkStatistics {
 
         const rateDelta = parseFloat((stat.successRate - comparator.successRate).toFixed(1));
         let costRatio = null;
-        if (comparator.costPerVerifiedSuccess && stat.costPerVerifiedSuccess) {
+        if (comparator.costPerVerifiedSuccess !== null && comparator.costPerVerifiedSuccess !== 0 && stat.costPerVerifiedSuccess !== null) {
           costRatio = parseFloat((stat.costPerVerifiedSuccess / comparator.costPerVerifiedSuccess).toFixed(2));
         }
 

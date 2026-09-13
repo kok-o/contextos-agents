@@ -3,6 +3,7 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const { normalizeOpenAIUsage, normalizeGeminiUsage, normalizeAnthropicUsage } = require('./usage');
 
 /**
  * Helper to make HTTP/HTTPS JSON requests with timeout and error handling.
@@ -80,9 +81,13 @@ function resolveProviderConfig(options = {}) {
   let model = options.model || '';
   let baseUrl = options.baseUrl || '';
 
+  if (provider === 'openai-compatible') provider = 'custom';
+
   // Auto-detect provider if not explicitly given
   if (!provider) {
-    if (model.startsWith('gemini-')) {
+    if (baseUrl) {
+      provider = 'custom';
+    } else if (model.startsWith('gemini-')) {
       provider = 'gemini';
     } else if (model.startsWith('claude-')) {
       provider = 'anthropic';
@@ -111,6 +116,10 @@ function resolveProviderConfig(options = {}) {
     apiKey = apiKey || process.env.ANTHROPIC_API_KEY || '';
     model = model || 'claude-3-7-sonnet-20250219';
     baseUrl = baseUrl || 'https://api.anthropic.com';
+  } else if (provider === 'custom') {
+    apiKey = apiKey || process.env.OPENAI_API_KEY || '';
+    model = model || 'gpt-4o';
+    baseUrl = baseUrl || process.env.OPENAI_BASE_URL || '';
   }
 
   return { provider, apiKey, model, baseUrl };
@@ -126,6 +135,9 @@ class LLMClient {
     this.apiKey = resolved.apiKey;
     this.model = resolved.model;
     this.baseUrl = resolved.baseUrl;
+    if (this.provider === 'custom' && !this.baseUrl) {
+      throw new Error('A custom OpenAI-compatible provider requires --base-url or OPENAI_BASE_URL.');
+    }
     this.maxRetries = options.maxRetries || 3;
     this.timeoutMs = options.timeoutMs || 300_000;
   }
@@ -155,11 +167,17 @@ class LLMClient {
         return {
           text: result.text,
           latencyMs: Date.now() - started,
-          usage: result.usage,
+          usage: {
+            ...result.usage,
+            attemptCount: attempt,
+            unreportedAttempts: attempt - 1,
+          },
           model: this.model,
           provider: this.provider,
         };
       } catch (err) {
+        err.attemptCount = attempt;
+        err.unreportedAttempts = attempt - 1;
         const isLast = attempt === this.maxRetries;
         const isRateLimit = err.status === 429 || /rate\s*limit|quota|in-flight/i.test(err.message);
         const isInFlight = err.status === 402 && /in-flight/i.test(err.message);
@@ -189,6 +207,7 @@ class LLMClient {
     const payload = {
       model: this.model,
       stream: true,
+      stream_options: { include_usage: true },
       messages: [
         { role: isReasoningModel ? 'user' : 'system', content: systemInstruction },
         { role: 'user', content: prompt },
@@ -257,8 +276,7 @@ class LLMClient {
         let raw = '';
         let text = '';
         let reasoningText = '';
-        let promptTokens = 0;
-        let completionTokens = 0;
+        let usageRaw = null;
         let buffer = '';
 
         res.setEncoding('utf8');
@@ -280,10 +298,7 @@ class LLMClient {
                 if (parsed.choices?.[0]?.delta?.reasoning_content) {
                   reasoningText += parsed.choices[0].delta.reasoning_content;
                 }
-                if (parsed.usage) {
-                  promptTokens = parsed.usage.prompt_tokens || promptTokens;
-                  completionTokens = parsed.usage.completion_tokens || completionTokens;
-                }
+                if (parsed.usage) usageRaw = parsed.usage;
               } catch {}
             }
           }
@@ -300,6 +315,7 @@ class LLMClient {
               if (parsed.choices?.[0]?.delta?.reasoning_content) {
                 reasoningText += parsed.choices[0].delta.reasoning_content;
               }
+              if (parsed.usage) usageRaw = parsed.usage;
             } catch {}
           }
 
@@ -319,6 +335,7 @@ class LLMClient {
             try {
               const parsed = JSON.parse(raw);
               text = parsed.choices?.[0]?.message?.content || parsed.choices?.[0]?.text || '';
+              usageRaw = parsed.usage || usageRaw;
             } catch {}
           }
 
@@ -327,20 +344,7 @@ class LLMClient {
             text = reasoningText;
           }
 
-          if (!promptTokens) {
-            promptTokens = Math.round(((systemInstruction.length + prompt.length) / 4));
-          }
-          if (!completionTokens) {
-            completionTokens = Math.round(text.length / 4);
-          }
-
-          const usage = {
-            promptTokens,
-            completionTokens,
-            totalTokens: promptTokens + completionTokens,
-          };
-
-          resolve({ text, usage });
+          resolve({ text, usage: normalizeOpenAIUsage(usageRaw) });
         });
       });
 
@@ -380,11 +384,7 @@ class LLMClient {
 
     const candidate = res.body?.candidates?.[0];
     const text = candidate?.content?.parts?.map(p => p.text).join('') || '';
-    const usage = {
-      promptTokens: res.body?.usageMetadata?.promptTokenCount || 0,
-      completionTokens: res.body?.usageMetadata?.candidatesTokenCount || 0,
-      totalTokens: res.body?.usageMetadata?.totalTokenCount || 0,
-    };
+    const usage = normalizeGeminiUsage(res.body?.usageMetadata || res.body?.usage_metadata || res.body?.usage);
 
     return { text, usage };
   }
@@ -422,11 +422,7 @@ class LLMClient {
     }
 
     const text = res.body?.content?.map(c => c.text || '').join('') || '';
-    const usage = {
-      promptTokens: res.body?.usage?.input_tokens || 0,
-      completionTokens: res.body?.usage?.output_tokens || 0,
-      totalTokens: (res.body?.usage?.input_tokens || 0) + (res.body?.usage?.output_tokens || 0),
-    };
+    const usage = normalizeAnthropicUsage(res.body?.usage);
 
     return { text, usage };
   }

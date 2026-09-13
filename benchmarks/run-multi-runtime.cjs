@@ -11,7 +11,7 @@ const { RUNTIME_SUITES } = require('./lib/runtime-suites');
 const { runRuntimeSuite } = require('./lib/runtime-runner');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUTPUT_DIR = path.join(ROOT, 'benchmarks', 'results');
+const OUTPUT_DIR = path.join(ROOT, 'benchmarks', 'results', 'legacy', 'multi-runtime');
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '';
 const OPENROUTER_BASE = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';

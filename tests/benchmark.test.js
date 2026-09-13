@@ -228,6 +228,10 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
 
     // Insecure baseline code: no timingSafeEqual, leaks stack in 500
     const insecureCode = `
+      // rateLimit attempts, validateInput and timingSafeEqual are mentioned here only as comments.
+      export function hashPassword(pwd) {
+        return pwd;
+      }
       export function verifyPassword(pwd, hash) {
         return pwd === hash;
       }
@@ -237,15 +241,19 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
     `;
     const baselineRun = await runRuntimeSuite(authSuite, insecureCode);
     assert.ok(baselineRun.passRate < 50, 'Insecure baseline code must fail security assertions');
+    assert.equal(baselineRun.tests.find(t => t.id === 'timing-safe-comparison').passed, false, 'A plain equality verifier must fail behavioral password verification');
+    assert.equal(baselineRun.tests.find(t => t.id === 'rate-limiting-lockout').passed, false, 'Mentioning rate-limit terms without a limiter must fail');
+    assert.equal(baselineRun.tests.find(t => t.id === 'no-stack-trace-leak').passed, false, 'A 500 handler that leaks message and stack must fail behaviorally');
+    assert.equal(baselineRun.tests.find(t => t.id === 'input-sanitization-validation').passed, false, 'Missing login input behavior must fail');
 
     // Hardened code: timing-safe, no stack leak, rate limit threshold configured
     const secureCode = `
-      import crypto from 'node:crypto';
-      export function verifyPassword(pwd, hash, salt) {
-        const h1 = crypto.createHash('sha256').update(pwd + salt).digest();
-        const h2 = Buffer.from(hash, 'hex');
-        if (h1.length !== h2.length) return false;
-        return crypto.timingSafeEqual(h1, h2);
+      const bcrypt = require('bcrypt');
+      export function hashPassword(pwd) {
+        return bcrypt.hash(pwd, 10);
+      }
+      export function verifyPassword(pwd, hash) {
+        return bcrypt.compare(pwd, hash);
       }
       export class RateLimiter {
         attempts: any = {};
@@ -258,16 +266,21 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
         res.status(500).json({ error: 'Internal Server Error' });
       }
       export function validateInput(data: { email: string }) {
-        if (!data.email.includes('@')) return { ok: false, error: 'Invalid email' };
+        if (!data.email.includes('@') || !data.password) return { ok: false, error: 'Invalid credentials' };
         return { ok: true };
+      }
+      export function handleLogin(request) {
+        const validation = validateInput(request);
+        if (!validation.ok) return { status: 400, body: { error: 'Invalid credentials' } };
+        return { status: 401, body: { error: 'Unauthorized' } };
       }
       export function generateToken(user: any, secret: string) {
         const jwt = require('jsonwebtoken');
-        return jwt.sign({ sub: user.id }, secret, { expiresIn: '15m', issuer: 'app' });
+        return jwt.sign({ id: user.id, sub: user.id, email: user.email }, secret, { expiresIn: '15m', issuer: 'app', audience: 'benchmark-api' });
       }
     `;
     const secureRun = await runRuntimeSuite(authSuite, secureCode);
-    assert.ok(secureRun.passRate >= 80, 'Secure code must achieve high pass rate on runtime assertions');
+    assert.equal(secureRun.passRate, 100, 'Secure code must pass every behavioral runtime assertion');
     assert.equal(secureRun.compiled, true);
 
     // Verify that a dummy limiter that never blocks fails the rate-limiting-lockout test
@@ -289,20 +302,23 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
     const dddCode = `
       export class Money {
         constructor(public amount: number, public currency: string = 'USD') {
-          if (amount < 0) throw new Error('Amount cannot be negative');
+          if (!Number.isFinite(amount) || amount < 0) throw new Error('Amount cannot be negative');
+          Object.freeze(this);
         }
         static of(amount: number, currency: string = 'USD') {
           return new Money(amount, currency);
         }
         add(other: Money): Money {
+          if (!(other instanceof Money) || other.currency !== this.currency) throw new Error('Currency mismatch');
           return new Money(this.amount + other.amount, this.currency);
         }
+        equals(other: Money): boolean { return other instanceof Money && other.amount === this.amount && other.currency === this.currency; }
       }
 
       export class Order {
-        private items: any[] = [];
-        private status: string = 'CREATED';
-        private events: any[] = [];
+        public items: any[] = [];
+        public status: string = 'PENDING';
+        public events: any[] = [];
 
         constructor(public id: string, public customerId: string) {
           this.events.push({ type: 'OrderCreatedEvent', orderId: id });
@@ -310,22 +326,33 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
 
         addItem(id: string, qty: number, price: any) {
           if (qty <= 0) throw new Error('Quantity must be positive');
-          if (this.status === 'PAID') throw new Error('Cannot add to paid order');
+          if (this.status !== 'PENDING') throw new Error('Cannot edit an order after payment');
+          if (!(price instanceof Money)) throw new Error('Money required');
+          if (this.items.length && this.items[0].price.currency !== price.currency) throw new Error('Currency mismatch');
           this.items.push({ id, qty, price });
         }
 
         pay() {
+          if (this.status !== 'PENDING' || this.items.length === 0) throw new Error('Order cannot be paid');
           this.status = 'PAID';
           this.events.push({ type: 'OrderPaidEvent' });
         }
 
         ship() {
+          if (this.status !== 'PAID') throw new Error('Order cannot ship before payment');
           this.status = 'SHIPPED';
+          this.events.push({ type: 'OrderShippedEvent' });
         }
 
         cancel() {
-          if (this.status === 'SHIPPED') throw new Error('Cannot cancel shipped order');
+          if (this.status !== 'PENDING') throw new Error('Cannot cancel this order');
           this.status = 'CANCELLED';
+          this.events.push({ type: 'OrderCancelledEvent' });
+        }
+
+        getTotal() {
+          const currency = this.items[0]?.price.currency || 'USD';
+          return this.items.reduce((total, item) => total.add(item.price), Money.of(0, currency));
         }
 
         getDomainEvents() {

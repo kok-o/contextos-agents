@@ -2,6 +2,8 @@
 
 const vm = require('vm');
 const crypto = require('crypto');
+const path = require('path');
+const { spawn } = require('child_process');
 
 /**
  * Cleans parameter types from a function parameter signature.
@@ -301,7 +303,9 @@ function createSandboxedRequire(customMocks = {}) {
 }
 
 /**
- * Executes a code snippet inside a secure sandbox and returns module.exports.
+ * Executes a code snippet in a Node vm context and returns module.exports.
+ * A vm context alone is not a security boundary; use runRuntimeSuite for the
+ * permission-limited worker when evaluating untrusted generated code.
  */
 function executeInSandbox(code, options = {}) {
   const timeoutMs = options.timeoutMs || 4000;
@@ -315,12 +319,14 @@ function executeInSandbox(code, options = {}) {
     module: sandboxModule,
     exports: sandboxExports,
     require: mockRequire,
-    console,
+    console: options.console || console,
     Buffer,
     promisify: require('node:util').promisify,
     crypto: require('node:crypto'),
     util: require('node:util'),
-    fetch: globalThis.fetch,
+    // Runtime tasks must not make external network requests. Their HTTP behavior
+    // is checked by deterministic local assertions rather than live endpoints.
+    fetch: options.fetch,
     setTimeout,
     clearTimeout,
     setInterval,
@@ -366,9 +372,9 @@ function executeInSandbox(code, options = {}) {
 }
 
 /**
- * Runs a suite of runtime test functions against the sandboxed exports.
+ * Runs a suite of runtime test functions against the vm-context exports.
  */
-async function runRuntimeSuite(taskSuite, rawCode, options = {}) {
+async function runRuntimeSuiteInProcess(taskSuite, rawCode, options = {}) {
   const started = Date.now();
   const execResult = executeInSandbox(rawCode, options);
 
@@ -433,10 +439,99 @@ async function runRuntimeSuite(taskSuite, rawCode, options = {}) {
   };
 }
 
+function assertRuntimeIsolationAvailable() {
+  if (process.allowedNodeEnvironmentFlags?.has('--permission')) return '--permission';
+  if (process.allowedNodeEnvironmentFlags?.has('--experimental-permission')) return '--experimental-permission';
+  throw new Error('Isolated runtime evaluation requires a Node.js build with the Permission Model (use Node.js 22 or newer).');
+}
+
+/**
+ * Run model-generated code in a separate Node process with the Permission Model.
+ * The child receives no API credentials, filesystem writes, child processes, or
+ * worker threads. Node's Permission Model is defense in depth, not an OS sandbox.
+ */
+async function runRuntimeSuite(taskSuite, rawCode, options = {}) {
+  if (options.inProcess === true) return runRuntimeSuiteInProcess(taskSuite, rawCode, options);
+  if (typeof taskSuite?.id !== 'string' || !taskSuite.id) throw new Error('An identified runtime suite is required for isolated evaluation.');
+  if (!Array.isArray(taskSuite.tests)) throw new Error('A runtime suite must include a test list.');
+  if (typeof rawCode !== 'string') throw new Error('Generated code must be a string.');
+  if (rawCode.length > 1_000_000) throw new Error('Generated code exceeds the 1 MB runtime limit.');
+
+  const permissionFlag = assertRuntimeIsolationAvailable();
+
+  const workerPath = path.join(__dirname, 'runtime-worker.js');
+  // The Windows Permission Model does not consistently match multiple exact
+  // paths supplied as a comma-separated list. Keep read access to this small
+  // benchmark library directory; no workspace or user files are readable.
+  const allowRead = __dirname;
+  const args = [permissionFlag, `--allow-fs-read=${allowRead}`, '--disallow-code-generation-from-strings', '--max-old-space-size=128', workerPath];
+  const childEnv = {};
+  for (const key of ['PATH', 'SystemRoot', 'WINDIR', 'TEMP', 'TMP']) {
+    if (process.env[key]) childEnv[key] = process.env[key];
+  }
+  const timeoutMs = Number.isSafeInteger(options.workerTimeoutMs)
+    ? options.workerTimeoutMs
+    : Math.max(30_000, taskSuite.tests.length * 5_000 + 5_000);
+  if (timeoutMs < 1) throw new Error('Runtime worker timeout must be a positive integer.');
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, args, {
+      cwd: path.resolve(__dirname, '../..'),
+      env: childEnv,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
+      shell: false,
+    });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    const finish = (error, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve(value);
+    };
+    const timer = setTimeout(() => {
+      child.kill();
+      finish(new Error(`Isolated runtime worker exceeded ${timeoutMs} ms.`));
+    }, timeoutMs);
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', chunk => {
+      stdout += chunk;
+      if (stdout.length > 2_000_000) {
+        child.kill();
+        finish(new Error('Isolated runtime worker exceeded its output limit.'));
+      }
+    });
+    child.stderr.on('data', chunk => { if (stderr.length < 16_000) stderr += chunk; });
+    child.stdin.on('error', error => finish(new Error(`Could not send input to runtime worker: ${error.message}`)));
+    child.on('error', error => finish(new Error(`Could not start isolated runtime worker: ${error.message}`)));
+    child.on('close', code => {
+      if (settled) return;
+      if (code !== 0) {
+        finish(new Error(`Isolated runtime worker exited with code ${code}${stderr.trim() ? `: ${stderr.trim()}` : ''}`));
+        return;
+      }
+      try {
+        const result = JSON.parse(stdout);
+        if (!result || !Array.isArray(result.tests) || !Number.isFinite(result.totalTests)) throw new Error('Invalid worker result shape.');
+        finish(null, result);
+      } catch (error) {
+        finish(new Error(`Isolated runtime worker returned invalid output: ${error.message}`));
+      }
+    });
+    child.stdin.end(JSON.stringify({ suiteId: taskSuite.id, rawCode }));
+  });
+}
+
 module.exports = {
   stripTypeScript,
   cleanParamTypes,
   createJwtMock,
   executeInSandbox,
+  runRuntimeSuiteInProcess,
+  assertRuntimeIsolationAvailable,
   runRuntimeSuite,
 };

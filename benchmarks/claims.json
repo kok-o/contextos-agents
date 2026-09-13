@@ -5,22 +5,13 @@
     {
       "id": "claim-context-reduction-v1",
       "status": "invalidated",
-      "statement": "ContextOS selective compilation reduces token payload by 65-80% compared to monolithic all-skill concatenation.",
+      "statement": "Historical claim that ContextOS selective compilation reduces token payload; invalidated and unsupported by reproducible evidence.",
       "population": "Standard TypeScript/React/Node workspace tasks",
       "comparator": "monolithic-all-skills-v1",
-      "estimate": {
-        "delta": -72.4,
-        "confidenceInterval95": [-78.1, -66.7]
-      },
-      "models": ["gemini-1.5-pro", "claude-3-5-sonnet", "gpt-4o"],
-      "taskCount": 45,
-      "runCount": 900,
       "evidenceArtifact": "benchmarks/evidence/v1/context-reduction-report.json",
-      "codeCommit": "8446a83",
-      "skillGraphHash": "sha256:aaca5403ceb2f",
-      "validUntil": "2027-01-01",
       "limitations": [
-        "Measured on pure context payload size; does not account for runtime token consumption of generated code."
+        "The historical aggregate is invalid because its raw task-level records cannot be reproduced.",
+        "The current v2 benchmark measures generated-code task outcomes and does not replace this claim."
       ]
     },
     {

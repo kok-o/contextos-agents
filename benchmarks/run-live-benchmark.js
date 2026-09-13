@@ -18,6 +18,7 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const { LLMClient, sleep } = require('./lib/llm-client');
+const { sumUsage } = require('./lib/usage');
 const { BENCHMARK_TASKS, loadSkillContext } = require('./lib/tasks');
 const { evaluateSubmission } = require('./lib/evaluator');
 const { printTerminalReport, generateMarkdownReport, generateHtmlReport } = require('./lib/reporter');
@@ -33,7 +34,7 @@ function parseArgs(argv) {
     task: 'all',
     html: true,
     open: false,
-    output: path.join(ROOT, 'benchmarks', 'results'),
+    output: path.join(ROOT, 'benchmarks', 'results', 'legacy', 'live'),
     help: false,
   };
 
@@ -146,16 +147,21 @@ async function runBenchmark() {
   console.log(`══════════════════════════════════════════════════════════════════\n`);
 
   const results = [];
+  const taskErrors = [];
 
   for (let i = 0; i < tasksToRun.length; i++) {
     const task = tasksToRun[i];
     console.log(`\n[Task ${i + 1}/${tasksToRun.length}] ${task.title} (${task.category})`);
 
+    let baseResult = null;
+    let skillResult = null;
+    let baselineEval = null;
+    let skillEval = null;
     try {
       // ── Scenario 1: Baseline (Without Skills) ──────────────────────────────
       console.log(`  → [Scenario 1] Running Baseline (vanilla prompt)...`);
       const baselinePrompt = `Task: ${task.title}\n\n${task.prompt}\n\nProvide the complete, self-contained production-ready code implementation in TypeScript/JavaScript with all necessary types, interfaces, and function exports. Output the complete code directly.`;
-      const baseResult = await llmClient.generate({
+      baseResult = await llmClient.generate({
         prompt: baselinePrompt,
         systemInstruction: 'You are an expert software engineer. Output the complete, self-contained, working production code directly in markdown code blocks (```typescript ... ```). Do not request repository access or conversational pauses; deliver the standalone code directly.',
       });
@@ -168,7 +174,7 @@ async function runBenchmark() {
       console.log(`  → [Scenario 2] Running With ContextOS Skills (${task.skills.join(', ')})...`);
       const skillRules = task.skills.map(loadSkillContext).join('\n');
       const skillPrompt = `Task: ${task.title}\n\n${task.prompt}\n\n=== ContextOS Authoritative Skills & Architecture Guidelines ===\n${skillRules}\n\nStrictly implement the complete, self-contained production code adhering to the loaded ContextOS technical rules, invariants, and architecture guidelines above. Output the complete TypeScript/JavaScript code directly with all types and exports.`;
-      const skillResult = await llmClient.generate({
+      skillResult = await llmClient.generate({
         prompt: skillPrompt,
         systemInstruction: '[PHASE: Build] [ROLE: Senior Developer] You are an elite principal engineer executing the approved plan. Apply all ContextOS technical rules and domain guidelines. Output the complete, self-contained production code directly in markdown code blocks (```typescript ... ```). Do not pause for spec/plan review or request repository access; deliver the complete code directly.',
       });
@@ -177,14 +183,14 @@ async function runBenchmark() {
 
       // ── Evaluate Both Submissions ──────────────────────────────────────────
       console.log(`  → Evaluating submissions (Static Analysis + Judge)...`);
-      const baselineEval = await evaluateSubmission({
+      baselineEval = await evaluateSubmission({
         llmClient,
         task,
         responseText: baselineResText,
         mode: 'without_skills',
       });
 
-      const skillEval = await evaluateSubmission({
+      skillEval = await evaluateSubmission({
         llmClient,
         task,
         responseText: skillResText,
@@ -192,6 +198,10 @@ async function runBenchmark() {
       });
 
       const delta = skillEval.compositeScore - baselineEval.compositeScore;
+      baselineEval.generationUsage = baseResult.usage;
+      baselineEval.usage = sumUsage([baseResult.usage, baselineEval.judgeUsage]);
+      skillEval.generationUsage = skillResult.usage;
+      skillEval.usage = sumUsage([skillResult.usage, skillEval.judgeUsage]);
       console.log(`     Baseline Score:  ${baselineEval.compositeScore}/100 (Static: ${baselineEval.staticScore}%, Judge: ${baselineEval.judgeScore}/100)`);
       console.log(`     ContextOS Score: ${skillEval.compositeScore}/100 (Static: ${skillEval.staticScore}%, Judge: ${skillEval.judgeScore}/100)`);
       console.log(`     Net Delta:       ${delta >= 0 ? '+' : ''}${delta} pts`);
@@ -207,6 +217,13 @@ async function runBenchmark() {
       });
     } catch (taskErr) {
       console.error(`  [Task Error] ${task.id} failed: ${taskErr.message}`);
+      taskErrors.push({
+        taskId: task.id,
+        title: task.title,
+        error: String(taskErr.message || taskErr),
+        baselineUsage: sumUsage([baseResult?.usage, baselineEval?.judgeUsage].filter(Boolean)),
+        withSkillsUsage: sumUsage([skillResult?.usage, skillEval?.judgeUsage].filter(Boolean)),
+      });
     }
 
     await sleep(1500);
@@ -214,7 +231,26 @@ async function runBenchmark() {
 
   if (results.length === 0) {
     console.error('\n[ERROR] No tasks completed successfully.');
-    process.exit(1);
+    const failureReport = {
+      timestamp: new Date().toISOString(),
+      provider: providerName,
+      model: modelName,
+      summary: {
+        tasksCount: 0,
+        requestedTasks: tasksToRun.length,
+        failedTasks: taskErrors.length,
+        baselineUsage: sumUsage(taskErrors.map(error => error.baselineUsage)),
+        skillUsage: sumUsage(taskErrors.map(error => error.withSkillsUsage)),
+      },
+      taskErrors,
+      results: [],
+    };
+    fs.mkdirSync(options.output, { recursive: true });
+    const failurePath = path.join(options.output, `report-failed-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+    fs.writeFileSync(failurePath, JSON.stringify(failureReport, null, 2));
+    console.error(`Token usage/error telemetry saved to ${failurePath}`);
+    process.exitCode = 1;
+    return;
   }
 
   // ── Calculate Summaries ───────────────────────────────────────────────────
@@ -232,6 +268,8 @@ async function runBenchmark() {
     model: modelName,
     summary: {
       tasksCount: results.length,
+      requestedTasks: tasksToRun.length,
+      failedTasks: taskErrors.length,
       baselineAvgScore: Number(avgBaselineScore.toFixed(1)),
       skillAvgScore: Number(avgSkillScore.toFixed(1)),
       scoreDelta: Number(avgDelta.toFixed(1)),
@@ -240,7 +278,16 @@ async function runBenchmark() {
       passRateDelta: Number((skillPassRate - baselinePassRate).toFixed(1)),
       baselineStaticAvg: Number(avgBaselineStatic.toFixed(1)),
       skillStaticAvg: Number(avgSkillStatic.toFixed(1)),
+      baselineUsage: sumUsage([
+        ...results.map(result => result.baseline.usage),
+        ...taskErrors.map(error => error.baselineUsage),
+      ]),
+      skillUsage: sumUsage([
+        ...results.map(result => result.withSkills.usage),
+        ...taskErrors.map(error => error.withSkillsUsage),
+      ]),
     },
+    taskErrors,
     results,
   };
 

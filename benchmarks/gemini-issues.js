@@ -18,6 +18,7 @@ const https = require('https');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
+const { normalizeGeminiUsage, normalizeUsage, sumUsage } = require('./lib/usage');
 
 // The benchmark belongs to the package but operates on the project from which
 // it is invoked, including that project's installed .agents directory.
@@ -43,7 +44,7 @@ function parseArgs(argv) {
     maxIterations: DEFAULT_MAX_ITERATIONS,
     model: DEFAULT_MODEL,
     query: DEFAULT_QUERY,
-    output: path.join(ROOT, 'benchmarks', 'results'),
+    output: path.join(ROOT, 'benchmarks', 'results', 'issues'),
     tasks: null,
     allowCommands: false,
     dryRun: false,
@@ -82,7 +83,7 @@ function printHelp() {
   console.log(`ContextOS Gemini Issue Benchmark
 
 Usage:
-  npm run benchmark -- [options]
+  npm run benchmark:issues -- [options]
 
 Options:
   --count <n>             Issues to discover (default: ${DEFAULT_COUNT})
@@ -351,7 +352,7 @@ async function callGemini(apiKey, model, input, systemInstruction) {
   if (response.status < 200 || response.status >= 300) throw new Error(`Gemini API ${response.status}: ${truncate(JSON.stringify(payload), 800)}`);
   const text = extractText(payload);
   if (!text) throw new Error('Gemini returned no text output');
-  return { text, latencyMs: Date.now() - started, usage: payload.usage_metadata || payload.usageMetadata || null };
+  return { text, latencyMs: Date.now() - started, usage: normalizeGeminiUsage(payload.usage_metadata || payload.usageMetadata || payload.usage) };
 }
 
 async function gitOutput(repository, args) {
@@ -384,7 +385,7 @@ async function runTaskCommand(repository, command, timeoutMs = 300_000) {
 async function runAgent(task, mode, options, workspace) {
   const repository = await cloneTask(task, workspace);
   const setup = await runTaskCommand(repository, task.setup);
-  if (!setup.passed) return { task, mode, status: 'setup_failed', setup, iterations: 0, score: 0 };
+  if (!setup.passed) return { task, mode, status: 'setup_failed', setup, iterations: 0, score: 0, usage: sumUsage([]) };
 
   const initialFiles = readRequestedFiles(repository, ['package.json', 'README.md']);
   let feedback = '';
@@ -402,7 +403,8 @@ async function runAgent(task, mode, options, workspace) {
     try {
       reply = parseAgentReply(response.text);
     } catch (error) {
-      return { task, mode, status: 'invalid_model_response', error: error.message, iterations: iteration, turns, score: 0 };
+      const usage = sumUsage([...turns.map(item => item.usage), response.usage]);
+      return { task, mode, status: 'invalid_model_response', error: error.message, iterations: iteration, turns: [...turns, { iteration, latencyMs: response.latencyMs, usage: response.usage }], score: 0, usage };
     }
     lastReply = reply;
     const files = readRequestedFiles(repository, reply.read);
@@ -434,18 +436,22 @@ async function runAgent(task, mode, options, workspace) {
   const ready = Boolean(lastReply?.ready && lastTest?.passed && diff.trim());
   const judge = await judgeChange(task, diff, lastTest, options);
   const score = scoreRun({ ready, test: lastTest, filesChanged, judge, iterations: turns.length });
-  return { task, mode, status: ready ? 'ready' : 'not_ready', setup, test: lastTest, iterations: turns.length, turns, filesChanged, diff, judge, score };
+  const generationUsage = sumUsage(turns.map(turn => turn.usage));
+  const judgeUsage = judge.usage || sumUsage([]);
+  const usage = sumUsage([...turns.map(turn => turn.usage), ...(judgeUsage.source !== 'not_applicable' ? [judgeUsage] : [])]);
+  return { task, mode, status: ready ? 'ready' : 'not_ready', setup, test: lastTest, iterations: turns.length, turns, filesChanged, diff, judge, generationUsage, judgeUsage, usage, score };
 }
 
 async function judgeChange(task, diff, test, options) {
-  if (!diff.trim()) return { score: 0, reason: 'No source change was produced.' };
+  if (!diff.trim()) return { score: 0, reason: 'No source change was produced.', usage: sumUsage([]) };
   const prompt = `Evaluate a proposed fix for this GitHub Issue. Score only issue fidelity and code quality from 0 to 30. Do not reward tests merely passing; explain missing behavior. Return exactly JSON: {"score":number,"reason":"short"}.\n\nIssue: ${task.title}\n${task.body}\n\nDiff:\n${truncate(diff, 18_000)}\n\nTest output:\n${truncate(`${test?.stdout || ''}\n${test?.stderr || ''}`, 4_000)}`;
+  let response = null;
   try {
-    const response = await callGemini(options.apiKey, options.model, prompt, 'You are an impartial senior code reviewer. Return JSON only.');
+    response = await callGemini(options.apiKey, options.model, prompt, 'You are an impartial senior code reviewer. Return JSON only.');
     const result = parseJsonObject(response.text);
-    return { score: Math.max(0, Math.min(30, Number(result.score) || 0)), reason: String(result.reason || ''), latencyMs: response.latencyMs };
+    return { score: Math.max(0, Math.min(30, Number(result.score) || 0)), reason: String(result.reason || ''), latencyMs: response.latencyMs, usage: response.usage };
   } catch (error) {
-    return { score: 0, reason: `Judge unavailable: ${error.message}` };
+    return { score: 0, reason: `Judge unavailable: ${error.message}`, usage: response?.usage || normalizeUsage({}, 'unavailable') };
   }
 }
 
@@ -471,6 +477,12 @@ function summarize(results) {
       testPassRate: runs.length ? runs.filter(run => run.test?.passed).length / runs.length : 0,
       averageScore: average(runs.map(run => run.score?.total || 0)),
       averageIterations: average(runs.map(run => run.iterations || 0)),
+      generationUsage: sumUsage(runs.flatMap(run => run.turns?.map(turn => turn.usage) || [])),
+      judgeUsage: sumUsage(runs.map(run => run.judge?.usage).filter(usage => usage && usage.source !== 'not_applicable')),
+      usage: sumUsage([
+        ...runs.flatMap(run => run.turns?.map(turn => turn.usage) || []),
+        ...runs.map(run => run.judge?.usage).filter(usage => usage && usage.source !== 'not_applicable'),
+      ]),
     };
   }
   const paired = results.reduce((map, result) => {
@@ -486,8 +498,12 @@ function summarize(results) {
 }
 
 function markdownReport(report) {
-  const row = (name, values) => `| ${name} | ${values.runs} | ${(values.readyRate * 100).toFixed(1)}% | ${(values.testPassRate * 100).toFixed(1)}% | ${values.averageScore.toFixed(1)} | ${values.averageIterations.toFixed(2)} |`;
-  return `# ContextOS Skills Benchmark\n\nModel: \`${report.model}\`  \nTasks: ${report.tasks.length}  \nPaired tasks: ${report.summary.pairedTasks}\n\n| Mode | Runs | Ready | Tests pass | Mean quality (0–110) | Mean turns |\n| --- | ---: | ---: | ---: | ---: | ---: |\n${row('Without skills', report.summary.byMode.without_skills)}\n${row('With ContextOS skills', report.summary.byMode.with_skills)}\n\nMean paired score delta (with skills − without): **${report.summary.meanSkillScoreDelta.toFixed(1)}**\n\n## Per task\n\n| Issue | Mode | Status | Turns | Score |\n| --- | --- | --- | ---: | ---: |\n${report.results.map(run => `| [${run.task.id}](${run.task.issueUrl}) | ${run.mode} | ${run.status} | ${run.iterations} | ${run.score?.total || 0} |`).join('\n')}\n`;
+  const row = (name, values) => {
+    const usage = values.usage;
+    const total = usage.totalTokens === null ? `N/A (known ${usage.knownTotalTokens})` : usage.totalTokens;
+    return `| ${name} | ${values.runs} | ${(values.readyRate * 100).toFixed(1)}% | ${(values.testPassRate * 100).toFixed(1)}% | ${values.averageScore.toFixed(1)} | ${values.averageIterations.toFixed(2)} | ${usage.promptTokens ?? 'N/A'} | ${usage.completionTokens ?? 'N/A'} | ${total} (${usage.source}) |`;
+  };
+  return `# ContextOS Skills Benchmark\n\nModel: \`${report.model}\`  \nTasks: ${report.tasks.length}  \nPaired tasks: ${report.summary.pairedTasks}\n\n| Mode | Runs | Ready | Tests pass | Mean quality (0–110) | Mean turns | Input tokens | Output tokens | Total tokens |\n| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n${row('Without skills', report.summary.byMode.without_skills)}\n${row('With ContextOS skills', report.summary.byMode.with_skills)}\n\nMean paired score delta (with skills − without): **${report.summary.meanSkillScoreDelta.toFixed(1)}**\n\n## Per task\n\n| Issue | Mode | Status | Turns | Tokens | Score |\n| --- | --- | --- | ---: | ---: | ---: |\n${report.results.map(run => `| [${run.task.id}](${run.task.issueUrl}) | ${run.mode} | ${run.status} | ${run.iterations} | ${run.usage?.totalTokens ?? 'N/A'} | ${run.score?.total || 0} |`).join('\n')}\n`;
 }
 
 async function main() {
@@ -518,14 +534,14 @@ async function main() {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     writeJson(path.join(options.output, `report-${stamp}.json`), report);
     fs.writeFileSync(path.join(options.output, `report-${stamp}.md`), markdownReport(report));
-    generateEvidence(report, path.join(ROOT, 'benchmarks', 'evidence.json'));
+    generateEvidence(report, path.join(options.output, `evidence-${stamp}.json`));
     console.log(`\nBenchmark complete. Reports and evidence written to ${options.output}`);
   } finally {
     fs.rmSync(workspace, { recursive: true, force: true });
   }
 }
 
-function generateEvidence(report, outputPath = path.join(ROOT, 'benchmarks', 'evidence.json')) {
+function generateEvidence(report, outputPath = path.join(ROOT, 'benchmarks', 'results', 'issues', 'evidence.json')) {
   if (!report || !report.summary || !report.summary.byMode) {
     throw new Error('Cannot generate evidence: report is missing summary or byMode results');
   }
@@ -556,12 +572,14 @@ function generateEvidence(report, outputPath = path.join(ROOT, 'benchmarks', 'ev
         readyRate: withoutSkills.readyRate ?? 0,
         averageScore: withoutSkills.averageScore ?? 0,
         averageTurns: withoutSkills.averageIterations ?? 0,
+        tokenUsage: withoutSkills.usage,
       },
       withSkills: {
         passRate: withSkills.testPassRate,
         readyRate: withSkills.readyRate ?? 0,
         averageScore: withSkills.averageScore ?? 0,
         averageTurns: withSkills.averageIterations ?? 0,
+        tokenUsage: withSkills.usage,
       },
       delta: {
         passRateImprovement: Number((withSkills.testPassRate - withoutSkills.testPassRate).toFixed(2)),

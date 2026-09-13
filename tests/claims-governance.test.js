@@ -49,7 +49,7 @@ test('Claims Registry — schema validation and evidence linking', () => {
   }
 });
 
-test('Product Positioning — contains ICPs, boundaries, and governance statements', () => {
+test('Product Positioning — separates the stable core from beta and experimental layers', () => {
   const docPath = path.resolve('docs/product/positioning.md');
   assert.equal(fs.existsSync(docPath), true, 'docs/product/positioning.md must exist');
 
@@ -57,9 +57,11 @@ test('Product Positioning — contains ICPs, boundaries, and governance statemen
   assert.ok(content.includes('Primary ICP'), 'Must specify Primary ICP');
   assert.ok(content.includes('Anti-ICP'), 'Must specify Anti-ICP');
   assert.ok(content.includes('ContextOS Core'), 'Must specify Core layer');
-  assert.ok(content.includes('ContextOS Runtime'), 'Must specify Runtime layer');
-  assert.ok(content.includes('ContextOS Catalog'), 'Must specify Catalog layer');
-  assert.ok(content.includes('benchmarks/claims.json'), 'Must link to claims registry');
+  assert.ok(content.includes('MCP Server'), 'Must specify the separate MCP beta layer');
+  assert.ok(content.includes('Runtime'), 'Must specify the experimental runtime layer');
+  assert.ok(content.includes('outside the stable core contract'), 'Must keep runtime outside stable core scope');
+  assert.ok(content.includes('does not make quantitative performance guarantees'), 'Must avoid unsupported performance claims');
+  assert.equal(content.includes('benchmarks/claims.json'), false, 'Product positioning must not market internal benchmark tooling');
 });
 
 test('Claim Linter Script — execution and validation', () => {

@@ -2,11 +2,7 @@
  * tests/benchmark-v2.test.js
  * ContextOS — Benchmark v2 Architecture & Evaluator Test Suite
  *
- * Verifies Milestone 19 (Issue #23):
- *   - 4-arm specification (Vanilla, Concise Checklist comparator, Core, Full Runtime) (Section 24.2)
- *   - Primary evaluator: independently_verified_success with hidden test oracle (Section 24.8)
- *   - Lazy placeholder and security finding rejection
- *   - Statistical engine: cost per verified success, Wilson score 95% CIs, and comparator delta (Section 24)
+ * Verifies current four-arm definitions, the harness outcome, and descriptive statistics.
  */
 
 'use strict';
@@ -17,13 +13,13 @@ const { ARMS } = require('../benchmarks/v2/arms/arm-definitions');
 const { BenchmarkEvaluator } = require('../benchmarks/v2/evaluators/verified-success');
 const { BenchmarkStatistics, calculateWilsonInterval } = require('../benchmarks/v2/analysis/statistics');
 
-test('Benchmark v2 Arms — definitions and token budget limits', () => {
+test('Benchmark v2 Arms — definitions', () => {
   assert.ok(ARMS.ARM_A_VANILLA);
   assert.ok(ARMS.ARM_B_CONCISE_CHECKLIST);
   assert.ok(ARMS.ARM_C_CONTEXTOS_CORE);
-  assert.ok(ARMS.ARM_D_FULL_CONTEXTOS);
+  assert.ok(ARMS.ARM_D_EXPANDED_GUIDANCE);
 
-  // Arm B: Concise Checklist is primary comparator (~600 tokens)
+  // Arm B: Generic checklist comparator
   const promptB = ARMS.ARM_B_CONCISE_CHECKLIST.buildSystemPrompt();
   assert.ok(promptB.includes('1. Inspect existing files'));
   assert.ok(promptB.includes('12. Ensure code compiles'));
@@ -32,20 +28,18 @@ test('Benchmark v2 Arms — definitions and token budget limits', () => {
   const promptC = ARMS.ARM_C_CONTEXTOS_CORE.buildSystemPrompt(['react', 'typescript']);
   assert.ok(promptC.includes('react, typescript'));
 
-  // Arm D: Full Runtime
-  const promptD = ARMS.ARM_D_FULL_CONTEXTOS.buildSystemPrompt(['security'], 'HIGH');
+  // Arm D: Expanded prompt-only guidance
+  const promptD = ARMS.ARM_D_EXPANDED_GUIDANCE.buildSystemPrompt(['security'], 'HIGH');
   assert.ok(promptD.includes('RISK: HIGH'));
 });
 
-test('BenchmarkEvaluator — primary outcome independently_verified_success', () => {
+test('BenchmarkEvaluator — primary outcome harness_verified_success', () => {
   // Successful run
   const successfulRun = {
     patchApplied: true,
-    buildPass: true,
-    publicTestsTotal: 10,
-    publicTestsPassed: 10,
-    hiddenTestsTotal: 5,
-    hiddenTestsPassed: 5,
+    compilationPassed: true,
+    oracleTestsTotal: 5,
+    oracleTestsPassed: 5,
     regressions: false,
     securityFindings: [],
     generatedCode: 'export function add(a: number, b: number): number { return a + b; }',
@@ -53,17 +47,17 @@ test('BenchmarkEvaluator — primary outcome independently_verified_success', ()
   };
 
   const evalSuccess = BenchmarkEvaluator.evaluate(successfulRun);
-  assert.equal(evalSuccess.independently_verified_success, true);
+  assert.equal(evalSuccess.harness_verified_success, true);
   assert.equal(evalSuccess.failureCount, 0);
 
-  // Hidden test failure
-  const hiddenTestFailure = {
+  // Runtime-oracle failure
+  const oracleFailure = {
     ...successfulRun,
-    hiddenTestsPassed: 4, // 4 out of 5
+    oracleTestsPassed: 4,
   };
-  const evalHiddenFail = BenchmarkEvaluator.evaluate(hiddenTestFailure);
-  assert.equal(evalHiddenFail.independently_verified_success, false);
-  assert.ok(evalHiddenFail.failures[0].includes('Hidden test oracle failed'));
+  const evalOracleFail = BenchmarkEvaluator.evaluate(oracleFailure);
+  assert.equal(evalOracleFail.harness_verified_success, false);
+  assert.ok(evalOracleFail.failures[0].includes('Runtime oracle failed'));
 
   // Placeholder failure
   const placeholderRun = {
@@ -71,7 +65,7 @@ test('BenchmarkEvaluator — primary outcome independently_verified_success', ()
     generatedCode: 'export function add(a: number, b: number): number {\n  // TODO: implement later\n  return 0;\n}',
   };
   const evalPlaceholder = BenchmarkEvaluator.evaluate(placeholderRun);
-  assert.equal(evalPlaceholder.independently_verified_success, false);
+  assert.equal(evalPlaceholder.harness_verified_success, false);
   assert.ok(evalPlaceholder.failures.some((f) => f.includes('placeholder detected')));
 
   // Security finding failure
@@ -80,7 +74,7 @@ test('BenchmarkEvaluator — primary outcome independently_verified_success', ()
     securityFindings: ['SEC-INJECTION-01'],
   };
   const evalSecurity = BenchmarkEvaluator.evaluate(securityRun);
-  assert.equal(evalSecurity.independently_verified_success, false);
+  assert.equal(evalSecurity.harness_verified_success, false);
 });
 
 test('BenchmarkStatistics — cost per verified success and Wilson confidence intervals', () => {

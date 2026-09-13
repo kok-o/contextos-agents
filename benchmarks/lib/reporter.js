@@ -13,6 +13,17 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function formatUsage(usage) {
+  if (!usage || usage.totalTokens === null || usage.totalTokens === undefined) {
+    if (!usage) return 'unavailable';
+    const known = Number.isSafeInteger(usage.knownTotalTokens) ? usage.knownTotalTokens : 0;
+    return known > 0
+      ? `incomplete (known ${known} total; ${usage.source})`
+      : `unavailable (${usage.source})`;
+  }
+  return `${usage.totalTokens} total (${usage.promptTokens ?? 'n/a'} input / ${usage.completionTokens ?? 'n/a'} output; ${usage.source})`;
+}
+
 /**
  * Generates terminal summary.
  */
@@ -30,6 +41,8 @@ function printTerminalReport(report) {
   console.log(`  • ContextOS Average Score:  ${summary.skillAvgScore.toFixed(1)} / 100 (${summary.skillPassRate.toFixed(1)}% pass)`);
   console.log(`  • Net Quality Gain (Delta): ${summary.scoreDelta >= 0 ? '+' : ''}${summary.scoreDelta.toFixed(1)} points`);
   console.log(`  • Pass Rate Improvement:    +${summary.passRateDelta.toFixed(1)}%`);
+  console.log(`  • Tokens (without skills):  ${formatUsage(summary.baselineUsage)}`);
+  console.log(`  • Tokens (with ContextOS):  ${formatUsage(summary.skillUsage)}`);
 
   console.log('\n  TASK BREAKDOWN:');
   console.log('  ' + '─'.repeat(66));
@@ -69,6 +82,8 @@ function generateMarkdownReport(report) {
 | **Composite Quality Score** | ${summary.baselineAvgScore.toFixed(1)} / 100 | **${summary.skillAvgScore.toFixed(1)} / 100** | **+${summary.scoreDelta.toFixed(1)} pts** |
 | **Pass Rate (Score ≥ 80)** | ${summary.baselinePassRate.toFixed(1)}% | **${summary.skillPassRate.toFixed(1)}%** | **+${summary.passRateDelta.toFixed(1)}%** |
 | **Static Safety & ARIA Invariants** | ${summary.baselineStaticAvg?.toFixed(1) || 'N/A'}% | **${summary.skillStaticAvg?.toFixed(1) || 'N/A'}%** | **Strict Invariants Enforced** |
+| **API Tokens (input / output / total)** | ${formatUsage(summary.baselineUsage)} | **${formatUsage(summary.skillUsage)}** | Provider usage; incomplete totals marked unavailable |
+| **Task coverage** | ${summary.tasksCount}/${summary.requestedTasks ?? summary.tasksCount} completed | ${summary.failedTasks || 0} failed | Failed and incomplete tasks are listed separately in JSON |
 
 ---
 
@@ -418,6 +433,14 @@ function generateHtmlReport(report) {
       <div class="stat-card">
         <div class="stat-label">Quality Pass Rate (≥80)</div>
         <div class="stat-value">${summary.skillPassRate.toFixed(0)}% <span class="stat-delta">+${summary.passRateDelta.toFixed(0)}%</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">API Tokens — Without Skills</div>
+        <div class="stat-value">${escapeHtml(formatUsage(summary.baselineUsage))}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">API Tokens — With ContextOS</div>
+        <div class="stat-value">${escapeHtml(formatUsage(summary.skillUsage))}</div>
       </div>
     </div>
 
