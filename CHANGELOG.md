@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-09-13
+
 ### Changed (Breaking)
+- Minimum supported Node.js version is now 22. Node.js 18 and 20 have reached end of life.
 - **Product Repositioning:** ContextOS is now explicitly positioned as an Agent Context Governance tool (a deterministic context compiler), shifting away from "Autonomous AI Swarm" messaging.
 - **Distribution Boundary:** The ContextOS MCP server and execution runtime are no longer bundled within the core `contextos-agents` package. They will be distributed separately via the `@contextos/mcp` package.
 - **CLI Deprecation:** The `--with-mcp` and `setup-mcp` flags in the `contextos init` command are deprecated and now serve only as a warning/redirect to the new package.

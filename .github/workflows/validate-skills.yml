@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node: ["18", "20", "22"]
+        node: ["22", "24"]
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
@@ -89,7 +89,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Lint SKILL.md frontmatter
         # Pure Node.js — no extra deps needed
@@ -147,7 +147,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install markdownlint-cli
         run: npm install --no-save markdownlint-cli
@@ -158,6 +158,7 @@ jobs:
             --config .markdownlint.json \
             "README.md" \
             "CONTRIBUTING.md" \
+            "GUIDE.md" \
             ".agents/core/skills/**/*.md" \
             --ignore ".agents/generated/**" \
             --ignore "CONVENTIONS.md" \
@@ -232,7 +233,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install MCP dependencies
         working-directory: ./contextos-mcp
@@ -265,7 +266,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies

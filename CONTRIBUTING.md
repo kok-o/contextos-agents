@@ -68,7 +68,7 @@ cat .agents/generated/claude/skills/<your-skill-name>/SKILL.md
 npm test
 ```
 
-All 245 tests across 39 suites (and 510 MCP tests) must pass before submitting a PR.
+The repository test suite and validation workflow must pass before submitting a PR. CI tests the core package on Node.js 22 and 24 across Windows, macOS, and Linux; the separate MCP package has its own checks.
 
 ---
 
@@ -103,7 +103,7 @@ npm unlink contextos-agents
 | Command | Description |
 | --------- | ------------- |
 | `contextos doctor` | Diagnostic health check for skills, profiles, and sync |
-| `contextos stats` | Token savings telemetry report across task categories |
+| `contextos stats` | Context configuration statistics |
 | `contextos watch` | Continuous background watcher & auto-compiler daemon |
 | `contextos resolve <prompt>` | Dynamic minimal skill resolution (`--explain`, `--json`) |
 | `contextos detect` | Workspace Evidence Graph detection (`--scope`, `--explain`) |
@@ -120,12 +120,12 @@ npm unlink contextos-agents
 | `node .agents/ctx.js skill remove <name>` | Remove a plugin skill |
 | `node .agents/ctx.js skill list` | List built-in + plugin skills |
 | `node .agents/ctx.js skill search [q]` | Search community registry |
-| `npm test` | Run full test suite (245 tests, 21 test files) |
+| `npm test` | Run the repository test suite |
 | `npm run validate` | Alias for `ctx.js validate` |
 | `npm run build` | Alias for `export all` |
 | `npm run watch` | Alias for `contextos watch` |
-| `npm run benchmark` | Run deterministic static benchmark suite |
-| `npm run benchmark:runtime` | Run execution-backed V8 runtime benchmark suite |
+
+The `benchmarks/` directory contains maintainer research tooling. It is not part of the stable core package or its user-facing feature set.
 
 ---
 
@@ -300,7 +300,7 @@ contextos-agents/
 │   ├── profiles.js           ← Profile definitions & stack auto-detection
 │   ├── resolver.js           ← AST import graph & dynamic skill resolver
 │   ├── doctor.js             ← Repository health diagnostic checker
-│   ├── stats.js              ← Token savings benchmark reporter
+│   ├── stats.js              ← Context configuration statistics
 │   ├── watch.js              ← Continuous file watcher auto-sync daemon
 │   ├── core/
 │   │   └── skills/           ← SKILL SOURCE FILES (edit these)
@@ -322,7 +322,7 @@ contextos-agents/
 │   └── generated/            ← COMPILED OUTPUT (do not edit manually)
 │       ├── gemini/skills/
 │       └── claude/skills/
-├── contextos-mcp/            ← MCP EXECUTION ENGINE (worktree subagent swarm)
+├── contextos-mcp/            ← Separate MCP server package (Beta)
 ├── tests/
 │   ├── install.test.js
 │   ├── export.test.js

@@ -1,41 +1,43 @@
-# ContextOS System Architecture
+# ContextOS Core Architecture
 
-## Core Overview
-ContextOS is composed of two primary layers interacting through a unified configuration source:
-1. **Canonical TypeScript Core (`contextos-mcp`)**: The engine providing orchestration, routing, execution sandboxes, verification loops, and the Model Context Protocol (MCP) server.
-2. **CLI Adapter (`.agents/bin`)**: A lightweight, bundled adapter built from the canonical core using `esbuild`. It serves as the local CLI endpoint for health checks, debugging, and setup.
+## Product boundary
 
-## Data Flow
+The stable `contextos-agents` package manages version-controlled engineering context for supported AI coding agents. It validates source skills and manifests, resolves relevant rules, compiles agent-native files, and detects configuration drift.
+
+The MCP server is a separate beta package. Agent orchestration and code-execution runtime features are experimental and are not part of the stable core contract.
+
+## Core data flow
+
 ```mermaid
-graph TD
-    A[User Request] --> B{Client (Cursor/Gemini/Claude)}
-    B -- MCP Protocol --> C[ContextOS MCP Server]
-    C --> D[Task Routing & Planning]
-    D --> E[Subagent Orchestration]
-    E --> F[Sandbox Execution]
-    
-    F -- Write Operations --> G[Journaled Transaction]
-    G -- Safe Path Check --> H[Project Mutation Lock]
-    H -- Commit --> I[Filesystem]
-    
-    C -- Read Operations --> J[Project Graph]
-    J --> K[Context Manager]
+flowchart TD
+    A[Version-controlled skills and manifests] --> B[Validation and registry compilation]
+    C[Project profile] --> D[Context resolver]
+    B --> D
+    D --> E[Agent adapters]
+    E --> F[Safe transactional writer]
+    F --> G[Native agent configuration]
+    G --> H[Lockfile and drift detection]
+    H --> I[Local validation and CI quality gate]
 ```
 
-## Key Components
+## Components
 
-### 1. Verification & Review
-Implemented via a configurable provider pattern (`reviewer-gate.ts`), supporting adversarial checks and mock implementations for testing. All mutations undergo programmatic review before being committed.
+### Canonical sources and validation
 
-### 2. Filesystem Concurrency
-- **ProjectMutationLock** (`project-lock.js`): Single-writer inter-process lock using UUID tokens and PID liveness probes.
-- **JournaledTransaction** (`journaled-transaction.js`): Provides crash-safe staging, preparation, and rollback for multi-file mutations.
-- **Safe Path Primitive** (`safe-path.js`): Blocks UNC, Absolute, Traversal, and ADS path targets.
+Engineering skills, rules, and profiles live in the project and are validated before they become generated agent configuration. Registry compilation provides a normalized index for resolution and validation.
 
-### 3. Execution Sandbox
-- Runs inside OCI containers (Docker/Podman).
-- Implements `oci-required`, `oci-preferred`, and `host-unsafe` execution boundaries.
-- Mounts limited read-write spaces (e.g. `/tmp:rw,size=64m`) and enforces `cap-drop=ALL`.
+### Resolver and adapters
 
-### 4. Supply Chain Security
-Enforces cryptographic integrity on plugins via `Integrity` checks, downloading and caching verifiable signatures. Floating/unverified sources are blocked by default.
+The resolver selects the rules and skills relevant to a task or profile. Adapters compile those sources into supported formats for Gemini, Claude Code, Cursor, GitHub Copilot, Aider, and Zed.
+
+### Safe updates and generated files
+
+Filesystem writes use project-relative paths, mutation locks, and journaled transactions. The lockfile records managed outputs so validation can detect drift and updates can preserve user changes.
+
+### CI quality gate
+
+The quality gate runs validation and checks generated configuration and repository policies. It reports drift so teams can correct generated files before merging.
+
+## Separate packages and experimental features
+
+The read-only MCP server is maintained in `contextos-mcp` and remains beta. Task routing, subagent orchestration, and execution sandboxes are experimental; they carry separate requirements and guarantees from the stable context compiler.

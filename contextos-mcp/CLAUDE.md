@@ -65,7 +65,7 @@ GitHub Actions runs on every push to main and every PR (`.github/workflows/test.
 |-----|-------------|
 | **Lint** | `biome check --reporter=github src/ tests/` |
 | **Typecheck** | `tsc --noEmit` |
-| **Test** | `vitest run` on Node 20 + 22, with Python 3.12 |
+| **Test** | `vitest run` on Node 22 + 24, with Python 3.12 |
 | **Build** | `npm run build` (runs after lint+typecheck+test pass) |
 
 Concurrency group cancels superseded runs on the same branch. Test matrix uses `fail-fast: false` so both Node versions always run.

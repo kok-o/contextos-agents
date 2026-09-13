@@ -5,4 +5,5 @@ During the SHIP phase, agents are instructed to record any durable learnings her
 
 ## Learnings
 
-*(No learnings logged yet. The agent will append to this section automatically at the end of future sessions.)*
+- Benchmark evidence must bind each response to the exact prompt-pack run and prompt hash; manually imported chat answers otherwise can be attributed to the wrong ContextOS context.
+- Treat missing provider usage for retries as incomplete token accounting, never as zero. Label chat UI counts as user-reported and leave hidden/unavailable token counts null.

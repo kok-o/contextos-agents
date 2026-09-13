@@ -1,164 +1,191 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# publish.yml
-# Triggered when a GitHub Release is published (tag vX.Y.Z).
-# Steps:
-#   1. Validate skills & run tests (same gates as CI)
-#   2. Sync package.json version with the git tag
-#   3. Build / compile all adapters
-#   4. Publish to npm
-#   5. Post a summary comment on the release
-#
-# Required secrets:
-#   NPM_TOKEN  — npm automation token (set in repo Settings → Secrets)
-# ─────────────────────────────────────────────────────────────────────────────
-
-name: Publish to npm
+name: Publish stable core package
 
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 permissions:
-  contents: write   # needed to update package.json version in the release commit
+  contents: read
 
 jobs:
-  publish:
-    name: Validate → Build → Publish
+  version:
+    name: Verify release identity
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Verify tag, package, and lockfile versions
+        id: version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Stable releases require a vX.Y.Z tag; got '$TAG'"
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          LOCK_VERSION="$(node -p "require('./package-lock.json').packages[''].version")"
+          if [[ "$PACKAGE_VERSION" != "$VERSION" || "$LOCK_VERSION" != "$VERSION" ]]; then
+            echo "::error::Tag $TAG, package.json $PACKAGE_VERSION, and package-lock.json $LOCK_VERSION must match"
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  tests:
+    name: Tests (Node ${{ matrix.node }} on ${{ matrix.os }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+      - run: npm run check:secrets
+      - run: npm test
+
+  validate:
+    name: Validate and compile (${{ matrix.os }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+      - run: node .agents/ctx.js export all
+      - run: npm run validate
+        env:
+          NO_COLOR: "1"
+      - run: git diff --exit-code
+
+  docs:
+    name: Markdown quality
+    needs: version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # needed for git tag inspection
+          ref: ${{ needs.version.outputs.tag }}
+          persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+      - run: npm run lint:md
+
+  mcp:
+    name: Separate MCP beta checks (${{ matrix.os }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
-          registry-url: "https://registry.npmjs.org"
 
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
+      - run: npm ci
+        working-directory: ./contextos-mcp
+      - run: npm run lint
+        working-directory: ./contextos-mcp
+      - run: npm run build
+        working-directory: ./contextos-mcp
+      - run: npm test
+        working-directory: ./contextos-mcp
+      - run: npm pack --dry-run
+        working-directory: ./contextos-mcp
 
-      # ── Extract & validate version from git tag ─────────────────────────────
-      - name: Extract version from tag
-        id: version
+  publish:
+    name: Pack and publish core
+    needs: [version, tests, validate, docs, mcp]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci --ignore-scripts
+
+      - name: Verify published tarball contents
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          # Strip leading 'v' — e.g. v1.2.3 → 1.2.3
-          VERSION="${TAG#v}"
-          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Publishing version: $VERSION (from tag $TAG)"
+          node - <<'NODE'
+          const { execFileSync } = require('node:child_process');
+          const packed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' }))[0];
+          const files = packed.files.map(file => file.path);
+          if (!files.includes('NOTICE')) throw new Error('NOTICE is missing from the npm package');
+          const benchmarks = files.filter(file => file === 'benchmarks' || file.startsWith('benchmarks/'));
+          if (benchmarks.length) throw new Error(`Benchmark files must not ship in core: ${benchmarks.join(', ')}`);
+          console.log(`Tarball contents verified (${files.length} files).`);
+          NODE
 
-      - name: Validate semver format
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?$'; then
-            echo "::error::Tag '${{ steps.version.outputs.tag }}' is not a valid semver (expected vX.Y.Z)"
-            exit 1
-          fi
-
-      # ── Sync package.json version ───────────────────────────────────────────
-      - name: Sync package.json version
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          CURRENT=$(node -e "console.log(require('./package.json').version)")
-          if [ "$CURRENT" != "$VERSION" ]; then
-            echo "Updating package.json: $CURRENT → $VERSION"
-            npm version "$VERSION" --no-git-tag-version
-          else
-            echo "package.json already at $VERSION"
-          fi
-
-      # ── Quality gates (same as validate-skills CI) ──────────────────────────
-      - name: Run test suite
-        run: npm test
-
-      - name: Run skill validator
-        run: npm run validate
-        env:
-          NO_COLOR: "1"
-
-      - name: Lint SKILL.md frontmatter
-        run: |
-          node - << 'EOF'
-          const fs   = require('fs');
-          const path = require('path');
-
-          const SKILLS_DIR  = path.join('.agents', 'core', 'skills');
-          const KNOWN_EMPTY = ['profiles'];
-          let errors = 0;
-
-          for (const name of fs.readdirSync(SKILLS_DIR)) {
-            if (KNOWN_EMPTY.includes(name)) continue;
-            const skillMd = path.join(SKILLS_DIR, name, 'SKILL.md');
-            if (!fs.existsSync(skillMd)) continue;
-
-            const content = fs.readFileSync(skillMd, 'utf8');
-            if (!content.startsWith('---')) continue;
-
-            const closeIdx = content.indexOf('---', 3);
-            if (closeIdx === -1) {
-              console.error(`Unclosed frontmatter: ${skillMd}`);
-              errors++;
-              continue;
-            }
-            const fm = content.slice(3, closeIdx);
-            if (!fm.match(/^name:\s*.+/m))   { console.error(`Missing name: in ${skillMd}`); errors++; }
-            if (!fm.match(/^description:/m)) { console.error(`Missing description: in ${skillMd}`); errors++; }
-          }
-
-          if (errors > 0) { console.error(`${errors} error(s)`); process.exit(1); }
-          console.log('Frontmatter OK');
-          EOF
-
-      # ── Build: compile all adapters ─────────────────────────────────────────
-      - name: Build (export all adapters)
-        run: npm run build
-
-      # ── Validate & Build contextos-mcp package ──────────────────────────────
-      - name: Install MCP dependencies
-        working-directory: ./contextos-mcp
-        run: npm ci
-
-      - name: Lint MCP package (Biome)
-        working-directory: ./contextos-mcp
-        run: npm run lint
-
-      - name: Build MCP package (TypeScript)
-        working-directory: ./contextos-mcp
-        run: npm run build
-
-      - name: Run MCP test suite (Vitest + Security + Handshake)
-        working-directory: ./contextos-mcp
-        run: npm test
-
-      - name: Verify MCP npm pack dry-run
-        working-directory: ./contextos-mcp
-        run: npm pack --dry-run
-
-      # ── Publish ─────────────────────────────────────────────────────────────
       - name: Publish to npm
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # ── Release summary ─────────────────────────────────────────────────────
       - name: Write release summary
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          echo "## ✅ Published contextos-agents@${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          VERSION="${{ needs.version.outputs.version }}"
+          echo "## Published contextos-agents@${VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| | |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 📦 npm | [contextos-agents@${VERSION}](https://www.npmjs.com/package/contextos-agents) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 🏷️ Tag | \`${{ steps.version.outputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 🧪 Tests | Passed |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| ✓ Validate | Passed |" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Install:**" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`bash" >> "$GITHUB_STEP_SUMMARY"
-          echo "npx contextos-agents" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm | [contextos-agents@${VERSION}](https://www.npmjs.com/package/contextos-agents) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tag | \`${{ needs.version.outputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tests, validation, docs, MCP checks | Passed |" >> "$GITHUB_STEP_SUMMARY"

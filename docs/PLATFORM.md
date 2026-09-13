@@ -1,24 +1,23 @@
-# ContextOS Platform Contract
+# ContextOS Core Platform Contract
 
-This document defines the strictly supported environments and boundaries for ContextOS v2.
+This document defines the supported environment for the stable `contextos-agents` core package.
 
-## Runtime Environment
-- **Node.js**: Minimum `v18.0.0` for Core adapters. Minimum `v20.0.0` for MCP Runtime Server (optimal). 
-- **Package Manager**: npm, yarn, pnpm supported. ContextOS CLI bundles `esbuild` for zero-dependency generation.
+## Runtime environment
 
-## Operating Systems
-- **Windows**: Supported (10/11, Windows Server 2022+). Full support for NTFS constraints.
-- **macOS**: Supported (12+).
-- **Linux**: Supported (Ubuntu 22.04+, Debian 11+, RHEL 9+). Mandatory for OCI execution isolation.
+- **Node.js:** `v22.0.0` or newer.
+- **Package manager:** npm. The core CLI is distributed as an npm package.
+- **Container runtime:** Not required by the stable core compiler.
 
-## Filesystem Constraints
-- **UNC/Network Paths**: STRICTLY PROHIBITED. ContextOS mutations via `JournaledTransaction` and `ProjectMutationLock` will return `UNSUPPORTED` on network drives to prevent distributed race conditions and locking failures.
-- **Path Traversal**: Any attempt to manipulate files outside of the resolved workspace root via relative paths (`../`) is structurally rejected by the `safe-path.js` primitive.
-- **Absolute Paths**: Denied by `safe-path.js`. All operations must be strictly relative to the project root.
+## Operating systems
 
-## Execution Isolation (Sandbox)
-- **OCI Containers**: Docker (API v1.40+) or Podman (v4.0+). 
-- **Mode Options**:
-  - `oci-required`: All code executions run inside containers.
-  - `oci-preferred`: Attempts container execution, fails closed if engine is unavailable.
-  - `host-unsafe`: Runs directly on the host (with user confirmation required). Auto-merge is blocked in this mode.
+The core test suite runs on Windows, macOS, and Linux in CI. Filesystem behavior is covered by the platform-specific test matrix before release.
+
+## Filesystem boundaries
+
+- Mutations are scoped to the selected project root.
+- User-supplied output paths must be relative to the project root; traversal and absolute output paths are rejected.
+- Network and UNC paths are unsupported for transactional mutations because filesystem locking guarantees vary across network filesystems.
+
+## Separate and experimental packages
+
+The optional MCP server is distributed separately and remains beta. Runtime execution and OCI sandbox integrations are experimental and are not required for, or guaranteed by, the stable core package. Consult the separate package documentation for their requirements.

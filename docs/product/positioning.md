@@ -1,15 +1,15 @@
 # ContextOS Product Positioning & ICP Governance
 
-Status: CORE STABLE / RUNTIME BETA  
-Version: 2.0  
-Last Updated: 2026-09-10
+Status: CORE STABLE / MCP BETA / RUNTIME EXPERIMENTAL
+Version: 2.0.0
+Last Updated: 2026-09-13
 
 ---
 
 ## 1. Value Proposition
 
-> **ContextOS is a deterministic context compiler and isolated verification runtime for AI coding assistants.**  
-> It transforms high-level team conventions into minimal, explainable, and reproducible context files across Gemini, Claude Code, Cursor, Copilot, Aider, and Zed, ensuring automated gates verify every commit before integration.
+> **ContextOS is a deterministic context and policy compiler for supported AI coding agents.**
+> It turns version-controlled engineering rules into focused, reproducible agent configuration and detects configuration drift in CI.
 
 ---
 
@@ -39,9 +39,10 @@ Last Updated: 2026-09-10
 
 | Layer | Responsibility | State & Mutability |
 |---|---|---|
-| **ContextOS Core** | Manifest compilation, canonical skill registry, context resolution, workspace discovery, adapter export. | Pure functions, zero network, zero host execution, deterministic outputs. |
-| **ContextOS Runtime** | Task orchestration, worktree isolation, verification/reviewer gates, and experimental OCI execution components. | Optional beta. Host execution is explicitly unsafe; production OCI integration is not yet a stable guarantee. |
-| **ContextOS Catalog** | Built-in skills, references, scripts, validation checklists, third-party plugins. | Versioned manifests, pinned digests, integrity verification. |
+| **ContextOS Core** | Manifest validation, context resolution, profile management, adapter export, lockfile and drift checks. | Stable CLI and compiler for supported agent formats. |
+| **MCP Server** | Read-only access to project context through MCP. | Separate package; beta. |
+| **Runtime** | Task orchestration, worktree isolation, and execution sandbox integrations. | Experimental; outside the stable core contract. |
+| **Context Catalog** | Built-in skills, references, and third-party plugins. | Versioned manifests and integrity verification. |
 
 ---
 
@@ -54,4 +55,4 @@ To maintain absolute engineering integrity, ContextOS explicitly **does not prom
 4. That reduced token context directly guarantees provider API cost reductions on complex reasoning models.
 5. That ContextOS improves task execution for uncalibrated or hallucinating foundation models.
 
-Every empirical metric published by ContextOS must be backed by an entry in `benchmarks/claims.json` with an evidence artifact link.
+ContextOS does not make quantitative performance guarantees. Any future empirical claim must include a reproducible method and supporting evidence.

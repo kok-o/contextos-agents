@@ -214,4 +214,57 @@ describe('Task 1.4a: Safe CLI update Command', () => {
     const loadedLock = loadLockfile(tmpProject);
     assert.equal(loadedLock.managedFiles['.agents/core/skills/deprecated-skill/SKILL.md'], undefined);
   });
+
+  test('reads profile exclusions without executing project profiles.js', () => {
+    const projAgents = path.join(tmpProject, '.agents');
+    const marker = path.join(tmpProject, 'profiles-executed');
+    fs.mkdirSync(projAgents, { recursive: true });
+    fs.writeFileSync(
+      path.join(projAgents, 'profiles.js'),
+      `require('fs').writeFileSync(${JSON.stringify(marker)}, 'executed');\n`
+    );
+    fs.writeFileSync(
+      path.join(projAgents, 'profile.json'),
+      JSON.stringify({ exclude_skills: ['react'] })
+    );
+
+    const result = planUpdate(tmpProject, path.join(tmpSource, '.agents'));
+    const plannedPaths = result.plans.map(item => item.relPath);
+
+    assert.equal(result.ok, true);
+    assert.equal(plannedPaths.some(relPath => relPath.includes('/react/')), false);
+    assert.equal(plannedPaths.some(relPath => relPath.includes('/security/')), true);
+    assert.equal(fs.existsSync(marker), false);
+  });
+
+  test('runs the package compiler rather than project ctx.js after update', () => {
+    const projAgents = path.join(tmpProject, '.agents');
+    const targetMarker = path.join(tmpProject, 'project-ctx-executed');
+    const packageMarker = path.join(tmpProject, 'package-ctx-executed');
+    const targetCtx = path.join(projAgents, 'ctx.js');
+    const sourceAgents = path.join(tmpSource, '.agents');
+    fs.mkdirSync(projAgents, { recursive: true });
+    fs.writeFileSync(
+      targetCtx,
+      `require('fs').writeFileSync(${JSON.stringify(targetMarker)}, 'executed');\n`
+    );
+    fs.writeFileSync(
+      path.join(sourceAgents, 'ctx.js'),
+      `require('fs').writeFileSync(${JSON.stringify(packageMarker)}, 'executed');\n`
+    );
+
+    const lock = createLockfileData({ version: '1.0.0' });
+    recordManagedFile(lock, '.agents/ctx.js', '# previously installed compiler\n');
+    saveLockfile(tmpProject, lock);
+
+    const result = runUpdate(tmpProject, {
+      sourceAgentsDir: sourceAgents,
+      dryRun: false,
+      skipCompile: false,
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(fs.existsSync(packageMarker), true);
+    assert.equal(fs.existsSync(targetMarker), false);
+  });
 });

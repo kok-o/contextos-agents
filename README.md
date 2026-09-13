@@ -2,12 +2,12 @@
 
 [![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg)](https://nodejs.org/)
 [![CI](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml/badge.svg)](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml)
 
-**One source of truth for every coding agent.**
+**One version-controlled source of engineering rules for supported coding agents.**
 
-ContextOS is a deterministic context and policy compiler for AI coding agents. It transforms your team's version-controlled engineering rules into a minimal, verifiable context payload for Cursor, Claude Code, GitHub Copilot, Aider, and Zed—and detects configuration drift in CI.
+ContextOS is a deterministic context and policy compiler for AI coding agents. It transforms your team's version-controlled engineering rules into focused, verifiable context for Gemini, Claude Code, Cursor, GitHub Copilot, Aider, and Zed—and detects configuration drift in CI.
 
 ## Installation
 
@@ -40,8 +40,8 @@ Most AI coding assistants suffer from two extremes: they either operate in a vac
 
 ### The Three Pillars
 
-1. **Portable:** Define your engineering rules once. ContextOS exports optimized configurations for all major AI editors (Cursor, Claude Code, Copilot, Aider, Zed).
-2. **Minimal:** The dynamic resolver selects only the relevant skills and rules needed for a specific task, eliminating prompt bloat and token waste.
+1. **Portable:** Define your engineering rules once. ContextOS exports configurations for supported agents (Gemini, Claude Code, Cursor, Copilot, Aider, and Zed).
+2. **Focused:** The resolver selects rules and skills relevant to a task so agents receive less unrelated context.
 3. **Verifiable:** Lockfiles, provenance, drift detection, and CI gates make generated agent configuration reproducible and auditable.
 
 ## How it works
@@ -121,25 +121,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@main
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.0.0
 ```
 
-## ContextOS MCP Bridge (Beta)
+## Optional MCP integration (Beta)
 
-ContextOS provides a read-only **Model Context Protocol (MCP)** server to allow compatible agents (like Claude Desktop) to dynamically read project rules, resolve context, and check project status.
+The MCP server is a separate beta package. It is not part of the stable `contextos-agents` core.
 
-> [!WARNING]
-> **Separation of Concerns:** The MCP Bridge and experimental runtime orchestration tools are distributed separately in the `@contextos/mcp` package (Beta). The `--with-mcp` flag in the Core CLI is deprecated.
+Install it separately if you want to try the beta integration:
 
-Install the optional MCP Bridge:
-
-`ash
+```bash
 npm install --save-dev @contextos/mcp
 npx contextos-mcp --dir .
-`
+```
 
-The MCP Bridge is read-only by default. Experimental execution tools require
-the explicit --enable-runtime flag and should only be used in trusted repositories.
+The MCP server is read-only by default. Runtime execution remains experimental and is outside the stable core scope.
 
 ## Security — Third-Party Skills
 

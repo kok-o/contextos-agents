@@ -33,4 +33,4 @@ These components have been removed from standard distribution or are actively be
 
 *   **Autonomous Swarm Orchestration:** Fully self-directed multi-agent routing.
 *   **Recursive Language Models (RLM):** Self-improving episodic memory trees.
-*   **Quantitative Benchmark Claims:** Token reduction marketing percentages (withheld until reproducible Benchmark v2 suite is finalized).
+*   **Quantitative Performance Claims:** No performance percentages are part of the stable product promise.

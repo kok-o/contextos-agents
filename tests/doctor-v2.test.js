@@ -41,11 +41,12 @@ describe('Milestone 8 — Doctor v2 Diagnostics Engine', () => {
     } catch {}
   });
 
-  test('checkNodeVersion() validates Node 18 for Core and reports Node 20 status', () => {
+  test('checkNodeVersion() validates the supported Node 22+ baseline', () => {
     const res = checkNodeVersion();
 
-    assert.ok([STATUS.PASS, STATUS.WARN].includes(res.status));
+    assert.equal(res.status, STATUS.PASS);
     assert.equal(res.ok, true);
+    assert.match(res.message, />= 22\.0\.0/);
     assert.ok(res.version.startsWith('v'));
   });
 
@@ -57,11 +58,18 @@ describe('Milestone 8 — Doctor v2 Diagnostics Engine', () => {
     assert.ok(res.message.includes('git version'));
   });
 
-  test('checkSecretScanner() returns WARN when scanner script is absent', () => {
-    // In tmpDir, scripts/check-secrets.js is absent
+  test('checkSecretScanner() skips an optional scanner in a regular workspace', () => {
     const res = checkSecretScanner(tmpDir);
 
-    // Per Milestone 8 spec: "doctor не считает отсутствующий scanner PASS"
+    assert.equal(res.status, STATUS.SKIP);
+    assert.equal(res.ok, true);
+    assert.ok(res.message.includes('optional'));
+  });
+
+  test('checkSecretScanner() warns when a ContextOS development repo lacks its scanner', () => {
+    fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'contextos-agents' }));
+    const res = checkSecretScanner(tmpDir);
+
     assert.equal(res.status, STATUS.WARN);
     assert.equal(res.ok, false);
     assert.ok(res.message.includes('missing'));

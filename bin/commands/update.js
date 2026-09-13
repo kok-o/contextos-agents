@@ -32,6 +32,7 @@ const {
 } = require('../lib/safe-writer.js');
 
 const pkg = require('../../package.json');
+const profiles = require('../../.agents/profiles.js');
 
 /**
  * Collect all distributable files from the source .agents directory.
@@ -112,13 +113,9 @@ function planUpdate(projectDir, sourceAgentsDir, options = {}) {
   // Determine active profile exclusions if available
   let excludedSkills = [];
   try {
-    const profilesPath = path.join(projectDir, '.agents', 'profiles.js');
-    if (fs.existsSync(profilesPath)) {
-      const profilesModule = require(profilesPath);
-      const active = profilesModule.getActiveProfile(projectDir);
-      if (active && Array.isArray(active.exclude_skills)) {
-        excludedSkills = active.exclude_skills;
-      }
+    const active = profiles.getActiveProfile(projectDir);
+    if (active && Array.isArray(active.exclude_skills)) {
+      excludedSkills = active.exclude_skills;
     }
   } catch {}
 
@@ -299,7 +296,9 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
 
   // Re-compile if ctx.js exists and not skipped
   if (!options.skipCompile) {
-    const ctxPath = path.join(projectDir, '.agents', 'ctx.js');
+    // Run the compiler shipped with this package. The project's .agents/ctx.js
+    // is user-controlled and must never be executed implicitly during update.
+    const ctxPath = path.join(sourceAgentsDir, 'ctx.js');
     if (fs.existsSync(ctxPath)) {
       try {
         const { execFileSync } = require('child_process');

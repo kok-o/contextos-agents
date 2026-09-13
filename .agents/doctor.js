@@ -5,7 +5,7 @@
  * Implements Milestone 8 Doctor v2 specification:
  * - Standardized status outcomes: PASS, WARN, FAIL, SKIP, UNVERIFIED, RECOVERY_REQUIRED
  * - Deep diagnostic checks:
- *   1. Node.js environment (Node 18 for Core, Node 20 for Runtime)
+ *   1. Node.js environment (Node 22+ for the stable Core)
  *   2. Git availability & version
  *   3. Filesystem permissions and path containment
  *   4. Manifests & schema compliance
@@ -76,33 +76,20 @@ function checkNodeVersion() {
       ok: false,
       version,
       message: `${version} (unknown format)`,
-      remediation: 'Install Node.js >= 18.0.0 from https://nodejs.org',
+      remediation: 'Install Node.js >= 22.0.0 from https://nodejs.org',
     };
   }
 
   const major = parseInt(match[1], 10);
-  const minor = parseInt(match[2], 10);
-
-  // Core requires Node >= 18.0.0 (or 16.7.0 for basic cpSync). Runtime requires Node >= 20.0.0.
-  if (major < 18) {
+  // Stable Core requires Node.js 22 or newer.
+  if (major < 22) {
     return {
       id: 'node_version',
       status: STATUS.FAIL,
       ok: false,
       version,
-      message: `Node.js ${version} (< 18.0.0, Node 18 required for Core)`,
-      remediation: 'Upgrade Node.js to >= 18.0.0 (recommended >= 20.0.0 for ContextOS Runtime)',
-    };
-  }
-
-  if (major < 20) {
-    return {
-      id: 'node_version',
-      status: STATUS.WARN,
-      ok: true,
-      version,
-      message: `Node.js ${version} (>= 18.0.0 for Core, Node 20 recommended for Runtime)`,
-      remediation: 'Upgrade to Node.js >= 20.0.0 for optimal sandbox and runtime worker support',
+      message: `Node.js ${version} (< 22.0.0, Node 22 required for Core)`,
+      remediation: 'Upgrade Node.js to >= 22.0.0 from https://nodejs.org',
     };
   }
 
@@ -111,7 +98,7 @@ function checkNodeVersion() {
     status: STATUS.PASS,
     ok: true,
     version,
-    message: `Node.js ${version} (>= 20.0.0, optimal)`,
+    message: `Node.js ${version} (>= 22.0.0, supported)`,
     remediation: null,
   };
 }
