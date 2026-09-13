@@ -43,7 +43,7 @@
                     "compile":  "node .agents/ctx.js compile",
                     "export":  "node .agents/ctx.js export gemini",
                     "validate":  "node .agents/ctx.js validate",
-                    "lint:md":  "markdownlint README.md CONTRIBUTING.md GUIDE.md .agents/core/skills/**/*.md --ignore .agents/generated/** --config .markdownlint.json",
+                    "lint:md":  "markdownlint README.md CONTRIBUTING.md GUIDE.md \".agents/core/skills/**/*.md\" --ignore \".agents/generated/**\" --config .markdownlint.json",
                     "check:secrets":  "node scripts/check-secrets.js --all",
                     "setup:hooks":  "node scripts/install-hooks.js",
                     "watch":  "node .agents/watch.js",

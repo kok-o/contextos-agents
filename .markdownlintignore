@@ -1,0 +1,4 @@
+.agents/generated/**
+CONVENTIONS.md
+contextos-mcp/**
+node_modules/**
