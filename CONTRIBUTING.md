@@ -30,7 +30,7 @@ description: >
   and when it activates.
 ---
 
-# Skill Title — Short Tagline
+# Skill Title - Short Tagline
 
 Brief explanation of the source/inspiration.
 
@@ -186,7 +186,7 @@ Any architectural changes, new platform layers, lifecycle phases, or contract mo
 
 You can share your skill with the community in three ways:
 
-### Option A — GitHub (simplest)
+### Option A - GitHub (simplest)
 
 1. Create a public GitHub repo (e.g. `alice/my-cool-skill`)
 2. Put your `SKILL.md` (and optional `skill.yaml`) at the repo root
@@ -202,7 +202,7 @@ If your skill lives in a subdirectory of a monorepo:
 node .agents/ctx.js skill add alice/my-monorepo/skills/docker
 ```
 
-### Option B — npm package
+### Option B - npm package
 
 1. Create a package with this structure:
 
@@ -234,7 +234,7 @@ node .agents/ctx.js skill add alice/my-monorepo/skills/docker
    node .agents/ctx.js skill add contextos-skill-docker
    ```
 
-### Option C — Add to the Community Registry
+### Option C - Add to the Community Registry
 
 Submit a PR to add your skill to [`registry.json`](./registry.json):
 

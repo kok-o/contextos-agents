@@ -10,7 +10,7 @@ In autonomous coding and subagent execution (`contextos-mcp`), verification fail
 Enforce strict **Fail-Closed** semantics across all runtime gates:
 1. Only an actual, successful execution of tests can produce a `PASS` verdict.
 2. Missing test commands are classified as `NOT_CONFIGURED` or `NOT_APPLICABLE` (with reason).
-3. Reviewer network failures, process crashes, or invalid output format yield `UNAVAILABLE`, `ERROR`, or `MALFORMED` — never `PASS`.
+3. Reviewer network failures, process crashes, or invalid output format yield `UNAVAILABLE`, `ERROR`, or `MALFORMED` - never `PASS`.
 4. Automated merges require explicit proof of work (`VerificationAttestation` and `ReviewAttestation`).
 
 ## Alternatives Considered

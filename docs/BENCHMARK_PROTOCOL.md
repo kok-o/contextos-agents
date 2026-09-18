@@ -14,10 +14,10 @@ The API mode is the reproducible comparison. Chat mode can compare answers manua
 
 For each task and repetition, the harness sends identical task text and output-token limits to the selected arms at requested temperature `0.1`. API run records save the output-token limit, temperature and whether the provider client applied it, maximum attempts, and request timeout. Some reasoning models ignore temperature; reports mark that explicitly. The arms vary only the system guidance/context:
 
-1. **A — Vanilla:** neutral software-engineering instruction.
-2. **B — Concise Checklist:** generic twelve-rule checklist.
-3. **C — ContextOS Resolver + Skills:** canonical resolver output, compiled declaration, and exact bytes of installed skill documents selected for the task.
-4. **D — Expanded Guidance:** C plus risk/workflow prompt guidance. It does not execute an isolated agent worktree or reviewer pipeline.
+1. **A - Vanilla:** neutral software-engineering instruction.
+2. **B - Concise Checklist:** generic twelve-rule checklist.
+3. **C - ContextOS Resolver + Skills:** canonical resolver output, compiled declaration, and exact bytes of installed skill documents selected for the task.
+4. **D - Expanded Guidance:** C plus risk/workflow prompt guidance. It does not execute an isolated agent worktree or reviewer pipeline.
 
 The C/D resolver runs against a fixed empty-workspace fixture and the compiled manifest from this checkout. Both arms also include the exact root `.agents/AGENTS.md` instructions. Task-specified skill names are audit annotations only; they do not force selection. Missing or unresolved skill IDs are recorded and no placeholder instructions are injected for them. In the current checkout, `typescript` is missing for auth/reliability, while `database`, `ddd`, and `system-design` are missing for DDD; those skill bodies are not included. Run reports include resolver/compiler/manifest fingerprints, selected/included/missing IDs, hashes and paths for included documents, and prompt hashes. A/B report no ContextOS context.
 
@@ -33,7 +33,7 @@ The pilot has three TypeScript tasks registered in `benchmarks/lib/runtime-suite
 | `ddd-order-invariants` | Immutable Money, matching currencies, totals, order transitions, and domain events |
 | `resilient-api-client` | Real abort behavior against a local fetch mock, circuit-breaker state transitions, and typed errors |
 
-`harness_verified_success` requires a complete code block, successful TypeScript stripping/JavaScript compilation, every registered runtime assertion passing, no recognized placeholder pattern, and—during API runs—available output-token and latency data within the configured budgets. Chat imports do not require UI token counts to pass the behavioral oracle; their token data is informational and labeled with its source.
+`harness_verified_success` requires a complete code block, successful TypeScript stripping/JavaScript compilation, every registered runtime assertion passing, no recognized placeholder pattern, and - during API runs - available output-token and latency data within the configured budgets. Chat imports do not require UI token counts to pass the behavioral oracle; their token data is informational and labeled with its source.
 
 The oracle is implemented by the same repository that produces the result, not independently audited. The auth worker substitutes offline bcrypt/Argon2-compatible interfaces backed by Node scrypt, so it exercises salted hashing, verification, and timing-safe comparison but does not validate production KDF work factors or prove that the limiter is wired into the login service. Some checks still rely on source inspection, including selected security-pattern and repository-boundary checks. This pilot does not run `tsc`, the package's full build/test suite, an external security scanner, or a human reviewer. It therefore supports narrow task-level comparisons, not claims that generated code is generally secure or production-ready.
 

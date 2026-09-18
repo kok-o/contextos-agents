@@ -1,15 +1,34 @@
-# <img src="./Frame%202.png" height="40" align="absmiddle" /> contextos-agents
+<p align="center">
+  <a href="https://github.com/kok-o/contextos-agents">
+    <img src="./Frame%202.png" alt="ContextOS Logo" width="88" height="88" />
+  </a>
+</p>
 
-[![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
-[![npm total downloads](https://img.shields.io/npm/dt/contextos-agents.svg?label=total%20downloads&color=0b7285&logo=npm)](https://www.npmjs.com/package/contextos-agents)
-[![npm monthly downloads](https://img.shields.io/npm/dm/contextos-agents.svg?label=downloads%2Fmonth&color=0b7285)](https://www.npmjs.com/package/contextos-agents)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg)](https://nodejs.org/)
-[![CI](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml/badge.svg)](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml)
+<h1 align="center">contextos-agents</h1>
 
-**One version-controlled source of engineering rules for supported coding agents.**
+<p align="center">
+  <strong>One version-controlled source of engineering rules for supported coding agents.</strong>
+</p>
 
-ContextOS is a deterministic context and policy compiler for AI coding agents. It transforms your team's version-controlled engineering rules into focused, verifiable context for Gemini, Claude Code, Cursor, GitHub Copilot, Aider, and Zed—and detects configuration drift in CI.
+<p align="center">
+  <a href="https://www.npmjs.com/package/contextos-agents"><img src="https://img.shields.io/npm/v/contextos-agents?color=18181b&logo=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/contextos-agents"><img src="https://img.shields.io/npm/dt/contextos-agents?color=18181b&logo=npm&label=downloads" alt="npm downloads" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-18181b?logo=node.js" alt="Node.js" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-18181b" alt="License" /></a>
+  <a href="https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml"><img src="https://img.shields.io/github/actions/workflow/status/kok-o/contextos-agents/validate-skills.yml?label=ci&color=18181b&logo=github" alt="CI" /></a>
+</p>
+
+<p align="center">
+  <a href="#installation">Installation</a> •
+  <a href="./GUIDE.md">Guide</a> •
+  <a href="#supported-agents--compilation">Supported Agents</a> •
+  <a href="./CONTRIBUTING.md">Contributing</a> •
+  <a href="https://www.npmjs.com/package/contextos-agents">npm</a>
+</p>
+
+---
+
+ContextOS is a deterministic context and policy compiler for AI coding agents. It transforms your team's version-controlled engineering rules into focused, verifiable context for Gemini, Claude Code, Cursor, GitHub Copilot, Aider, and Zed - and detects configuration drift in CI.
 
 ## Installation
 
@@ -139,9 +158,9 @@ npx contextos-mcp --dir .
 
 The MCP server is read-only by default. Runtime execution remains experimental and is outside the stable core scope.
 
-## Security — Third-Party Skills
+## Security - Third-Party Skills
 
-ContextOS skills are **executable context** — they become part of the system prompt that controls your AI agent's behavior. A malicious skill could instruct the AI agent to exfiltrate environment variables, modify files, or ignore your project's security policies.
+ContextOS skills are **executable context** - they become part of the system prompt that controls your AI agent's behavior. A malicious skill could instruct the AI agent to exfiltrate environment variables, modify files, or ignore your project's security policies.
 
 > [!CAUTION]
 > **Install skills only from repositories you trust as you would trust executable code.** Skills installed via `ctx.js skill add` from npm or GitHub are not sandboxed.
