@@ -1,6 +1,8 @@
 # <img src="./Frame%202.png" height="40" align="absmiddle" /> contextos-agents
 
 [![npm version](https://img.shields.io/npm/v/contextos-agents.svg)](https://www.npmjs.com/package/contextos-agents)
+[![npm total downloads](https://img.shields.io/npm/dt/contextos-agents.svg?label=total%20downloads&color=0b7285&logo=npm)](https://www.npmjs.com/package/contextos-agents)
+[![npm monthly downloads](https://img.shields.io/npm/dm/contextos-agents.svg?label=downloads%2Fmonth&color=0b7285)](https://www.npmjs.com/package/contextos-agents)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg)](https://nodejs.org/)
 [![CI](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml/badge.svg)](https://github.com/kok-o/contextos-agents/actions/workflows/validate-skills.yml)
