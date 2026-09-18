@@ -1,201 +1,200 @@
-# Руководство по работе с ContextOS (Cheat Sheet)
+# ContextOS Guide & Cheat Sheet
 
-Практическое руководство по управлению инженерным контекстом для AI-кодинг агентов: хранение правил проекта, их разрешение по задаче и компиляция для поддерживаемых редакторов и агентов.
-
----
-
-## 1. Что такое ContextOS на практике?
-
-**ContextOS** - детерминированный компилятор контекста и политик. Он хранит инженерные правила проекта в одном версионируемом источнике, формирует настройки для поддерживаемых агентов и помогает обнаруживать расхождения.
-
-Ключевые принципы системы:
-
-- **Единый источник правил:** Инженерные инструкции хранятся в проекте и версионируются вместе с кодом.
-- **Фокус по задаче:** Резолвер подбирает применимые правила и навыки для конкретной задачи.
-- **Проверяемость:** Адаптеры генерируют конфигурацию для агентов, а lockfile и CI помогают находить дрейф.
+Practical guide to managing engineering context for AI coding agents: storing project rules, resolving them per task, and compiling for supported editors and agents.
 
 ---
 
-## 2. Команды терминала (CLI `contextos` / `ctx.js`)
+## 1. What is ContextOS in Practice?
 
-Управление профилями, адаптерами, диагностикой и валидацией осуществляется через CLI утилиту `contextos` (или напрямую через `node .agents/ctx.js`). Все команды поддерживают оба формата вызова:
+**ContextOS** is a deterministic context and policy compiler. It stores your project engineering rules in a single version-controlled source, compiles settings for supported agents, and helps detect configuration drift in CI.
 
-### Динамический резолювер навыков (`resolve`)
+Key system principles:
+
+- **Single Source of Truth:** Engineering instructions are version-controlled alongside application code.
+- **Task-Focused Context:** The resolver selects only the rules and skills applicable to the current task.
+- **Verifiable & Reproducible:** Adapters generate native configurations for agents, while lockfiles and CI detect configuration drift.
+
+---
+
+## 2. CLI Commands (`contextos` / `ctx.js`)
+
+Manage profiles, adapters, diagnostics, and validation via the `contextos` CLI (or directly via `node .agents/ctx.js`). All commands support both execution formats:
+
+### Dynamic Skill Resolution (`resolve`)
 
 ```bash
-# Динамический расчет минимального набора навыков под задачу:
-contextos resolve "Сделай адаптивное модальное окно на React с Tailwind"
+# Dynamically resolve the minimal set of skills for a task:
+contextos resolve "Build an accessible modal component with React and Tailwind"
 
-# С подробным объяснением скоринга и доказательной базы evidence:
+# With detailed evidence scoring explanation:
 contextos resolve "security review Next.js auth" --files apps/web/app/login/page.tsx --explain
 
-# В структурированном формате JSON для скриптов и IDE:
+# Output structured JSON for scripts and IDE integrations:
 contextos resolve "Dockerize NestJS API" --json
 ```
 
-### Определение стека и граф рабочего пространства (`detect`)
+### Stack Detection & Workspace Graph (`detect`)
 
 ```bash
-# Автоматически определить стек проекта (React, Next.js, FastAPI, Cargo, Go и т.д.)
+# Auto-detect project tech stack (React, Next.js, FastAPI, Cargo, Go, etc.):
 contextos detect
-# или: node .agents/ctx.js detect
+# or: node .agents/ctx.js detect
 
-# С таргетингом на конкретный пакет монорепозитория и выводом доказательств:
+# Target a specific monorepo package with evidence breakdown:
 contextos detect --scope apps/web --explain
 ```
 
-### Управление профилями v2 (`profile`)
+### Profile Management v2 (`profile`)
 
 ```bash
-# Посмотреть список доступных профилей и активный профиль
+# List available profiles and the active profile:
 contextos profile list
 
-# Изучить структуру профиля, обязательные/предпочтительные навыки и политики:
+# Inspect profile structure, required/preferred skills, and policies:
 contextos profile explain enterprise
 contextos profile explain frontend --json
 
-# Переключить профиль проекта (с поддержкой монорепозиториев и подавлением экспорта):
-contextos profile apply minimal                          # Для быстрых прототипов
-contextos profile apply frontend --scope apps/web        # Таргетинг на пакет
-contextos profile apply backend                          # Фокус на API и БД
-contextos profile apply enterprise --no-export           # Без немедленной перезаписи адаптеров
+# Switch project profile (supports monorepos and export suppression):
+contextos profile apply minimal                          # For rapid prototypes
+contextos profile apply frontend --scope apps/web        # Scope to package
+contextos profile apply backend                          # Focus on API and database
+contextos profile apply enterprise --no-export           # Suppress immediate adapter rewrite
 ```
 
-### Экспорт настроек в редакторы (Адаптеры)
+### Export Settings to Editors (Adapters)
 
 ```bash
-# Скомпилировать правила для всех поддерживаемых IDE (.cursorrules, Zed, Aider и др.)
+# Compile rules for all supported IDEs (.cursorrules, Zed, Aider, etc.):
 contextos export all
-# или: node .agents/ctx.js export all
+# or: node .agents/ctx.js export all
 
-# Скомпилировать правила под конкретного агента
+# Compile rules for a specific agent:
 contextos export gemini
 contextos export claude
 contextos export cursor
 contextos export zed
 ```
 
-### Диагностика и мониторинг
+### Diagnostics and Monitoring
 
 ```bash
-# Комплексный чек-ап здоровья проекта (стек, установленные навыки, MCP, секреты)
+# Run pre-flight health diagnostics (stack, installed skills, MCP, secrets):
 contextos doctor
-# или: node .agents/ctx.js doctor
+# or: node .agents/ctx.js doctor
 
-# Отчет о контекстной конфигурации проекта
+# View context configuration statistics:
 contextos stats
-# или: node .agents/ctx.js stats
+# or: node .agents/ctx.js stats
 
-# Фоновый демон непрерывной синхронизации при изменении файлов
+# Background daemon for continuous synchronization on file changes:
 contextos watch
-# или: node .agents/ctx.js watch
+# or: node .agents/ctx.js watch
 ```
 
-### Валидация и тестирование
+### Validation and Testing
 
 ```bash
-# Проверить целостность и валидность навыков, схем и зависимостей
+# Validate integrity of skills, schemas, and dependencies:
 contextos validate
-# или: node .agents/ctx.js validate
+# or: node .agents/ctx.js validate
 
-# Запустить полный набор тестов репозитория
+# Run the full test suite:
 npm test
 
-# Проверки отдельного MCP beta-пакета
+# Run tests for the optional MCP package:
 cd contextos-mcp && npm test
 ```
 
-### MCP-сервер (Beta, отдельный пакет)
+### MCP Server (Beta, Separate Package)
 
 ```bash
 npm install --save-dev @contextos/mcp
 npx contextos-mcp --dir .
 ```
 
-MCP-сервер распространяется отдельно и остаётся Beta. Runtime, сабагенты и песочницы выполнения - экспериментальные функции; они не входят в стабильный core CLI.
-
+The MCP server is distributed separately and remains Beta. Runtime execution, subagents, and sandboxes are experimental features outside the stable core CLI.
 
 ---
 
-## 3. Шесть фаз разработки (Workflow Pipeline)
+## 3. Six-Phase Workflow Pipeline
 
-При решении любых задач AI обязан следовать фазам конвейера:
+When solving engineering tasks, AI agents follow this structured lifecycle:
 
-| Фаза | Слэш-команда | Роль агента | Что делает агент |
+| Phase | Slash Command | Agent Role | Responsibility |
 |---|---|---|---|
-| **1. DEFINE** | `/spec` | `Product Manager` | Анализирует задачу, формулирует acceptance criteria и задает вопросы. **Код не пишет.** |
-| **2. PLAN** | `/plan` | `Architect` | Составляет пошаговый план, список изменяемых файлов и оценивает риски. **Код не пишет.** |
-| **3. BUILD** | `/build` | `Senior Developer` | Пишет готовый код без заглушек, следуя принципу минимализма (YAGNI). |
-| **4. VERIFY** | `/test` | `QA Lead` | Пишет модульные и интеграционные тесты, проверяет пограничные случаи. |
-| **5. REVIEW** | `/review` | `Staff Engineer` / `Senior Designer` | Проводит жесткий аудит кода, безопасности и UI (чек-лист `impeccable-design`). |
-| **6. SHIP** | `/ship` | `Release Engineer` | Проверяет сборку, готовит документацию и changelog. |
+| **1. DEFINE** | `/spec` | `Product Manager` | Analyzes requirements, formulates acceptance criteria, and asks clarifying questions. **Does not write code.** |
+| **2. PLAN** | `/plan` | `Architect` | Creates a step-by-step implementation plan, identifies affected files, and assesses risk. **Does not write code.** |
+| **3. BUILD** | `/build` | `Senior Developer` | Writes clean, production-ready code without stubs or placeholders (following YAGNI). |
+| **4. VERIFY** | `/test` | `QA Lead` | Writes unit and integration tests, verifying edge cases and boundary conditions. |
+| **5. REVIEW** | `/review` | `Staff Engineer` / `Senior Designer` | Performs rigorous code review, security audits, and UI checks (`impeccable-design`). |
+| **6. SHIP** | `/ship` | `Release Engineer` | Verifies builds, updates documentation, and prepares release changelogs. |
 
 ---
 
-## 4. Ключевые навыки (Skills) и их назначение
+## 4. Key Core Skills
 
-Навыки находятся в каталоге `.agents/core/skills/`. Вы можете напрямую активировать их в диалоге:
+Skills live in `.agents/core/skills/` and can be explicitly activated during conversations:
 
-- **`gemini-precision`** - строгий режим для моделей Gemini: запрет на предположения, полные реализации без `// TODO`, верификация перед сдачей работы.
-- **`ponytail-mindset`** - минимализм в коде (YAGNI): выбор стандартных библиотек вместо сторонних npm-пакетов, чистые и очевидные решения.
-- **`ui-ux-pro`** и **`impeccable-design`** - профессиональный дизайн: запрет на банальные шрифты, запрет чисто черного `#000` цвета, микро-анимации, доступность (a11y).
-- **`system-design`** и **`database`** - масштабируемая архитектура, правильные индексы, транзакции, решение проблемы N+1.
-- **`security`** - аудит безопасности: проверка авторизации перед доступом к данным, валидация входящих параметров (Zod).
-- **`interview-me`** - интерактивное интервью: агент задает вопросы по одному, чтобы прояснить требования к фиче.
+- **`gemini-precision`** - Strict precision mode for Gemini models: zero assumptions, zero placeholders (`// TODO`), and mandatory proof-of-work verification.
+- **`ponytail-mindset`** - Minimalist coding standard (YAGNI): prefer standard library and platform APIs over superfluous npm dependencies, clean solutions.
+- **`ui-ux-pro`** and **`impeccable-design`** - Professional UI/UX standards: bans cliché fonts, bans pure black (`#000000`), requires micro-animations and accessibility (a11y).
+- **`system-design`** and **`database`** - Scalable system architecture, optimized indexes, transactions, and N+1 query prevention.
+- **`security`** - Security audits: explicit authorization before data access, strict input validation (e.g. Zod), and sanitization.
+- **`interview-me`** - Interactive requirements interview: asks targeted questions one by one to eliminate ambiguity.
 
 ---
 
-## 5. Готовые шаблоны промптов (Prompt Cheatsheet)
+## 5. Ready-to-Use Prompt Templates
 
-Используйте эти шаблоны для быстрого старта задач:
+Use these templates to quickly launch workflows:
 
-### 🟢 Сценарий 1: Разработка новой фичи с нуля (Полный цикл)
+### 🟢 Scenario 1: Developing a New Feature (Full Lifecycle)
 
 > `[DOMAIN: Full-Stack] [PHASE: Define] [ROLE: Product Manager]`
 > `Skills: engineering-workflow, interview-me`
 >
-> _Я хочу добавить в систему функционал двухфакторной аутентификации (2FA) по TOTP. Запусти фазу /spec. Если есть неоднозначности - задай мне вопросы перед формированием спецификации._
+> _I want to add Time-based One-Time Password (TOTP) two-factor authentication. Launch the /spec phase. If there is ambiguity, ask me questions before finalizing the specification._
 
 ---
 
-### 🟡 Сценарий 2: Переход от плана к коду
+### 🟡 Scenario 2: Transitioning from Plan to Implementation
 
 > `[DOMAIN: Full-Stack] [PHASE: Build] [ROLE: Senior Developer]`
 > `Skills: gemini-precision, ponytail-mindset`
 >
-> _План утвержден. Переходи к фазе /build. Напиши полную реализацию сервиса без заглушек и TODO. Все зависимости проверь в package.json._
+> _The implementation plan is approved. Transition to /build. Write the complete service implementation without stubs or TODOs. Verify all dependencies in package.json._
 
 ---
 
-### 🎨 Сценарий 3: Верстка современного премиального интерфейса
+### 🎨 Scenario 3: Crafting Modern Premium Interfaces
 
 > `[DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Designer]`
 > `Skills: ui-ux-pro, react, typescript`
 >
-> _Создай карточку аналитики профиля. Используй Tailwind CSS с семантическими токенами, темную тему, плавные hover-эффекты и поддержку a11y. Избегай шаблонного AI-дизайна (не используй чистый #000000, резкие тени и чрезмерный радиус скруглений)._
+> _Build a profile analytics card component. Use Tailwind CSS with semantic tokens, dark mode support, smooth hover micro-animations, and full a11y compliance. Avoid AI-generated clichés (no pure #000000, no harsh shadows, no excessive border radius)._
 
 ---
 
-### 🛡️ Сценарий 4: Аудит безопасности и ревью кода
+### 🛡️ Scenario 4: Security Audit and Code Review
 
 > `[DOMAIN: Backend] [PHASE: Review] [ROLE: Chief Security Officer]`
 > `Skills: security, engineering-workflow`
 >
-> _Проведи аудит безопасности и качества кода файла [api/payment.ts](file:///path/to/payment.ts). Проверь валидацию входных данных, авторизацию и обработку краевых случаев._
+> _Audit security and code quality for [api/payment.ts](file:///path/to/payment.ts). Verify input validation, authorization checks, and edge-case handling._
 
 ---
 
-### ⚡ Сценарий 5: Рефакторинг и оптимизация производительности
+### ⚡ Scenario 5: Refactoring and Performance Optimization
 
 > `[DOMAIN: Full-Stack] [PHASE: Plan] [ROLE: Performance Engineer]`
 > `Skills: performance, react-best-practices, system-design`
 >
-> _Компонент таблицы пользователей рендерится слишком медленно при 1000+ записях. Составь план оптимизации (виртуализация, мемоизация, пагинация) без избыточного усложнения._
+> _The user table component renders sluggishly with 1,000+ rows. Draft an optimization plan (virtualization, memoization, pagination) without unnecessary architectural complexity._
 
 ---
 
-## 6. Рекомендации по эффективной работе
+## 6. Best Practices for Working with Coding Agents
 
-1. **Кликабельные ссылки:** При указании файлов агенту используйте относительный или абсолютный путь. Агент умеет открывать файлы по клику.
-2. **Не пропускайте планирование:** Для задач сложнее 1-2 строк кода всегда требуйте сначала `/spec` и `/plan`. Это экономит до 80% времени на исправление ошибок.
-3. **Требуйте доказательства (Proof-of-Work):** Просите агента запустить `node .agents/ctx.js validate` или тесты, прежде чем подтверждать выполнение задачи.
+1. **Clickable File Links:** When referring to files, use relative or absolute paths. Agents can navigate files directly via markdown links.
+2. **Never Skip Planning:** For tasks involving more than 1-2 lines of code, always require `/spec` and `/plan` first. This saves up to 80% of debugging time.
+3. **Mandatory Proof-of-Work:** Require the agent to run `node .agents/ctx.js validate` and automated tests before marking tasks as complete.
