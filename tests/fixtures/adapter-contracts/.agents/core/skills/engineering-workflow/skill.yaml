@@ -1,0 +1,4 @@
+name: engineering-workflow
+version: 2.0.0
+description: Core software engineering lifecycle workflow
+tags: [workflow, core, always-apply]

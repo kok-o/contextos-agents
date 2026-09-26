@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
+const YAML = require('../../compiler/vendor/yaml.js');
 
 const GENERATOR_ID = 'aider@2';
 
@@ -43,7 +44,7 @@ function buildSkillSection(skillDir) {
   }
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
-  const skillRef = `*Source: \`.agents/skills/${skillName}/SKILL.md\` — Load via \`/read .agents/skills/${skillName}/SKILL.md\`*\n`;
+  const skillRef = `*Source: \`.agents/skills/${skillName}/SKILL.md\` - Load via \`/read .agents/skills/${skillName}/SKILL.md\`*\n`;
   return `\n## Skill: ${title}\n${descLine}${skillRef}`;
 }
 
@@ -68,23 +69,49 @@ function render(context) {
   }, 'markdown');
 
   // 1. .aider.conf.yml
-  const aiderConfContent = [
-    yamlProv,
-    '# Load project conventions as a read-only context file on every session',
-    'read:',
-    '  - CONVENTIONS.md',
-    '',
-    '# Auto commit edits with standard git format',
-    'auto-commits: true',
-    'dirty-commits: true',
-    '',
-  ].join('\n');
+  const existingAiderConfPath = path.join(projectRoot, '.aider.conf.yml');
+  let aiderConfContent = '';
+
+  if (fs.existsSync(existingAiderConfPath)) {
+    try {
+      const rawUserConf = fs.readFileSync(existingAiderConfPath, 'utf8');
+      const parsed = YAML.parse(rawUserConf) || {};
+
+      if (!parsed.read) {
+        parsed.read = ['CONVENTIONS.md'];
+      } else if (Array.isArray(parsed.read)) {
+        if (!parsed.read.includes('CONVENTIONS.md')) {
+          parsed.read.push('CONVENTIONS.md');
+        }
+      } else if (typeof parsed.read === 'string') {
+        if (parsed.read !== 'CONVENTIONS.md') {
+          parsed.read = [parsed.read, 'CONVENTIONS.md'];
+        }
+      }
+
+      aiderConfContent = yamlProv + '\n' + YAML.stringify(parsed);
+    } catch {
+      aiderConfContent = yamlProv + '\nread:\n  - CONVENTIONS.md\n';
+    }
+  } else {
+    aiderConfContent = [
+      yamlProv,
+      '# Load project conventions as a read-only context file on every session',
+      'read:',
+      '  - CONVENTIONS.md',
+      '',
+      '# Auto commit edits with standard git format',
+      'auto-commits: true',
+      'dirty-commits: true',
+      '',
+    ].join('\n');
+  }
 
   // 2. CONVENTIONS.md
   const convSections = [];
   convSections.push(
     mdProv +
-    `# ContextOS — Project Conventions for Aider\n\n` +
+    `# ContextOS - Project Conventions for Aider\n\n` +
     `> **Core law: Do not read everything. Read only what the current task requires.**\n\n`
   );
 

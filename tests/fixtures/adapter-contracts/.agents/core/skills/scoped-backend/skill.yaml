@@ -1,0 +1,5 @@
+name: scoped-backend
+version: 2.0.0
+description: Backend service architecture and API endpoints
+globs: "src/api/**/*.ts,src/services/**/*.ts"
+tags: [backend, api, service]

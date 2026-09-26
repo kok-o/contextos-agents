@@ -448,4 +448,6 @@ module.exports = {
   listAdapters,
   renderAdapters,
   applyArtifacts,
+  computeExactHash,
+  computeSemanticHash,
 };
