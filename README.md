@@ -131,9 +131,9 @@ contextos doctor
 contextos export all       # Compile for all agents
 ```
 
-### CI Quality Gate Action (`contextos-gate`)
+### CI Quality Gate Action (contextos-gate)
 
-Guard your repository against skill drift, secret leaks, and rule regressions using the official GitHub Composite Action:
+Guard your repository against skill drift, missing outputs, and rule regressions using the official GitHub Composite Action:
 
 ```yaml
 # .github/workflows/pr-gate.yml
@@ -145,7 +145,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.0.0
+        with:
+          version: '2.0.0'       # Pinned version of contextos-agents runner
+          adapters: 'all'        # Adapters to verify (or specific: 'cursor', 'claude')
+          working-directory: '.' # Project root directory
 ```
+
+The action executes the verified ContextOS quality gate in-process from the pinned package version, verifying generated AI adapter configs against source skills without executing untrusted scripts from pull requests, and without requiring a Node.js project or running `npm test`.
 
 ## Optional MCP integration (Beta)
 

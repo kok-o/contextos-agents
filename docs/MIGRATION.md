@@ -39,3 +39,31 @@ In v1.x, a standard installation included ~39 skills ranging from `react` to `br
   contextos profile prune
   ```
 * **Adding them back:** If you are setting up a new project and want the React or UI skills, you must install them explicitly from the catalog.
+
+### 3. GitHub Action (contextos-gate) Migration to In-Process Gate Runner
+
+In v1.x, the composite action ran `npm ci --ignore-scripts`, executed the incoming pull request's `.agents/ctx.js`, and executed `npm test` inside the consumer project.
+
+**What changed:**
+* **Security & Isolation**: The gate runner now executes in-process from the pinned package version (`contextos gate`). Incoming pull requests cannot execute untrusted scripts or rogue `.agents/ctx.js`.
+* **Non-Node Repositories**: The gate no longer requires `package.json`, `npm ci`, or `npm test`. Repositories in Python, Go, Rust, or documentation trees are supported as first-class consumers.
+* **Granular Adapters**: The action supports `adapters: 'all'` (default) or scoped adapter lists (e.g. `cursor`, `claude,gemini`).
+* **Secrets Scanning Decoupled**: Built-in secret scanning in the gate action is `not_configured` in v2.0 (scheduled for Phase 5). To avoid silent false security guarantees, requesting `skip-secrets: 'false'` or `require-secrets: 'true'` fails closed with exit code 2. Use dedicated security scanners (such as `gitleaks/gitleaks-action`) in your CI pipeline.
+
+**Migration:**
+Update your `.github/workflows/` workflow step:
+```yaml
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.0.0
+  with:
+    version: '2.0.0'
+    adapters: 'all'
+    working-directory: '.'
+```
+
+If you previously relied on ContextOS Gate for secret scanning, add a dedicated scanner action to your workflow:
+```yaml
+- name: Secret Scanning
+  uses: gitleaks/gitleaks-action@v2
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```

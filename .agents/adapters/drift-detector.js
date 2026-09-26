@@ -240,15 +240,17 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
     findings[DRIFT_STATES.PROFILE_MISMATCH] = [];
   }
 
+  const totalFindings = Object.values(findings).reduce((acc, list) => acc + list.length, 0);
+  const hasDrift = totalFindings > 0 || collisions.length > 0;
   const hasError = findings[DRIFT_STATES.CORRUPT_LOCKFILE].length > 0 ||
     findings[DRIFT_STATES.EMPTY_PROJECTION].length > 0 ||
     findings[DRIFT_STATES.CONFIG_ERROR].length > 0;
-
-  const totalFindings = Object.values(findings).reduce((acc, list) => acc + list.length, 0);
-  const hasDrift = totalFindings > 0 || collisions.length > 0;
   const code = hasError ? 2 : (hasDrift ? 1 : 0);
+  const status = hasError ? 'error' : (hasDrift ? 'drift' : 'pass');
 
   return {
+    schemaVersion: '2.0.0',
+    status,
     hasDrift,
     hasError,
     code,

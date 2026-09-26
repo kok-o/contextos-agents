@@ -233,5 +233,178 @@ describe('Task 1.1: Consumer Project Root & Unique Skill Isolation', () => {
       'profiles.json must not be created or modified by check mode'
     );
   });
+
+  test('Task 1.7: CRLF checkout normalization does not produce false drift findings', () => {
+    const { applyArtifacts } = require('../.agents/adapters/pure-compiler.js');
+    const renderedAll = renderAdapters(consumerDir, 'all');
+    applyArtifacts(consumerDir, renderedAll.artifacts, { context: renderedAll.context });
+
+    // Pick an existing generated file and convert LF to CRLF to simulate Windows git checkout
+    const cursorFile = path.join(consumerDir, '.cursor', 'rules', `${customSkillName}.mdc`);
+    const originalContent = fs.readFileSync(cursorFile, 'utf8');
+    const crlfContent = originalContent.replace(/\r?\n/g, '\r\n');
+    fs.writeFileSync(cursorFile, crlfContent, 'utf8');
+
+    // Drift detector must normalize CRLF via computeSemanticHash and report clean sync
+    const drift = detectDrift(consumerDir, 'cursor');
+    assert.equal(drift.hasDrift, false, 'CRLF on disk must not trigger false drift');
+    assert.equal(drift.code, 0, 'Exit code must be 0 for CRLF equivalent file');
+  });
+
+  test('Task 1.8: Verifies stale source, profile mismatch, collision detection, and export resolution', () => {
+    const { applyArtifacts, registerAdapter, unregisterAdapter } = require('../.agents/adapters/pure-compiler.js');
+
+    // 1. Stale Source: update source skill without re-exporting
+    const skillMdPath = path.join(consumerDir, '.agents', 'core', 'skills', customSkillName, 'SKILL.md');
+    fs.appendFileSync(skillMdPath, '\n\nAdditional rule appended to source skill.\n');
+
+    const staleReport = detectDrift(consumerDir, 'cursor');
+    assert.equal(staleReport.hasDrift, true, 'Drift must be detected after source skill changes');
+    assert.ok(
+      staleReport.findings.STALE_INPUT.length > 0 || staleReport.findings.MODIFIED_MANAGED_OUTPUT.length > 0,
+      'Must flag stale input or generated divergence'
+    );
+
+    // 2. Export Resolution: re-exporting synchronizes disk and clears drift
+    const reRendered = renderAdapters(consumerDir, 'all');
+    applyArtifacts(consumerDir, reRendered.artifacts, { context: reRendered.context });
+
+    const cleanReport = detectDrift(consumerDir, 'all');
+    assert.equal(cleanReport.hasDrift, false, 'Re-export must resolve drift cleanly');
+    assert.equal(cleanReport.code, 0, 'Clean project must return exit code 0');
+
+    // 3. Collision Detection: register an intentionally colliding test adapter
+    const collidingAdapter = {
+      describe: () => ({ name: 'collider', description: 'Colliding adapter for test' }),
+      render: () => [{
+        path: '.cursor/rules/00-project-rules.mdc',
+        content: Buffer.from('collision-content'),
+        generator: 'collider@2',
+        kind: 'generated-adapter',
+      }],
+      validate: () => [],
+      run: () => {},
+    };
+    registerAdapter('collider', collidingAdapter);
+
+    try {
+      const collisionResult = renderAdapters(consumerDir, ['cursor', 'collider']);
+      assert.ok(collisionResult.collisions.length > 0, 'Must detect path collision between cursor and collider');
+      assert.equal(collisionResult.collisions[0].path, '.cursor/rules/00-project-rules.mdc');
+    } finally {
+      unregisterAdapter('collider');
+    }
+  });
+
+  test('Task 1.11 & 1.12: Formats and writes GitHub Actions annotations and step summary', () => {
+    const { emitGitHubAnnotations, formatGitHubSummary, writeGitHubSummary } = require('../bin/lib/gate.js');
+
+    const sampleDriftResult = {
+      ok: false,
+      code: 1,
+      status: 'drift',
+      projectRoot: consumerDir,
+      target: 'cursor',
+      profile: 'default',
+      message: 'Adapter outputs have drifted from source skills',
+      drift: {
+        totalFindings: 2,
+        projectedCount: 5,
+        findings: {
+          MISSING_OUTPUT: [{ path: '.cursor/rules/missing-rule.mdc', reason: 'Missing rule' }],
+          MODIFIED_MANAGED_OUTPUT: [{ path: '.cursor/rules/modified-rule.mdc', reason: 'User edit detected' }],
+        },
+        collisions: [],
+      },
+    };
+
+    // 1. Verify markdown formatting for step summary
+    const summaryMarkdown = formatGitHubSummary(sampleDriftResult);
+    assert.ok(summaryMarkdown.includes('# ⚠️ ContextOS Quality Gate Report'));
+    assert.ok(summaryMarkdown.includes('**Status**: `DRIFT`'));
+    assert.ok(summaryMarkdown.includes('`.cursor/rules/missing-rule.mdc`'));
+    assert.ok(summaryMarkdown.includes('`.cursor/rules/modified-rule.mdc`'));
+    assert.ok(summaryMarkdown.includes('Run `npx contextos-agents export all`'));
+
+    // 2. Verify write to GITHUB_STEP_SUMMARY
+    const tempSummaryFile = path.join(tmpBase, 'github_step_summary.md');
+    process.env.GITHUB_STEP_SUMMARY = tempSummaryFile;
+    try {
+      writeGitHubSummary(sampleDriftResult);
+      assert.ok(fs.existsSync(tempSummaryFile), 'GITHUB_STEP_SUMMARY file must be written');
+      const writtenContent = fs.readFileSync(tempSummaryFile, 'utf8');
+      assert.ok(writtenContent.includes('ContextOS Quality Gate Report'));
+    } finally {
+      delete process.env.GITHUB_STEP_SUMMARY;
+    }
+
+    // 3. Verify emitGitHubAnnotations prints workflow commands to stderr
+    const stderrMessages = [];
+    const origStderrWrite = process.stderr.write;
+    process.stderr.write = (chunk) => {
+      stderrMessages.push(chunk.toString());
+      return true;
+    };
+    try {
+      emitGitHubAnnotations(sampleDriftResult);
+      const combinedStderr = stderrMessages.join('');
+      assert.ok(combinedStderr.includes('::error file=.cursor/rules/missing-rule.mdc::[MISSING_OUTPUT]'));
+      assert.ok(combinedStderr.includes('::error file=.cursor/rules/modified-rule.mdc::[MODIFIED_OUTPUT]'));
+    } finally {
+      process.stderr.write = origStderrWrite;
+    }
+  });
+
+  test('Task 1.11: Project path containing spaces is resolved and verified cleanly', () => {
+    const { runGate } = require('../bin/lib/gate.js');
+    const spacedDir = path.join(tmpBase, 'consumer app with spaces');
+    fs.mkdirSync(spacedDir, { recursive: true });
+
+    // Copy .agents from consumerDir to spacedDir
+    fs.cpSync(path.join(consumerDir, '.agents'), path.join(spacedDir, '.agents'), { recursive: true });
+
+    // Export cursor rules in spaced directory
+    const { applyArtifacts } = require('../.agents/adapters/pure-compiler.js');
+    const rendered = renderAdapters(spacedDir, 'cursor');
+    applyArtifacts(spacedDir, rendered.artifacts, { context: rendered.context });
+
+    // Gate should verify cleanly on a directory with spaces
+    const result = runGate(spacedDir, { target: 'cursor' });
+    assert.equal(result.ok, true, 'Gate must pass for path with spaces');
+    assert.equal(result.code, 0, 'Exit code must be 0');
+  });
+
+  test('Task 1.13: Non-Node repository (Python/Go layout without package.json) runs gate safely', () => {
+    const { runGate } = require('../bin/lib/gate.js');
+    const pythonRepoDir = path.join(tmpBase, 'python-service-repo');
+    fs.mkdirSync(pythonRepoDir, { recursive: true });
+
+    // Add Python service files and NO package.json
+    fs.writeFileSync(path.join(pythonRepoDir, 'main.py'), 'print("Hello from python service")\n');
+    fs.writeFileSync(path.join(pythonRepoDir, 'requirements.txt'), 'fastapi==0.110.0\n');
+    assert.equal(fs.existsSync(path.join(pythonRepoDir, 'package.json')), false, 'Must not contain package.json');
+
+    // Setup .agents and export
+    fs.cpSync(path.join(consumerDir, '.agents'), path.join(pythonRepoDir, '.agents'), { recursive: true });
+    const { applyArtifacts } = require('../.agents/adapters/pure-compiler.js');
+    const rendered = renderAdapters(pythonRepoDir, 'claude');
+    applyArtifacts(pythonRepoDir, rendered.artifacts, { context: rendered.context });
+
+    // 1. Verification passes on clean repo without node dependencies
+    const passResult = runGate(pythonRepoDir, { target: 'claude' });
+    assert.equal(passResult.ok, true, 'Non-Node project must verify without requiring package.json or npm');
+    assert.equal(passResult.status, 'pass');
+    assert.equal(passResult.code, 0);
+
+    // 2. Modifying Claude export produces drift
+    const claudeMdPath = path.join(pythonRepoDir, 'CLAUDE.md');
+    if (fs.existsSync(claudeMdPath)) {
+      fs.appendFileSync(claudeMdPath, '\n# User local drift edit\n');
+      const driftResult = runGate(pythonRepoDir, { target: 'claude' });
+      assert.equal(driftResult.ok, false, 'Modifying CLAUDE.md must trigger drift detection');
+      assert.equal(driftResult.status, 'drift');
+      assert.equal(driftResult.code, 1);
+    }
+  });
 });
 

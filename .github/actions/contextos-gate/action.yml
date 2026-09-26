@@ -1,25 +1,44 @@
 name: 'ContextOS Quality Gate'
-description: 'Validates skill integrity, prevents adapter drift, scans for secrets, and runs test suites.'
+description: 'Deterministic quality gate verifying skill integrity and preventing adapter drift in consumer projects.'
 author: 'kok-o'
 
 inputs:
-  node-version:
-    description: 'Node.js version to use'
+  version:
+    description: 'Version of contextos-agents package to run (e.g. 2.0.0, latest, or local)'
     required: false
-    default: '22'
+    default: '2.0.0'
+  adapters:
+    description: 'Target adapter(s) to verify (gemini, claude, cursor, copilot, aider, zed, all)'
+    required: false
+    default: 'all'
+  profile:
+    description: 'Profile to verify against (default: current project profile)'
+    required: false
+    default: ''
   working-directory:
     description: 'Target repository working directory'
     required: false
     default: '.'
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '22'
   skip-secrets:
-    description: 'Skip credential and secret scanning step'
+    description: '[DEPRECATED] In v1 this defaulted to false. In v2 built-in secret scanning is not_configured until Phase 5. Set to true or omit.'
+    required: false
+    default: 'true'
+  require-secrets:
+    description: 'Explicitly require secrets scanning (unsupported in v2 gate; fails closed if true)'
     required: false
     default: 'false'
 
 outputs:
   status:
-    description: 'Final gate result status (pass / fail)'
+    description: 'Final gate result status (pass / drift / error)'
     value: ${{ steps.run-gate.outputs.status }}
+  code:
+    description: 'Exit code of the gate runner (0 for pass, 1 for drift, 2 for error)'
+    value: ${{ steps.run-gate.outputs.code }}
 
 runs:
   using: 'composite'
@@ -29,40 +48,41 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
+    - name: Validate Security Requirements
+      shell: bash
+      run: |
+        if [ "${{ inputs.require-secrets }}" = "true" ] || [ "${{ inputs.skip-secrets }}" = "false" ]; then
+          echo "::error::[SECRETS_SCANNER_NOT_CONFIGURED] Secret scanning is not_configured in ContextOS Gate v2.0. To avoid silent security degradation, this check fails closed. Please use a dedicated secrets scanner (e.g. gitleaks/gitleaks-action) in your workflow."
+          exit 2
+        fi
+
     - name: Run ContextOS Quality Gate
       id: run-gate
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
       run: |
-        set -e
-
-        echo "::group::ContextOS Gate — Dependencies"
-        npm ci --ignore-scripts
-        echo "::endgroup::"
-
-        if [ "${{ inputs.skip-secrets }}" != "true" ]; then
-          echo "::group::ContextOS Gate — Secret Scanning"
-          if [ -f scripts/check-secrets.js ]; then
-            node scripts/check-secrets.js --all
-          fi
-          echo "::endgroup::"
+        CMD_ARGS=(gate --project "${{ inputs.working-directory }}" --target "${{ inputs.adapters }}" --github-annotations)
+        if [ -n "${{ inputs.profile }}" ]; then
+          CMD_ARGS+=(--profile "${{ inputs.profile }}")
         fi
 
-        echo "::group::ContextOS Gate — Skill Integrity Validation"
-        node .agents/ctx.js validate
-        echo "::endgroup::"
+        if [ "${{ inputs.version }}" = "local" ]; then
+          RUNNER="node ${{ github.action_path }}/../../bin/index.js"
+        else
+          RUNNER="npx --yes contextos-agents@${{ inputs.version }}"
+        fi
 
-        echo "::group::ContextOS Gate — Adapter Drift Detection"
-        node .agents/ctx.js export all
-        git diff --exit-code .agents/generated/ .cursorrules .cursor/rules/ .github/copilot-instructions.md .aider.conf.yml CONVENTIONS.md .zed/ || {
-          echo "::error::Adapter drift detected! Generated AI configs do not match source skills. Run 'node .agents/ctx.js export all' and commit the changes."
-          exit 1
-        }
-        echo "::endgroup::"
+        set +e
+        $RUNNER "${CMD_ARGS[@]}"
+        GATE_CODE=$?
+        set -e
 
-        echo "::group::ContextOS Gate — Unit & Integration Tests"
-        npm test
-        echo "::endgroup::"
+        if [ $GATE_CODE -eq 0 ]; then
+          echo "status=pass" >> $GITHUB_OUTPUT
+        elif [ $GATE_CODE -eq 1 ]; then
+          echo "status=drift" >> $GITHUB_OUTPUT
+        else
+          echo "status=error" >> $GITHUB_OUTPUT
+        fi
+        echo "code=$GATE_CODE" >> $GITHUB_OUTPUT
 
-        echo "status=pass" >> $GITHUB_OUTPUT
-        echo "ContextOS Gate passed successfully."
+        exit $GATE_CODE

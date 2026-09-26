@@ -111,5 +111,34 @@ describe('Consumer Tarball Smoke Test', () => {
       encoding: 'utf8',
     });
     assert.ok(!validateOutput.includes('Cannot find module'), 'Validate must not throw MODULE_NOT_FOUND');
+
+    // Task 1.9: Verify gate and export check operate from unpacked tarball
+    assert.ok(
+      fs.existsSync(path.join(extractedPkgDir, 'package', 'bin', 'lib', 'gate.js')),
+      'Tarball must contain bin/lib/gate.js'
+    );
+
+    let gateOutput = '';
+    try {
+      gateOutput = execSync(`node "${pkgBin}" gate --project "${consumerProjectDir}" --json`, {
+        encoding: 'utf8',
+      });
+    } catch (err) {
+      gateOutput = (err.stdout || '').toString();
+    }
+    const gateParsed = JSON.parse(gateOutput);
+    assert.equal(gateParsed.schemaVersion, '2.0.0');
+    assert.ok(gateParsed.status === 'pass' || gateParsed.status === 'drift');
+
+    let exportCheckOutput = '';
+    try {
+      exportCheckOutput = execSync(`node "${pkgBin}" export all --check --project "${consumerProjectDir}" --json`, {
+        encoding: 'utf8',
+      });
+    } catch (err) {
+      exportCheckOutput = (err.stdout || '').toString();
+    }
+    const exportParsed = JSON.parse(exportCheckOutput);
+    assert.equal(exportParsed.schemaVersion, '2.0.0');
   });
 });

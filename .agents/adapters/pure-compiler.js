@@ -140,6 +140,13 @@ function registerAdapter(name, adapter) {
 }
 
 /**
+ * Unregisters an adapter from the pure compiler registry.
+ */
+function unregisterAdapter(name) {
+  adaptersRegistry.delete(name);
+}
+
+/**
  * Retrieves a registered adapter.
  */
 function getAdapter(name) {
@@ -436,6 +443,7 @@ module.exports = {
   createProvenanceHeader,
   loadCompilerContext,
   registerAdapter,
+  unregisterAdapter,
   getAdapter,
   listAdapters,
   renderAdapters,

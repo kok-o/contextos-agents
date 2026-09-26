@@ -40,6 +40,7 @@ const flags = {
     const i = args.indexOf('--target');
     return i !== -1 && args[i + 1] && !args[i + 1].startsWith('-') ? args[i + 1] : null;
   })(),
+  githubAnnotations: args.includes('--github-annotations'),
 };
 
 // ── Help / Version ────────────────────────────────────────────────────────────
@@ -72,12 +73,16 @@ Options:
   --minimal           Install only 7 core skills (lightweight footprint)
   --profile <name>    Install a specific profile (mvp, startup, enterprise, frontend, backend)
   --auto              Auto-detect tech stack and apply recommended profile
+  --project <path>    Specify target project root directory (default: current directory)
+  --target <adapters> Target adapter(s) to verify or export (default: all)
+  --github-annotations Emit GitHub Actions workflow commands and step summary
   --with-mcp, --mcp   [DEPRECATED] Use the separate @contextos/mcp package instead
   --skip-compile      Skip running ctx.js export after installation
   --add-skill <ref>   Install a community plugin skill after setup
 
 Commands:
   init                Install and configure .agents/ in target project
+  gate                Run deterministic quality gate against adapter drift
   status              Display project configuration, active profile, and lockfile status
   update              Safely update skills without overwriting custom changes
   uninstall           Safely uninstall ContextOS files (preserves user custom skills)
@@ -260,13 +265,18 @@ if (mainCommand === 'recover') {
 
 // Gate command (deterministic quality gate verification)
 if (mainCommand === 'gate') {
-  const { runGate } = require('./lib/gate.js');
+  const { runGate, emitGitHubAnnotations, writeGitHubSummary } = require('./lib/gate.js');
   const target = flags.target || (args[1] && !args[1].startsWith('-') ? args[1] : 'all');
   const result = runGate(flags.project, {
     target,
     profile: flags.profile,
     json: flags.json,
   });
+
+  if (process.env.GITHUB_ACTIONS === 'true' || flags.githubAnnotations) {
+    emitGitHubAnnotations(result);
+    writeGitHubSummary(result);
+  }
 
   if (flags.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -301,6 +311,22 @@ if (mainCommand === 'export' && args.includes('--check')) {
   const { detectDrift } = require('../.agents/adapters/drift-detector.js');
   const rawTarget = flags.target || (args[1] && !args[1].startsWith('-') ? args[1] : 'all');
   const drift = detectDrift(flags.project, rawTarget, { profile: flags.profile });
+
+  if (process.env.GITHUB_ACTIONS === 'true' || flags.githubAnnotations) {
+    const { emitGitHubAnnotations, writeGitHubSummary } = require('./lib/gate.js');
+    const gateFormat = {
+      ok: !drift.hasDrift && !drift.hasError,
+      code: drift.code !== undefined ? drift.code : (drift.hasDrift ? 1 : 0),
+      status: drift.status || (drift.hasError ? 'error' : (drift.hasDrift ? 'drift' : 'pass')),
+      projectRoot: flags.project,
+      target: rawTarget,
+      profile: flags.profile || 'default',
+      drift,
+      message: drift.hasDrift ? 'Adapter drift detected' : 'Artifacts synchronized',
+    };
+    emitGitHubAnnotations(gateFormat);
+    writeGitHubSummary(gateFormat);
+  }
 
   if (flags.json) {
     console.log(JSON.stringify(drift, null, 2));
