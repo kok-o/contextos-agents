@@ -1,4 +1,4 @@
-# ContextOS — Deterministic context compiler and policy engine for AI coding agents.
+# ContextOS -  Deterministic context compiler and policy engine for AI coding agents.
 
 You are working inside a project managed by **ContextOS**. This file is the **single source of truth** for how you must behave, think, and which skills to activate for every task.
 
@@ -6,7 +6,7 @@ You are working inside a project managed by **ContextOS**. This file is the **si
 
 ---
 
-## Step 0 — Identify Before Acting
+## Step 0 -  Identify Before Acting
 
 Before writing a single line of code or plan, stop and answer three questions:
 
@@ -43,10 +43,10 @@ These 7 skills are always present in ContextOS Core:
 
 | Skill | File | Activate When |
 |-------|------|--------------|
-| **engineering-workflow** | `engineering-workflow/SKILL.md` | **Every task** — defines the DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline |
-| **gstack-roles** | `gstack-roles/SKILL.md` | **Every task** — declare your specialist role before each phase |
-| **ponytail-mindset** | `ponytail-mindset/SKILL.md` | **Every BUILD phase** — run the 7-rung ladder before writing any code |
-| **gemini-precision** | `gemini-precision/SKILL.md` | **All Gemini tasks** — zero assumptions, zero placeholders, surgical blast radius, test proof |
+| **engineering-workflow** | `engineering-workflow/SKILL.md` | **Every task** -  defines the DEFINE→PLAN→BUILD→VERIFY→REVIEW→SHIP pipeline |
+| **gstack-roles** | `gstack-roles/SKILL.md` | **Every task** -  declare your specialist role before each phase |
+| **ponytail-mindset** | `ponytail-mindset/SKILL.md` | **Every BUILD phase** -  run the 7-rung ladder before writing any code |
+| **gemini-precision** | `gemini-precision/SKILL.md` | **All Gemini tasks** -  zero assumptions, zero placeholders, surgical blast radius, test proof |
 | **security** | `security/SKILL.md` | Any feature with auth, data access, user input, external integration |
 | **context-os** | `context-os/SKILL.md` | Managing context rules, compiler pipelines, project policies |
 | **context-manager** | `context-manager/SKILL.md` | Context selection, dynamic skill resolution, project graph traversal |
@@ -58,14 +58,14 @@ The following domain skills are available in the extended catalog and can be add
 | Domain | Skills | Install Command |
 |--------|--------|-----------------|
 | **Frontend** | `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `ui-design`, `ux-design`, `web-accessibility`, `brutalist-design`, `minimalist-design`, `soft-design`, `redesign-audit` | `contextos skill add <name>` |
-| **Backend** | `system-design`, `node`, `fastapi`, `nestjs`, `microservices`, `ddd`, `database` | `contextos skill add <name>` |
-| **Cross-Cutting** | `testing`, `docker`, `decisions`, `architecture-diagrams`, `adapters`, `generators`, `graphify`, `performance`, `vercel-optimize` | `contextos skill add <name>` |
+| **Backend** | `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `microservices`, `ddd`, `database` | `contextos skill add <name>` |
+| **Cross-Cutting** | `testing`, `docker`, `ci-cd`, `terraform`, `security-audit`, `decisions`, `architecture-diagrams`, `adapters`, `generators`, `graphify`, `performance`, `vercel-optimize` | `contextos skill add <name>` |
 
 ---
 
 ## Automatic Skill Activation Rules (Proactive Routing)
 
-The following rules are **deterministic** — no judgment needed. If the condition is true, the skill is loaded.
+The following rules are **deterministic** -  no judgment needed. If the condition is true, the skill is loaded.
 
 > **Availability Guard**: Load only skills that are physically installed in `.agents/core/skills/`. For uninstalled catalog skills, rely on core skills (`engineering-workflow`, `ponytail-mindset`, `gemini-precision`, `security`) and recommend `contextos skill add <name>` when deep domain checklists are needed.
 
@@ -159,6 +159,22 @@ role: Staff Engineer (Orchestrator)
 trigger: "graphify" OR "codebase graph" OR "project graph" OR "map codebase" OR "knowledge graph" OR "построй граф проекта"
 load: [graphify, system-design, context-manager]
 role: Architect
+
+trigger: "security audit" OR "vulnerability" OR "pentest"
+load: [security-audit, security, engineering-workflow]
+role: Chief Security Officer (audit) -> Senior Developer (build)
+
+trigger: "api design" OR "REST API" OR "contract" OR "openapi"
+load: [api-design, system-design, engineering-workflow]
+role: Architect (plan) -> Senior Developer (build)
+
+trigger: "terraform" OR "opentofu" OR "iac" OR "infrastructure"
+load: [terraform, decisions, engineering-workflow]
+role: DevOps Engineer
+
+trigger: "ci/cd" OR "github actions" OR "pipeline" OR "quality gates"
+load: [ci-cd, engineering-workflow]
+role: DevOps Engineer
 ```
 
 ### By Technology Detected in Codebase
@@ -178,7 +194,7 @@ files: "components/ui/*" present → shadcn detected, apply K9-K11 rules from im
 
 ---
 
-## Pipeline — Phase-by-Phase Rules
+## Pipeline -  Phase-by-Phase Rules
 
 Every task MUST follow these phases in order. No skipping.
 
@@ -191,7 +207,7 @@ Required output before proceeding:
 - Explicit in-scope / out-of-scope
 - List of files that will change
 - Acceptance criteria as testable statements
-- **STOP — do not write code until spec is reviewed**
+- **STOP -  do not write code until spec is reviewed**
 
 ---
 
@@ -205,7 +221,7 @@ Required output before proceeding:
 - Test requirement per task
 - Risk assessment
 - **If UI domain, read and incorporate `.interface-design/system.md` design memory**
-- **STOP — do not write code until plan is approved**
+- **STOP -  do not write code until plan is approved**
 
 ---
 
@@ -236,12 +252,12 @@ Rules:
 **Role**: `[ROLE: Staff Engineer]` + `[ROLE: Senior Designer]` if UI  
 **Load**: `engineering-workflow` (code review checklist) + `impeccable-design` (if UI)
 
-For UI tasks — run the full impeccable-design audit:
-- Typography rules T1–T10
-- Color rules C1–C12
-- Layout rules L1–L11 (including z-index check)
-- Component rules K1–K11 (shadcn-first)
-- Animation rules A1–A8 (Framer Motion exception noted)
+For UI tasks -  run the full impeccable-design audit:
+- Typography rules T1-T10
+- Color rules C1-C12
+- Layout rules L1-L11 (including z-index check)
+- Component rules K1-K11 (shadcn-first)
+- Animation rules A1-A8 (Framer Motion exception noted)
 
 ---
 
@@ -276,6 +292,10 @@ Use this table to instantly determine which skills to load:
 | Architecture visualization | `architecture-diagrams` + `system-design` | Architect |
 | Multi-agent parallel tasks | `subagent-orchestrator` + `engineering-workflow` | Staff Engineer (Orchestrator) |
 | Codebase graph / repo mapping | `graphify` + `context-manager` + `system-design` | Architect |
+| Security audit / pen-test | `security-audit` + `security` + `engineering-workflow` | Chief Security Officer |
+| API contract / interface design | `api-design` + `system-design` + `engineering-workflow` | Architect |
+| Terraform / IaC | `terraform` + `decisions` + `engineering-workflow` | DevOps Engineer |
+| CI/CD pipeline automation | `ci-cd` + `engineering-workflow` | DevOps Engineer |
 
 ---
 
@@ -326,18 +346,18 @@ These rules apply regardless of which skills are loaded:
 
 ### Code Quality
 - Business logic NEVER lives in API route handlers → always in `services/` or `use-cases/`
-- No `// TODO` in committed code — create a tracked issue instead
+- No `// TODO` in committed code -  create a tracked issue instead
 - All async operations have explicit error handling
-- No secrets hardcoded — use environment variables
+- No secrets hardcoded -  use environment variables
 
 ### Security
-- Auth check BEFORE any data access — no exceptions
+- Auth check BEFORE any data access -  no exceptions
 - All user input validated and sanitized before processing
-- SQL queries use parameterized form — no string concatenation
+- SQL queries use parameterized form -  no string concatenation
 
 ### Design
-- No arbitrary Tailwind values (`gap-[17px]`) — use scale utilities
-- No hardcoded z-indexes (`z-[999]`) — use Radix/shadcn Portals
+- No arbitrary Tailwind values (`gap-[17px]`) -  use scale utilities
+- No hardcoded z-indexes (`z-[999]`) -  use Radix/shadcn Portals
 - Every list/table/feed has a designed empty state
 
 ### Engineering
@@ -348,10 +368,10 @@ These rules apply regardless of which skills are loaded:
 
 ### Completion Protocol
 When finishing a workflow or task, always report your final status clearly using one of the following:
-- **DONE** — completed with evidence.
-- **DONE_WITH_CONCERNS** — completed, but list specific concerns.
-- **BLOCKED** — cannot proceed; state blocker and what was tried.
-- **NEEDS_CONTEXT** — missing info; state exactly what is needed.
+- **DONE** -  completed with evidence.
+- **DONE_WITH_CONCERNS** -  completed, but list specific concerns.
+- **BLOCKED** -  cannot proceed; state blocker and what was tried.
+- **NEEDS_CONTEXT** -  missing info; state exactly what is needed.
 
 ---
 

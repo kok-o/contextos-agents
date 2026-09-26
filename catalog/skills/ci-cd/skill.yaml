@@ -1,0 +1,12 @@
+schemaVersion: 2
+name: ci-cd
+description: Shift-left CI/CD pipeline automation inspired by Addy Osmani. Enforces unskippable quality gates, least-privilege token permissions, and deterministic GitHub Actions workflows.
+version: 1.0.0
+category: devops
+type: instruction-only
+requires:
+  - engineering-workflow
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - VALIDATION.json

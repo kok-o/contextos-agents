@@ -1,0 +1,11 @@
+{
+  "skill": "security-audit",
+  "version": "1.0.0",
+  "checks": [
+    "Hunter and verifier roles are strictly separated",
+    "Evidence-based verification requires complete source trace",
+    "Target code is executed in read-only sandbox writing only to scratch/",
+    "Findings are documented in structured findings.json format",
+    "Remediations adhere to surgical blast radius containment"
+  ]
+}

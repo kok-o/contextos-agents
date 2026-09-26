@@ -106,8 +106,11 @@ Comprehensive performance optimization guide for React and Next.js applications,
 - `advanced-effect-event-deps` - Don't put `useEffectEvent` results in effect deps.
 - `advanced-event-handler-refs` - Store event handlers in refs for stable listener attachments.
 - `advanced-init-once` - Initialize app singletons once per lifecycle.
+- `advanced-compound-components` - Use React Context with compound components for composable sub-parts instead of monolithic prop bags.
+- `advanced-error-boundary-colocation` - Colocate Error Boundaries and Suspense boundaries close to the fault-prone tree, preserving the rest of the UI.
 
 ## Code Examples
+
 
 ```tsx
 // [GOOD] Parallel server fetching without waterfall

@@ -1,0 +1,11 @@
+{
+  "skill": "terraform",
+  "version": "1.0.0",
+  "checks": [
+    "Response contract declared with assumptions, risk category, and rollback plan",
+    "Safe destroy protocol strictly enforced without -auto-approve",
+    "Module hierarchy maintained (resource -> infrastructure -> composition)",
+    "Remote backend configured with state locking and encryption at rest",
+    "Resource refactoring uses moved blocks to prevent identity churn"
+  ]
+}

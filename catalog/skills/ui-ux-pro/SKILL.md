@@ -67,7 +67,50 @@ Before starting a design implementation:
 
 ---
 
+## Component Architecture & Colocation Standards
+
+### Colocated File Structure
+Colocate everything belonging to a component in a dedicated directory:
+```
+src/components/TaskList/
+  TaskList.tsx          # Pure presentation component
+  TaskList.test.tsx     # Unit & interaction tests
+  use-task-list.ts      # Custom hook for state & handlers (if complex)
+  types.ts              # Component-specific interfaces & contracts
+```
+
+### Composition over Configuration
+Avoid large "prop-bag" configurations. Prefer composable slots and child components:
+
+```tsx
+// [PASS] Composable, flexible, predictable:
+<Card>
+  <CardHeader>
+    <CardTitle>Tasks</CardTitle>
+  </CardHeader>
+  <CardBody>
+    <TaskList tasks={tasks} />
+  </CardBody>
+</Card>
+
+// [FAIL] Over-configured prop bag (inflexible, brittle):
+<Card
+  title="Tasks"
+  headerVariant="large"
+  bodyPadding="md"
+  content={<TaskList tasks={tasks} />}
+/>
+```
+
+### Container vs Presentation Separation
+Separate network side effects from UI rendering:
+- **Container**: Handles `useQuery`, loading skeletons, error states, and empty states.
+- **Presentation**: Pure component receiving typed data and callbacks, easy to test and render in Storybook.
+
+---
+
 ## [PASS] Required Standards
+
 
 ### Accessibility Checklist
 

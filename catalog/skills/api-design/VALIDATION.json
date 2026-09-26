@@ -1,0 +1,11 @@
+{
+  "skill": "api-design",
+  "version": "1.0.0",
+  "checks": [
+    "Hyrum's Law awareness enforced: no raw internal errors or ORM models leaked",
+    "Contracts defined before implementation using TypeScript, JSON Schema, or OpenAPI",
+    "Uniform error response shape implemented across all endpoints",
+    "Boundary validation applied at all network and controller ingress points",
+    "Idempotency keys supported for critical state-mutating requests"
+  ]
+}

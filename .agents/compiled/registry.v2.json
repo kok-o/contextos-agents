@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:ee94ee1691d6fffc9404b90e7ca3803663200284c7afa87bc2e181e3e2de21c2",
+  "sourceGraphHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
   "skills": {
     "context-manager": {
       "id": "context-manager",
@@ -341,9 +341,9 @@
       "category": "backend",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:6c23ea85a6b94e784adfd896daf8ce37d592af854e3e10541a3f6502cfd50f74",
-      "resourceTreeHash": "sha256:8a1843bee27cb659197690579a06a339c2d34d7b2a4090b75e133a4a7ac00767",
-      "estimatedTokens": 2089,
+      "entrypointHash": "sha256:5daec60e9bb1c49a2b66e43d73e897397507e3604ef4bf02588d35cfd59b1903",
+      "resourceTreeHash": "sha256:b4302851046e1faffc18bc600c79d92d1da7f31bed03781eee89e84ddedc4956",
+      "estimatedTokens": 2237,
       "source": ".agents/core/skills/security/skill.yaml",
       "signals": {
         "aliases": [
@@ -411,7 +411,7 @@
       },
       "context": {
         "priority": 90,
-        "estimatedTokens": 2089
+        "estimatedTokens": 2237
       },
       "resources": [
         {

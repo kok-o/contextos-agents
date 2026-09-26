@@ -84,10 +84,16 @@ When building AI workflows, tools, or MCP servers:
    - Restrict file system tools to the workspace root - block directory traversal (`../`).
 3. **Secret Masking & Output Sanitization**:
    - Scrub API keys (`sk-...`, `Bearer ...`), tokens, and credentials before writing to agent logs or step summaries.
+4. **Sandbox Execution & Write Isolation (Supply-Chain Defense)**:
+   - Target code is inspected strictly read-only; never execute target-controlled builds or tests with write access to the repository root.
+   - Restrict process write boundaries strictly to an isolated temporary `scratch/` directory.
+   - Enforce zero outbound external network access during security audits to prevent secret exfiltration via malicious scripts or dependencies.
+   - Promote verified non-secret results to retained `artifacts/` only via trusted parent-side inspection code.
 
 ---
 
 ## Code Examples
+
 
 ### Timing-Safe Secret Verification
 

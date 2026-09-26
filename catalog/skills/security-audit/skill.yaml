@@ -1,0 +1,13 @@
+schemaVersion: 2
+name: security-audit
+description: Adversarial multi-agent security audit framework inspired by Cloudflare. Employs independent hunter and verifier roles, OS sandbox write isolation, and evidence-backed vulnerability verification.
+version: 1.0.0
+category: engineering
+type: instruction-only
+requires:
+  - engineering-workflow
+  - security
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - VALIDATION.json

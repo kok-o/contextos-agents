@@ -69,6 +69,7 @@ website/
 
 # Local scratch and temporary scripts
 scratch/
+.external-skills/
 
 *.tgz
 

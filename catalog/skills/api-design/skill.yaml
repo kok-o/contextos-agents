@@ -1,0 +1,13 @@
+schemaVersion: 2
+name: api-design
+description: Contract-first API and interface design standard inspired by Addy Osmani. Enforces Hyrum's Law awareness, uniform error shapes, boundary validation, and idempotency keys.
+version: 1.0.0
+category: backend
+type: instruction-only
+requires:
+  - engineering-workflow
+  - system-design
+resources:
+  - EXAMPLES.md
+  - SKILL.md
+  - VALIDATION.json

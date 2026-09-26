@@ -1,0 +1,11 @@
+{
+  "skill": "ci-cd",
+  "version": "1.0.0",
+  "checks": [
+    "Shift-left quality gates pipeline implemented in order",
+    "Least-privilege token permissions declared (contents: read)",
+    "Deterministic dependency installation enforced with frozen lockfile",
+    "Concurrency cancellation configured for PR branch updates",
+    "Unskippable gates invariant enforced without disabling rules"
+  ]
+}
