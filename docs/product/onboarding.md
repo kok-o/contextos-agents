@@ -170,3 +170,32 @@ The composite Action runs completely isolated from consumer code: it never invok
   npx contextos-agents recover --list
   npx contextos-agents recover --rollback <txId>
   ```
+
+---
+
+## 8. Pre-Commit Security & Runtime Defense
+
+For end-to-end security, combine static pre-commit scanning with real-time runtime protection:
+
+### Static Git Index Governance (ContextOS)
+
+Prevent dirty commits, leaked API keys, and lazy placeholder stubs:
+
+```sh
+# Scan staged index prior to commit
+npx contextos-agents scan --staged --enforce
+
+# Install safe pre-commit Git hook that runs in milliseconds
+npx contextos-agents hook install
+```
+
+### In-Flight Runtime Defense (Stroq Synergy)
+
+While ContextOS governs rules, configs, and commits, coding agents can encounter indirect prompt injections during live execution (e.g. from malicious GitHub issues or untrusted packages). For enterprise setups, we recommend pairing ContextOS with a local runtime action firewall, such as [Stroq](https://github.com/AGGIB/Stroq):
+
+```sh
+# Guard agent sessions against data egress and injection
+npx @stroq/cli init
+```
+
+Together, ContextOS provides compile-time rule governance and commit gating, while Stroq intercepts live tool-calls to block credential exfiltration and unauthorized commands.

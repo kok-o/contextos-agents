@@ -8,8 +8,9 @@ These components are production-ready, strictly versioned, and guaranteed for ba
 
 *   **Manifest & Resolver Engine:** The dependency resolution and skill graph planning engine.
 *   **Adapter Generation:** Compilers that produce `.cursorrules`, Claude Code config, Copilot instructions, etc.
-*   **Lockfile & Validation (Drift Detection):** Generation of deterministic lockfiles and CI quality gates (`contextos validate`).
-*   **Core Commands:** `init`, `export`, `resolve`, `doctor`, `watch`.
+*   **Lockfile & Validation (Drift Detection):** Generation of deterministic lockfiles and CI quality gates (`contextos validate`, `contextos gate`).
+*   **Staged Index Scanner & Safe Hooks:** Scanning Git index blobs for secrets and lazy stubs (`contextos scan`), and managing isolated pre-commit hooks (`contextos hook`).
+*   **Core Commands:** `init`, `export`, `resolve`, `doctor`, `watch`, `scan`, `hook`, `gate`.
 
 ## 🟡 Beta (MCP Bridge)
 
@@ -20,7 +21,7 @@ These components are feature-complete but their APIs (specifically MCP schemas) 
 
 ## 🟠 Experimental (Runtime)
 
-These components handle execution and mutation. They carry security implications and should only be used in trusted repositories or local environments with explicit opt-in flags.
+These components handle execution and mutation. They carry security implications and should only be used in trusted repositories or local environments with explicit opt-in flags. In-flight action firewalling (such as real-time tool-call interception, taint analysis, and socket blocking) is out-of-scope for the core compiler and is best handled by dedicated local action firewalls (such as Stroq).
 
 *   **Git Worktree Isolation:** Spawning and managing parallel `.swarm-worktrees/`.
 *   **Host Agent Execution:** Launching Claude Code, Codex, or OpenCode as subprocesses.
