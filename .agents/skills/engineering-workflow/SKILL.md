@@ -307,6 +307,7 @@ export async function POST(req) {
 - [ ] Implementation plan broken down into vertical tasks < 2 hours each.
 - [ ] Tests written before implementation (TDD/BDD).
 - [ ] Code reviewed against correctness, security, performance, and design gates.
+- [ ] Staged security and quality check passes (`contextos scan --staged --enforce`).
 - [ ] Simplification ladder executed before shipping.
 
 ---

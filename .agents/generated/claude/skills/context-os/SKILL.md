@@ -2,11 +2,11 @@
 
 ## Overview
 
-Deterministic context compiler and policy engine for AI coding agents. Standardizes software engineering workflows across requirements, architecture, atomic task planning, implementation, verification, and release.
+Deterministic context compiler and policy engine for AI coding agents. Governs repository policy configuration, skill dependency graphs, profile management, and multi-agent configuration export.
 
 ## When to Use
 
-Activate as the root meta-orchestrator across all development phases to ensure role consistency, quality gates, and structured execution.
+Activate when managing project configuration, resolving skill dependencies, compiling rules for editors, or defining repository-level agent standards. (For task-specific file and context budgeting, use `context-manager`).
 
 ## Rules & Patterns
 

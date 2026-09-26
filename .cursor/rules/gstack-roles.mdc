@@ -26,13 +26,14 @@ Inspired by [Garry Tan's gstack](https://github.com/garrytan/gstack) - structure
 
 ## Role Identification Protocol
 
-At the start of each task or major phase switch, declare your role:
+At the start of each task or major phase switch, declare your role using the ContextOS standard format:
 
-```
-[ROLE: <Role Name>] - <One-line description of your mandate for this task>
+```text
+[DOMAIN: <Domain>] [PHASE: <Phase>] [ROLE: <Role Name>]
+Skills loaded: <skill-1>, <skill-2>
 ```
 
-> **Anti-Spam Invariant**: Declare this role **strictly once per phase**. Never prefix intermediate tool calls, file operations, or step updates with role tags.
+> **Anti-Spam Invariant**: Declare this role header **strictly once per phase**. Never prefix intermediate tool calls, file operations, or step updates with role tags.
 
 Then execute ONLY within the constraints of that role.
 

@@ -51,6 +51,7 @@ Activate whenever:
   1. Run the project validator or compiler (`node .agents/ctx.js validate`, `tsc --noEmit`, etc.).
   2. Run unit and integration tests (`npm test`, `pytest`, etc.).
   3. Run linter and formatting checks (`npm run lint:md`, `eslint`, etc.).
+  4. Run staged security and quality scanner (`contextos scan --staged --enforce`).
 - If a test or validation fails, do not guess: read the exact error trace, fix the root cause, and re-run until green.
 
 ### 4. Surgical Blast Radius Containment
@@ -86,7 +87,7 @@ Activate whenever:
 **Eliminate the "black box" by narrating technical decisions.**
 
 - Avoid executing long, silent chains of tool calls without user visibility.
-- Provide a concise 1–2 sentence transparent status update before key operations:
+- Provide a concise 1-2 sentence transparent status update before key operations:
   - State what was inspected or verified from the code.
   - State the architectural decision made and the immediate next action.
 - Keep narration crisp and actionable without excessive verbosity.

@@ -48,6 +48,7 @@ Activate whenever:
   1. Run the project validator or compiler (`node .agents/ctx.js validate`, `tsc --noEmit`, etc.).
   2. Run unit and integration tests (`npm test`, `pytest`, etc.).
   3. Run linter and formatting checks (`npm run lint:md`, `eslint`, etc.).
+  4. Run staged security and quality scanner (`contextos scan --staged --enforce`).
 - If a test or validation fails, do not guess: read the exact error trace, fix the root cause, and re-run until green.
 
 ### 4. Surgical Blast Radius Containment
@@ -83,7 +84,7 @@ Activate whenever:
 **Eliminate the "black box" by narrating technical decisions.**
 
 - Avoid executing long, silent chains of tool calls without user visibility.
-- Provide a concise 1–2 sentence transparent status update before key operations:
+- Provide a concise 1-2 sentence transparent status update before key operations:
   - State what was inspected or verified from the code.
   - State the architectural decision made and the immediate next action.
 - Keep narration crisp and actionable without excessive verbosity.
@@ -169,3 +170,106 @@ export async function updateUser(id, data, session) {
 - Enforces the 7-rung ladder of `ponytail-mindset`.
 - Acts as the baseline behavioral guardrail across all Gemini and Antigravity operations.
 
+
+<!-- Source: EXAMPLES.md -->
+
+# gemini-precision Examples - Anti-patterns vs ContextOS Standard
+
+## Example 1: Read-Before-Write Invariant (Zero Assumptions)
+
+### Anti-pattern: Hallucinated Import and Signature
+
+```typescript
+// BAD: Assuming the module exists and export is a default function
+import hashPassword from 'src/utils/crypto';
+const hash = hashPassword(password);
+```
+
+### Best practice: ContextOS Standard (Inspected Active Codebase First)
+
+```typescript
+// GOOD: Inspected src/lib/auth.ts via view_file before writing code
+import { hashSecret, ARGON2_CONFIG } from '../lib/auth.js';
+const hash = await hashSecret(password, ARGON2_CONFIG);
+```
+
+---
+
+## Example 2: Zero-Placeholder Invariant (Complete Code Only)
+
+### Anti-pattern: Lazy Stubs and Ellipsis Comments
+
+```typescript
+// BAD: Emitting incomplete code with TODOs and ellipsis
+export function processTransaction(tx: Transaction) {
+  // TODO: validate transaction balance
+  // ... rest of implementation stays here ...
+  return { status: 'ok' };
+}
+```
+
+### Best practice: ContextOS Standard (100% Drop-in Compilable)
+
+```typescript
+// GOOD: Fully implemented logic with complete error handling
+export function processTransaction(tx: Transaction): TransactionResult {
+  if (!tx.amount || tx.amount <= 0) {
+    throw new ValidationError('Transaction amount must be positive');
+  }
+  if (tx.senderBalance < tx.amount) {
+    throw new InsufficientFundsError(tx.senderId, tx.amount);
+  }
+  return {
+    status: 'ok',
+    transactionId: tx.id,
+    newBalance: tx.senderBalance - tx.amount,
+  };
+}
+```
+
+---
+
+## Example 3: Mandatory Proof-of-Work Invariant
+
+### Anti-pattern: Claiming Task Complete Without Evidence
+
+```text
+BAD: "I have updated the authentication handler. The code looks correct and is ready to merge."
+```
+
+### Best practice: ContextOS Standard (Verified with Automated Gates)
+
+```bash
+# GOOD: Run test suite, staged scanner, and consistency checks
+npm test
+contextos scan --staged --enforce
+node .agents/ctx.js validate
+```
+
+<!-- Source: TROUBLESHOOTING.md -->
+
+# gemini-precision Troubleshooting & Common Failure Modes
+
+## 1. Test Failure Investigation (No Guesswork)
+
+- **Symptom**: Test fails during `npm test` after code modifications.
+- **Root Cause**: Trying to patch the code without reading the exact assertion diff.
+- **Fix**: Never guess the fix. View the test file line where assertion failed, inspect expected vs actual output, and resolve the root discrepancy.
+
+## 2. Accidental Staged Secrets or Placeholders
+
+- **Symptom**: `contextos scan --staged --enforce` fails with exit code 1.
+- **Root Cause**: Committed temporary `.env` file or left an unfinished `// TODO: implement later` stub in added lines.
+- **Fix**: Remove or redact the secret before committing. Fully implement the logic or replace the placeholder with an explicit tracked issue rather than committed code stubs.
+
+## 3. Scope Creep and Excessive Blast Radius
+
+- **Symptom**: Unrelated files reformatted or imports reordered across the repository.
+- **Root Cause**: Full-file rewrite instead of targeted surgical replacement.
+- **Fix**: Use targeted chunks that touch only the lines specified in the task plan. Avoid modifying unrelated styling or formatting.
+
+## 4. Forbidden Long Dashes
+
+- **Symptom**: Linter or compliance check flags unicode dashes in text.
+- **Root Cause**: Using typography dashes (`\u2014` or `\u2013`) instead of standard ASCII hyphens.
+- **Fix**: Replace all em-dashes and en-dashes with standard ASCII hyphens (` - `) or appropriate punctuation (parentheses, commas, colons).

@@ -12,7 +12,6 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
-  - security.md
 rules:
   - id: SEC-001
     level: must
