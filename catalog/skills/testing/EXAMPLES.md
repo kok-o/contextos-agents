@@ -69,3 +69,54 @@ export const server = setupServer(
   })
 );
 ```
+
+---
+
+## Example 3: End-to-End User Journey with Playwright
+
+### Anti-pattern (Brittle CSS selectors and explicit sleeps)
+
+```typescript
+// BAD: XPath / brittle class selectors and fixed timer sleeps
+test('creates new task', async ({ page }) => {
+  await page.goto('http://localhost:3000');
+  await page.waitForTimeout(5000); // Brittle!
+  await page.click('.btn-primary-small'); // Class name will change with CSS refactoring
+});
+```
+
+### Best practice: ContextOS Standard (Accessible locators & auto-waiting)
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Task Management Journey', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate using baseURL configured in playwright.config.ts
+    await page.goto('/tasks');
+  });
+
+  test('creates, completes, and deletes a task', async ({ page }) => {
+    // 1. Fill input using accessible label
+    const input = page.getByRole('textbox', { name: /new task title/i });
+    await input.fill('Deploy production release');
+
+    // 2. Click button using accessible role
+    await page.getByRole('button', { name: /add task/i }).click();
+
+    // 3. Auto-waiting assertion for item appearance
+    const taskItem = page.getByRole('listitem').filter({ hasText: 'Deploy production release' });
+    await expect(taskItem).toBeVisible();
+
+    // 4. Toggle completion checkbox
+    const checkbox = taskItem.getByRole('checkbox', { name: /mark as done/i });
+    await checkbox.check();
+    await expect(checkbox).toBeChecked();
+
+    // 5. Delete task and verify disappearance
+    await taskItem.getByRole('button', { name: /delete task/i }).click();
+    await expect(taskItem).not.toBeVisible();
+  });
+});
+```
+

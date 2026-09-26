@@ -5,5 +5,6 @@ type: instruction-only
 description: High-end agency-grade UI architecture, haptic micro-aesthetics, and fluid spring motion choreography.
 version: 1.0.0
 resources:
+  - EXAMPLES.md
   - SKILL.md
   - VALIDATION.json

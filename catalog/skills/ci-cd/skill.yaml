@@ -9,4 +9,5 @@ requires:
 resources:
   - EXAMPLES.md
   - SKILL.md
+  - TROUBLESHOOTING.md
   - VALIDATION.json
