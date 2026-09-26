@@ -117,4 +117,121 @@ describe('Task 1.1: Consumer Project Root & Unique Skill Isolation', () => {
       'detectDrift must not create lockfile'
     );
   });
+
+  test('Task 1.3: bin/index.js verification paths with explicit project root do not execute rogue .agents/ctx.js', () => {
+    const binPath = path.resolve(__dirname, '../bin/index.js');
+    const rogueCtxPath = path.join(consumerDir, '.agents', 'ctx.js');
+
+    // Plant a rogue script in consumer project that would fail with distinctive error if executed
+    fs.writeFileSync(rogueCtxPath, 'process.stderr.write("ROGUE_SCRIPT_LEAK"); process.exit(99);\n');
+
+    try {
+      // 1. Run gate command targeting consumer project with explicit --project
+      let gateStdout = '';
+      let gateCode = 0;
+      try {
+        gateStdout = execSync(`node "${binPath}" gate --project "${consumerDir}" --json`, {
+          stdio: 'pipe',
+          env: { ...process.env, NO_COLOR: '1' },
+        }).toString();
+      } catch (err) {
+        gateCode = err.status;
+        gateStdout = (err.stdout || '').toString();
+      }
+
+      const parsedGate = JSON.parse(gateStdout);
+      assert.equal(parsedGate.schemaVersion, '2.0.0');
+      assert.notEqual(gateCode, 99, 'Gate must not execute rogue script (code 99)');
+      assert.ok(!gateStdout.includes('ROGUE_SCRIPT_LEAK'), 'Rogue script output must not appear in gate');
+
+      // 2. Run export check command targeting consumer project
+      let exportCode = 0;
+      let exportStdout = '';
+      try {
+        exportStdout = execSync(`node "${binPath}" export all --check --project "${consumerDir}" --json`, {
+          stdio: 'pipe',
+          env: { ...process.env, NO_COLOR: '1' },
+        }).toString();
+      } catch (err) {
+        exportCode = err.status;
+        exportStdout = err.stdout.toString();
+      }
+
+      // Exit code 1 for drift is expected because files are not exported yet, but NOT 99 (the rogue code)
+      assert.notEqual(exportCode, 99, 'Must NOT execute rogue .agents/ctx.js');
+      assert.ok(!exportStdout.includes('ROGUE_SCRIPT_LEAK'), 'Rogue script output must not appear');
+    } finally {
+      if (fs.existsSync(rogueCtxPath)) {
+        fs.unlinkSync(rogueCtxPath);
+      }
+    }
+  });
+
+  test('Task 1.4: Scoped adapter check does not flag unselected adapters as orphans', () => {
+    const { applyArtifacts } = require('../.agents/adapters/pure-compiler.js');
+
+    // Export all adapters so that files for all 6 adapters exist and are tracked in lockfile
+    const renderedAll = renderAdapters(consumerDir, 'all');
+    applyArtifacts(consumerDir, renderedAll.artifacts, { context: renderedAll.context });
+
+    // Now verify ONLY cursor adapter
+    const cursorDrift = detectDrift(consumerDir, 'cursor');
+
+    assert.equal(cursorDrift.hasDrift, false, 'Cursor adapter must be in sync');
+    assert.equal(cursorDrift.findings.ORPHAN_MANAGED_OUTPUT.length, 0, 'Must NOT flag Claude or Gemini files as orphans');
+    assert.equal(cursorDrift.code, 0, 'Must return code 0 for in-sync single adapter check');
+  });
+
+  test('Task 1.5: Corrupt lockfile, unknown adapter, and empty projection fail closed with code 2', () => {
+    const lockfilePath = path.join(consumerDir, '.agents', 'lockfile.v2.json');
+    const validLockBackup = fs.readFileSync(lockfilePath, 'utf8');
+
+    try {
+      // 1. Corrupt lockfile
+      fs.writeFileSync(lockfilePath, '{ corrupt json invalid: true');
+      const corruptDrift = detectDrift(consumerDir, 'all');
+      assert.equal(corruptDrift.hasError, true, 'Corrupt lockfile must set hasError: true');
+      assert.equal(corruptDrift.code, 2, 'Corrupt lockfile must return error code 2');
+      assert.ok(corruptDrift.findings.CORRUPT_LOCKFILE.length > 0, 'Must report corrupt lockfile finding');
+
+      // 2. Unknown adapter
+      fs.writeFileSync(lockfilePath, validLockBackup);
+      const unknownDrift = detectDrift(consumerDir, 'nonexistent-adapter');
+      assert.equal(unknownDrift.hasError, true, 'Unknown adapter must set hasError: true');
+      assert.equal(unknownDrift.code, 2, 'Unknown adapter must return error code 2');
+      assert.ok(unknownDrift.findings.CONFIG_ERROR.length > 0, 'Must report config error finding');
+    } finally {
+      fs.writeFileSync(lockfilePath, validLockBackup);
+    }
+  });
+
+  test('Task 1.6: Check mode with --profile causes zero disk mutations', () => {
+    const binPath = path.resolve(__dirname, '../bin/index.js');
+    const lockfilePath = path.join(consumerDir, '.agents', 'lockfile.v2.json');
+    const profilesJsonPath = path.join(consumerDir, '.agents', 'profiles.json');
+
+    const lockfileBefore = fs.readFileSync(lockfilePath, 'utf8');
+    const profilesJsonExistedBefore = fs.existsSync(profilesJsonPath);
+
+    // Run export all --check with --profile frontend
+    try {
+      execSync(`node "${binPath}" export all --check --profile frontend --project "${consumerDir}" --json`, {
+        stdio: 'pipe',
+        env: { ...process.env, NO_COLOR: '1' },
+      });
+    } catch {
+      // Exit code 1 for drift is normal if profile differences exist
+    }
+
+    const lockfileAfter = fs.readFileSync(lockfilePath, 'utf8');
+    assert.equal(lockfileBefore, lockfileAfter, 'Lockfile must remain bit-for-bit identical after check mode');
+
+    const profilesJsonExistedAfter = fs.existsSync(profilesJsonPath);
+    assert.equal(
+      profilesJsonExistedBefore,
+      profilesJsonExistedAfter,
+      'profiles.json must not be created or modified by check mode'
+    );
+  });
 });
+

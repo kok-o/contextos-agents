@@ -97,24 +97,30 @@ if (command === 'export') {
   const pureCompiler = require('./adapters/pure-compiler.js');
   const driftDetector = require('./adapters/drift-detector.js');
 
+  const isCheck = args.includes('--check');
+  const isDiff = args.includes('--diff');
+  const isDryRun = args.includes('--dry-run');
+  const asJson = args.includes('--json');
+
   const profileFlagIdx = args.indexOf('--profile');
   let overrideProfile = null;
   if (profileFlagIdx !== -1 && args[profileFlagIdx + 1]) {
     const profiles = require('./profiles.js');
     overrideProfile = args[profileFlagIdx + 1];
     try {
-      profiles.applyProfile(overrideProfile);
-      console.log(`[PROFILE] Applied profile '${overrideProfile}' for this export.\n`);
+      const prof = profiles.getProfile(overrideProfile, process.cwd());
+      if (!prof) {
+        throw new Error(`Profile '${overrideProfile}' not found`);
+      }
+      if (!isCheck && !isDryRun && !isDiff) {
+        profiles.applyProfile(overrideProfile);
+        console.log(`[PROFILE] Applied profile '${overrideProfile}' for this export.\n`);
+      }
     } catch (err) {
       console.error(`[ERROR] ${err.message}`);
-      process.exit(1);
+      process.exit(2);
     }
   }
-
-  const isCheck = args.includes('--check');
-  const isDiff = args.includes('--diff');
-  const isDryRun = args.includes('--dry-run');
-  const asJson = args.includes('--json');
 
   const rawTarget = args[1] && !args[1].startsWith('--') ? args[1] : 'all';
 
@@ -125,7 +131,7 @@ if (command === 'export') {
       console.log(JSON.stringify(drift, null, 2));
     } else {
       console.log('\nContextOS — Adapter Output Drift Check\n');
-      if (!drift.hasDrift) {
+      if (!drift.hasDrift && !drift.hasError) {
         console.log(`✓ No adapter drift detected. All ${drift.projectedCount} output artifacts are synchronized.`);
       } else {
         console.log(`! Drift detected (${drift.totalFindings} finding(s)):\n`);
@@ -146,7 +152,7 @@ if (command === 'export') {
         console.log('\nRun: node .agents/ctx.js export all    to synchronize outputs with source skills.\n');
       }
     }
-    process.exit(drift.hasDrift ? 1 : 0);
+    process.exit(drift.code !== undefined ? drift.code : (drift.hasDrift ? 1 : 0));
   }
 
   // 2. Diff Preview Mode (--diff)

@@ -32,6 +32,14 @@ const flags = {
     const i = args.indexOf('--add-skill');
     return i !== -1 ? args[i + 1] : null;
   })(),
+  project:     (() => {
+    const i = args.indexOf('--project');
+    return i !== -1 && args[i + 1] && !args[i + 1].startsWith('-') ? path.resolve(args[i + 1]) : process.cwd();
+  })(),
+  target:      (() => {
+    const i = args.indexOf('--target');
+    return i !== -1 && args[i + 1] && !args[i + 1].startsWith('-') ? args[i + 1] : null;
+  })(),
 };
 
 // ── Help / Version ────────────────────────────────────────────────────────────
@@ -250,20 +258,103 @@ if (mainCommand === 'recover') {
   process.exit(0);
 }
 
-// Proxy commands to .agents/ctx.js when executed in a ContextOS project
+// Gate command (deterministic quality gate verification)
+if (mainCommand === 'gate') {
+  const { runGate } = require('./lib/gate.js');
+  const target = flags.target || (args[1] && !args[1].startsWith('-') ? args[1] : 'all');
+  const result = runGate(flags.project, {
+    target,
+    profile: flags.profile,
+    json: flags.json,
+  });
+
+  if (flags.json) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(`\nContextOS Quality Gate (${result.schemaVersion})\n`);
+    console.log(`  Project: ${result.projectRoot}`);
+    console.log(`  Status : ${result.status.toUpperCase()} (code ${result.code})`);
+    console.log(`  Message: ${result.message}\n`);
+    if (result.drift && result.drift.hasDrift) {
+      console.log(`! Drift detected (${result.drift.totalFindings} findings):`);
+      for (const [state, items] of Object.entries(result.drift.findings)) {
+        if (items.length > 0) {
+          console.log(`  [${state}] (${items.length}):`);
+          for (const item of items) {
+            console.log(`    • ${item.path || item.reason || JSON.stringify(item)}`);
+          }
+        }
+      }
+      if (result.drift.collisions && result.drift.collisions.length > 0) {
+        console.log(`\n  [PATH_COLLISIONS] (${result.drift.collisions.length}):`);
+        for (const c of result.drift.collisions) {
+          console.log(`    • ${c.path} (between ${c.firstAdapter} and ${c.secondAdapter})`);
+        }
+      }
+    }
+  }
+  process.exit(result.code);
+}
+
+// Export check mode (in-process verification without spawning untrusted project scripts)
+if (mainCommand === 'export' && args.includes('--check')) {
+  const { detectDrift } = require('../.agents/adapters/drift-detector.js');
+  const rawTarget = flags.target || (args[1] && !args[1].startsWith('-') ? args[1] : 'all');
+  const drift = detectDrift(flags.project, rawTarget, { profile: flags.profile });
+
+  if (flags.json) {
+    console.log(JSON.stringify(drift, null, 2));
+  } else {
+    console.log('\nContextOS - Adapter Output Drift Check\n');
+    console.log(`  Project: ${flags.project}`);
+    if (!drift.hasDrift && !drift.hasError) {
+      console.log(`✓ No adapter drift detected. All ${drift.projectedCount} output artifacts are synchronized.`);
+    } else {
+      console.log(`! Drift detected (${drift.totalFindings} finding(s)):\n`);
+      for (const [state, items] of Object.entries(drift.findings)) {
+        if (items.length > 0) {
+          console.log(`  [${state}] (${items.length}):`);
+          for (const item of items) {
+            console.log(`    • ${item.path || item.reason || JSON.stringify(item)}`);
+          }
+        }
+      }
+      if (drift.collisions && drift.collisions.length > 0) {
+        console.log(`\n  [PATH_COLLISIONS] (${drift.collisions.length}):`);
+        for (const c of drift.collisions) {
+          console.log(`    • ${c.path} (between ${c.firstAdapter} and ${c.secondAdapter})`);
+        }
+      }
+      console.log('\nRun: contextos export all    to synchronize outputs with source skills.\n');
+    }
+  }
+  process.exit(drift.code !== undefined ? drift.code : (drift.hasDrift ? 1 : 0));
+}
+
+// Proxy commands to trusted package .agents/ctx.js targeting flags.project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',
   'clean-worktrees', 'stats', 'watch', 'compile', 'explain',
   'thread'
 ];
 
-const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
-const hasLocalCtx = fs.existsSync(ctxPath);
+const packageCtxPath = path.join(__dirname, '..', '.agents', 'ctx.js');
 
-if (mainCommand && PROXY_COMMANDS.includes(mainCommand) && hasLocalCtx) {
+if (mainCommand && PROXY_COMMANDS.includes(mainCommand)) {
   const { execFileSync } = require('child_process');
+  const filteredArgs = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--project') {
+      i++; // skip project path
+      continue;
+    }
+    filteredArgs.push(args[i]);
+  }
   try {
-    execFileSync(process.execPath, [ctxPath, ...args], { stdio: 'inherit' });
+    execFileSync(process.execPath, [packageCtxPath, ...filteredArgs], {
+      cwd: flags.project,
+      stdio: 'inherit',
+    });
   } catch (e) {
     process.exit(e.status || 1);
   }
@@ -300,34 +391,7 @@ if (mainCommand === 'watch') {
   watchModule.runWatch(process.cwd());
 }
 
-const PROJECT_ONLY_COMMANDS = ['profile', 'export', 'validate', 'resolve', 'skill', 'index', 'clean-worktrees', 'compile', 'explain'];
-if (mainCommand && PROJECT_ONLY_COMMANDS.includes(mainCommand) && !hasLocalCtx) {
-  console.error('[ERROR] .agents/ctx.js not found in current directory.');
-  console.error('        Are you in a ContextOS project? Run `contextos` or `npx contextos-agents` first.');
-  process.exit(1);
-}
-
-if (mainCommand === 'audit') {
-  if (!hasLocalCtx) {
-    console.error('[ERROR] .agents/ctx.js not found. Are you in a ContextOS project?');
-    process.exit(1);
-  }
-  const { execFileSync } = require('child_process');
-  try {
-    execFileSync(process.execPath, [ctxPath, 'validate'], { stdio: 'inherit' });
-  } catch (e) {
-    process.exit(1);
-  }
-  process.exit(0);
-}
-
 if (mainCommand === 'install-skill') {
-  const ctxPath = path.join(process.cwd(), '.agents', 'ctx.js');
-  if (!fs.existsSync(ctxPath)) {
-    console.error('[ERROR] .agents/ctx.js not found. Are you in a ContextOS project?');
-    process.exit(1);
-  }
-  
   const fromRepo = (() => {
     const i = args.indexOf('--from-repo');
     return i !== -1 ? args[i + 1] : null;
@@ -338,7 +402,10 @@ if (mainCommand === 'install-skill') {
   if (ref) {
     const { execFileSync } = require('child_process');
     try {
-      execFileSync(process.execPath, [ctxPath, 'skill', 'add', ref], { stdio: 'inherit' });
+      execFileSync(process.execPath, [packageCtxPath, 'skill', 'add', ref], {
+        cwd: flags.project,
+        stdio: 'inherit',
+      });
     } catch (e) {
       process.exit(1);
     }

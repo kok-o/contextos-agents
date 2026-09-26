@@ -195,13 +195,28 @@ const COMMAND_REGISTRY = {
     requiresProject: true,
     options: [],
   },
+  gate: {
+    name: 'gate',
+    description: 'Run quality gate validation and drift checks without disk mutation',
+    usage: 'contextos gate [--project <dir>] [--target <adapters>] [--profile <name>] [--json]',
+    requiresProject: false,
+    options: [
+      { flag: '--project <dir>', desc: 'Target project directory (default: cwd)' },
+      { flag: '--target <adapters>', desc: 'Adapters to verify (gemini, claude, cursor, copilot, aider, zed, all)' },
+      { flag: '--profile <name>', desc: 'Profile override for verification' },
+      { flag: '--json', desc: 'Output gate report in versioned JSON format' },
+    ],
+  },
   export: {
     name: 'export',
     description: 'Compile skills for target agent (gemini, claude, cursor, copilot, aider, zed, all)',
-    usage: 'contextos export <target> [--profile <name>]',
+    usage: 'contextos export <target> [--check] [--project <dir>] [--profile <name>] [--json]',
     requiresProject: true,
     options: [
+      { flag: '--check', desc: 'Verify synchronization without modifying disk' },
+      { flag: '--project <dir>', desc: 'Target project directory (default: cwd)' },
       { flag: '--profile <name>', desc: 'Apply profile for this export run' },
+      { flag: '--json', desc: 'Output in JSON format' },
     ],
   },
   profile: {
