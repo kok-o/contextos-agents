@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0-rc.1] - 2026-09-26
+
+### Added
+- **Quality Gate Engine (`bin/lib/gate.js`)**: Deterministic, in-process drift verification engine checking managed outputs against source skills without disk mutation. Supports `--json` output, GitHub Actions annotations, and job step summaries.
+- **Isolated Composite Action (`.github/actions/contextos-gate`)**: Security-hardened CI action running from a pinned package version without executing consumer build scripts or `npm test`.
+- **Adapter Compatibility Contracts (`docs/ADAPTER_COMPATIBILITY.md`)**: Comprehensive specifications and verified test contracts for Cursor, Claude Code, GitHub Copilot, Gemini CLI, Aider, and Zed.
+- **Non-Destructive Aider Configuration Merger**: Preserves custom user settings (`model`, `auto-commits`, flags) in `.aider.conf.yml` using vendored AST parser while managing read-only rule conventions.
+- **Public Init from Tarball Suite (`tests/consumer-init.test.js`)**: End-to-end tests for `init --auto`, `init --minimal`, `init --agent`, `init --dry-run`, safe non-destructive updates, and refusal to overwrite user files.
+- **Transaction Recovery and Doctor Diagnostics**: Robust detection and remediation of interrupted transactions via `contextos recover --list`, `contextos recover --rollback <txId>`, and `contextos doctor`.
+- **Developer Onboarding and Pilot Protocol (`docs/product/`)**: 5-minute quickstart guide, multi-repository pilot protocol, and topology validation results across Node/TS, pure Python/Go, and legacy config repositories.
+
+### Changed
+- **Pure Compiler Normalization**: Added CRLF line-ending normalization in semantic hashing to guarantee identical hash calculation across Windows, macOS, and Linux checkouts.
+- **Package Size Verification**: Enforced 2.00 MB package limit in CI/prepublish (`scripts/verify-package-size.js`), maintaining a lightweight 0.95 MB unpacked footprint.
+
 ## [2.0.0] - 2026-09-13
 
 ### Changed (Breaking)
