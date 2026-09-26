@@ -105,6 +105,25 @@ npm test
 cd contextos-mcp && npm test
 ```
 
+### Security Scanning & Governance Hooks
+
+```bash
+# Scan staged Git index for secrets, blocked files, and placeholders:
+contextos scan --staged --enforce
+
+# Enforce task write-scope containment:
+contextos scan --staged --scope .agents/task-scope.json --json
+
+# Install safe, isolated pre-commit Git hooks:
+contextos hook install
+
+# Safely remove ContextOS hook block while preserving user hooks:
+contextos hook uninstall
+
+# Execute the 8-point CI quality gate:
+contextos gate
+```
+
 ### MCP Server (Beta, Separate Package)
 
 ```bash
@@ -198,3 +217,16 @@ Use these templates to quickly launch workflows:
 1. **Clickable File Links:** When referring to files, use relative or absolute paths. Agents can navigate files directly via markdown links.
 2. **Never Skip Planning:** For tasks involving more than 1-2 lines of code, always require `/spec` and `/plan` first. This saves up to 80% of debugging time.
 3. **Mandatory Proof-of-Work:** Require the agent to run `node .agents/ctx.js validate` and automated tests before marking tasks as complete.
+
+---
+
+## 7. Documentation Map
+
+Explore deeper architecture guides, adapter references, and product specifications:
+
+- **Quickstart & Onboarding:** [docs/product/onboarding.md](./docs/product/onboarding.md) - Five-minute guide to installing, configuring, and verifying ContextOS.
+- **Adapter Compatibility Matrix:** [docs/ADAPTER_COMPATIBILITY.md](./docs/ADAPTER_COMPATIBILITY.md) - Support tiers, file layouts, and test coverage across 11 AI coding tools.
+- **Catalog Quality & Code Examples:** [docs/product/catalog-quality.md](./docs/product/catalog-quality.md) - Quality tiers and test runner for executable code snippets in `SKILL.md`.
+- **Pilot Protocol & Evaluation:** [docs/product/pilot-protocol.md](./docs/product/pilot-protocol.md) and [docs/product/pilot-results.md](./docs/product/pilot-results.md) - Team evaluation methodology and verified benchmark results.
+- **Architecture & Boundaries:** [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) and [docs/PRODUCT_BOUNDARIES.md](./docs/PRODUCT_BOUNDARIES.md) - Internal compiler pipeline and stable vs experimental scope boundaries.
+- **Project Roadmap:** [docs/ROADMAP.md](./docs/ROADMAP.md) - Evolution milestones and completed phases.

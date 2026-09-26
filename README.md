@@ -21,6 +21,8 @@
 <p align="center">
   <a href="#installation">Installation</a> •
   <a href="./GUIDE.md">Guide</a> •
+  <a href="./docs/product/onboarding.md">Onboarding</a> •
+  <a href="./docs/ADAPTER_COMPATIBILITY.md">Adapters</a> •
   <a href="#supported-agents--compilation">Supported Agents</a> •
   <a href="./CONTRIBUTING.md">Contributing</a> •
   <a href="https://www.npmjs.com/package/contextos-agents">npm</a>
@@ -129,6 +131,32 @@ contextos doctor
 
 ```bash
 contextos export all       # Compile for all agents
+```
+
+### Staged Index Security Scanner (`contextos scan`)
+
+Scan staged changes directly from the Git index for secret leaks, blocked credential files, unfinished lazy stubs, and write-scope containment:
+
+```bash
+contextos scan --staged --enforce
+contextos scan --staged --placeholders --scope .agents/task-scope.json --json
+```
+
+### Safe Git Pre-Commit Hooks (`contextos hook`)
+
+Install or remove isolated pre-commit hooks that run fast security checks without clobbering existing developer hooks:
+
+```bash
+contextos hook install
+contextos hook uninstall
+```
+
+### CI Quality Gate (`contextos gate`)
+
+Run the complete 8-point production quality gate locally:
+
+```bash
+contextos gate
 ```
 
 ### CI Quality Gate Action (contextos-gate)
