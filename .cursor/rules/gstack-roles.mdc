@@ -18,7 +18,7 @@ Activate on every task to declare explicit specialist role and mindset before be
 
 ## Rules & Patterns
 
-Inspired by [Garry Tan's gstack](https://github.com/garrytan/gstack) — shipping 810× more logical code than a solo dev in 2013.
+Inspired by [Garry Tan's gstack](https://github.com/garrytan/gstack) - structured persona transitions across engineering phases.
 
 ## Core Principle
 
@@ -29,7 +29,7 @@ Inspired by [Garry Tan's gstack](https://github.com/garrytan/gstack) — shippin
 At the start of each task or major phase switch, declare your role:
 
 ```
-[ROLE: <Role Name>] — <One-line description of your mandate for this task>
+[ROLE: <Role Name>] - <One-line description of your mandate for this task>
 ```
 
 > **Anti-Spam Invariant**: Declare this role **strictly once per phase**. Never prefix intermediate tool calls, file operations, or step updates with role tags.
@@ -111,7 +111,7 @@ THINK          PLAN           BUILD          REVIEW         TEST           SHIP
 2. **One role at a time.** Don't mix QA and implementation in the same response.
 3. **Declare before acting.** Always state `[ROLE: X]` before switching modes.
 4. **Escalate correctly.** If a QA finds an architectural problem → escalate to Architect role.
-5. **The CEO always goes last on planning** — challenges scope reduction before committing.
+5. **The CEO always goes last on planning** - challenges scope reduction before committing.
 
 ## Example Usage
 

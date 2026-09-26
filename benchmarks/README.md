@@ -1,5 +1,7 @@
 # ContextOS Benchmark
 
+> **Note on Product Scope (ADR-011)**: Following the strategic decision in [ADR-011](../docs/decisions/0011-pivot-to-agent-governance-and-ci-gates.md), this evaluation harness serves as an internal regression and prompt-efficacy test for skill authors. It is not designed to prove commercial token-reduction claims.
+
 `npm run benchmark` is the current paired benchmark. It can call a model through an API or prepare equivalent prompts for manual runs in a chat UI. The API mode is the reproducible path; manual chat mode uses the same local evaluator but cannot control or inspect the chat platform's hidden context.
 
 ## Run against a model API

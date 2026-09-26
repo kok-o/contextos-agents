@@ -104,28 +104,66 @@ export function verifyWebhookSignature(payload, signature, secret) {
 }
 ```
 
-### Safe SSRF Prevention Wrapper
+### Safe SSRF Prevention (OWASP Compliant)
 
 ```typescript
 import dns from 'node:dns/promises';
+import net from 'node:net';
 
-export async function validateSafeUrl(urlString: string): Promise<URL> {
+export function isPrivateOrReservedIp(ip: string): boolean {
+  // Normalize IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 -> 127.0.0.1)
+  const cleanIp = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+  const family = net.isIP(cleanIp);
+  if (family === 0) return true; // Malformed address rejected
+
+  if (family === 4) {
+    const parts = cleanIp.split('.').map(Number);
+    const [b0, b1] = parts;
+    if (b0 === 0) return true;                                // 0.0.0.0/8 (Current network)
+    if (b0 === 10) return true;                               // 10.0.0.0/8 (Private class A)
+    if (b0 === 127) return true;                              // 127.0.0.0/8 (Loopback)
+    if (b0 === 100 && b1 >= 64 && b1 <= 127) return true;     // 100.64.0.0/10 (Carrier-grade NAT)
+    if (b0 === 169 && b1 === 254) return true;                // 169.254.0.0/16 (Link-local / Cloud metadata)
+    if (b0 === 172 && b1 >= 16 && b1 <= 31) return true;     // 172.16.0.0/12 (Private class B)
+    if (b0 === 192 && b1 === 168) return true;                // 192.168.0.0/16 (Private class C)
+    if (b0 >= 224) return true;                               // Multicast (224.0.0.0/4) & Reserved (240.0.0.0/4)
+    return false;
+  }
+
+  if (family === 6) {
+    const lower = cleanIp.toLowerCase();
+    if (lower === '::1' || lower === '::') return true;       // Loopback & Unspecified
+    if (lower.startsWith('fe80:') || lower.startsWith('fe9') || lower.startsWith('fea') || lower.startsWith('feb')) return true; // fe80::/10 (Link-local)
+    if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // fc00::/7 (Unique Local Address)
+    if (lower.startsWith('ff')) return true;                  // ff00::/8 (Multicast)
+    return false;
+  }
+  return true;
+}
+
+export async function fetchWithSsrfProtection(urlString: string, options: RequestInit = {}): Promise<Response> {
   const parsed = new URL(urlString);
   if (parsed.protocol !== 'https:') {
     throw new Error('Only HTTPS protocol is permitted');
   }
-
-  const { address } = await dns.lookup(parsed.hostname);
-  if (
-    address.startsWith('127.') ||
-    address.startsWith('10.') ||
-    address.startsWith('192.168.') ||
-    address === '169.254.169.254'
-  ) {
-    throw new Error('Access to private/metadata IP addresses is blocked');
+  if (parsed.username || parsed.password) {
+    throw new Error('Credentials in URL are strictly prohibited');
   }
 
-  return parsed;
+  // Resolve both IPv4 and IPv6 to prevent IPv6 bypass
+  const addresses = await dns.lookup(parsed.hostname, { all: true });
+  if (!addresses || addresses.length === 0) {
+    throw new Error(`Unable to resolve host: ${parsed.hostname}`);
+  }
+
+  for (const { address } of addresses) {
+    if (isPrivateOrReservedIp(address)) {
+      throw new Error(`Blocked SSRF target: host ${parsed.hostname} resolved to private/reserved IP ${address}`);
+    }
+  }
+
+  // Pinned connection or custom dispatcher prevents DNS rebinding (TOCTOU)
+  return fetch(urlString, options);
 }
 ```
 

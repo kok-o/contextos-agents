@@ -62,6 +62,18 @@ export function AccessibleModal({ isOpen, onClose, titleId, children }: ModalPro
     if (!isOpen) return;
     triggerRef.current = document.activeElement as HTMLElement;
 
+    // Move focus inside dialog upon opening (W3C ARIA APG pattern)
+    requestAnimationFrame(() => {
+      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) || [];
+      if (focusables.length > 0) {
+        focusables[0].focus();
+      } else {
+        dialogRef.current?.focus();
+      }
+    });
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -101,9 +113,10 @@ export function AccessibleModal({ isOpen, onClose, titleId, children }: ModalPro
       <div 
         ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg rounded-xl bg-background p-6 shadow-2xl border"
+        className="w-full max-w-lg rounded-xl bg-background p-6 shadow-2xl border outline-none"
       >
         {children}
       </div>

@@ -186,12 +186,12 @@ describe('Milestone 9: Prompt & Skill System Quality Guardrails', () => {
   describe('4. Prompt Budget Limits (Section 14.4)', () => {
     test('applies tiered default budgets based on task risk level', () => {
       const standardRes = resolver.resolve({ task: 'Add button component' });
-      // Standard tasks default to 4,000 token budget tier
-      assert.equal(BUDGET_TIERS.STANDARD, 4000);
+      // Standard tasks default to 32,000 token budget tier
+      assert.equal(BUDGET_TIERS.STANDARD, 32000);
 
       const highRes = resolver.resolve({ task: 'Update security authentication tokens' });
-      // High-risk tasks default to 7,500 token budget tier
-      assert.equal(BUDGET_TIERS.HIGH, 7500);
+      // High-risk tasks default to 64,000 token budget tier
+      assert.equal(BUDGET_TIERS.HIGH, 64000);
     });
 
     test('explicit user budget overrides tiered default budget', () => {

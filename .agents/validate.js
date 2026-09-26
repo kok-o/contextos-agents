@@ -642,6 +642,65 @@ function checkRegistryV2() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+//  CHECK 13 — Catalog Skills Validation
+// ═════════════════════════════════════════════════════════════════════════════
+function checkCatalogSkills() {
+  const catalogSkillsDir = path.join(ROOT, 'catalog', 'skills');
+  if (!fs.existsSync(catalogSkillsDir)) return;
+
+  let validated = 0;
+  const entries = fs.readdirSync(catalogSkillsDir);
+
+  for (const name of entries) {
+    const dir = path.join(catalogSkillsDir, name);
+    if (!fs.statSync(dir).isDirectory()) continue;
+
+    const skillMd = path.join(dir, 'SKILL.md');
+    const yaml = path.join(dir, 'skill.yaml');
+    const validationJson = path.join(dir, 'VALIDATION.json');
+
+    if (!fs.existsSync(skillMd)) {
+      error(`[catalog] ${name}: missing SKILL.md`);
+      continue;
+    }
+
+    const content = fs.readFileSync(skillMd, 'utf8');
+    const fm = parseFrontmatter(content);
+    if (!fm || fm.malformed) {
+      error(`[catalog] ${name}: malformed YAML frontmatter in SKILL.md`);
+    } else {
+      if (!yamlField(fm.raw, 'name')) {
+        error(`[catalog] ${name}: missing 'name' in SKILL.md frontmatter`);
+      }
+      if (!yamlField(fm.raw, 'description')) {
+        error(`[catalog] ${name}: missing 'description' in SKILL.md frontmatter`);
+      }
+    }
+
+    if (!fs.existsSync(yaml)) {
+      error(`[catalog] ${name}: missing skill.yaml`);
+    } else {
+      const yamlText = fs.readFileSync(yaml, 'utf8');
+      if (!yamlField(yamlText, 'name') && !yamlField(yamlText, 'id')) {
+        error(`[catalog] ${name}: missing 'name' or 'id' in skill.yaml`);
+      }
+    }
+
+    if (fs.existsSync(validationJson)) {
+      try {
+        JSON.parse(fs.readFileSync(validationJson, 'utf8'));
+      } catch (err) {
+        error(`[catalog] ${name}: invalid JSON in VALIDATION.json: ${err.message}`);
+      }
+    }
+
+    validated++;
+  }
+
+  info(`[catalog] ${validated} catalog skills validated (frontmatter, skill.yaml, validation metadata)`);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 //  MAIN
 // ═════════════════════════════════════════════════════════════════════════════
 function run() {
@@ -669,6 +728,7 @@ function run() {
   checkResourcesManifest(sourceSkills);
   checkProfilesIntegrity(sourceSkills);
   checkRegistryV2();
+  checkCatalogSkills();
 
   const passed = printReport();
   process.exit(passed ? 0 : 1);

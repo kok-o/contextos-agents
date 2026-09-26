@@ -55,22 +55,24 @@ npx contextos-agents --skip-compile     # Skip auto-compilation step
 
 ## Why ContextOS?
 
-Most AI coding assistants suffer from two extremes: they either operate in a vacuum with zero knowledge of your architectural standards, or they are choked with massive monolithic system prompts that cause context overflow and lazy code stubs (`// TODO`).
+Modern development teams face fragmented AI tooling: engineers use Cursor, Claude Code, GitHub Copilot, Gemini, Zed, and Aider. Each tool requires its own proprietary rules format, leading to configuration drift, contradictory standards, and unvetted AI slop (`// TODO`, leaked secrets).
 
-**ContextOS is not another coding agent.** It governs the context and policies used by the agents your team already has.
+Artificially truncating skills to save tokens degrades model reasoning and induces hallucinations. Instead, ContextOS ensures that agents receive complete, high-fidelity engineering context from a single version-controlled source.
+
+**ContextOS is not another coding agent.** It is the deterministic context compiler and policy engine for the agents your team already uses.
 
 ### The Three Pillars
 
-1. **Portable:** Define your engineering rules once. ContextOS exports configurations for supported agents (Gemini, Claude Code, Cursor, Copilot, Aider, and Zed).
-2. **Focused:** The resolver selects rules and skills relevant to a task so agents receive less unrelated context.
-3. **Verifiable:** Lockfiles, provenance, drift detection, and CI gates make generated agent configuration reproducible and auditable.
+1. **Portable (Multi-Agent):** Define your engineering skills once in standard Markdown. ContextOS compiles native configurations for all supported agents (Gemini, Claude Code, Cursor, Copilot, Aider, and Zed).
+2. **High-Fidelity & Focused:** The resolver maps domain skills to relevant tasks without lossy truncation, delivering rich, complete context to the model.
+3. **Verifiable in CI:** Lockfile v2 provenance, dual-hash verification, and CI quality gates detect configuration drift and enforce quality guardrails before merge.
 
 ## How it works
 
 1. Define version-controlled engineering policies once.
-2. Resolve only the policies relevant to the current task.
+2. Resolve the complete, relevant skill policies for the current task.
 3. Compile native configuration for each coding agent.
-4. Detect configuration drift in CI.
+4. Detect configuration drift and policy violations in CI.
 
 ```bash
 contextos resolve "review authentication changes" \
@@ -83,10 +85,10 @@ Selected:
   engineering-workflow  required dependency
 
 Excluded:
-  context-manager       context budget
+  context-manager       domain relevance filter
 
 Risk: high
-Estimated context: 2,840 tokens
+Context status: complete and verified
 
 ## Dynamic Skill Resolution & Unified CLI (`contextos` / `ctx.js`)
 

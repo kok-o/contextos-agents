@@ -75,42 +75,36 @@ Assemble context from three levels:
 - `docs/ROADMAP.md` — where are we going
 - `docs/PROJECT_GRAPH.md` — project structure
 
-**Level 2 — Architecture (load when needed):**
+**Level 2 - Architecture (load when needed):**
 
-- `docs/ARCHITECTURE.md` — system design
-- `docs/DATABASE.md` — data model
-- `docs/API.md` — API contracts
-- `docs/decisions/` — prior decisions
+- `docs/ARCHITECTURE.md` - system design and boundaries
+- `docs/decisions/` - architecture decision records (ADRs)
+- `docs/PRODUCT_BOUNDARIES.md` - maturity boundaries and non-promises
 
-**Level 3 — Development (load per task):**
+**Level 3 - Task-Specific Context (load per task):**
 
-- Relevant skill `.md` files
-- `docs/UI.md` — for frontend tasks
-- `docs/TASKS.md` — current sprint
+- Relevant skill documents from `.agents/skills/`
+- Target code and test files within planned blast radius
 
-**Context Filtering Rules:**
-See `references/context-rules.md` for the full mapping of task types to required documents.
+### Stage 4: Focused Context Selection
 
-### Stage 4: Prompt Optimization
+Before sending context to the AI coding assistant:
 
-Before sending to the AI agent:
+1. Select only skills relevant to the task domain and touched files
+2. Prioritize: task goal > architectural constraints > project conventions
+3. Include active Decision Records that affect the target component
+4. Enforce quality guardrails and verification criteria
 
-1. Remove sections not relevant to the current task
-2. Prioritize: current task context > architecture > vision
-3. Include recent Decision Records that affect the current task
-4. Add coding rules from the loaded skills
-
-## Commands
+## Core CLI Commands
 
 | Command | Action |
 | --- | --- |
-| `ctx init` | Analyze project idea, generate all docs |
-| `ctx plan` | Generate development plan from PRD |
-| `ctx compile` | Compile context for a specific task |
-| `ctx update` | Update changed documents |
-| `ctx graph` | Show/update Project Graph |
-| `ctx doctor` | Validate skill dependencies, check for conflicts |
-| `ctx explain` | Explain why specific context was loaded |
+| `contextos init` | Initialize `.agents/` folder and bootstrap profiles |
+| `contextos export <agent>` | Compile skills for target agent (`gemini`, `claude`, `cursor`, `copilot`, `aider`, `zed`, `all`) |
+| `contextos resolve "<task>"` | Dynamically resolve relevant skills, rules, and risk level for task |
+| `contextos validate` | Validate skill schemas, dependencies, and detect configuration drift |
+| `contextos doctor` | Pre-flight diagnostics for skills, profiles, and compiler synchronization |
+| `contextos watch` | Background file watcher for continuous auto-compilation |
 
 ## Project Initialization Flow
 

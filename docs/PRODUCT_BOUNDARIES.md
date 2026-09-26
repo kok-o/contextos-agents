@@ -6,7 +6,7 @@ To ensure stability and secure deployments, the ContextOS project is strictly se
 
 These components are production-ready, strictly versioned, and guaranteed for backwards compatibility. They form the `contextos-agents` root package.
 
-*   **Manifest & Resolver Engine:** The dependency resolution and token-budget planning engine.
+*   **Manifest & Resolver Engine:** The dependency resolution and skill graph planning engine.
 *   **Adapter Generation:** Compilers that produce `.cursorrules`, Claude Code config, Copilot instructions, etc.
 *   **Lockfile & Validation (Drift Detection):** Generation of deterministic lockfiles and CI quality gates (`contextos validate`).
 *   **Core Commands:** `init`, `export`, `resolve`, `doctor`, `watch`.

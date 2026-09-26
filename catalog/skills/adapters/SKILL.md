@@ -22,23 +22,19 @@ ContextOS is agent-agnostic. This skill generates the right config format for an
 
 ## Supported Agents
 
-| Agent | Config File | Format |
+| Agent | Config Target | Format |
 | --- | --- | --- |
-| **Gemini** | `.agents/AGENTS.md` + `.agents/skills/` | Markdown + YAML skills |
-| **Claude Code** | `CLAUDE.md` | Single markdown file |
-| **GitHub Copilot / Codex** | `AGENTS.md` (root) | Markdown |
-| **Cursor** | `.cursorrules` | Plain text rules |
-| **Aider** | `.aider.conf.yml` | YAML config |
-| **Continue** | `.continuerules` | Markdown rules |
-| **OpenHands** | `openhands.json` | JSON config |
-| **Roo Code** | `.roo/` | Directory with rules |
-| **Windsurf** | `.windsurfrules` | Plain text rules |
+| **Gemini / Antigravity** | `.agents/generated/gemini/skills/` | Native modular skills |
+| **Claude Code** | `.agents/generated/claude/skills/` | Aggregated markdown skills |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | Single instructions file with on-demand skill references |
+| **Cursor** | `.cursor/rules/*.mdc` + `.cursorrules` | MDC modular glob rules + fallback |
+| **Aider** | `.aider.conf.yml` + `CONVENTIONS.md` | YAML config + conventions markdown |
+| **Zed IDE** | `.zed/rules.md` + `.zed/prompts/*.md` | Native rules and prompt templates |
 
-## Generation Command
+## Generation Commands
 
-`ctx adapt [agent]` — Generate config for a specific agent.
-
-`ctx adapt all` — Generate configs for all supported agents.
+- `contextos export <agent>` (or `node .agents/ctx.js export <agent>`) - Generate config for a specific agent (`gemini`, `claude`, `cursor`, `copilot`, `aider`, `zed`).
+- `contextos export all` - Generate configs for all supported agents in a single transaction.
 
 ## Adapter Logic
 

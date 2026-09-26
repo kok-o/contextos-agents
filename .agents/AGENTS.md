@@ -28,12 +28,12 @@ Skills loaded: react, typescript, ui-ux-pro, ponytail-mindset
 
 ---
 
-## Skill Architecture (Context Efficiency)
+## Skill Architecture (High Fidelity & Progressive Disclosure)
 
-Skills are loaded on-demand. To keep the agent context window efficient:
-1. **Keep `SKILL.md` under 500 lines**: Put detailed reference material in separate files.
-2. **Use progressive disclosure**: Use a `references/` directory for deep context and load those files only when specifically needed by the task.
-3. **Use `scripts/`**: Place executable scripts in a `scripts/` directory alongside the skill.
+Skills provide deep, production-ready engineering standards. To maximize instruction adherence:
+1. **High-Fidelity Guidance**: Skills must be complete, self-contained, and comprehensive. Never truncate essential rules, edge cases, or code examples for artificial brevity.
+2. **Progressive Disclosure**: Use a `references/` directory for deep domain specifications, detailed schemas, and specialized manuals, loading them when the task explicitly targets those areas.
+3. **Executable Scripts**: Place verification and automation scripts in a `scripts/` directory alongside the skill.
 
 ## Skill Registry
 

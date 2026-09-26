@@ -23,15 +23,15 @@ const { WorkspaceGraphBuilder } = require('../workspace/workspace-graph');
 // Prompt budget limits (Section 14.4)
 const BUDGET_TIERS = {
   BOOTSTRAP: 1200,      // always-on bootstrap budget
-  SKILL_SUMMARY: 150,   // single skill summary limit
-  SKILL_BODY: 1200,     // single skill body limit
-  ROUTINE: 2000,        // routine context limit
-  STANDARD: 4000,       // standard normal compiled context limit
-  HIGH: 7500,           // high-risk compiled context limit
-  DESTRUCTIVE: 10000,   // destructive compiled context limit
+  SKILL_SUMMARY: 300,   // single skill summary limit
+  SKILL_BODY: 10000,    // single skill body limit (supports rich code examples and rules)
+  ROUTINE: 16000,       // routine context limit
+  STANDARD: 32000,      // standard normal compiled context limit (supports 8-10 full skills)
+  HIGH: 64000,          // high-risk compiled context limit
+  DESTRUCTIVE: 128000,  // destructive compiled context limit
 };
 
-const DEFAULT_CONTEXT_BUDGET_TOKENS = 8000;
+const DEFAULT_CONTEXT_BUDGET_TOKENS = 64000;
 
 // Risk-based workflows (Section 14.3)
 const WORKFLOW_TEMPLATES = {

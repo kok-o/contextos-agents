@@ -49,7 +49,7 @@ app/
 ## Pydantic Models
 
 ```python
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -66,8 +66,13 @@ class UserResponse(BaseModel):
 ## Dependency Injection
 
 ```python
-from fastapi import Depends
+from typing import AsyncGenerator
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
+import jwt
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
@@ -77,16 +82,34 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ) -> User:
-    # Verify token, return user
-    ...
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token signature or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = await user_repo.get_by_id(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
 ```
 
 ## Async
 
 - **Use async** for all I/O operations (database, HTTP calls, file I/O)
-- **Never block the event loop** — no sync I/O in async endpoints
+- **Never block the event loop** - no sync I/O in async endpoints
 - **Use `asyncio.gather`** for parallel async operations
-- **Background tasks** — `BackgroundTasks` for non-critical work
+- **Background tasks** - use `BackgroundTasks` for non-critical work
 
 ## Error Handling
 

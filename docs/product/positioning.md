@@ -15,14 +15,14 @@ Last Updated: 2026-09-13
 
 ## 2. Ideal Customer Profiles (ICP)
 
-### Primary ICP: Engineering Teams (5–100 Developers)
+### Primary ICP: Engineering Teams (5-100 Developers)
 - **Profile**: Multi-engineer teams where developers use varied AI assistants (e.g., some on Cursor, some using Claude Code in terminal, some pairing with Antigravity / Gemini).
 - **Core Pain**: Prompt drift, contradictory instructions, repetitive prompt pasting, accidental commits of unvetted AI slop or unreviewed changes.
 - **Value**: Single source of truth in `.agents/`, deterministic compilation to all IDE-native formats, fail-closed automated verification.
 
 ### Secondary ICP: Platform / DX Teams & Solo Maintainers
 - **Profile**: Platform engineers managing shared development standards across monorepos and microservices, or maintainers of high-integrity open-source projects.
-- **Core Pain**: Enforcing architectural guidelines and test requirements across dozens of packages without bloating context windows.
+- **Core Pain**: Enforcing architectural guidelines and test requirements across dozens of packages without manual synchronization overhead or rule drift across divergent agent formats.
 - **Value**: Workspace-aware dependency graphs, atomic transaction rollback, and verifiable provenance.
 
 ---
