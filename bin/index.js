@@ -357,6 +357,20 @@ if (mainCommand === 'export' && args.includes('--check')) {
   process.exit(drift.code !== undefined ? drift.code : (drift.hasDrift ? 1 : 0));
 }
 
+// Scan command (Git staged index security and placeholder scanner)
+if (mainCommand === 'scan') {
+  const scanModule = require('./commands/scan.js');
+  scanModule(args, flags);
+  process.exit(0);
+}
+
+// Hook command (safe Git hook lifecycle management)
+if (mainCommand === 'hook') {
+  const { hookCommand } = require('./commands/hook.js');
+  hookCommand(args, flags);
+  process.exit(0);
+}
+
 // Proxy commands to trusted package .agents/ctx.js targeting flags.project
 const PROXY_COMMANDS = [
   'profile', 'export', 'validate', 'resolve', 'skill', 'index',

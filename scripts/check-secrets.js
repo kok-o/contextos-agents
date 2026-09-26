@@ -8,78 +8,13 @@ const { execFileSync } = require('child_process');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-// ── Blocked file names and extensions ───────────────────────────────────────
-
-const BLOCKED_EXACT_NAMES = new Set([
-  '.env',
-  '.env.local',
-  '.env.production',
-  '.env.development',
-  '.env.staging',
-  '.env.test',
-  '.netrc',
-  '.git-credentials',
-  '.npmrc',
-  'credentials.json',
-  'service-account.json',
-  'serviceaccountkey.json',
-  'id_rsa',
-  'id_ed25519',
-  'mcp_config.json',
-]);
-
-const BLOCKED_EXTENSIONS = new Set([
-  '.key',
-  '.pem',
-  '.pfx',
-  '.p12',
-  '.pkcs12',
-]);
-
-// ── Secret Content Patterns ──────────────────────────────────────────────────
-
-const SECRET_PATTERNS = [
-  {
-    name: 'Hardcoded User Home Path Leak',
-    pattern: /(?:[a-zA-Z]:[/\\]Users[/\\]|\/(?:home|Users)\/)[a-zA-Z0-9_-]+[/\\](?:Desktop|Documents|Downloads|code|projects|repos)\b/i,
-  },
-  {
-    name: 'Private Key Header',
-    pattern: /-----BEGIN\s+(?:RSA|OPENSSH|EC|DSA|PGP)?\s*PRIVATE\s+KEY-----/,
-  },
-  {
-    name: 'GitHub Personal Access Token (Classic/OAuth)',
-    pattern: /\b(?:ghp|gho)_[A-Za-z0-9]{36}\b/,
-  },
-  {
-    name: 'GitHub Fine-Grained PAT',
-    pattern: /\bgithub_pat_[A-Za-z0-9_]{82}\b/,
-  },
-  {
-    name: 'Google API Key',
-    pattern: /\bAIza[A-Za-z0-9_-]{35}\b/,
-  },
-  {
-    name: 'OpenAI API Key',
-    pattern: /\bsk-[A-Za-z0-9]{32,}\b/,
-  },
-  {
-    name: 'Anthropic API Key',
-    pattern: /\bsk-ant-[A-Za-z0-9-]{90,}\b/,
-  },
-  {
-    name: 'OpenRouter API Key',
-    pattern: /\bsk-or-v1-[a-f0-9]{64}\b/,
-  },
-  {
-    name: 'Slack Token',
-    pattern: /\bxox[baprs]-[A-Za-z0-9_-]{10,48}\b/,
-  },
-  {
-    name: 'npm Access Token',
-    pattern: /\bnpm_[A-Za-z0-9]{32,36}\b/,
-  },
-];
+// ── Shared Secret Rules & Patterns (from bin/lib/scan.js) ───────────────────
+const {
+  BLOCKED_EXACT_NAMES,
+  BLOCKED_EXTENSIONS,
+  SECRET_PATTERNS,
+  redact,
+} = require('../bin/lib/scan.js');
 
 // Exempt directories and files (test fixtures and validation suites)
 const EXEMPT_PATH_SUBSTRINGS = [
@@ -126,10 +61,6 @@ function getFilesToScan(mode) {
   }
 }
 
-function redact(str) {
-  if (str.length <= 8) return '***';
-  return str.slice(0, 4) + '...' + str.slice(-4);
-}
 
 function findLocalEnvFiles(dir = ROOT_DIR) {
   const envFiles = [];

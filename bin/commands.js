@@ -308,6 +308,29 @@ const COMMAND_REGISTRY = {
       { flag: '--continue [txId]', desc: 'Attempt to resume and complete prepared transaction' },
     ],
   },
+  scan: {
+    name: 'scan',
+    description: 'Scan Git staged index for secrets, lazy stubs, and write-scope containment',
+    usage: 'contextos scan [--staged] [--secrets] [--placeholders] [--scope <file>] [--enforce] [--json]',
+    requiresProject: false,
+    options: [
+      { flag: '--staged', desc: 'Scan staged changes in Git index (default)' },
+      { flag: '--placeholders', desc: 'Detect unfinished lazy placeholder stubs in newly added code' },
+      { flag: '--scope <file>', desc: 'Verify staged files stay within declared task scope JSON' },
+      { flag: '--enforce', desc: 'Fail with exit code 1 if violations are detected' },
+      { flag: '--json', desc: 'Output scan results in versioned JSON format' },
+    ],
+  },
+  hook: {
+    name: 'hook',
+    description: 'Manage safe pre-commit Git governance hooks',
+    usage: 'contextos hook <install|uninstall>',
+    requiresProject: false,
+    options: [
+      { flag: 'install', desc: 'Install or update isolated pre-commit hook' },
+      { flag: 'uninstall', desc: 'Remove ContextOS hook block while preserving custom hooks' },
+    ],
+  },
 };
 
 /**
