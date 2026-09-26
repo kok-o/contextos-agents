@@ -103,7 +103,7 @@ ${mergedContent.trimStart()}
 }
 
 function render(context) {
-  const skills = collectSkillDirectories(context?.profile);
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   const artifacts = [];
 
   for (const skill of skills) {

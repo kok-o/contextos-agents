@@ -79,7 +79,7 @@ function render(context) {
     `| --- | --- | --- |\n`
   );
 
-  const skills = collectSkillDirectories(context?.profile);
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
     const skillName = path.basename(skill);
     const yamlPath = path.join(skill, 'skill.yaml');

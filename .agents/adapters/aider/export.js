@@ -97,7 +97,7 @@ function render(context) {
     `Skills are loaded on demand. Use \`/read .agents/skills/<skill>/SKILL.md\` when needed.\n\n` +
     `### Skill Index\n`);
 
-  const skills = collectSkillDirectories(context?.profile);
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
     const section = buildSkillSection(skill);
     if (section) convSections.push(section);

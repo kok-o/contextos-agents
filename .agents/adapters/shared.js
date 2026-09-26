@@ -12,17 +12,26 @@ const AGENTS_MD_PATH = path.join(AGENTS_DIR, 'AGENTS.md');
  * Plugins intentionally live outside `core/skills`, so adapters must use this
  * helper rather than enumerate the core directory themselves.
  */
-function collectSkillDirectories(overrideProfile = null) {
+function collectSkillDirectories(overrideProfile = null, projectRoot = null) {
+  let profile = overrideProfile;
+  let root = projectRoot;
+
+  if (overrideProfile && typeof overrideProfile === 'object') {
+    if (overrideProfile.projectRoot && !root) {
+      root = overrideProfile.projectRoot;
+    }
+  }
+
+  const effectiveRoot = root ? path.resolve(root) : process.cwd();
   const plugins = require(path.join(AGENTS_DIR, 'plugins.js'));
-  let dirs = plugins.collectAllSkillDirs()
+  let dirs = plugins.collectAllSkillDirs(effectiveRoot)
     .filter(dir => fs.existsSync(dir) && fs.statSync(dir).isDirectory())
     .sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
 
-  let profile = overrideProfile;
   if (!profile) {
     try {
       const profilesEngine = require(path.join(AGENTS_DIR, 'profiles.js'));
-      profile = profilesEngine.getActiveProfile();
+      profile = profilesEngine.getActiveProfile(effectiveRoot);
     } catch {
       profile = null;
     }

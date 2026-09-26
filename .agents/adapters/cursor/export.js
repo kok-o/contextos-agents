@@ -187,7 +187,7 @@ ${agentsMd}
     });
   }
 
-  const skills = collectSkillDirectories(context?.profile);
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
     const mdc = generateCursorMdc(skill);
     if (mdc) {

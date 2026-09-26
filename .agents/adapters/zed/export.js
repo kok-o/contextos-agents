@@ -95,7 +95,7 @@ function render(context) {
     `### Available Skills\n`
   );
 
-  const skills = collectSkillDirectories(context?.profile);
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
     const res = buildSkillSection(skill);
     if (res) {

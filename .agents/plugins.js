@@ -901,17 +901,18 @@ async function search(query) {
  * Adapters call this instead of reading CORE_SKILLS directly.
  */
 function collectAllSkillDirs(targetRoot) {
+  const isTargetExplicit = Boolean(targetRoot);
   const root = targetRoot || process.cwd();
   const agentsDir = path.join(root, '.agents');
   const localCore = path.join(agentsDir, 'core', 'skills');
   const localPlugins = path.join(agentsDir, 'plugins');
 
-  const coreDir = fs.existsSync(localCore) ? localCore : CORE_SKILLS;
-  const pluginsDir = fs.existsSync(localPlugins) ? localPlugins : PLUGINS_DIR;
+  const coreDir = fs.existsSync(localCore) ? localCore : (isTargetExplicit ? null : CORE_SKILLS);
+  const pluginsDir = fs.existsSync(localPlugins) ? localPlugins : (isTargetExplicit ? null : PLUGINS_DIR);
   const dirs = [];
 
   // Core skills
-  if (fs.existsSync(coreDir)) {
+  if (coreDir && fs.existsSync(coreDir)) {
     for (const name of fs.readdirSync(coreDir)) {
       const d = path.join(coreDir, name);
       if (fs.statSync(d).isDirectory()) dirs.push(d);
@@ -919,7 +920,7 @@ function collectAllSkillDirs(targetRoot) {
   }
 
   // Plugin skills (supports both standalone skill dirs and plugin bundles with skills/)
-  if (fs.existsSync(pluginsDir)) {
+  if (pluginsDir && fs.existsSync(pluginsDir)) {
     for (const name of fs.readdirSync(pluginsDir)) {
       const d = path.join(pluginsDir, name);
       if (!fs.statSync(d).isDirectory()) continue;
