@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.0-rc.1] - 2026-09-26
+## [2.1.0] - 2026-09-26
 
 ### Added
+- **4 New Industry Catalog Skills**:
+  - `security-audit`: In-depth vulnerability scanning, SAST/DAST automation, dependency checking, privilege escalation prevention, and SAIF/CIS benchmark mapping.
+  - `api-design`: Deterministic API design guidelines, RESTful contracts, idempotent operations, cursor pagination, rate limiting, and OpenAPI specifications.
+  - `terraform`: Infrastructure as Code (IaC) governance, remote state locking, plan review quality gates, least-privilege provider blocks, and OpenTofu compatibility.
+  - `ci-cd`: GitHub Actions hardening, matrix test workflows, supply chain artifact signing, branch protection rules, and build caching strategies.
+- **Catalog Troubleshooting Guides (`TROUBLESHOOTING.md`)**: Complete diagnostic guides with root causes, concrete code fixes, and verification steps across all 36 catalog skills.
+- **Design Style Code Implementations (`EXAMPLES.md`)**: Added production-ready TypeScript/Tailwind component examples to `minimalist-design`, `brutalist-design`, and `soft-design`.
+- **End-to-End Testing Scenarios**: Enriched `testing` skill with comprehensive Playwright E2E testing scenarios, fixtures, mock routes, and cross-browser CI configurations.
 - **Quality Gate Engine (`bin/lib/gate.js`)**: Deterministic, in-process drift verification engine checking managed outputs against source skills without disk mutation. Supports `--json` output, GitHub Actions annotations, and job step summaries.
+- **Staged Git Index Security Scanner (`bin/commands/scan.js`)**: Fast, in-memory scanner inspecting `git diff --cached` for leaked API secrets, credential patterns, unfinished lazy stubs (`// TODO`), and task write-scope containment.
+- **Isolated Pre-Commit Git Hooks (`bin/commands/hook.js`)**: Safe hook manager installing isolated ContextOS pre-commit verification blocks without overwriting or interfering with existing user hooks.
 - **Isolated Composite Action (`.github/actions/contextos-gate`)**: Security-hardened CI action running from a pinned package version without executing consumer build scripts or `npm test`.
 - **Adapter Compatibility Contracts (`docs/ADAPTER_COMPATIBILITY.md`)**: Comprehensive specifications and verified test contracts for Cursor, Claude Code, GitHub Copilot, Gemini CLI, Aider, and Zed.
 - **Non-Destructive Aider Configuration Merger**: Preserves custom user settings (`model`, `auto-commits`, flags) in `.aider.conf.yml` using vendored AST parser while managing read-only rule conventions.
@@ -19,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Developer Onboarding and Pilot Protocol (`docs/product/`)**: 5-minute quickstart guide, multi-repository pilot protocol, and topology validation results across Node/TS, pure Python/Go, and legacy config repositories.
 
 ### Changed
+- **Catalog Skill Count**: Expanded verified catalog from 32 to 36 specialized skills (43 skills total including 7 core skills).
+- **Catalog Sanitation**: Removed 13 redundant legacy markdown files across catalog skills to enforce single-source-of-truth standards.
+- **CLI Help Index**: Updated `contextos --help` command registry to include `scan`, `hook`, `recover`, and `explain`.
 - **Pure Compiler Normalization**: Added CRLF line-ending normalization in semantic hashing to guarantee identical hash calculation across Windows, macOS, and Linux checkouts.
 - **Package Size Verification**: Enforced 2.00 MB package limit in CI/prepublish (`scripts/verify-package-size.js`), maintaining a lightweight 0.95 MB unpacked footprint.
 

@@ -150,9 +150,11 @@ When solving engineering tasks, AI agents follow this structured lifecycle:
 
 ---
 
-## 4. Key Core Skills
+## 4. Key Core & Catalog Skills
 
-Skills live in `.agents/core/skills/` and can be explicitly activated during conversations:
+Skills live in `.agents/core/skills/` (core essential skills) and `catalog/skills/` (36 on-demand domain skills installable via `contextos skill add <name>`):
+
+### Core Skills (7)
 
 - **`gemini-precision`** - Strict precision mode for Gemini models: zero assumptions, zero placeholders (`// TODO`), and mandatory proof-of-work verification.
 - **`ponytail-mindset`** - Minimalist coding standard (YAGNI): prefer standard library and platform APIs over superfluous npm dependencies, clean solutions.
@@ -160,6 +162,17 @@ Skills live in `.agents/core/skills/` and can be explicitly activated during con
 - **`system-design`** and **`database`** - Scalable system architecture, optimized indexes, transactions, and N+1 query prevention.
 - **`security`** - Security audits: explicit authorization before data access, strict input validation (e.g. Zod), and sanitization.
 - **`interview-me`** - Interactive requirements interview: asks targeted questions one by one to eliminate ambiguity.
+- **`engineering-workflow`** - Senior engineering lifecycle enforcing DEFINE -> PLAN -> BUILD -> VERIFY -> REVIEW -> SHIP.
+
+### Extended Catalog Skills (36)
+
+Installable into any project on demand:
+
+- **Security & Compliance:** `security-audit` (SAST/DAST, dependency audits, CIS/SAIF benchmarks), `security` (application defenses).
+- **Architecture & APIs:** `api-design` (RESTful contracts, OpenAPI specifications, idempotency), `system-design`, `ddd`, `microservices`.
+- **DevOps & Infrastructure:** `terraform` (IaC state governance, plan review quality gates), `ci-cd` (GitHub Actions hardening, build caching), `docker`.
+- **Frontend & Design:** `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `minimalist-design`, `brutalist-design`, `soft-design`, `web-accessibility`.
+- **Cross-Cutting:** `testing` (Playwright E2E and unit test patterns), `performance`, `decisions` (ADRs), `architecture-diagrams`.
 
 ---
 

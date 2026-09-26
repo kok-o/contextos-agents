@@ -97,6 +97,10 @@ Commands:
   watch               Start continuous file watcher and auto-sync daemon
   detect              Analyze project and display detected tech stack & IDE
   install-skill       Interactive skill installer (or pass <ref> / --from-repo)
+  scan                Scan Git staged changes for secrets, placeholders, and scope
+  hook <cmd>          Manage isolated pre-commit Git governance hooks (install, uninstall)
+  recover             List or recover from interrupted filesystem transactions
+  explain [rule]      Inspect rule catalog, enforcement levels, and checkers
   setup-mcp           [DEPRECATED] Add MCP execution server to an existing .agents/ project
 
 Profiles:

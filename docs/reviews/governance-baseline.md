@@ -37,7 +37,7 @@
 | --- | --- | --- | --- |
 | `npm test` | 0 | 384 tests pass, 0 fail (67 suites) | Длительность: 66.5 сек, рабочее дерево чистое |
 | `node .agents/ctx.js validate` | 0 | PASSED (0 errors, 0 warnings) | Проверено 7 core skills, 33 ресурса, 1 профиль, registry v2 |
-| `node .agents/ctx.js validate --catalog` | 0 | PASSED (0 errors, 0 warnings) | Проверено 32 навыка каталога, frontmatter, skill.yaml, validation json |
+| `node .agents/ctx.js validate --catalog` | 0 | PASSED (0 errors, 0 warnings) | Проверено 36 навыков каталога, frontmatter, skill.yaml, validation json |
 | `node .agents/ctx.js export all --check` | 0 | PASSED (0 drift findings) | Синхронизированы все 41 выходной артефакт |
 | `npm run lint:md` | 0 | PASSED (0 errors) | README, CONTRIBUTING, GUIDE, core skills соответствуют правилам |
 | `npm run check:secrets` | 0 | PASSED (612 files scanned) | Секретов и приватных ключей не обнаружено |
