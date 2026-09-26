@@ -642,11 +642,14 @@ function checkRegistryV2() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-//  CHECK 13 — Catalog Skills Validation
+//  CHECK 13 — Catalog Skills Validation (Optional, gated by --catalog)
 // ═════════════════════════════════════════════════════════════════════════════
 function checkCatalogSkills() {
   const catalogSkillsDir = path.join(ROOT, 'catalog', 'skills');
-  if (!fs.existsSync(catalogSkillsDir)) return;
+  if (!fs.existsSync(catalogSkillsDir)) {
+    error(`[catalog] Catalog skills directory not found: ${catalogSkillsDir}`);
+    return;
+  }
 
   let validated = 0;
   const entries = fs.readdirSync(catalogSkillsDir);
@@ -703,7 +706,9 @@ function checkCatalogSkills() {
 // ═════════════════════════════════════════════════════════════════════════════
 //  MAIN
 // ═════════════════════════════════════════════════════════════════════════════
-function run() {
+function run(options = {}) {
+  const checkCatalog = Boolean(options.checkCatalog || process.argv.includes('--catalog'));
+
   console.log(c.cyan('\nContextOS Validator — scanning skills...\n'));
 
   if (!fs.existsSync(CORE_SKILLS)) {
@@ -728,7 +733,10 @@ function run() {
   checkResourcesManifest(sourceSkills);
   checkProfilesIntegrity(sourceSkills);
   checkRegistryV2();
-  checkCatalogSkills();
+
+  if (checkCatalog) {
+    checkCatalogSkills();
+  }
 
   const passed = printReport();
   process.exit(passed ? 0 : 1);

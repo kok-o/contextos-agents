@@ -45,83 +45,51 @@ button:focus:not(:focus-visible) {
 
 ```tsx
 import React, { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 
-interface ModalProps {
+interface AccessibleModalProps {
   isOpen: boolean;
   onClose: () => void;
   titleId: string;
   children: React.ReactNode;
 }
 
-export function AccessibleModal({ isOpen, onClose, titleId, children }: ModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLElement | null>(null);
+/**
+ * Accessible Modal Dialog (W3C ARIA APG Compliant)
+ * Uses native HTMLDialogElement with .showModal() to guarantee:
+ * 1. Native inert background (blocks screen reader and click bleed-through).
+ * 2. Native keyboard focus trap (strictly keeps Tab cycles within dialog).
+ * 3. Native Escape key cancellation and focus restoration to trigger element.
+ */
+export function AccessibleModal({ isOpen, onClose, titleId, children }: AccessibleModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
-    triggerRef.current = document.activeElement as HTMLElement;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
-    // Move focus inside dialog upon opening (W3C ARIA APG pattern)
-    requestAnimationFrame(() => {
-      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      ) || [];
-      if (focusables.length > 0) {
-        focusables[0].focus();
-      } else {
-        dialogRef.current?.focus();
+    if (isOpen) {
+      if (!dialog.open) {
+        dialog.showModal();
       }
-    });
+    } else {
+      if (dialog.open) {
+        dialog.close();
+      }
+    }
+  }, [isOpen]);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      onCancel={(e) => {
         e.preventDefault();
         onClose();
-      }
-
-      if (e.key === 'Tab') {
-        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        ) || [];
-        if (!focusables.length) return;
-
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      triggerRef.current?.focus();
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div 
-        ref={dialogRef}
-        role="dialog"
-        tabIndex={-1}
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="w-full max-w-lg rounded-xl bg-background p-6 shadow-2xl border outline-none"
-      >
-        {children}
-      </div>
-    </div>,
-    document.body
+      }}
+      className="w-full max-w-lg rounded-xl bg-background p-6 shadow-2xl border backdrop:bg-black/60 outline-none"
+    >
+      {children}
+    </dialog>
   );
 }
 ```

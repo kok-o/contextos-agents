@@ -20,55 +20,53 @@ Activate during project kickoff (ctx init), new service scaffolding, or when gen
 
 You generate project documentation from a user's idea. Use the templates in `templates/` as the structure for each document.
 
-## Commands
+## Workflows & CLI Commands
 
-### `ctx init`
+### Project Initialization (`contextos init`)
 
-Full project initialization. From one user prompt, generate ALL documents:
+Full project initialization. From one user prompt, generate foundational documentation:
 
-1. Ask clarifying questions (see Context OS SKILL.md)
+1. Ask clarifying questions (see context-os SKILL.md)
 2. Select profile and skill pack
 3. Generate documents in this order:
-   - `docs/PRD.md` — Product Requirements (from template)
-   - `docs/ARCHITECTURE.md` — System Architecture
-   - `docs/DATABASE.md` — Database Schema
-   - `docs/API.md` — API Specification
-   - `docs/UI.md` — UI/UX Specification
-   - `docs/ROADMAP.md` — Development Roadmap
-   - `docs/TASKS.md` — Task Breakdown
-   - `docs/PROJECT_GRAPH.md` — Project Graph
+   - `docs/PRD.md` - Product Requirements (from template)
+   - `docs/ARCHITECTURE.md` - System Architecture
+   - `docs/DATABASE.md` - Database Schema
+   - `docs/API.md` - API Specification (optional, when backend API layer is present)
+   - `docs/UI.md` - UI/UX Specification (optional, when UI layer is present)
+   - `docs/ROADMAP.md` - Development Roadmap
+   - `docs/TASKS.md` - Task Breakdown
+   - `docs/PROJECT_GRAPH.md` - Project Graph
 4. Create `docs/decisions/` directory for future ADRs
-5. Generate agent config via Adapters skill
+5. Generate agent configuration via Adapters skill (`contextos export all`)
 
-### `ctx update`
+### Incremental Updates
 
-Incremental update. When requirements change:
+When project requirements or schemas change:
 
 1. Identify which documents are affected
 2. Update only affected documents
-3. Show diff of changes
-4. Ask user to confirm
-5. Update Project Graph if structure changed
+3. Show diff of changes to user
+4. Update Project Graph if structure changed
 
-### `ctx plan`
+### Task Breakdown & Planning (`contextos resolve` & `/plan`)
 
-Generate development plan from existing PRD:
+Generate vertical development tasks from existing PRD and architecture:
 
-1. Read `docs/PRD.md`
-2. Break into modules (Project Graph)
-3. Break modules into features
-4. Break features into tasks
-5. Estimate complexity (S/M/L/XL)
-6. Output to `docs/TASKS.md`
+1. Read `docs/PRD.md` and `docs/ARCHITECTURE.md`
+2. Run `contextos resolve "<task description>"` to resolve minimal required skills
+3. Break modules into vertical features and tasks (< 2 hours each)
+4. Estimate complexity (S/M/L/XL)
+5. Output to `docs/TASKS.md` or task implementation plan
 
 ## Template Usage
 
 Each template contains:
 
-- **Section headers** — required sections for the document
-- **Placeholder prompts** — `{{description}}` markers that guide content generation
-- **Examples** — sample content to illustrate the expected format
-- **Validation rules** — what must be present for the document to be valid
+- **Section headers** - required sections for the document
+- **Placeholder prompts** - `{{description}}` markers that guide content generation
+- **Examples** - sample content to illustrate the expected format
+- **Validation rules** - what must be present for the document to be valid
 
 When generating a document:
 

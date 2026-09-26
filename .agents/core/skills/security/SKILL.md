@@ -32,7 +32,7 @@ Activate whenever writing authentication, authorization, session management, dat
 
 #### 1. Injection (SQL, NoSQL, Command)
 
-- Always use parameterized queries — never concatenate user input into SQL or shell commands.
+- Always use parameterized queries - never concatenate user input into SQL or shell commands.
 - Use ORMs (Prisma, Drizzle, SQLAlchemy) with strict schema validation.
 - Validate and sanitize all user input before processing.
 
@@ -81,7 +81,7 @@ When building AI workflows, tools, or MCP servers:
    - Never allow untrusted content to override system instructions or tool execution permissions.
 2. **Tool Execution Boundaries**:
    - Destructive operations (database drops, file deletions, payment triggers) MUST require explicit user confirmation.
-   - Restrict file system tools to the workspace root — block directory traversal (`../`).
+   - Restrict file system tools to the workspace root - block directory traversal (`../`).
 3. **Secret Masking & Output Sanitization**:
    - Scrub API keys (`sk-...`, `Bearer ...`), tokens, and credentials before writing to agent logs or step summaries.
 
@@ -104,66 +104,50 @@ export function verifyWebhookSignature(payload, signature, secret) {
 }
 ```
 
-### Safe SSRF Prevention (OWASP Compliant)
+### SSRF Prevention Requirements (OWASP Compliant)
+
+Per [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html), naive application-level DNS pre-checks followed by standard `fetch(url)` are fundamentally flawed due to DNS rebinding (TOCTOU) and unvalidated HTTP 3xx redirects.
+
+#### Mandatory Architectural Controls
+
+1. **Network-Layer Defense (Primary)**: For user-supplied arbitrary webhooks or URLs, route all outbound traffic through an isolated egress forward proxy (e.g., Smokescreen, Envoy, Squid) configured with firewall-level IP filters blocking RFC 1918, RFC 6598, link-local (`169.254.169.254`), loopback, and IPv6 local addresses at the socket handshake level.
+2. **Positive Destination Allowlist**: If fetching from known external partners, validate destination hostname against a strict positive allowlist.
+3. **Disable Automatic Redirects**: Always set `redirect: 'error'` or `'manual'`. Never follow HTTP redirects automatically without re-validating the target URL against allowlist rules.
+4. **Protocol & Credential Restrictions**: Enforce `https:` exclusively; reject embedded credentials (`user:pass@host`) and non-standard ports.
 
 ```typescript
-import dns from 'node:dns/promises';
-import net from 'node:net';
-
-export function isPrivateOrReservedIp(ip: string): boolean {
-  // Normalize IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 -> 127.0.0.1)
-  const cleanIp = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
-  const family = net.isIP(cleanIp);
-  if (family === 0) return true; // Malformed address rejected
-
-  if (family === 4) {
-    const parts = cleanIp.split('.').map(Number);
-    const [b0, b1] = parts;
-    if (b0 === 0) return true;                                // 0.0.0.0/8 (Current network)
-    if (b0 === 10) return true;                               // 10.0.0.0/8 (Private class A)
-    if (b0 === 127) return true;                              // 127.0.0.0/8 (Loopback)
-    if (b0 === 100 && b1 >= 64 && b1 <= 127) return true;     // 100.64.0.0/10 (Carrier-grade NAT)
-    if (b0 === 169 && b1 === 254) return true;                // 169.254.0.0/16 (Link-local / Cloud metadata)
-    if (b0 === 172 && b1 >= 16 && b1 <= 31) return true;     // 172.16.0.0/12 (Private class B)
-    if (b0 === 192 && b1 === 168) return true;                // 192.168.0.0/16 (Private class C)
-    if (b0 >= 224) return true;                               // Multicast (224.0.0.0/4) & Reserved (240.0.0.0/4)
-    return false;
-  }
-
-  if (family === 6) {
-    const lower = cleanIp.toLowerCase();
-    if (lower === '::1' || lower === '::') return true;       // Loopback & Unspecified
-    if (lower.startsWith('fe80:') || lower.startsWith('fe9') || lower.startsWith('fea') || lower.startsWith('feb')) return true; // fe80::/10 (Link-local)
-    if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // fc00::/7 (Unique Local Address)
-    if (lower.startsWith('ff')) return true;                  // ff00::/8 (Multicast)
-    return false;
-  }
-  return true;
-}
-
-export async function fetchWithSsrfProtection(urlString: string, options: RequestInit = {}): Promise<Response> {
+/**
+ * Verified Allowlist-based HTTP Client (OWASP SSRF Prevention)
+ * Enforces HTTPS, strict destination allowlist, and rejects HTTP redirects.
+ */
+export async function fetchFromAllowlist(
+  urlString: string,
+  allowedHostnames: ReadonlySet<string>,
+  options: RequestInit = {}
+): Promise<Response> {
   const parsed = new URL(urlString);
+
+  // 1. Enforce HTTPS only
   if (parsed.protocol !== 'https:') {
-    throw new Error('Only HTTPS protocol is permitted');
+    throw new Error(`SSRF blocked: protocol "${parsed.protocol}" is not permitted; HTTPS required`);
   }
+
+  // 2. Reject credentials in URL
   if (parsed.username || parsed.password) {
-    throw new Error('Credentials in URL are strictly prohibited');
+    throw new Error('SSRF blocked: URL credentials (user:password@host) are prohibited');
   }
 
-  // Resolve both IPv4 and IPv6 to prevent IPv6 bypass
-  const addresses = await dns.lookup(parsed.hostname, { all: true });
-  if (!addresses || addresses.length === 0) {
-    throw new Error(`Unable to resolve host: ${parsed.hostname}`);
+  // 3. Strict positive destination allowlist (prevents internal network probing)
+  const normalizedHost = parsed.hostname.toLowerCase();
+  if (!allowedHostnames.has(normalizedHost)) {
+    throw new Error(`SSRF blocked: destination host "${normalizedHost}" is not in the approved allowlist`);
   }
 
-  for (const { address } of addresses) {
-    if (isPrivateOrReservedIp(address)) {
-      throw new Error(`Blocked SSRF target: host ${parsed.hostname} resolved to private/reserved IP ${address}`);
-    }
-  }
-
-  // Pinned connection or custom dispatcher prevents DNS rebinding (TOCTOU)
-  return fetch(urlString, options);
+  // 4. Disable automatic redirects to prevent redirection to private IPs or metadata endpoints
+  return fetch(urlString, {
+    ...options,
+    redirect: 'error'
+  });
 }
 ```
 

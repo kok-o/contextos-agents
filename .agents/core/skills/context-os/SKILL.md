@@ -46,10 +46,10 @@ intent:
 For each required layer, load the skill graph:
 
 1. Read `skill.yaml` from each relevant skill directory
-2. Resolve `requires` — load mandatory dependencies
-3. Check `conflicts` — ensure no incompatible skills are loaded
-4. Apply `optional` — suggest but don't force
-5. Respect project profile (if set) — apply rules from `profiles/`
+2. Resolve `requires` - load mandatory dependencies
+3. Check `conflicts` - ensure no incompatible skills are loaded
+4. Apply `optional` - suggest but don't force
+5. Respect project profile (if set) - apply rules from `profiles/`
 
 **Dependency resolution example:**
 
@@ -67,17 +67,20 @@ Suggested: [tailwind, prisma, next-auth]
 
 Assemble context from three levels:
 
-**Level 1 — Vision (always available):**
+**Level 1 - Vision (always available):**
 
-- `docs/PRD.md` — what are we building
-- `docs/ROADMAP.md` — where are we going
-- `docs/PROJECT_GRAPH.md` — project structure
+- `docs/PRD.md` - what are we building
+- `docs/ROADMAP.md` - where are we going
+- `docs/PROJECT_GRAPH.md` - project structure
+- `docs/API.md` - API specification (optional, when backend API layer is present)
+- `docs/UI.md` - UI/UX specification (optional, when UI layer is present)
 
 **Level 2 - Architecture (load when needed):**
 
 - `docs/ARCHITECTURE.md` - system design and boundaries
 - `docs/decisions/` - architecture decision records (ADRs)
 - `docs/PRODUCT_BOUNDARIES.md` - maturity boundaries and non-promises
+- `references/context-rules.md` - dynamic context selection and compilation rules
 
 **Level 3 - Task-Specific Context (load per task):**
 
@@ -120,7 +123,7 @@ When user says something like "Сделай CRM для стоматологии"
 3. **Select profile** (startup/enterprise/mvp/hackathon)
 4. **Resolve skills** (Stage 2)
 5. **Generate all documents** using `generators/` skill
-6. **Create Project Graph** — the master map of modules → features → tasks → files → skills
+6. **Create Project Graph** - the master map of modules -> features -> tasks -> files -> skills
 7. **Output agent config** using `adapters/` skill
 
 ## Skill Discovery
