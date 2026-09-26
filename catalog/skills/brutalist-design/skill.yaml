@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: brutalist-design
+category: design
 type: instruction-only
 description: Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics.
 version: 1.0.0

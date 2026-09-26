@@ -1,4 +1,4 @@
-# {{Project Name}} — Product Requirements Document
+# {{Project Name}} - Product Requirements Document
 
 ## Overview
 <!-- One paragraph describing what this product does and who it's for -->

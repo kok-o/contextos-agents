@@ -1,4 +1,4 @@
-# generators Examples — Anti-patterns vs ContextOS Standard
+# generators Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Technical Documentation Generation
 

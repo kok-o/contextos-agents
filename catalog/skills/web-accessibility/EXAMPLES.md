@@ -1,4 +1,4 @@
-# web-accessibility Examples — Anti-patterns vs ContextOS Standard
+# web-accessibility Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Semantic Buttons vs Clickable Divs
 

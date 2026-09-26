@@ -1,4 +1,4 @@
-# Node.js Examples — Anti-patterns vs ContextOS Standard
+# Node.js Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Graceful Process Shutdown
 

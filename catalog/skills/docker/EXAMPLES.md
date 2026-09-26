@@ -1,4 +1,4 @@
-# Docker Examples — Anti-patterns vs ContextOS Standard
+# Docker Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Multi-Stage Build & Layer Caching
 

@@ -17,7 +17,7 @@ Activate when designing core business domain models, transactional consistency b
 ## Rules & Patterns
 <!-- Source: ddd.md -->
 
-## Domain-Driven Design — Patterns & Practices
+## Domain-Driven Design - Patterns & Practices
 
 ## When to Use DDD
 
@@ -40,7 +40,7 @@ Activate when designing core business domain models, transactional consistency b
 
 The single most important DDD concept. A Bounded Context is a boundary within which a particular model is defined and applicable.
 
-**Example — E-Commerce:**
+**Example - E-Commerce:**
 
 ```
 [Order Context]          [Payment Context]       [Shipping Context]
@@ -223,11 +223,11 @@ When consuming data from an external bounded context or 3rd-party vendor API (e.
 
 ## Anti-Patterns
 
-- [FAIL] Anemic domain model — entities with only getters/setters, all logic in services
-- [FAIL] Big aggregate — aggregates should be small, focused on invariants
-- [FAIL] Cross-aggregate transactions — use eventual consistency
-- [FAIL] DDD everywhere — use DDD only where complexity justifies it
-- [FAIL] ORM entities leaking into Domain — domain entities must not depend on `@Entity()` or ORM decorators
+- [FAIL] Anemic domain model - entities with only getters/setters, all logic in services
+- [FAIL] Big aggregate - aggregates should be small, focused on invariants
+- [FAIL] Cross-aggregate transactions - use eventual consistency
+- [FAIL] DDD everywhere - use DDD only where complexity justifies it
+- [FAIL] ORM entities leaking into Domain - domain entities must not depend on `@Entity()` or ORM decorators
 
 
 ## Code Examples

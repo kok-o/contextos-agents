@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: vercel-optimize
+category: devops
 type: runtime
 description: Observability-first Vercel performance and cost reduction optimization skill.
 version: 1.2.0

@@ -1,4 +1,4 @@
-# {{Project Name}} — API Specification
+# {{Project Name}} - API Specification
 
 ## Base URL
 

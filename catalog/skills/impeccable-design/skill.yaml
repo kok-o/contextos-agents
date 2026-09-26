@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: impeccable-design
+category: design
 type: instruction-only
 description: >
   Visual design quality skill based on pbakaus/impeccable.

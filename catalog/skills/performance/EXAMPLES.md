@@ -1,4 +1,4 @@
-# performance Examples — Anti-patterns vs ContextOS Standard
+# performance Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Dynamic Imports for Heavy Libraries
 

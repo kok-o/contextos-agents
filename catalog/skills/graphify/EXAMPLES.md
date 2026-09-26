@@ -1,4 +1,4 @@
-# Graphify Examples — Anti-patterns vs ContextOS Standard
+# Graphify Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Codebase Exploration & Architecture Mapping
 

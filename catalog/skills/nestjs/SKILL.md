@@ -17,14 +17,14 @@ Activate when building enterprise Node.js microservices, complex REST/GraphQL AP
 ## Rules & Patterns
 <!-- Source: nestjs.md -->
 
-## NestJS — Best Practices
+## NestJS - Best Practices
 
 ## Module Architecture
 
-- **One module per domain** — `UsersModule`, `AuthModule`, `OrdersModule`
-- **Feature modules** — encapsulate related controllers, services, repositories
-- **Shared module** — for cross-cutting concerns (logging, config, utils)
-- **Core module** — singleton services (database, auth guards)
+- **One module per domain** - `UsersModule`, `AuthModule`, `OrdersModule`
+- **Feature modules** - encapsulate related controllers, services, repositories
+- **Shared module** - for cross-cutting concerns (logging, config, utils)
+- **Core module** - singleton services (database, auth guards)
 
 ```
 src/
@@ -109,17 +109,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 ## Testing
 
-- **Unit tests** — mock dependencies with `Test.createTestingModule()`
-- **E2E tests** — use `supertest` with a test module
-- **Mock everything** — services should be testable in isolation
+- **Unit tests** - mock dependencies with `Test.createTestingModule()`
+- **E2E tests** - use `supertest` with a test module
+- **Mock everything** - services should be testable in isolation
 
 ## Anti-Patterns
 
-- [FAIL] Business logic in controllers — use services
-- [FAIL] Direct database access in controllers — use repositories
-- [FAIL] Circular dependencies — refactor module structure
-- [FAIL] God modules — split large modules by domain
-- [FAIL] Not using DTOs — always validate input
+- [FAIL] Business logic in controllers - use services
+- [FAIL] Direct database access in controllers - use repositories
+- [FAIL] Circular dependencies - refactor module structure
+- [FAIL] God modules - split large modules by domain
+- [FAIL] Not using DTOs - always validate input
 
 
 ## Code Examples

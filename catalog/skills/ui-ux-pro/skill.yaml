@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: ui-ux-pro
+category: design
 type: instruction-only
 description: >
   Professional UI/UX design skill with strict anti-pattern enforcement.

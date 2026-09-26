@@ -1,4 +1,4 @@
-# State Management Examples — Anti-patterns vs ContextOS Standard
+# State Management Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Selecting State from Zustand
 

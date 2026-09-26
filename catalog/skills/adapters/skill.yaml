@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: adapters
+category: engineering
 type: compiler
 description: >
   Generates agent-specific configuration files from unified ContextOS format.

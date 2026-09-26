@@ -28,8 +28,8 @@ Activate whenever analyzing, profiling, writing, or optimizing page loading spee
 
 | Priority | Category | Key Optimization Target | Expected Impact |
 |:---|:---|:---|:---|
-| **1. CRITICAL** | **Eliminating Waterfalls** | Parallel data fetching (`Promise.all`), Suspense streaming | **30–60% faster LCP** |
-| **2. CRITICAL** | **Bundle Size Optimization** | Direct submodule imports, `next/dynamic`, deferring 3rd party scripts | **40–70% smaller initial JS** |
+| **1. CRITICAL** | **Eliminating Waterfalls** | Parallel data fetching (`Promise.all`), Suspense streaming | **30-60% faster LCP** |
+| **2. CRITICAL** | **Bundle Size Optimization** | Direct submodule imports, `next/dynamic`, deferring 3rd party scripts | **40-70% smaller initial JS** |
 | **3. HIGH** | **Server-Side & RSC Caching** | `React.cache()` request deduplication, edge SSR caching | **Lower TTFB & DB load** |
 | **4. MEDIUM-HIGH** | **Client Query Optimization** | SWR / TanStack Query stale-while-revalidate, deduplication | **Zero redundant network calls** |
 | **5. MEDIUM** | **Render & DOM Optimization** | Virtualization for large lists, state colocation, `:focus-visible` | **Smooth 60 FPS / INP < 100ms** |

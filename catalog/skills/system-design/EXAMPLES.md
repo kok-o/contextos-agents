@@ -1,4 +1,4 @@
-# system-design Examples — Anti-patterns vs ContextOS Standard
+# system-design Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Database Caching Strategy
 

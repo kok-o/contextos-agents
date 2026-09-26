@@ -1,4 +1,4 @@
-# fastapi Examples — Anti-patterns vs ContextOS Standard
+# fastapi Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Asynchronous Route Handlers
 

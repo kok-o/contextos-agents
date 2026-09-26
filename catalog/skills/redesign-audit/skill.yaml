@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: redesign-audit
+category: design
 type: instruction-only
 description: Audits and upgrades existing web codebases with high-end typography, color, layout, and interaction polish.
 version: 1.0.0

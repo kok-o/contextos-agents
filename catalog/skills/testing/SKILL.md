@@ -19,11 +19,11 @@ Activate for any task involving unit tests, integration tests, E2E testing, TDD/
 
 ```
       /\
-     /E2E\       10% — Playwright (Critical user journeys, auth, checkout)
+     /E2E\       10% - Playwright (Critical user journeys, auth, checkout)
     /-----\
-   / Integ \     20% — API & Component Integration (RTL + MSW / Supertest)
+   / Integ \     20% - API & Component Integration (RTL + MSW / Supertest)
   /---------\
- /   Unit    \   70% — Pure functions, Domain Entities, Utils (Vitest)
+ /   Unit    \   70% - Pure functions, Domain Entities, Utils (Vitest)
 /-------------\
 ```
 

@@ -1,4 +1,4 @@
-# {{Project Name}} — System Architecture
+# {{Project Name}} - System Architecture
 
 ## Architecture Overview
 <!-- High-level architecture description and diagram -->

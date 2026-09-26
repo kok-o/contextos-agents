@@ -17,14 +17,14 @@ Activate when designing complex multi-step workflows, onboarding funnels, form v
 ## Rules & Patterns
 <!-- Source: ux.md -->
 
-## UX Design — Best Practices
+## UX Design - Best Practices
 
 ## Information Architecture
 
-- **Mental models** — organize content the way users think, not the way your code is structured
-- **Card sorting** — group features into logical categories
-- **Navigation structure** — no more than 3 clicks to any page
-- **Naming** — use user's language, not internal jargon
+- **Mental models** - organize content the way users think, not the way your code is structured
+- **Card sorting** - group features into logical categories
+- **Navigation structure** - no more than 3 clicks to any page
+- **Naming** - use user's language, not internal jargon
 
 ## User Flows
 
@@ -32,18 +32,18 @@ Activate when designing complex multi-step workflows, onboarding funnels, form v
 
 Every screen has 5 states. Design ALL of them:
 
-1. **Empty state** — first visit, no data yet. Include CTA to get started
-2. **Loading state** — skeleton screens > spinners
-3. **Partial state** — some data, not complete
-4. **Ideal state** — normal usage with data
-5. **Error state** — what went wrong and how to fix it
+1. **Empty state** - first visit, no data yet. Include CTA to get started
+2. **Loading state** - skeleton screens > spinners
+3. **Partial state** - some data, not complete
+4. **Ideal state** - normal usage with data
+5. **Error state** - what went wrong and how to fix it
 
 ### Reduce cognitive load
 
-- **Progressive disclosure** — show only what's needed now
-- **Sensible defaults** — pre-fill what you can
-- **Inline help** — tooltips and contextual guidance
-- **Confirmation for destructive actions** — but NOT for every action
+- **Progressive disclosure** - show only what's needed now
+- **Sensible defaults** - pre-fill what you can
+- **Inline help** - tooltips and contextual guidance
+- **Confirmation for destructive actions** - but NOT for every action
 
 ## Forms UX
 
@@ -56,10 +56,10 @@ Every screen has 5 states. Design ALL of them:
 
 ## Onboarding
 
-- **Quick win** — let users see value within 30 seconds
-- **Minimal signup** — only ask for what's absolutely needed
-- **Progressive onboarding** — teach features as users encounter them
-- **Skip option** — always let users skip tutorials
+- **Quick win** - let users see value within 30 seconds
+- **Minimal signup** - only ask for what's absolutely needed
+- **Progressive onboarding** - teach features as users encounter them
+- **Skip option** - always let users skip tutorials
 
 ## Feedback
 
@@ -72,18 +72,18 @@ Every screen has 5 states. Design ALL of them:
 ## Mobile UX
 
 - Touch targets: minimum 44x44px
-- Thumb zones — place primary actions within easy reach
+- Thumb zones - place primary actions within easy reach
 - Bottom navigation for core actions
 - Pull-to-refresh for content lists
 - Haptic feedback for important actions
 
 ## Psychology Principles
 
-- **Fitts's Law** — make important targets large and close
-- **Hick's Law** — reduce choices to reduce decision time
-- **Jakob's Law** — users prefer familiar patterns
-- **Peak-End Rule** — make the last interaction great
-- **Aesthetic-Usability Effect** — beautiful things are perceived as easier to use
+- **Fitts's Law** - make important targets large and close
+- **Hick's Law** - reduce choices to reduce decision time
+- **Jakob's Law** - users prefer familiar patterns
+- **Peak-End Rule** - make the last interaction great
+- **Aesthetic-Usability Effect** - beautiful things are perceived as easier to use
 
 ## Usability Heuristics (Nielsen)
 

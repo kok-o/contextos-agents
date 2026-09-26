@@ -1,4 +1,4 @@
-# decisions Examples — Anti-patterns vs ContextOS Standard
+# decisions Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Documenting Tech Choices
 

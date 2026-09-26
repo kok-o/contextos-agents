@@ -42,9 +42,9 @@ Always use strict TypeScript configuration:
 ## Types
 
 - **Prefer `interface`** for object shapes, `type` for unions/intersections
-- **No `any`** — use `unknown` if type is truly unknown, then narrow
+- **No `any`** - use `unknown` if type is truly unknown, then narrow
 - **Explicit return types** for exported functions
-- **Const assertions** — `as const` for literal types
+- **Const assertions** - `as const` for literal types
 
 ```typescript
 // Good
@@ -60,11 +60,11 @@ type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
 ## Utility Types
 
-- `Partial<T>` — all properties optional
-- `Required<T>` — all properties required
-- `Pick<T, K>` — select specific properties
-- `Omit<T, K>` — remove specific properties
-- `Record<K, V>` — key-value map
+- `Partial<T>` - all properties optional
+- `Required<T>` - all properties required
+- `Pick<T, K>` - select specific properties
+- `Omit<T, K>` - remove specific properties
+- `Record<K, V>` - key-value map
 
 ## Type Guards
 
@@ -88,11 +88,11 @@ interface Repository<T extends { id: string }> {
 
 ## Anti-Patterns
 
-- [FAIL] `any` — use `unknown` + type guards
-- [FAIL] Type assertions (`as`) — prefer type guards
-- [FAIL] Non-null assertions (`!`) — handle null explicitly
-- [FAIL] Enums — prefer union types or `as const` objects
-- [FAIL] Complex generics without JSDoc — document intent
+- [FAIL] `any` - use `unknown` + type guards
+- [FAIL] Type assertions (`as`) - prefer type guards
+- [FAIL] Non-null assertions (`!`) - handle null explicitly
+- [FAIL] Enums - prefer union types or `as const` objects
+- [FAIL] Complex generics without JSDoc - document intent
 
 
 ## Code Examples

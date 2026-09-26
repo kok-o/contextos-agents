@@ -1,4 +1,4 @@
-# nextjs Examples — Anti-patterns vs ContextOS Standard
+# nextjs Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Server Components vs Client Components
 

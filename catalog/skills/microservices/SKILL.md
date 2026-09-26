@@ -17,7 +17,7 @@ Activate when decomposing monoliths into independent services, designing inter-s
 ## Rules & Patterns
 <!-- Source: microservices.md -->
 
-## Microservices — Architecture Guide
+## Microservices - Architecture Guide
 
 ## When to Use Microservices
 
@@ -120,31 +120,31 @@ When integrating with legacy or external systems, create an adapter that transla
 
 ### Observability (The Three Pillars)
 
-1. **Logs** — structured JSON, correlated by request ID
-2. **Metrics** — latency, error rate, throughput (RED)
-3. **Traces** — distributed tracing across services (Jaeger, Zipkin)
+1. **Logs** - structured JSON, correlated by request ID
+2. **Metrics** - latency, error rate, throughput (RED)
+3. **Traces** - distributed tracing across services (Jaeger, Zipkin)
 
 ### Resilience
 
-- **Circuit Breaker** — stop calling failing services
-- **Retry with Backoff** — exponential backoff + jitter
-- **Timeout** — every call has a timeout
-- **Bulkhead** — isolate failures
+- **Circuit Breaker** - stop calling failing services
+- **Retry with Backoff** - exponential backoff + jitter
+- **Timeout** - every call has a timeout
+- **Bulkhead** - isolate failures
 
 ### Deployment
 
-- **Containers** — Docker for consistency
-- **Orchestration** — Kubernetes for production
-- **CI/CD** — independent pipelines per service
-- **Blue-Green / Canary** — safe rollouts
+- **Containers** - Docker for consistency
+- **Orchestration** - Kubernetes for production
+- **CI/CD** - independent pipelines per service
+- **Blue-Green / Canary** - safe rollouts
 
 ## Anti-Patterns
 
-- [FAIL] Distributed monolith — services that can't deploy independently
-- [FAIL] Shared database — defeats the purpose
-- [FAIL] Synchronous chains — A calls B calls C calls D
-- [FAIL] No versioning — breaking API changes
-- [FAIL] Premature microservices — start with a modular monolith
+- [FAIL] Distributed monolith - services that can't deploy independently
+- [FAIL] Shared database - defeats the purpose
+- [FAIL] Synchronous chains - A calls B calls C calls D
+- [FAIL] No versioning - breaking API changes
+- [FAIL] Premature microservices - start with a modular monolith
 
 
 ## Code Examples

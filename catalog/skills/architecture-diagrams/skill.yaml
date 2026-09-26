@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: architecture-diagrams
+category: architecture
 type: instruction-only
 description: Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows.
 version: 1.0.0

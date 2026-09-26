@@ -1,4 +1,4 @@
-# {{Project Name}} — Tasks
+# {{Project Name}} - Tasks
 
 ## Current Sprint: {{sprint_name}}
 

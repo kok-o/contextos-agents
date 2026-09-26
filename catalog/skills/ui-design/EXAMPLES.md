@@ -1,4 +1,4 @@
-# ui-design Examples — Anti-patterns vs ContextOS Standard
+# ui-design Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Component Token Consistency
 

@@ -1,4 +1,4 @@
-# React Examples — Anti-patterns vs ContextOS Standard
+# React Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Derived State vs. useEffect
 

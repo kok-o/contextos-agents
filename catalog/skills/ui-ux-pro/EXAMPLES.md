@@ -1,4 +1,4 @@
-# UI/UX Pro Examples — Anti-patterns vs ContextOS Standard
+# UI/UX Pro Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Accessible Icon Button with Visible Focus States
 

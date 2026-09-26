@@ -50,7 +50,7 @@ After each user answer:
 
 - Acknowledge the decision and update the mental model.
 - If more critical decisions remain, ask the next question.
-- Once 2–4 key questions are resolved, synthesize the formal Feature Spec and transition to `engineering-workflow` (`[PHASE: Plan]`).
+- Once 2-4 key questions are resolved, synthesize the formal Feature Spec and transition to `engineering-workflow` (`[PHASE: Plan]`).
 
 ---
 

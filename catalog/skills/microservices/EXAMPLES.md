@@ -1,4 +1,4 @@
-# microservices Examples — Anti-patterns vs ContextOS Standard
+# microservices Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Inter-service Communication
 

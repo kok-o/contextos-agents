@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: generators
+category: engineering
 type: compiler
 description: >
   Generates complete project documentation (PRD, Architecture, Database, API, UI,

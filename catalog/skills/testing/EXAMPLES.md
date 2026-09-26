@@ -1,4 +1,4 @@
-# Testing Examples — Anti-patterns vs ContextOS Standard
+# Testing Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: React Component Testing
 

@@ -17,7 +17,7 @@ Activate when building Python REST APIs, microservices, asynchronous background 
 ## Rules & Patterns
 <!-- Source: fastapi.md -->
 
-## FastAPI — Best Practices
+## FastAPI - Best Practices
 
 ## Project Structure
 
@@ -124,11 +124,11 @@ class AppException(HTTPException):
 
 ## Security
 
-- **OAuth2 with JWT** — use `python-jose`
-- **Password hashing** — bcrypt via `passlib`
-- **CORS** — configure explicitly
-- **Rate limiting** — use `slowapi`
-- **Input validation** — Pydantic handles this automatically
+- **OAuth2 with JWT** - use `python-jose`
+- **Password hashing** - bcrypt via `passlib`
+- **CORS** - configure explicitly
+- **Rate limiting** - use `slowapi`
+- **Input validation** - Pydantic handles this automatically
 
 ## Testing
 
@@ -147,11 +147,11 @@ async def test_create_user(client: AsyncClient):
 
 ## Anti-Patterns
 
-- [FAIL] Business logic in route handlers — use services
-- [FAIL] Raw SQL without ORM — use SQLAlchemy
-- [FAIL] Sync database calls — use async drivers
-- [FAIL] Hardcoded settings — use Pydantic BaseSettings
-- [FAIL] No schema validation — always use Pydantic models
+- [FAIL] Business logic in route handlers - use services
+- [FAIL] Raw SQL without ORM - use SQLAlchemy
+- [FAIL] Sync database calls - use async drivers
+- [FAIL] Hardcoded settings - use Pydantic BaseSettings
+- [FAIL] No schema validation - always use Pydantic models
 
 
 ## Code Examples

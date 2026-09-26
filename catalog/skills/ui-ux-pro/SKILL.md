@@ -38,17 +38,17 @@ Before starting a design implementation:
 ### Typography Anti-Patterns
 
 - **NEVER** use Arial, Helvetica, or system-ui defaults as primary fonts
-- **NEVER** use Inter as the ONLY font — it is the #1 "AI-generated" visual tell when used alone
+- **NEVER** use Inter as the ONLY font - it is the #1 "AI-generated" visual tell when used alone
   - [PASS] **CORRECT**: If using Inter for primary UI text, ALWAYS pair it with a strong monospace font like `JetBrains Mono` for numbers, code blocks, and technical accents to create a premium SaaS aesthetic (see Vercel, Linear)
-  - [FAIL] **WRONG**: Inter for headings, body, labels, numbers, captions — everything
+  - [FAIL] **WRONG**: Inter for headings, body, labels, numbers, captions - everything
 - **NEVER** mix more than 2 font families
 - **ALWAYS** import proper fonts from Google Fonts or similar
 
 ### Color Anti-Patterns
 
-- **NEVER** use pure black `#000000` — always tint toward brand hue (e.g. `#0A0A0F`)
-- **NEVER** use pure gray `#808080` — tint it (e.g. `#6B7280` has blue undertones)
-- **NEVER** use purple-to-blue gradients — it is the #1 "AI generated" visual tell
+- **NEVER** use pure black `#000000` - always tint toward brand hue (e.g. `#0A0A0F`)
+- **NEVER** use pure gray `#808080` - tint it (e.g. `#6B7280` has blue undertones)
+- **NEVER** use purple-to-blue gradients - it is the #1 "AI generated" visual tell
 - **NEVER** use neon colors for primary UI (only accents, sparingly)
 - **ALWAYS** use HSL-based semantic palettes with clear naming
 
@@ -61,7 +61,7 @@ Before starting a design implementation:
 
 ### Animation Anti-Patterns
 
-- **NEVER** use bounce or elastic easing in raw CSS — it feels dated (circa 2014)
+- **NEVER** use bounce or elastic easing in raw CSS - it feels dated (circa 2014)
 - **NEVER** add animations just to show they work
 - **ALWAYS** use `ease-out` for enter, `ease-in` for exit, `ease-in-out` for continuous
 
@@ -83,7 +83,7 @@ Before shipping any UI, verify:
 - [ ] Keyboard navigation works without mouse
 - [ ] No color alone conveys information (use icons + text too)
 
-### Semantic Color Palette — shadcn/ui & Tailwind CSS v4 Format
+### Semantic Color Palette - shadcn/ui & Tailwind CSS v4 Format
 
 Generate palettes in the format compatible with shadcn/ui's `globals.css`. Always support both light and dark themes as this is the de-facto standard:
 
@@ -138,13 +138,13 @@ Generate palettes in the format compatible with shadcn/ui's `globals.css`. Alway
 
 Use Tailwind spacing utilities. **Never use arbitrary values** like `gap-[17px]`:
 
-- `gap-1` / `p-1` — 4px micro gaps
-- `gap-2` / `p-2` — 8px component internal
-- `gap-4` / `p-4` — 16px standard padding
-- `gap-6` / `p-6` — 24px section gaps
-- `gap-8` / `p-8` — 32px block separators
-- `gap-12` / `py-12` — 48px section separators
-- `gap-20` / `py-20` — 80px hero spacing
+- `gap-1` / `p-1` - 4px micro gaps
+- `gap-2` / `p-2` - 8px component internal
+- `gap-4` / `p-4` - 16px standard padding
+- `gap-6` / `p-6` - 24px section gaps
+- `gap-8` / `p-8` - 32px block separators
+- `gap-12` / `py-12` - 48px section separators
+- `gap-20` / `py-20` - 80px hero spacing
 
 ### Typography Scale
 
@@ -282,7 +282,7 @@ transform: scale(0.97);
 For complex UI like modals, popovers, layout shifts, and multi-element orchestration, prefer Framer Motion over raw CSS keyframes. Keep animations quick and purposeful:
 
 ```tsx
-// [GOOD] Modal entrance — use highly damped spring for physical feel (like Vercel/Linear)
+// [GOOD] Modal entrance - use highly damped spring for physical feel (like Vercel/Linear)
 <motion.div
   initial={{ opacity: 0, scale: 0.96, y: 8 }}
   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -309,11 +309,11 @@ transition={{ type: "spring", stiffness: 200, damping: 8 }} // WRONG
 
 When choosing styles, reference these domains:
 
-- `style` — UI style options (glassmorphism, neobrutalism, minimalism)
-- `typography` — Font pairing recommendations  
-- `color` — Color palettes by product type
-- `ux` — Best practices and anti-patterns
-- `gsap` — Animation patterns by intensity (hover, scroll, transition)
+- `style` - UI style options (glassmorphism, neobrutalism, minimalism)
+- `typography` - Font pairing recommendations  
+- `color` - Color palettes by product type
+- `ux` - Best practices and anti-patterns
+- `gsap` - Animation patterns by intensity (hover, scroll, transition)
 
 ## Role Integration
 

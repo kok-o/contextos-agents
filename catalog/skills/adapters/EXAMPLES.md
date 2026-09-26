@@ -1,4 +1,4 @@
-# adapters Examples — Anti-patterns vs ContextOS Standard
+# adapters Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Multi-Agent Configuration
 

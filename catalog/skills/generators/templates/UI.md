@@ -1,4 +1,4 @@
-# {{Project Name}} — UI/UX Specification
+# {{Project Name}} - UI/UX Specification
 
 ## Design System
 
@@ -66,8 +66,8 @@
 ## Anti-Patterns (avoid these)
 
 - No gray text on colored backgrounds
-- No pure black — always tint with brand color
-- No bounce/elastic easing — use ease-out
+- No pure black - always tint with brand color
+- No bounce/elastic easing - use ease-out
 - No cards nested inside cards
 - No generic color palettes (plain red, blue, green)
-- No default browser fonts — use curated typography
+- No default browser fonts - use curated typography

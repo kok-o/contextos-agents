@@ -1,4 +1,4 @@
-# ux-design Examples — Anti-patterns vs ContextOS Standard
+# ux-design Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Destructive Actions
 

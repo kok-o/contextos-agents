@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: decisions
+category: architecture
 type: instruction-only
 description: >
   Architecture Decision Records (ADR) management. Creates, tracks, and queries

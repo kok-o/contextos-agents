@@ -1,4 +1,4 @@
-# ddd Examples — Anti-patterns vs ContextOS Standard
+# ddd Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Domain Entities vs Anemic Models
 

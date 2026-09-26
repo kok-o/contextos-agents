@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: subagent-orchestrator
+category: engineering
 type: runtime
 description: Subagent delegation and parallel coordination skill. Implements task decomposition, context hand-offs, blast-radius boundary isolation, and conflict-free merge synthesis.
 version: 1.0.0

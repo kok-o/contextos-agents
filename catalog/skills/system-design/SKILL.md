@@ -19,7 +19,7 @@ Activate during the PLAN phase of any backend service, API design, database sche
 
 ## Rules & Patterns
 
-Based on [donnemartin/system-design-primer](https://github.com/donnemartin/system-design-primer) — the most starred system design resource on GitHub.
+Based on [donnemartin/system-design-primer](https://github.com/donnemartin/system-design-primer) - the most starred system design resource on GitHub.
 
 ## Core Principle
 
@@ -52,7 +52,7 @@ Clients → Load Balancer → [App Server 1, App Server 2, App Server N]
 - Use **Round Robin** for stateless services
 - Use **Least Connections** for varying request times
 - Use **IP Hash** for session affinity (or move sessions to Redis)
-- Always add **health checks** — remove unhealthy nodes automatically
+- Always add **health checks** - remove unhealthy nodes automatically
 
 **Rule**: Any service expecting > 1000 RPS needs a load balancer. No exceptions.
 
@@ -80,9 +80,9 @@ Cache decision ladder (check in order):
 **Modern framework-native caching (Next.js App Router)**:  
 Before spinning up a dedicated Redis instance for caching API responses, check if Next.js built-in mechanisms are sufficient:
 
-- `revalidatePath('/dashboard')` — invalidate all cache for a route
-- `revalidateTag('user-profile')` — fine-grained tagged cache invalidation
-- `unstable_cache()` — server-side data caching with TTL
+- `revalidatePath('/dashboard')` - invalidate all cache for a route
+- `revalidateTag('user-profile')` - fine-grained tagged cache invalidation
+- `unstable_cache()` - server-side data caching with TTL
 
 ```typescript
 // [GOOD] Use Next.js native caching first
@@ -120,9 +120,9 @@ revalidateTag('user-profile')
 **Read replicas**: Route SELECT to replicas, writes to primary.  
 **Sharding (horizontal partitioning)**:
 
-- Hash sharding: `user_id % N` — even distribution, hard to rebalance
-- Range sharding: user_id 1-1M on shard 1 — easy range queries, hotspots risk
-- Directory-based: lookup table maps key → shard — flexible, but lookup is overhead
+- Hash sharding: `user_id % N` - even distribution, hard to rebalance
+- Range sharding: user_id 1-1M on shard 1 - easy range queries, hotspots risk
+- Directory-based: lookup table maps key → shard - flexible, but lookup is overhead
 
 **Denormalization**: For read-heavy systems, duplicate data to avoid joins.  
 **Rule**: Don't shard until you've maxed out read replicas.
@@ -173,7 +173,7 @@ When deploying to serverless (Vercel Functions, AWS Lambda) or edge (Vercel Edge
 
 **Cold Start Problem**:
 
-- Serverless functions spin up from zero on first request — this can add 100–1000ms
+- Serverless functions spin up from zero on first request - this can add 100-1000ms
 - **Never** do heavy initialization at module level (DB connections, config loading, crypto keys)
 - **Always** initialize lazily inside the handler, or use a connection pooling service
 
@@ -191,14 +191,14 @@ function getDb() {
 
 **DB Connection Pooling in Serverless**:
 
-- Traditional in-process pools (pg-pool, knex) do NOT work in serverless — each invocation is ephemeral
-- Use **Prisma Accelerate**, **PlanetScale**, **Neon** pooling, or **Supabase** — they handle pooling at the infrastructure level
+- Traditional in-process pools (pg-pool, knex) do NOT work in serverless - each invocation is ephemeral
+- Use **Prisma Accelerate**, **PlanetScale**, **Neon** pooling, or **Supabase** - they handle pooling at the infrastructure level
 - Rule: If deploying to Vercel/serverless, NEVER assume `max_connections` is managed by your app process
 
 **Edge Functions limitations**:
 
 - No Node.js APIs (no `fs`, no `crypto.randomBytes`, limited DNS)
-- Latency must be < 50ms — no heavy DB queries
+- Latency must be < 50ms - no heavy DB queries
 - Use edge for: auth token verification, A/B testing, geo-routing, lightweight transformations
 
 ### BFF Pattern & Server Actions (Type-Safe Client-Server)
@@ -231,7 +231,7 @@ export async function updateUser(id: string, data: UpdateUserInput) {
 For complex APIs with many routes, use tRPC to get end-to-end type safety from DB to UI without code generation.
 
 **Option 3: REST (When appropriate)**  
-When building a public API consumed by external clients or mobile apps — use REST with OpenAPI spec.
+When building a public API consumed by external clients or mobile apps - use REST with OpenAPI spec.
 
 **Decision rule**:
 
@@ -239,7 +239,7 @@ When building a public API consumed by external clients or mobile apps — use R
 - Internal complex API → **tRPC**
 - Public/mobile API → **REST + OpenAPI**
 
-### Domain-Driven Design (DDD) — Business Logic Isolation
+### Domain-Driven Design (DDD) - Business Logic Isolation
 
 **Rule**: NEVER write business logic inside API route handlers, Server Actions, or controllers. Always extract to dedicated services/use-cases.
 
@@ -273,7 +273,7 @@ export async function POST(req: Request) {
   return Response.json(result)
 }
 
-// orderService.createOrder() — pure function, fully unit-testable without HTTP
+// orderService.createOrder() - pure function, fully unit-testable without HTTP
 ```
 
 ---
@@ -297,7 +297,7 @@ Always implement for public APIs:
 - Sliding window: most accurate, slightly more complex
 ```
 
-Store rate limit state in Redis (not in-process — it doesn't survive restarts).
+Store rate limit state in Redis (not in-process - it doesn't survive restarts).
 
 ### Circuit Breaker
 
@@ -312,7 +312,7 @@ CLOSED (normal) → [failures > threshold] → OPEN (fail fast)
 ### Database Connection Pooling
 
 - **Traditional servers**: Use pg-pool, knex, Prisma connection pool
-- **Serverless**: Use Prisma Accelerate, PlanetScale, Neon, or Supabase pooling — NOT in-process pools
+- **Serverless**: Use Prisma Accelerate, PlanetScale, Neon, or Supabase pooling - NOT in-process pools
 
 ---
 
@@ -381,7 +381,7 @@ When proposing any backend architecture, include:
 **Read/Write Ratio**: [X:Y]
 
 ### Components
-- **API Layer**: [REST/tRPC/Server Actions] — [why this choice]
+- **API Layer**: [REST/tRPC/Server Actions] - [why this choice]
 - **Cache**: [Next.js native | Redis] for [what] with [TTL/tags strategy]
 - **Database**: [SQL/NoSQL] - [pooling solution for serverless if applicable]
 - **Async**: [Queue tech] for [what operations]

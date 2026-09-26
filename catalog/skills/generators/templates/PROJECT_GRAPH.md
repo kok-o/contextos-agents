@@ -1,4 +1,4 @@
-# {{Project Name}} — Project Graph
+# {{Project Name}} - Project Graph
 
 ## Project
 
@@ -43,9 +43,9 @@ depends_on: [{{other_module}}]
 | --- | --- | --- |
 | `src/modules/{{module}}/**` | {{module}} | {{skills}} |
 | `src/shared/**` | shared | {{skills}} |
-| `src/config/**` | config | — |
+| `src/config/**` | config | - |
 | `tests/**` | testing | testing |
-| `docs/**` | docs | — |
+| `docs/**` | docs | - |
 
 ## Feature → Task Mapping
 

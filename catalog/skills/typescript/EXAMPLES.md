@@ -1,4 +1,4 @@
-# TypeScript Examples — Anti-patterns vs ContextOS Standard
+# TypeScript Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Type-Safe Parsing with Zod (No `any`)
 

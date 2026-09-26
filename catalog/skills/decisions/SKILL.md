@@ -23,9 +23,9 @@ You manage **Architecture Decision Records** (ADRs).
 
 Without ADRs, the AI agent sees:
 
-- "Database: PostgreSQL" — but doesn't know WHY
-- "Auth: JWT" — but doesn't know what alternatives were considered
-- "Framework: Next.js" — but doesn't know the tradeoffs
+- "Database: PostgreSQL" - but doesn't know WHY
+- "Auth: JWT" - but doesn't know what alternatives were considered
+- "Framework: Next.js" - but doesn't know the tradeoffs
 
 With ADRs, the agent understands the reasoning and won't accidentally contradict prior decisions.
 

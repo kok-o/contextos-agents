@@ -1,4 +1,4 @@
-# {{Project Name}} — Database Schema
+# {{Project Name}} - Database Schema
 
 ## Database Engine
 

@@ -1,11 +1,11 @@
-# Web Accessibility — WCAG 2.1 Compliance
+# Web Accessibility - WCAG 2.1 Compliance
 
 ## Principles (POUR)
 
-1. **Perceivable** — content can be perceived by all users
-2. **Operable** — interface can be operated by all users
-3. **Understandable** — content and interface are understandable
-4. **Robust** — content works across assistive technologies
+1. **Perceivable** - content can be perceived by all users
+2. **Operable** - interface can be operated by all users
+3. **Understandable** - content and interface are understandable
+4. **Robust** - content works across assistive technologies
 
 ## Keyboard Navigation
 
@@ -25,12 +25,12 @@
 
 ## ARIA (when HTML alone isn't enough)
 
-- `aria-label` — label for screen readers when no visible text
-- `aria-labelledby` — reference to existing visible text
-- `aria-describedby` — additional description
-- `aria-live="polite"` — announce dynamic changes
-- `aria-expanded` — for collapsible sections
-- `aria-hidden="true"` — hide decorative elements
+- `aria-label` - label for screen readers when no visible text
+- `aria-labelledby` - reference to existing visible text
+- `aria-describedby` - additional description
+- `aria-live="polite"` - announce dynamic changes
+- `aria-expanded` - for collapsible sections
+- `aria-hidden="true"` - hide decorative elements
 
 **Rule: no ARIA is better than bad ARIA.** Use semantic HTML first.
 

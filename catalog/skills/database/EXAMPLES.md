@@ -1,4 +1,4 @@
-# Database Examples — Anti-patterns vs ContextOS Standard
+# Database Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Solving the N+1 Query Problem
 

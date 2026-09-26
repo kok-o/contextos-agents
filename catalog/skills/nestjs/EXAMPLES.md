@@ -1,4 +1,4 @@
-# nestjs Examples — Anti-patterns vs ContextOS Standard
+# nestjs Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Input Validation and DTOs
 

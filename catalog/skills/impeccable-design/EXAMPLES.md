@@ -1,4 +1,4 @@
-# impeccable-design Examples — Anti-patterns vs ContextOS Standard
+# impeccable-design Examples - Anti-patterns vs ContextOS Standard
 
 ## Example 1: Dark Mode Surfaces & Elevation
 

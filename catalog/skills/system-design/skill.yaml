@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: system-design
+category: architecture
 type: instruction-only
 description: >
   Architecture and system design skill based on donnemartin's System Design Primer.
@@ -11,4 +12,3 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
-  - system-design.md

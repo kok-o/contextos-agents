@@ -1,5 +1,6 @@
 schemaVersion: 2
 name: react-best-practices
+category: frontend
 type: instruction-only
 description: React and Next.js performance optimization guidelines from Vercel Engineering.
 version: 1.0.0
