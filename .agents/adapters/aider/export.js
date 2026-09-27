@@ -90,8 +90,8 @@ function render(context) {
       }
 
       aiderConfContent = yamlProv + '\n' + YAML.stringify(parsed);
-    } catch {
-      aiderConfContent = yamlProv + '\nread:\n  - CONVENTIONS.md\n';
+    } catch (err) {
+      throw new Error(`Failed to parse existing .aider.conf.yml: ${err.message}. Aborting to protect existing configuration from data loss.`);
     }
   } else {
     aiderConfContent = [

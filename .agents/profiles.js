@@ -298,13 +298,25 @@ function validateProfile(profile, registry = null) {
 }
 
 /**
- * Lists all available project profiles defined in core/profiles.
+ * Lists all available project profiles defined in core/profiles and optionally consumer project.
+ * Searches built-in profiles in packageRoot, and if projectRoot is supplied, searches
+ * consumer project .agents/profiles, .agents/core/profiles, and profiles directories.
  *
+ * @param {string|null} [projectRoot=null] - Optional consumer project root
  * @returns {ProfileConfig[]} Array of profile configurations
  */
-function listProfiles() {
+function listProfiles(projectRoot = null) {
   const profiles = [];
   const searchDirs = [PROFILES_DIR, path.join(AGENTS_DIR, 'catalog', 'presets')];
+
+  if (projectRoot) {
+    const absConsumer = path.resolve(projectRoot);
+    searchDirs.push(
+      path.join(absConsumer, '.agents', 'profiles'),
+      path.join(absConsumer, '.agents', 'core', 'profiles'),
+      path.join(absConsumer, 'profiles')
+    );
+  }
 
   for (const dir of searchDirs) {
     if (!fs.existsSync(dir)) continue;
@@ -314,22 +326,31 @@ function listProfiles() {
       const parsed = parseYamlProfile(content);
       if (!parsed.id) parsed.id = path.basename(file, path.extname(file));
       if (!parsed.name) parsed.name = parsed.id;
-      profiles.push(parsed);
+
+      // Consumer profiles can override or extend built-in profiles; deduplicate by id
+      const normId = parsed.id.toLowerCase();
+      const existingIdx = profiles.findIndex(p => p.id.toLowerCase() === normId);
+      if (existingIdx !== -1) {
+        profiles[existingIdx] = parsed;
+      } else {
+        profiles.push(parsed);
+      }
     }
   }
   return profiles;
 }
 
 /**
- * Finds a profile by its slug ID or title.
+ * Finds a profile by its slug ID or title across package and consumer roots.
  *
  * @param {string} name - Profile identifier or name
+ * @param {string|null} [projectRoot=null] - Optional consumer project root
  * @returns {ProfileConfig|null} Found profile or null
  */
-function getProfile(name) {
+function getProfile(name, projectRoot = null) {
   if (!name) return null;
   const clean = name.toLowerCase().trim();
-  const all = listProfiles();
+  const all = listProfiles(projectRoot);
   return all.find(p => p.id.toLowerCase() === clean || p.name.toLowerCase() === clean) || null;
 }
 
@@ -398,7 +419,7 @@ function getActiveProfile(projectDir = process.cwd(), targetFileOrScope = null) 
     }
 
     if (matchedProfileName) {
-      const overrideProf = getProfile(matchedProfileName);
+      const overrideProf = getProfile(matchedProfileName, projectDir);
       if (overrideProf) {
         return {
           ...overrideProf,
@@ -424,9 +445,9 @@ function getActiveProfile(projectDir = process.cwd(), targetFileOrScope = null) 
  * @returns {Object} Updated profile lock data
  */
 function applyProfile(profileName, projectDir = process.cwd(), options = {}) {
-  const profile = getProfile(profileName);
+  const profile = getProfile(profileName, projectDir);
   if (!profile) {
-    throw new Error(`Profile '${profileName}' not found. Available profiles: ${listProfiles().map(p => p.id).join(', ')}`);
+    throw new Error(`Profile '${profileName}' not found. Available profiles: ${listProfiles(projectDir).map(p => p.id).join(', ')}`);
   }
 
   validateProfile(profile);
@@ -563,9 +584,9 @@ function removeActiveProfile(projectDir = process.cwd(), options = {}) {
  * @returns {Object} Explanation structure
  */
 function explainProfile(profileName, projectDir = process.cwd()) {
-  const profile = getProfile(profileName);
+  const profile = getProfile(profileName, projectDir);
   if (!profile) {
-    throw new Error(`Profile '${profileName}' not found. Available profiles: ${listProfiles().map(p => p.id).join(', ')}`);
+    throw new Error(`Profile '${profileName}' not found. Available profiles: ${listProfiles(projectDir).map(p => p.id).join(', ')}`);
   }
 
   return {

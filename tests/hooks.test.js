@@ -34,7 +34,7 @@ test('Phase 5: Git Hook Lifecycle & Safety (hooks.test.js)', async (t) => {
     const content = fs.readFileSync(hookFile, 'utf8');
     assert.match(content, /^#!\/bin\/sh/);
     assert.match(content, /# BEGIN CONTEXTOS HOOK/);
-    assert.match(content, /contextos-agents scan --staged --enforce/);
+    assert.match(content, /scan --staged --enforce/);
     assert.match(content, /# END CONTEXTOS HOOK/);
   });
 
@@ -111,5 +111,99 @@ test('Phase 5: Git Hook Lifecycle & Safety (hooks.test.js)', async (t) => {
 
     // Reset git config
     execFileSync('git', ['config', '--unset', 'core.hooksPath'], { cwd: tmpDir });
+  });
+
+  await t.test('Task 5.20: Upgrades legacy v2.1.0 trailing hook block to execute before pre-existing exit 0', () => {
+    const legacyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-hook-legacy-'));
+    try {
+      execFileSync('git', ['init'], { cwd: legacyDir });
+      const hookFile = path.join(legacyDir, '.git', 'hooks', 'pre-commit');
+
+      // Emulate v2.1.0 installation: user script ending in exit 0, followed by old block
+      const v210Hook = `#!/bin/sh
+echo "user pre-commit check"
+exit 0
+
+# BEGIN CONTEXTOS HOOK
+npx contextos-agents scan --staged --enforce || exit 1
+# END CONTEXTOS HOOK
+`;
+      fs.writeFileSync(hookFile, v210Hook, 'utf8');
+
+      // Run upgrade install
+      execFileSync(NODE, [CTX_BIN, 'hook', 'install'], { cwd: legacyDir });
+
+      const upgraded = fs.readFileSync(hookFile, 'utf8');
+      const startIdx = upgraded.indexOf('# BEGIN CONTEXTOS HOOK');
+      const endIdx = upgraded.indexOf('# END CONTEXTOS HOOK');
+      const exit0Idx = upgraded.indexOf('exit 0');
+
+      assert.ok(startIdx !== -1, 'ContextOS block must exist');
+      assert.ok(exit0Idx !== -1, 'User exit 0 must be preserved');
+      assert.ok(startIdx < exit0Idx, 'ContextOS hook must be positioned BEFORE user exit 0 after upgrade');
+      assert.ok(endIdx < exit0Idx, 'ContextOS hook end must be positioned BEFORE user exit 0');
+    } finally {
+      fs.rmSync(legacyDir, { recursive: true, force: true });
+    }
+  });
+
+  await t.test('Task 5.21: Rejects installation on non-shell shebang (python/node)', () => {
+    const nonShellDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-hook-nonshell-'));
+    try {
+      execFileSync('git', ['init'], { cwd: nonShellDir });
+      const hookFile = path.join(nonShellDir, '.git', 'hooks', 'pre-commit');
+
+      fs.writeFileSync(hookFile, '#!/usr/bin/env python\nimport sys\nsys.exit(0)\n', 'utf8');
+
+      let failed = false;
+      try {
+        execFileSync(NODE, [CTX_BIN, 'hook', 'install'], { cwd: nonShellDir, stdio: 'pipe' });
+      } catch (err) {
+        failed = true;
+        assert.strictEqual(err.status, 1);
+        const stderr = err.stderr.toString('utf8');
+        assert.ok(stderr.includes('requires POSIX shell'), 'Must state POSIX shell requirement');
+      }
+      assert.ok(failed, 'Must fail closed when non-shell interpreter is detected');
+    } finally {
+      fs.rmSync(nonShellDir, { recursive: true, force: true });
+    }
+  });
+
+  await t.test('Task 5.23: Hook blocks commit with error when local runner is absent', () => {
+    const noRunnerDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-hook-norunner-'));
+    try {
+      execFileSync('git', ['init'], { cwd: noRunnerDir });
+      execFileSync('git', ['config', 'user.name', 'Tester'], { cwd: noRunnerDir });
+      execFileSync('git', ['config', 'user.email', 'tester@test.com'], { cwd: noRunnerDir });
+
+      // Install hook
+      execFileSync(NODE, [CTX_BIN, 'hook', 'install'], { cwd: noRunnerDir });
+
+      // Stage a file
+      fs.writeFileSync(path.join(noRunnerDir, 'file.txt'), 'hello');
+      execFileSync('git', ['add', 'file.txt'], { cwd: noRunnerDir });
+
+      let commitFailed = false;
+      let output = '';
+      try {
+        execFileSync('git', ['commit', '-m', 'test commit'], {
+          cwd: noRunnerDir,
+          encoding: 'utf8',
+          stdio: 'pipe',
+        });
+      } catch (err) {
+        commitFailed = true;
+        output = (err.stderr || err.stdout || '').toString();
+      }
+
+      assert.ok(commitFailed, 'Commit must be blocked when local runner is not installed');
+      assert.ok(
+        output.includes('ContextOS local runner not found'),
+        'Must output explicit diagnostic about missing local runner'
+      );
+    } finally {
+      fs.rmSync(noRunnerDir, { recursive: true, force: true });
+    }
   });
 });

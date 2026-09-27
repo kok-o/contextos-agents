@@ -56,8 +56,8 @@ function getFilesToScan(mode) {
 
     return Array.from(new Set([...tracked, ...untracked]));
   } catch (err) {
-    console.error(`[check-secrets] Warning: Failed to query git (${err.message}). Falling back to local check.`);
-    return [];
+    console.error(`[check-secrets] Error: Failed to query git (${err.message}). Git repository verification required.`);
+    process.exit(2);
   }
 }
 

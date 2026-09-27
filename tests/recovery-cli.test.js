@@ -24,7 +24,12 @@ test('Recovery CLI', async (t) => {
   });
 
   await t.test('doctor handles no pending transactions', () => {
-    const stdout = execFileSync(NODE, [CTX_BIN, 'doctor'], { cwd: tmpDir, encoding: 'utf8' });
+    let stdout = '';
+    try {
+      stdout = execFileSync(NODE, [CTX_BIN, 'doctor'], { cwd: tmpDir, encoding: 'utf8' });
+    } catch (err) {
+      stdout = (err.stdout || '') + (err.stderr || '');
+    }
     assert.doesNotMatch(stdout, /RECOVERY_REQUIRED/);
   });
 
@@ -102,7 +107,12 @@ test('Recovery CLI', async (t) => {
   });
 
   await t.test('doctor handles clean state again', () => {
-    const stdout = execFileSync(NODE, [CTX_BIN, 'doctor'], { cwd: tmpDir, encoding: 'utf8' });
+    let stdout = '';
+    try {
+      stdout = execFileSync(NODE, [CTX_BIN, 'doctor'], { cwd: tmpDir, encoding: 'utf8' });
+    } catch (err) {
+      stdout = (err.stdout || '') + (err.stderr || '');
+    }
     assert.doesNotMatch(stdout, /RECOVERY_REQUIRED/);
   });
 });

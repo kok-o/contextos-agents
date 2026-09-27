@@ -53,9 +53,9 @@ In v1.x, the composite action ran `npm ci --ignore-scripts`, executed the incomi
 **Migration:**
 Update your `.github/workflows/` workflow step:
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.0.0
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.1.1
   with:
-    version: '2.0.0'
+    version: '2.1.1'
     adapters: 'all'
     working-directory: '.'
 ```

@@ -172,9 +172,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.0.0
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.1.1
         with:
-          version: '2.0.0'       # Pinned version of contextos-agents runner
+          version: '2.1.1'       # Pinned version of contextos-agents runner
           adapters: 'all'        # Adapters to verify (or specific: 'cursor', 'claude')
           working-directory: '.' # Project root directory
 ```

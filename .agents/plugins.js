@@ -26,7 +26,7 @@ const https   = require('https');
 const crypto  = require('crypto');
 const { execFileSync } = require('child_process');
 const { ProjectMutationLock } = require('./filesystem/project-lock.js');
-const JournaledTransaction = require('./filesystem/journaled-transaction.js');
+const { JournaledTransaction } = require('./filesystem/journaled-transaction.js');
 const {
   calculateTreeDigest,
   validateArchiveEntry,
@@ -284,9 +284,47 @@ function isValidNpmPackage(name) {
   return /^(?:@[a-z0-9_.-]+\/)?[a-z0-9_.-]+$/.test(name);
 }
 
-function parseRef(ref) {
+function parseRef(ref, projectRoot = null) {
   if (typeof ref !== 'string' || !ref.trim()) {
     throw new Error('A plugin reference is required');
+  }
+
+  // 1. Built-in package catalog skills take strict precedence for catalog names.
+  // Consumer project local files can never spoof or hijack package catalog skills.
+  const pkgCatalogPath = path.join(path.resolve(__dirname, '..'), 'catalog', 'skills', ref);
+  if (fs.existsSync(pkgCatalogPath) && fs.existsSync(path.join(pkgCatalogPath, 'SKILL.md'))) {
+    return {
+      type: 'catalog',
+      name: ref,
+      path: pkgCatalogPath,
+      isPinned: true,
+      raw: ref,
+    };
+  }
+
+  // 2. Explicit local references (must start with 'local:', './', '../', or 'file:')
+  if (ref.startsWith('local:') || ref.startsWith('./') || ref.startsWith('../') || ref.startsWith('file:')) {
+    const rawTarget = ref.startsWith('local:')
+      ? ref.slice(6)
+      : (ref.startsWith('file:') ? ref.slice(5) : ref);
+
+    const baseRoot = projectRoot || process.cwd();
+    let localDir = path.resolve(baseRoot, rawTarget);
+    if (!fs.existsSync(localDir)) {
+      localDir = path.join(baseRoot, 'catalog', 'skills', rawTarget);
+    }
+
+    if (fs.existsSync(localDir) && fs.existsSync(path.join(localDir, 'SKILL.md'))) {
+      const skillName = path.basename(localDir);
+      return {
+        type: 'catalog',
+        name: skillName,
+        path: localDir,
+        isPinned: true,
+        raw: ref,
+      };
+    }
+    throw new Error(`Local skill not found at: '${ref}'`);
   }
 
   // Scoped packages contain a slash but are npm packages, not GitHub refs.
@@ -529,6 +567,62 @@ function installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe = f
   return sha256;
 }
 
+// ── Catalog installer ─────────────────────────────────────────────────────────
+function installFromCatalog(descriptor, skillName, dryRun, checksum, forceUnsafe = false, tx = null) {
+  const sourceDir = descriptor.path;
+  const targetDir = path.join(PLUGINS_DIR, skillName);
+  const relTargetDir = toPosix(path.relative(ROOT, targetDir));
+
+  if (dryRun) {
+    console.log(c.dim(`  [DRY-RUN] Would copy catalog skill from: ${sourceDir}`));
+    return 'sha256:0000000000000000000000000000000000000000000000000000000000000000';
+  }
+
+  function copyRecursive(src, dest, relDest) {
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      const relPath = toPosix(path.join(relDest, entry.name));
+
+      if (entry.isDirectory()) {
+        copyRecursive(srcPath, destPath, relPath);
+      } else {
+        const content = fs.readFileSync(srcPath, 'utf8');
+        if (tx) {
+          tx.stageWrite(relPath, content);
+        } else {
+          fs.writeFileSync(destPath, content, 'utf8');
+        }
+      }
+    }
+  }
+
+  copyRecursive(sourceDir, targetDir, relTargetDir);
+
+  const primarySkillMd = path.join(sourceDir, 'SKILL.md');
+  const sha256 = fs.existsSync(primarySkillMd) ? crypto.createHash('sha256').update(fs.readFileSync(primarySkillMd)).digest('hex') : null;
+
+  const sourceMeta = {
+    source: 'catalog',
+    name: skillName,
+    path: toPosix(path.relative(ROOT, sourceDir)),
+    sha256,
+    installedAt: new Date().toISOString(),
+  };
+  if (tx) {
+    tx.stageWrite(`${relTargetDir}/.source`, JSON.stringify(sourceMeta, null, 2) + '\n');
+  } else {
+    fs.writeFileSync(path.join(targetDir, '.source'), JSON.stringify(sourceMeta, null, 2) + '\n');
+  }
+
+  console.log(c.green(`  ✓ Installed from built-in catalog: ${skillName}`));
+  return sha256;
+}
+
 // ── Derive skill name from ref ────────────────────────────────────────────────
 function deriveSkillName(ref) {
   // username/repo/path/to/my-skill → my-skill
@@ -570,7 +664,7 @@ async function add(ref, options = {}) {
   }
 
   // Supply-chain source pinning check (Wave 6)
-  if (!dryRun) {
+  if (!dryRun && descriptor.type !== 'catalog') {
     const pinning = validatePluginPinning(
       {
         type: descriptor.type,
@@ -637,7 +731,9 @@ async function add(ref, options = {}) {
     lockToken = projectLock.acquire({ command: 'skill:add' });
 
     let installedSha256 = null;
-    if (descriptor.type === 'github') {
+    if (descriptor.type === 'catalog') {
+      installedSha256 = installFromCatalog(descriptor, skillName, dryRun, checksum, forceUnsafe, tx);
+    } else if (descriptor.type === 'github') {
       installedSha256 = await installFromGitHub(descriptor, skillName, dryRun, checksum, forceUnsafe, tx);
     } else {
       installedSha256 = installFromNpm(descriptor, skillName, dryRun, checksum, forceUnsafe, tx);

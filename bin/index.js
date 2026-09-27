@@ -270,7 +270,10 @@ if (mainCommand === 'recover') {
 // Gate command (deterministic quality gate verification)
 if (mainCommand === 'gate') {
   const { runGate, emitGitHubAnnotations, writeGitHubSummary } = require('./lib/gate.js');
-  const target = flags.target || (args[1] && !args[1].startsWith('-') ? args[1] : 'all');
+  let target = flags.target || (args[1] && !args[1].startsWith('-') ? args[1] : 'all');
+  if (typeof target === 'string' && target.includes(',')) {
+    target = target.split(',').map(s => s.trim()).filter(Boolean);
+  }
   const result = runGate(flags.project, {
     target,
     profile: flags.profile,
@@ -377,7 +380,7 @@ if (mainCommand === 'hook') {
 
 // Proxy commands to trusted package .agents/ctx.js targeting flags.project
 const PROXY_COMMANDS = [
-  'profile', 'export', 'validate', 'resolve', 'skill', 'index',
+  'profile', 'export', 'validate', 'audit', 'resolve', 'skill', 'index',
   'clean-worktrees', 'stats', 'watch', 'compile', 'explain',
   'thread'
 ];
@@ -544,6 +547,9 @@ if (mainCommand === 'install-skill') {
   console.error('[DEPRECATED] The bundled MCP server has been moved to a separate package in v2.0.');
   console.error('             To use the MCP Bridge or execution runtime, install @contextos/mcp:');
   console.error('             npm install @contextos/mcp --save-dev');
+  process.exit(1);
+} else if (mainCommand && mainCommand !== 'init') {
+  console.error(`[ERROR] Unknown command: '${mainCommand}'. Run 'contextos --help' for available commands.`);
   process.exit(1);
 } else {
 

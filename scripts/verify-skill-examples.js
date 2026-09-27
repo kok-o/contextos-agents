@@ -158,6 +158,72 @@ function classifyBlock(skillId, heading, lang, code, startLine) {
 }
 
 /**
+ * Validates language syntax using esbuild (for JS/TS/TSX/JSX) and Python AST parser.
+ * Note: Syntax validation confirms grammatical correctness; it does not prove behavioral correctness.
+ *
+ * @param {Object} block - Code block metadata from classifyBlock
+ * @returns {Object|null} Verification result or null if not applicable
+ */
+function verifyBlockSyntax(block) {
+  const lang = (block.lang || '').toLowerCase();
+  const code = block.code || '';
+
+  if (block.type === 'illustrative' || block.type === 'expected-failure') {
+    return null;
+  }
+
+  // Check JavaScript / TypeScript / TSX / JSX with esbuild
+  if (['javascript', 'js', 'typescript', 'ts', 'tsx', 'jsx'].includes(lang)) {
+    try {
+      const esbuild = require('esbuild');
+      const loader = (lang === 'typescript' || lang === 'ts') ? 'ts'
+        : (lang === 'tsx' || lang === 'jsx') ? 'tsx'
+        : 'js';
+      esbuild.transformSync(code, { loader });
+      return {
+        id: `syntax:${block.id}`,
+        kind: 'syntax-parsing',
+        passed: true,
+        note: 'Syntax parsed cleanly via esbuild (syntax validation only; not behavioral proof)',
+      };
+    } catch (err) {
+      return {
+        id: `syntax:${block.id}`,
+        kind: 'syntax-parsing',
+        passed: false,
+        error: `Syntax error: ${err.message}`,
+      };
+    }
+  }
+
+  // Check Python with AST parsing
+  if (lang === 'python' || lang === 'py') {
+    try {
+      execFileSync('python', ['-c', 'import ast, sys; ast.parse(sys.stdin.read())'], {
+        input: code,
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      return {
+        id: `syntax:${block.id}`,
+        kind: 'syntax-parsing',
+        passed: true,
+        note: 'Python AST parsed cleanly (syntax validation only; not behavioral proof)',
+      };
+    } catch (err) {
+      return {
+        id: `syntax:${block.id}`,
+        kind: 'syntax-parsing',
+        passed: false,
+        error: `Python syntax error: ${err.message}`,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Runs execution and syntax verifications for the first coverage suite.
  */
 async function verifyCoverageExamples() {
@@ -169,23 +235,23 @@ async function verifyCoverageExamples() {
 
   // 1. Verify Security Examples
   const secTimingResults = securityRunner.runSecurityExamples();
-  secTimingResults.forEach(r => verificationResults.push(r));
+  secTimingResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
 
   const secSsrfResults = await securityRunner.runSsrfExamples();
-  secSsrfResults.forEach(r => verificationResults.push(r));
+  secSsrfResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
 
   // 2. Verify Web Accessibility Examples
   const a11yModalResults = a11yRunner.verifyAccessibleModalBehavior();
-  a11yModalResults.forEach(r => verificationResults.push(r));
+  a11yModalResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
 
   const a11ySkillFile = path.join(PROJECT_ROOT, 'catalog', 'skills', 'web-accessibility', 'SKILL.md');
   const a11yContent = fs.readFileSync(a11ySkillFile, 'utf8');
   const a11yCssResults = a11yRunner.verifyFocusVisibleCss(a11yContent);
-  a11yCssResults.forEach(r => verificationResults.push(r));
+  a11yCssResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
 
   // 3. Verify Adapters CLI Examples
   const adapterResults = adaptersRunner.verifyAdaptersSkillCommands();
-  adapterResults.forEach(r => verificationResults.push(r));
+  adapterResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
 
   // 4. Verify FastAPI Python Examples
   const pyRunnerPath = path.join(PROJECT_ROOT, 'tests', 'fixtures', 'skill-examples', 'fastapi-runner.py');
@@ -193,12 +259,12 @@ async function verifyCoverageExamples() {
     const pyOutput = execFileSync('python', [pyRunnerPath], { encoding: 'utf8' });
     const pyParsed = JSON.parse(pyOutput);
     if (pyParsed.results) {
-      pyParsed.results.forEach(r => verificationResults.push(r));
+      pyParsed.results.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
     }
   } catch (err) {
-    // If python is unavailable, record as skipped or syntax-checked fallback
     verificationResults.push({
       id: 'fastapi:python-environment',
+      kind: 'behavioral-test',
       passed: false,
       error: `Python runner failed: ${err.message}`,
     });
@@ -220,8 +286,17 @@ async function run() {
     inventory.push(...blocks);
   }
 
-  const verifications = await verifyCoverageExamples();
-  const failedVerifications = verifications.filter(v => !v.passed);
+  // Syntax validation pass across all extracted runnable code blocks
+  const syntaxResults = [];
+  for (const block of inventory) {
+    const res = verifyBlockSyntax(block);
+    if (res) syntaxResults.push(res);
+  }
+
+  // Behavioral execution pass
+  const behavioralResults = await verifyCoverageExamples();
+  const allVerifications = [...syntaxResults, ...behavioralResults];
+  const failedVerifications = allVerifications.filter(v => !v.passed);
 
   const stats = {
     totalBlocks: inventory.length,
@@ -231,15 +306,19 @@ async function run() {
       expectedFailure: inventory.filter(b => b.type === 'expected-failure').length,
       unverified: inventory.filter(b => b.type === 'unverified').length,
     },
-    verificationsRun: verifications.length,
-    verificationsPassed: verifications.filter(v => v.passed).length,
+    syntaxChecksRun: syntaxResults.length,
+    syntaxChecksPassed: syntaxResults.filter(r => r.passed).length,
+    behavioralChecksRun: behavioralResults.length,
+    behavioralChecksPassed: behavioralResults.filter(r => r.passed).length,
+    verificationsRun: allVerifications.length,
+    verificationsPassed: allVerifications.filter(v => v.passed).length,
     verificationsFailed: failedVerifications.length,
   };
 
   const ok = failedVerifications.length === 0 && stats.byType.unverified === 0;
 
   if (isJson) {
-    console.log(JSON.stringify({ ok, stats, inventory, verifications }, null, 2));
+    console.log(JSON.stringify({ ok, stats, inventory, syntaxResults, behavioralResults }, null, 2));
     process.exit(ok ? 0 : 1);
   }
 
@@ -253,15 +332,21 @@ async function run() {
   console.log(`    • Expected-Failure : ${stats.byType.expectedFailure}`);
   console.log(`    • Unverified       : ${stats.byType.unverified}\n`);
 
-  console.log('  Executable Verifications:');
-  for (const v of verifications) {
+  console.log('  Syntax Parsing Checks (Language Grammar):');
+  for (const v of syntaxResults) {
+    const icon = v.passed ? '✓' : '✗';
+    console.log(`    ${icon} ${v.id}${v.error ? ` [ERROR: ${v.error}]` : ''}`);
+  }
+
+  console.log('\n  Behavioral Runtime Checks (Negative/Positive Execution):');
+  for (const v of behavioralResults) {
     const icon = v.passed ? '✓' : '✗';
     console.log(`    ${icon} ${v.id}${v.error ? ` [ERROR: ${v.error}]` : ''}`);
   }
 
   console.log('\n------------------------------------------------------');
   if (ok) {
-    console.log(`  RESULT: PASSED (${stats.verificationsPassed}/${stats.verificationsRun} checks green, 0 unverified)`);
+    console.log(`  RESULT: PASSED (${stats.verificationsPassed}/${stats.verificationsRun} checks green: ${stats.syntaxChecksPassed} syntax, ${stats.behavioralChecksPassed} behavioral, 0 unverified)`);
   } else {
     console.log(`  RESULT: FAILED (${failedVerifications.length} checks failed)`);
   }
@@ -281,5 +366,6 @@ module.exports = {
   FIRST_COVERAGE_SKILLS,
   extractSkillExamples,
   classifyBlock,
+  verifyBlockSyntax,
   verifyCoverageExamples,
 };

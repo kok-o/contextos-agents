@@ -7,9 +7,10 @@
 
 'use strict';
 
+const path = require('path');
 const { runScan } = require('../lib/scan.js');
 
-function scanCommand(args, flags) {
+function scanCommand(args, flags = {}) {
   const isJson = flags.json || args.includes('--json');
   const enforce = flags.enforce || args.includes('--enforce');
   const checkPlaceholders = flags.placeholders || args.includes('--placeholders');
@@ -18,8 +19,13 @@ function scanCommand(args, flags) {
   const scopeIdx = args.indexOf('--scope');
   const scopeFile = scopeIdx !== -1 && args[scopeIdx + 1] ? args[scopeIdx + 1] : null;
 
+  const projectIdx = args.indexOf('--project');
+  const projectArg = projectIdx !== -1 && args[projectIdx + 1] ? args[projectIdx + 1] : null;
+  const targetProject = flags.project || projectArg;
+  const projectDir = targetProject ? path.resolve(targetProject) : process.cwd();
+
   const result = runScan({
-    cwd: process.cwd(),
+    cwd: projectDir,
     staged: true,
     secrets: checkSecrets,
     placeholders: checkPlaceholders,
@@ -43,6 +49,7 @@ function scanCommand(args, flags) {
 
   console.log(`  Staged Files Scanned : ${result.stats.stagedFilesCount}`);
   console.log(`  Enforcement Mode     : ${enforce ? 'STRICT (fails on findings)' : 'ADVISORY (warnings only)'}`);
+  console.log(`  Scope Containment    : ${result.scope.status.toUpperCase()}`);
   console.log(`  Violations Found     : ${result.stats.violationsCount}\n`);
 
   if (result.findings.length > 0) {
@@ -58,7 +65,7 @@ function scanCommand(args, flags) {
 
   console.log('──────────────────────────────────────────────────────');
   if (result.ok) {
-    console.log('  RESULT: PASSED (No blocking violations in staged index)');
+    console.log('  RESULT: PASSED (Verification completed cleanly, no blocking violations)');
   } else {
     console.log('  RESULT: FAILED (Commit blocked due to staged violations)');
   }

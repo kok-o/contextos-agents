@@ -9,13 +9,15 @@ const { collectSkillDirectories, readMeaningfulMarkdown } = require('../shared.j
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'claude@2';
+const CLAUDE_START_MARKER = '<!-- CONTEXTOS:START -->';
+const CLAUDE_END_MARKER = '<!-- CONTEXTOS:END -->';
 
 function describe() {
   return {
     name: 'claude',
     version: '2.0.0',
-    description: 'Compiles clean markdown skills for Claude Code CLI',
-    targetPattern: '.agents/generated/claude/skills/**/SKILL.md',
+    description: 'Compiles clean markdown skills for Claude Code CLI and manages CLAUDE.md entrypoint',
+    targetPattern: '{CLAUDE.md,.agents/generated/claude/skills/**/SKILL.md}',
   };
 }
 
@@ -53,6 +55,50 @@ function renderClaudeSkill(skillDir, context) {
   };
 }
 
+function renderClaudeRootIndex(skills, context) {
+  const projectRoot = context?.projectRoot || '.';
+  const claudePath = path.join(projectRoot, 'CLAUDE.md');
+  let existingContent = '';
+  if (fs.existsSync(claudePath)) {
+    try {
+      existingContent = fs.readFileSync(claudePath, 'utf8');
+    } catch {}
+  }
+
+  const skillEntries = skills.map(skillDir => {
+    const name = path.basename(skillDir);
+    return `- [${name}](.agents/generated/claude/skills/${name}/SKILL.md)`;
+  }).join('\n');
+
+  const managedBlock = `${CLAUDE_START_MARKER}
+<!-- Do not edit this section directly. Synchronized by ContextOS. -->
+# ContextOS Agent Governance
+
+The following skills are managed by ContextOS:
+${skillEntries}
+${CLAUDE_END_MARKER}`;
+
+  let finalContent;
+  if (existingContent.includes(CLAUDE_START_MARKER)) {
+    const regex = new RegExp(`${CLAUDE_START_MARKER}[\\s\\S]*?${CLAUDE_END_MARKER}`);
+    finalContent = existingContent.replace(regex, managedBlock);
+  } else if (existingContent.trim()) {
+    finalContent = `${existingContent.trimEnd()}\n\n${managedBlock}\n`;
+  } else {
+    finalContent = `${managedBlock}\n`;
+  }
+
+  return {
+    path: 'CLAUDE.md',
+    content: finalContent.replace(/\r\n/g, '\n'),
+    mediaType: 'text/markdown',
+    kind: 'generated-adapter',
+    generator: GENERATOR_ID,
+    sourceSkillIds: skills.map(s => path.basename(s)),
+    inputsHash: context?.sourceGraphHash || 'none',
+  };
+}
+
 function render(context) {
   const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   const artifacts = [];
@@ -60,6 +106,11 @@ function render(context) {
   for (const skill of skills) {
     const art = renderClaudeSkill(skill, context);
     if (art) artifacts.push(art);
+  }
+
+  if (skills.length > 0) {
+    const rootIndex = renderClaudeRootIndex(skills, context);
+    if (rootIndex) artifacts.push(rootIndex);
   }
 
   return artifacts;

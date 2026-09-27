@@ -82,4 +82,40 @@ describe('profiles.js — profile management & detection', () => {
     assert.equal(removed, true);
     assert.equal(profiles.getActiveProfile(targetProject), null);
   });
+
+  test('dual-root contract: consumer-unique profile is discovered and applied via projectRoot', () => {
+    const consumerRoot = path.join(tmpDir, 'consumer-with-custom-profile');
+    const customProfileDir = path.join(consumerRoot, '.agents', 'profiles');
+    fs.mkdirSync(customProfileDir, { recursive: true });
+
+    const customProfileYaml = `name: Consumer Proprietary
+description: Custom profile defined exclusively in consumer repository
+skills:
+  required:
+    - security
+  preferred:
+    - testing
+`;
+    fs.writeFileSync(path.join(customProfileDir, 'consumer-special.yaml'), customProfileYaml, 'utf8');
+
+    // Without consumer root: must NOT be found
+    const notFound = profiles.getProfile('consumer-special');
+    assert.equal(notFound, null, 'Must not find consumer profile without projectRoot');
+
+    // With consumer root: must be found by getProfile and listProfiles
+    const found = profiles.getProfile('consumer-special', consumerRoot);
+    assert.ok(found, 'Must find consumer profile when projectRoot is passed');
+    assert.equal(found.id, 'consumer-special');
+    assert.equal(found.name, 'Consumer Proprietary');
+
+    const allProfiles = profiles.listProfiles(consumerRoot);
+    assert.ok(allProfiles.some(p => p.id === 'consumer-special'), 'listProfiles must include consumer-unique profile');
+
+    // Applying consumer-unique profile
+    const applied = profiles.applyProfile('consumer-special', consumerRoot);
+    assert.equal(applied.profile, 'consumer-special');
+
+    const active = profiles.getActiveProfile(consumerRoot);
+    assert.equal(active.profile, 'consumer-special');
+  });
 });

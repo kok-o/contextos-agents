@@ -142,10 +142,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify ContextOS Projections
-        uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.1.0-rc.1
+        uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.1.1
         with:
-          version: '2.1.0-rc.1'
-          target: 'all'
+          version: '2.1.1'
+          adapters: 'all'
 ```
 
 The composite Action runs completely isolated from consumer code: it never invokes `npm ci`, never runs consumer shell scripts, and never executes untrusted code from PR forks.

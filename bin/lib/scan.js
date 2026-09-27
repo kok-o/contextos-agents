@@ -127,18 +127,25 @@ const PLACEHOLDER_PATTERNS = [
   },
 ];
 
-// Exempt path substrings (e.g. test fixtures, test files, lockfiles)
-const EXEMPT_PATH_SUBSTRINGS = [
-  path.join('tests', ''),
-  path.join('.git', ''),
+// Exempt path segments and exact files (e.g. test fixtures, test files)
+const EXEMPT_SEGMENTS = new Set([
+  'tests',
+  '.git',
   'node_modules',
-  'check-secrets.js',
-  'scan.js',
-];
+]);
+
+const EXEMPT_EXACT_PATHS = new Set([
+  'scripts/check-secrets.js',
+  'bin/lib/scan.js',
+]);
 
 function isExempt(filePath) {
-  const norm = path.normalize(filePath);
-  return EXEMPT_PATH_SUBSTRINGS.some(exempt => norm.includes(exempt));
+  const norm = filePath.replace(/\\/g, '/');
+  if (EXEMPT_EXACT_PATHS.has(norm)) {
+    return true;
+  }
+  const segments = norm.split('/');
+  return segments.some(seg => EXEMPT_SEGMENTS.has(seg));
 }
 
 function redact(str) {
@@ -147,7 +154,7 @@ function redact(str) {
 }
 
 /**
- * Checks if a relative path matches a glob pattern or prefix.
+ * Checks if a relative path matches a glob pattern or prefix with strict segment boundaries.
  */
 function matchesScope(filePath, pattern) {
   const normFile = filePath.replace(/\\/g, '/').toLowerCase();
@@ -155,15 +162,16 @@ function matchesScope(filePath, pattern) {
 
   if (normPattern.endsWith('/**')) {
     const prefix = normPattern.slice(0, -3);
-    return normFile.startsWith(prefix);
+    return normFile === prefix || normFile.startsWith(prefix + '/');
   }
   if (normPattern.endsWith('/*')) {
     const prefix = normPattern.slice(0, -2);
+    if (!normFile.startsWith(prefix + '/')) return false;
     const rest = normFile.slice(prefix.length + 1);
-    return normFile.startsWith(prefix) && !rest.includes('/');
+    return !rest.includes('/');
   }
   if (normPattern.includes('*')) {
-    const reg = new RegExp('^' + normPattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+    const reg = new RegExp('^' + normPattern.replace(/\./g, '\\.').replace(/\*/g, '[^/]*') + '$');
     return reg.test(normFile);
   }
   return normFile === normPattern || normFile.startsWith(normPattern + '/');
@@ -191,17 +199,26 @@ function runScan(options = {}) {
 
   const checkSecrets = options.secrets !== false;
   const checkPlaceholders = Boolean(options.placeholders);
-  const scopeFile = options.scope || null;
   const enforce = Boolean(options.enforce);
 
+  let targetScopeFile = options.scope || null;
+  let scopeStatus = 'not_configured';
+
+  if (!targetScopeFile) {
+    const defaultScope = path.join(gitRoot, '.agents', 'task-scope.json');
+    if (fs.existsSync(defaultScope)) {
+      targetScopeFile = '.agents/task-scope.json';
+    }
+  }
+
   let allowedScopePatterns = null;
-  if (scopeFile) {
-    const resolvedScopePath = path.resolve(gitRoot, scopeFile);
+  if (targetScopeFile) {
+    const resolvedScopePath = path.resolve(gitRoot, targetScopeFile);
     if (!fs.existsSync(resolvedScopePath)) {
       return {
         ok: false,
         code: 2,
-        error: `Scope file not found: ${scopeFile}`,
+        error: `Scope file not found: ${targetScopeFile}`,
         findings: [],
         stats: { filesScanned: 0, violations: 0 },
       };
@@ -218,6 +235,7 @@ function runScan(options = {}) {
         }
       }
       allowedScopePatterns = list;
+      scopeStatus = `active (${targetScopeFile})`;
     } catch (err) {
       return {
         ok: false,
@@ -243,17 +261,28 @@ function runScan(options = {}) {
   }
 
   const findings = [];
-  const addedLinesMap = checkPlaceholders ? getStagedAddedLines(gitRoot) : new Map();
+  let addedLinesMap = new Map();
+  if (checkPlaceholders) {
+    try {
+      const activePaths = stagedEntries.filter(e => e.status !== 'D').map(e => e.path);
+      addedLinesMap = getStagedAddedLines(gitRoot, activePaths);
+    } catch (err) {
+      return {
+        ok: false,
+        code: 2,
+        error: `Failed to inspect staged added lines: ${err.message}`,
+        findings: [],
+        stats: { filesScanned: stagedEntries.length, violations: 0 },
+      };
+    }
+  }
 
   for (const entry of stagedEntries) {
-    // Skip deleted files from content and blocked filename checks
-    if (entry.status === 'D') continue;
-
     const relPath = entry.path;
     const baseName = path.basename(relPath).toLowerCase();
     const extName = path.extname(relPath).toLowerCase();
 
-    // 1. Scope Containment Check
+    // 1. Scope Containment Check (checked for ALL staged actions: added, modified, deleted, renamed)
     if (allowedScopePatterns) {
       const inScope = allowedScopePatterns.some(p => matchesScope(relPath, p));
       if (!inScope) {
@@ -265,7 +294,22 @@ function runScan(options = {}) {
           details: `Staged file "${relPath}" is outside allowed task scope`,
         });
       }
+      if (entry.oldPath) {
+        const oldInScope = allowedScopePatterns.some(p => matchesScope(entry.oldPath, p));
+        if (!oldInScope) {
+          findings.push({
+            ruleId: 'SCOPE-001',
+            file: entry.oldPath,
+            type: 'Scope Violation',
+            severity: 'error',
+            details: `Source file of rename "${entry.oldPath}" is outside allowed task scope`,
+          });
+        }
+      }
     }
+
+    // Skip deleted files from content and blocked filename checks
+    if (entry.status === 'D') continue;
 
     // 2. Blocked Exact Names Check
     if (checkSecrets && BLOCKED_EXACT_NAMES.has(baseName)) {
@@ -294,12 +338,43 @@ function runScan(options = {}) {
     // Skip content scan for exempt paths
     if (isExempt(relPath)) continue;
 
-    // Read blob from index
-    const blob = getStagedBlob(relPath, gitRoot);
-    if (!blob) continue;
+    // Read blob from index (fails closed with code 2 on read errors in any mode)
+    let blob;
+    try {
+      blob = getStagedBlob(relPath, gitRoot);
+    } catch (err) {
+      return {
+        ok: false,
+        code: 2,
+        error: `Failed to read staged blob for "${relPath}": ${err.message}`,
+        findings,
+        stats: { filesScanned: stagedEntries.length, violations: findings.length },
+      };
+    }
 
-    // Skip large files (> 2MB)
-    if (blob.length > 2 * 1024 * 1024) continue;
+    if (!blob) {
+      return {
+        ok: false,
+        code: 2,
+        error: `Failed to read staged blob for "${relPath}": file unreadable in git index`,
+        findings,
+        stats: { filesScanned: stagedEntries.length, violations: findings.length },
+      };
+    }
+
+    // Large files (> 2MB): fail-closed in enforce mode
+    if (blob.length > 2 * 1024 * 1024) {
+      if (enforce) {
+        findings.push({
+          ruleId: 'SCAN-SKIP-001',
+          file: relPath,
+          type: 'Skipped Large File',
+          severity: 'error',
+          details: `Staged file "${relPath}" exceeds 2MB limit (${(blob.length / (1024 * 1024)).toFixed(2)}MB) and cannot be verified for secrets in enforce mode.`,
+        });
+      }
+      continue;
+    }
 
     const content = blob.toString('utf8');
     const lines = content.split(/\r?\n/);
@@ -352,13 +427,19 @@ function runScan(options = {}) {
 
   const hasViolations = findings.length > 0;
   // If enforce is true, violations return code 1. If enforce is false, warnings return code 0.
+  // Incomplete/failed inspection returns code 2 in all modes.
   const exitCode = hasViolations && enforce ? 1 : 0;
 
   return {
     ok: exitCode === 0,
     code: exitCode,
+    message: exitCode === 0 ? 'Verification completed cleanly, no blocking violations' : 'Blocking violations detected in staged index',
     gitRoot,
     enforce,
+    scope: {
+      file: targetScopeFile,
+      status: scopeStatus,
+    },
     findings,
     stats: {
       stagedFilesCount: stagedEntries.length,

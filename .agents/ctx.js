@@ -253,8 +253,8 @@ if (command === 'export') {
     : (args.find(a => a.startsWith('--scope=')) || '').split('=')[1] || null;
 
   if (subcommand === 'list') {
-    const list = profiles.listProfiles();
-    const active = profiles.getActiveProfile();
+    const list = profiles.listProfiles(process.cwd());
+    const active = profiles.getActiveProfile(process.cwd());
     if (asJson) {
       console.log(JSON.stringify({ active, profiles: list }, null, 2));
     } else {
@@ -285,7 +285,7 @@ if (command === 'export') {
       console.error('[ERROR] Usage: node ctx.js profile show <name> [--json]');
       process.exit(1);
     }
-    const profile = profiles.getProfile(name);
+    const profile = profiles.getProfile(name, process.cwd());
     if (!profile) {
       console.error(`[ERROR] Profile '${name}' not found.`);
       process.exit(1);
@@ -306,7 +306,7 @@ if (command === 'export') {
       process.exit(1);
     }
     try {
-      const explanation = profiles.explainProfile(name);
+      const explanation = profiles.explainProfile(name, process.cwd());
       if (asJson) {
         console.log(JSON.stringify(explanation, null, 2));
       } else {

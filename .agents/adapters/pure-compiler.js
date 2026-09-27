@@ -86,11 +86,22 @@ function loadCompilerContext(projectRoot, options = {}) {
 
   // 2. Profile v2
   let profile = null;
-  try {
-    const profiles = require('../profiles.js');
-    profile = options.profile ? profiles.getProfile(options.profile, absRoot) : profiles.getActiveProfile(absRoot);
-  } catch {
-    profile = null;
+  const profiles = require('../profiles.js');
+  if (options.profile) {
+    try {
+      profile = profiles.getProfile(options.profile, absRoot);
+    } catch (err) {
+      throw new Error(`Failed to load profile '${options.profile}': ${err.message}`);
+    }
+    if (!profile) {
+      throw new Error(`Profile '${options.profile}' was specified but does not exist.`);
+    }
+  } else {
+    try {
+      profile = profiles.getActiveProfile(absRoot);
+    } catch {
+      profile = null;
+    }
   }
 
   // 3. Workspace Graph
@@ -172,9 +183,10 @@ function listAdapters() {
  */
 function renderAdapters(projectRoot, adapterNames = 'all', options = {}) {
   const context = loadCompilerContext(projectRoot, options);
-  const targets = adapterNames === 'all'
+  const rawTargets = adapterNames === 'all'
     ? listAdapters()
     : (Array.isArray(adapterNames) ? adapterNames : [adapterNames]);
+  const targets = rawTargets.flatMap(a => (typeof a === 'string' && a.includes(',') ? a.split(',').map(s => s.trim()).filter(Boolean) : a));
 
   const allArtifacts = [];
   const pathToArtifact = new Map();

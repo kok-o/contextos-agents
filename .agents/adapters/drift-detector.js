@@ -170,10 +170,13 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
     } else {
       const diskContent = fs.readFileSync(fullPath, 'utf8');
       const diskSemanticHash = computeSemanticHash(diskContent);
+      const lockRecord = lockfile?.managedFiles?.[art.path];
 
-      // Check if disk matches projected render
-      if (diskSemanticHash !== projectedSemanticHash) {
-        const lockRecord = lockfile?.managedFiles?.[art.path];
+      // Check if disk matches projected render and recorded lockfile
+      const matchesProjection = diskSemanticHash === projectedSemanticHash;
+      const matchesLock = lockRecord ? diskSemanticHash === lockRecord.semanticTextSha256 : matchesProjection;
+
+      if (!matchesProjection || !matchesLock) {
         if (lockRecord && lockRecord.semanticTextSha256 !== diskSemanticHash) {
           findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].push({
             path: art.path,

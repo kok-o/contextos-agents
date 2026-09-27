@@ -201,6 +201,38 @@ describe('plugins — parseRef and deriveSkillName logic', () => {
     assert.throws(() => plugins.parseRef('@scope/-bad'));
     assert.throws(() => plugins.parseRef('pkg with spaces'));
   });
+
+  test('built-in catalog skills strictly take precedence over consumer project files', () => {
+    const parsed = plugins.parseRef('security-audit');
+    assert.equal(parsed.type, 'catalog');
+    assert.equal(parsed.name, 'security-audit');
+    assert.ok(
+      parsed.path.includes(path.join('catalog', 'skills', 'security-audit')),
+      'Must point to authentic catalog directory'
+    );
+  });
+
+  test('explicit local: prefix resolves to consumer project skills', () => {
+    const sandboxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-local-skill-'));
+    try {
+      const localSkillDir = path.join(sandboxDir, 'catalog', 'skills', 'custom-local');
+      fs.mkdirSync(localSkillDir, { recursive: true });
+      fs.writeFileSync(path.join(localSkillDir, 'SKILL.md'), '---\nname: custom-local\ndescription: test\n---\n# Custom Local\n');
+
+      const origCwd = process.cwd();
+      process.chdir(sandboxDir);
+      try {
+        const parsed = plugins.parseRef('local:custom-local');
+        assert.equal(parsed.type, 'catalog');
+        assert.equal(parsed.name, 'custom-local');
+        assert.ok(fs.existsSync(parsed.path));
+      } finally {
+        process.chdir(origCwd);
+      }
+    } finally {
+      fs.rmSync(sandboxDir, { recursive: true, force: true });
+    }
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

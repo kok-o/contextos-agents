@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-27
+
+### Fixed
+- **NPM Package Catalog Distribution**: Included `catalog` in npm package distribution (`package.json` `files` field), ensuring catalog skills install cleanly in consumer projects without requiring local repository checkouts.
+- **Fail-Closed Inspection Exit Codes**: Standardized exit codes across `scan` and `gate`: all reading, git, or configuration failures return code `2` with explicit diagnostics in both enforce and advisory modes; code `0` is returned strictly when verification completes cleanly with no blocking violations; code `1` is returned on blocking violations.
+- **Literal Git Pathspecs & Diff Isolation**: Added `--literal-pathspecs`, `--no-ext-diff`, and `--no-textconv` to staged git diff and blob inspections, eliminating filename regex fragility and supporting paths with spaces, Unicode, and glob characters.
+- **Pre-Commit Hook Safety & Trusted Local Runner**:
+  - Automatically migrates existing trailing hook blocks from v2.1.0 to execute immediately after the shebang before any user `exit 0`.
+  - Added strict shell shebang validation, rejecting non-shell interpreters (`python`, `node`) with exit code 1.
+  - Resolved local executable via `./node_modules/.bin/contextos` or source repository runner, eliminating unpinned PATH binary fallback.
+  - Preserves exact scanner exit codes (including code `2` for infrastructure/unverified errors) rather than coercing to code 1.
+- **Cross-Repository Scan Targeting (`--project`)**: Added `--project <path>` support to `contextos scan`, enabling inspection of external target Git repositories from a central runner.
+- **Supply-Chain Catalog Precedence**: Built-in package catalog skills take strict precedence over consumer project files, preventing local workspace files from hijacking catalog installations; local skills require explicit `local:` or path references.
+- **Self-Contained MCP Selector Resolution**: Resolver parity tests now dynamically compile the TypeScript selector in-memory when gitignored `dist` is absent, guaranteeing clean checkout compatibility without pre-build requirements.
+- **CLAUDE.md Preservation & Idempotency**: Claude Code adapter now generates `CLAUDE.md` with explicit `<!-- CONTEXTOS:START -->` and `<!-- CONTEXTOS:END -->` demarcation, preserving user preamble, custom guidelines, and ensuring idempotent re-exports.
+- **Dual-Root Profile Discovery**: Extended dual-root contract to `profiles.js` (`listProfiles` and `getProfile`), enabling consumer projects to define custom profiles that are seamlessly discovered across all CLI and compiler entrypoints.
+- **Skill Examples Verification Engine**: Replaced `vm.Script` with `esbuild.transformSync` (for TypeScript/TSX/ESM JavaScript) and Python AST parsing in `scripts/verify-skill-examples.js`, with syntax validation explicitly separated from behavioral runtime checks.
+- **CLI Robustness & Documentation Alignment**: Restored `audit` proxy command (as an alias for `validate`), added rejection with exit code 1 for unknown commands, supported comma-separated `--target cursor,claude`, updated action examples to `v2.1.1`, and protected `.aider.conf.yml` against malformed YAML overwrites.
+
 ## [2.1.0] - 2026-09-26
 
 ### Added

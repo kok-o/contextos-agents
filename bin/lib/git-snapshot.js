@@ -61,7 +61,7 @@ function getStagedFiles(cwd = process.cwd()) {
   try {
     const output = execFileSync(
       'git',
-      ['diff', '--cached', '-z', '--name-status'],
+      ['-c', 'core.quotepath=false', 'diff', '--cached', '-z', '--name-status', '--no-ext-diff'],
       { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
     );
 
@@ -104,78 +104,105 @@ function getStagedFiles(cwd = process.cwd()) {
 
 /**
  * Reads the content of a file directly from the Git staged index.
+ * Fails closed with an error if the staged blob cannot be read.
  *
  * @param {string} relativePath - Path relative to repo root
  * @param {string} [cwd=process.cwd()] - Working directory
- * @returns {Buffer|null} Staged file buffer or null if deleted/missing
+ * @returns {Buffer} Staged file buffer
  */
 function getStagedBlob(relativePath, cwd = process.cwd()) {
+  const posixPath = relativePath.replace(/\\/g, '/');
   try {
-    const posixPath = relativePath.replace(/\\/g, '/');
-    const buf = execFileSync('git', ['show', `:${posixPath}`], {
-      cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 10 * 1024 * 1024,
-    });
+    const buf = execFileSync(
+      'git',
+      ['--literal-pathspecs', 'show', `:${posixPath}`],
+      {
+        cwd,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        maxBuffer: 10 * 1024 * 1024,
+      }
+    );
     return buf;
   } catch (err) {
-    // If file was deleted or unreadable in index, return null
-    return null;
+    const errMsg = err.stderr ? err.stderr.toString('utf8').trim() : err.message;
+    throw new Error(`Failed to read staged blob for "${posixPath}": ${errMsg}`);
   }
 }
 
 /**
  * Extracts added lines from git diff --cached -U0 for each staged file.
  * Returns only lines that were added (+), excluding diff headers and deleted lines (-).
+ * Uses --literal-pathspecs, --no-ext-diff, and --no-textconv for strict path isolation.
  *
  * @param {string} [cwd=process.cwd()] - Working directory
+ * @param {string[]} [files=null] - Optional list of staged file paths. If omitted, discovered via getStagedFiles.
  * @returns {Map<string, Array<{ line: number, content: string }>>} Added lines by file
  */
-function getStagedAddedLines(cwd = process.cwd()) {
+function getStagedAddedLines(cwd = process.cwd(), files = null) {
   const addedLinesByFile = new Map();
 
-  try {
-    const diffOutput = execFileSync('git', ['diff', '--cached', '-U0'], {
-      cwd,
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 10 * 1024 * 1024,
-    });
+  let targetFiles = files;
+  if (!targetFiles) {
+    const staged = getStagedFiles(cwd);
+    targetFiles = staged.filter(e => e.status !== 'D').map(e => e.path);
+  }
 
-    if (!diffOutput) return addedLinesByFile;
-
-    const lines = diffOutput.split(/\r?\n/);
-    let currentFile = null;
-    let currentLineNum = 0;
-
-    for (const line of lines) {
-      if (line.startsWith('+++ b/')) {
-        currentFile = line.slice(6).trim();
-        if (!addedLinesByFile.has(currentFile)) {
-          addedLinesByFile.set(currentFile, []);
+  for (const filePath of targetFiles) {
+    try {
+      const posixPath = filePath.replace(/\\/g, '/');
+      const diffOutput = execFileSync(
+        'git',
+        [
+          '--literal-pathspecs',
+          '-c', 'core.quotepath=false',
+          'diff',
+          '--cached',
+          '-U0',
+          '--no-ext-diff',
+          '--no-textconv',
+          '--',
+          posixPath,
+        ],
+        {
+          cwd,
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          maxBuffer: 10 * 1024 * 1024,
         }
-      } else if (line.startsWith('@@ ')) {
-        // Parse @@ -a,b +c,d @@ to get current target line number
-        const match = line.match(/\+([0-9]+)(?:,([0-9]+))?/);
-        if (match) {
-          currentLineNum = parseInt(match[1], 10);
-        }
-      } else if (line.startsWith('+') && !line.startsWith('+++')) {
-        if (currentFile) {
+      );
+
+      if (!diffOutput) continue;
+
+      const lines = diffOutput.split(/\r?\n/);
+      let currentLineNum = 0;
+      const fileAddedLines = [];
+
+      for (const line of lines) {
+        if (line.startsWith('@@ ')) {
+          // Parse @@ -a,b +c,d @@ to get current target line number
+          const match = line.match(/\+([0-9]+)(?:,([0-9]+))?/);
+          if (match) {
+            currentLineNum = parseInt(match[1], 10);
+          }
+        } else if (line.startsWith('+') && !line.startsWith('+++')) {
           const content = line.slice(1);
-          addedLinesByFile.get(currentFile).push({
+          fileAddedLines.push({
             line: currentLineNum,
             content,
           });
+          currentLineNum++;
         }
-        currentLineNum++;
       }
-    }
 
-    return addedLinesByFile;
-  } catch {
-    return addedLinesByFile;
+      if (fileAddedLines.length > 0) {
+        addedLinesByFile.set(filePath, fileAddedLines);
+      }
+    } catch (err) {
+      throw new Error(`Failed to extract staged diff for "${filePath}": ${err.message}`);
+    }
   }
+
+  return addedLinesByFile;
 }
 
 module.exports = {

@@ -6,7 +6,7 @@ inputs:
   version:
     description: 'Version of contextos-agents package to run (e.g. 2.0.0, latest, or local)'
     required: false
-    default: '2.0.0'
+    default: '2.1.1'
   adapters:
     description: 'Target adapter(s) to verify (gemini, claude, cursor, copilot, aider, zed, all)'
     required: false
@@ -66,7 +66,7 @@ runs:
         fi
 
         if [ "${{ inputs.version }}" = "local" ]; then
-          RUNNER="node ${{ github.action_path }}/../../bin/index.js"
+          RUNNER="node ${{ github.action_path }}/../../../bin/index.js"
         else
           RUNNER="npx --yes contextos-agents@${{ inputs.version }}"
         fi

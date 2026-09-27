@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "revision": 634,
+  "revision": 635,
   "package": {
     "name": "contextos-project",
     "version": "1.0.0",
@@ -388,6 +388,15 @@
       "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
       "mode": 420,
       "lastTransaction": "tx-1790444204507-c102d3fc"
+    },
+    "CLAUDE.md": {
+      "exactSha256": "sha256:7b3613a66463efef86b63c1a9ac8c880959979a502047f904dfb7a2635971784",
+      "semanticTextSha256": "sha256:7b3613a66463efef86b63c1a9ac8c880959979a502047f904dfb7a2635971784",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "mode": 420,
+      "lastTransaction": "tx-1790528462774-f0b0dae0"
     }
   }
 }

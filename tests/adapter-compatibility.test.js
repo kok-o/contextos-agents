@@ -109,6 +109,37 @@ describe('Phase 2: Adapter Compatibility & Technical Contracts', () => {
     assert.ok(content.includes('FRONTEND_SCOPED_RULE_MARKER'), 'Must retain skill body');
   });
 
+  test('Task 2.4b: Claude Code generates CLAUDE.md and preserves user content idempotently', () => {
+    const claudeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-claude-test-'));
+    try {
+      fs.cpSync(fixtureSrc, claudeDir, { recursive: true });
+
+      // Create pre-existing user CLAUDE.md
+      const initialUserContent = '# Custom User Team Instructions\n\n- Build using pnpm\n- Keep bundle small\n';
+      fs.writeFileSync(path.join(claudeDir, 'CLAUDE.md'), initialUserContent, 'utf8');
+
+      // First render and apply
+      const res1 = renderAdapters(claudeDir, 'claude');
+      const claudeArt1 = res1.artifacts.find(a => a.path === 'CLAUDE.md');
+      assert.ok(claudeArt1, 'CLAUDE.md must be generated');
+      applyArtifacts(claudeDir, res1.artifacts, { context: res1.context });
+
+      const onDisk1 = fs.readFileSync(path.join(claudeDir, 'CLAUDE.md'), 'utf8');
+      assert.ok(onDisk1.includes('# Custom User Team Instructions'), 'User preamble must be preserved');
+      assert.ok(onDisk1.includes('<!-- CONTEXTOS:START -->'), 'Managed start marker must be present');
+      assert.ok(onDisk1.includes('<!-- CONTEXTOS:END -->'), 'Managed end marker must be present');
+
+      // Second render and apply (idempotency check)
+      const res2 = renderAdapters(claudeDir, 'claude');
+      applyArtifacts(claudeDir, res2.artifacts, { context: res2.context });
+
+      const onDisk2 = fs.readFileSync(path.join(claudeDir, 'CLAUDE.md'), 'utf8');
+      assert.equal(onDisk2, onDisk1, 'Repeated export must be strictly idempotent');
+    } finally {
+      fs.rmSync(claudeDir, { recursive: true, force: true });
+    }
+  });
+
   test('Task 2.5: Gemini CLI export maintains native skills and YAML frontmatter', () => {
     const rendered = renderAdapters(fixtureDir, 'gemini');
     assert.equal(rendered.collisions.length, 0);
