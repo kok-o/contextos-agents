@@ -40,7 +40,16 @@ You do not need to clone anything manually. Just open your terminal in the root 
 npx contextos-agents init
 ```
 
-The script will automatically detect your project tech stack, create the `.agents` folder, configure a neutral bootstrap profile, and compile it for your AI agent.
+By default, ContextOS sets up a focused **Lean Core** (7 essential skills: `engineering-workflow`, `ponytail-mindset`, `gemini-precision`, `security`, `context-os`, `context-manager`, and `gstack-roles`). This ensures your AI agent context remains lightweight and focused, preventing context degradation.
+
+Want more skills right away? Install pre-packaged presets or the entire catalog:
+
+```bash
+npx contextos-agents init --preset frontend   # React, Next.js, TypeScript, UI/UX, a11y
+npx contextos-agents init --preset backend    # System design, API design, Node.js, databases
+npx contextos-agents init --preset devops     # Docker, CI/CD, Terraform
+npx contextos-agents init --all               # Install all 36 catalog skills at once
+```
 
 ### Options
 
@@ -48,6 +57,8 @@ The script will automatically detect your project tech stack, create the `.agent
 npx contextos-agents --help             # Show all options
 npx contextos-agents --version          # Show version
 npx contextos-agents --minimal          # Install only the core bootstrap skills
+npx contextos-agents --all              # Install all 36 catalog domain skills during init
+npx contextos-agents --preset <name>    # Install stack preset: frontend, backend, devops, full
 npx contextos-agents --profile init     # Install with specific profile
 npx contextos-agents --auto             # Auto-detect tech stack and apply recommended profile
 npx contextos-agents --dry-run          # Preview what will be installed
@@ -108,6 +119,30 @@ contextos resolve "Build an accessible modal component with React and Tailwind"
 
 # Resolve with full evidence scoring explanation:
 contextos resolve "security review" --files apps/web/app/login/page.tsx --explain
+```
+
+### Skill & Catalog Management (`contextos skill`)
+
+Discover, install, and customize skills:
+
+```bash
+# Explore all available catalog skills (36 domain skills):
+contextos skill list --available
+
+# Install a specific skill from the catalog (with typo suggestions):
+contextos skill add fastapi
+
+# Install all 36 catalog skills at once:
+contextos skill add --all
+
+# Fork a built-in skill into your project for team customizations:
+contextos skill override gemini-precision
+
+# Diff your local customizations against upstream updates:
+contextos skill diff gemini-precision
+
+# Eject a skill to decouple it from upstream updates:
+contextos skill eject gemini-precision
 ```
 
 ### Diagnostic Health Check (`contextos doctor`)
@@ -172,9 +207,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.1.1
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.2.0
         with:
-          version: '2.1.1'       # Pinned version of contextos-agents runner
+          version: '2.2.0'       # Pinned version of contextos-agents runner
           adapters: 'all'        # Adapters to verify (or specific: 'cursor', 'claude')
           working-directory: '.' # Project root directory
 ```

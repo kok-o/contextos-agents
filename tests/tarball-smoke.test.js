@@ -305,7 +305,8 @@ describe('Consumer Tarball Smoke Test', () => {
       cwd: realConsumerDir,
       encoding: 'utf8',
     });
-    assert.ok(versionOut.includes('2.1.1'), `Installed binary must output version 2.1.1, got: ${versionOut}`);
+    const expectedVersion = require('../package.json').version;
+    assert.ok(versionOut.includes(expectedVersion), `Installed binary must output version ${expectedVersion}, got: ${versionOut}`);
 
     // Initialize git and test hook install in real consumer project
     execSync('git init', { cwd: realConsumerDir });

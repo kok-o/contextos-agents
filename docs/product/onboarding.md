@@ -17,6 +17,20 @@ npx contextos-agents init --auto
 
 ### Alternative Installation Modes
 
+- **Default Lean Core** (7 essential skills, zero token bloat):
+  ```sh
+  npx contextos-agents init
+  ```
+- **Domain presets** (targeted stack skills installed immediately):
+  ```sh
+  npx contextos-agents init --preset frontend   # React, Next.js, TypeScript, UI/UX
+  npx contextos-agents init --preset backend    # System design, Node, FastAPI, database
+  npx contextos-agents init --preset devops     # Docker, CI/CD, Terraform
+  ```
+- **Full catalog** (all 36 domain skills installed immediately):
+  ```sh
+  npx contextos-agents init --all
+  ```
 - **Minimal core only** (essential workflows without tech-specific catalog skills):
   ```sh
   npx contextos-agents init --minimal
@@ -142,9 +156,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify ContextOS Projections
-        uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.1.1
+        uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.2.0
         with:
-          version: '2.1.1'
+          version: '2.2.0'
           adapters: 'all'
 ```
 

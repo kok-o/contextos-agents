@@ -61,6 +61,30 @@ contextos profile apply backend                          # Focus on API and data
 contextos profile apply enterprise --no-export           # Suppress immediate adapter rewrite
 ```
 
+### Skill & Catalog Management (`skill`)
+
+```bash
+# List installed skills (and inspect available catalog skills):
+contextos skill list
+contextos skill list --available
+
+# Install domain skills from the catalog (with automatic typo suggestions):
+contextos skill add react
+contextos skill add fastapi
+
+# Install all 36 catalog skills at once:
+contextos skill add --all
+
+# Fork a built-in skill for local customization:
+contextos skill override gemini-precision
+
+# Diff local modifications against upstream core:
+contextos skill diff gemini-precision
+
+# Decouple local skill permanently from upstream tracking:
+contextos skill eject gemini-precision
+```
+
 ### Export Settings to Editors (Adapters)
 
 ```bash
@@ -156,23 +180,27 @@ Skills live in `.agents/core/skills/` (core essential skills) and `catalog/skill
 
 ### Core Skills (7)
 
-- **`gemini-precision`** - Strict precision mode for Gemini models: zero assumptions, zero placeholders (`// TODO`), and mandatory proof-of-work verification.
-- **`ponytail-mindset`** - Minimalist coding standard (YAGNI): prefer standard library and platform APIs over superfluous npm dependencies, clean solutions.
-- **`ui-ux-pro`** and **`impeccable-design`** - Professional UI/UX standards: bans cliché fonts, bans pure black (`#000000`), requires micro-animations and accessibility (a11y).
-- **`system-design`** and **`database`** - Scalable system architecture, optimized indexes, transactions, and N+1 query prevention.
-- **`security`** - Security audits: explicit authorization before data access, strict input validation (e.g. Zod), and sanitization.
-- **`interview-me`** - Interactive requirements interview: asks targeted questions one by one to eliminate ambiguity.
 - **`engineering-workflow`** - Senior engineering lifecycle enforcing DEFINE -> PLAN -> BUILD -> VERIFY -> REVIEW -> SHIP.
+- **`ponytail-mindset`** - Minimalist coding standard (YAGNI): prefer standard library and platform APIs over superfluous npm dependencies, clean solutions.
+- **`gemini-precision`** - Strict precision mode for Gemini models: zero assumptions, zero placeholders (`// TODO`), and mandatory proof-of-work verification.
+- **`security`** - Security audits: explicit authorization before data access, strict input validation (e.g. Zod), and sanitization.
+- **`context-os`** - Deterministic context compiler and policy engine for AI coding agents.
+- **`context-manager`** - Smart context selection engine and graph-based relevance resolution.
+- **`gstack-roles`** - Role-based AI specialist system declaring specialist roles per task phase.
 
 ### Extended Catalog Skills (36)
 
-Installable into any project on demand:
+Installable into any project on demand via `contextos skill add <name>`, `contextos skill add --all`, or stack presets during `init`:
 
-- **Security & Compliance:** `security-audit` (SAST/DAST, dependency audits, CIS/SAIF benchmarks), `security` (application defenses).
-- **Architecture & APIs:** `api-design` (RESTful contracts, OpenAPI specifications, idempotency), `system-design`, `ddd`, `microservices`.
-- **DevOps & Infrastructure:** `terraform` (IaC state governance, plan review quality gates), `ci-cd` (GitHub Actions hardening, build caching), `docker`.
-- **Frontend & Design:** `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `minimalist-design`, `brutalist-design`, `soft-design`, `web-accessibility`.
-- **Cross-Cutting:** `testing` (Playwright E2E and unit test patterns), `performance`, `decisions` (ADRs), `architecture-diagrams`.
+- **Presets at Init (`--preset <name>`):**
+  - `frontend`: `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `web-accessibility`
+  - `backend`: `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `database`, `ddd`
+  - `devops`: `docker`, `ci-cd`, `terraform`, `security-audit`, `performance`
+  - `full` or `--all`: Installs all 36 catalog skills
+- **Frontend & Design:** `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `ui-design`, `ux-design`, `web-accessibility`, `brutalist-design`, `minimalist-design`, `soft-design`, `redesign-audit`.
+- **Backend & Systems:** `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `microservices`, `ddd`, `database`.
+- **DevOps & Cloud:** `docker`, `ci-cd`, `terraform`, `security-audit`.
+- **Cross-Cutting & Architecture:** `testing`, `performance`, `decisions`, `architecture-diagrams`, `interview-me`, `subagent-orchestrator`, `graphify`, `vercel-optimize`, `adapters`, `generators`.
 
 ---
 

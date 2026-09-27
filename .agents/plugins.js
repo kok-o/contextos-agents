@@ -47,6 +47,25 @@ const REGISTRY_URL   = 'https://raw.githubusercontent.com/kok-o/contextos-agents
 const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024;
 const SAFE_SKILL_NAME = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
+function getCatalogDir() {
+  if (process.env.CONTEXTOS_CATALOG_DIR && fs.existsSync(process.env.CONTEXTOS_CATALOG_DIR)) {
+    return process.env.CONTEXTOS_CATALOG_DIR;
+  }
+  const localAgentsCatalog = path.join(__dirname, 'catalog', 'skills');
+  if (fs.existsSync(localAgentsCatalog)) return localAgentsCatalog;
+
+  const relativeCatalog = path.join(path.resolve(__dirname, '..'), 'catalog', 'skills');
+  if (fs.existsSync(relativeCatalog)) return relativeCatalog;
+
+  try {
+    const pkgPath = require.resolve('contextos-agents/package.json', { paths: [__dirname, process.cwd()] });
+    const pkgCatalog = path.join(path.dirname(pkgPath), 'catalog', 'skills');
+    if (fs.existsSync(pkgCatalog)) return pkgCatalog;
+  } catch {}
+
+  return null;
+}
+
 // ── ANSI helpers ──────────────────────────────────────────────────────────────
 const NO_COLOR = process.env.NO_COLOR || !process.stdout.isTTY;
 const c = {
@@ -291,7 +310,7 @@ function parseRef(ref, projectRoot = null) {
 
   // 1. Built-in package catalog skills take strict precedence for catalog names.
   // Consumer project local files can never spoof or hijack package catalog skills.
-  const pkgCatalogPath = path.join(path.resolve(__dirname, '..'), 'catalog', 'skills', ref);
+  const pkgCatalogPath = path.join(getCatalogDir(), ref);
   if (fs.existsSync(pkgCatalogPath) && fs.existsSync(path.join(pkgCatalogPath, 'SKILL.md'))) {
     return {
       type: 'catalog',
@@ -636,9 +655,137 @@ function isSafeSkillName(skillName) {
   return typeof skillName === 'string' && SAFE_SKILL_NAME.test(skillName);
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  COMMANDS
-// ═════════════════════════════════════════════════════════════════════════════
+function findClosestSkill(target, candidates) {
+  let closest = null;
+  let minDistance = Infinity;
+  for (const item of candidates) {
+    if (item === target) return item;
+    if (item.includes(target) || target.includes(item)) return item;
+    const dist = levenshtein(target, item);
+    if (dist < minDistance && dist <= 3) {
+      minDistance = dist;
+      closest = item;
+    }
+  }
+  return closest;
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+    }
+  }
+  return d[m][n];
+}
+
+/**
+ * Batch install all available catalog skills.
+ */
+async function addAllFromCatalog(options = {}) {
+  const dryRun = Boolean(options.dryRun || options['dry-run']);
+  const force = Boolean(options.force);
+  const catalogDir = getCatalogDir();
+  if (!fs.existsSync(catalogDir)) {
+    throw new Error('Catalog directory not found in package');
+  }
+
+  const catalogSkills = fs.readdirSync(catalogDir).filter(n => {
+    const full = path.join(catalogDir, n);
+    return fs.statSync(full).isDirectory() && fs.existsSync(path.join(full, 'SKILL.md'));
+  });
+
+  console.log('');
+  console.log(c.bold(`Batch installing ${catalogSkills.length} catalog skills...`));
+
+  const lock = readLock();
+  const existingNames = new Set(lock.plugins.map(p => p.name));
+
+  const projectLock = new ProjectMutationLock(ROOT);
+  const tx = new JournaledTransaction(ROOT);
+  let lockToken = null;
+
+  let installedCount = 0;
+  let skippedCount = 0;
+  const newlyInstalled = [];
+
+  try {
+    lockToken = projectLock.acquire({ command: 'skill:add-all' });
+
+    for (const skillName of catalogSkills) {
+      if (existingNames.has(skillName) && !force) {
+        skippedCount++;
+        continue;
+      }
+
+      const descriptor = {
+        type: 'catalog',
+        name: skillName,
+        path: path.join(catalogDir, skillName),
+        isPinned: true,
+        raw: skillName,
+      };
+
+      const installedSha256 = installFromCatalog(descriptor, skillName, dryRun, null, false, tx);
+
+      if (!dryRun) {
+        const idx = lock.plugins.findIndex(p => p.name === skillName);
+        const entry = {
+          name: skillName,
+          ref: skillName,
+          type: 'catalog',
+          sha256: installedSha256,
+          installedAt: new Date().toISOString(),
+        };
+        if (idx >= 0) lock.plugins[idx] = entry;
+        else lock.plugins.push(entry);
+        newlyInstalled.push(skillName);
+      }
+      installedCount++;
+    }
+
+    if (!dryRun) {
+      writeLock(lock, tx);
+      tx.commit();
+
+      for (const skillName of newlyInstalled) {
+        const targetDir = path.join(PLUGINS_DIR, skillName);
+        if (fs.existsSync(targetDir)) {
+          const digestResult = calculateTreeDigest(targetDir);
+          const entry = lock.plugins.find(p => p.name === skillName);
+          if (entry) entry.treeDigest = digestResult.treeDigest;
+        }
+      }
+      writeLock(lock);
+    }
+
+    console.log('');
+    if (dryRun) {
+      console.log(c.dim(`[DRY-RUN] Would install ${installedCount} skills (${skippedCount} already installed - skipped).`));
+    } else {
+      console.log(c.green(c.bold(`✓ Batch install complete: ${installedCount} catalog skills installed.`)));
+      if (skippedCount > 0) {
+        console.log(c.dim(`  (${skippedCount} skills already installed - skipped)`));
+      }
+      console.log('');
+      console.log('  Next steps:');
+      console.log('    node .agents/ctx.js export all    # recompile with new skills');
+      console.log('    node .agents/ctx.js validate      # verify consistency');
+    }
+
+    return { installedCount, skippedCount };
+  } catch (err) {
+    console.error(c.red(`\n[ERROR] Batch installation failed: ${err.message}`));
+    process.exit(1);
+  } finally {
+    if (lockToken) projectLock.release(lockToken);
+  }
+}
 
 /**
  * skill add <ref> [--dry-run] [--checksum <sha256>] [--force-unsafe-prompts]
@@ -649,6 +796,10 @@ async function add(ref, options = {}) {
   const forceUnsafe = Boolean(options.forceUnsafe || options['force-unsafe-prompts']);
   const allowFloating = Boolean(options.allowFloating || options['allow-floating']);
   const force = Boolean(options.force);
+
+  if (ref === '--all' || ref === 'all' || options.all) {
+    return await addAllFromCatalog(options);
+  }
 
   if (!ref) {
     console.error(c.red('Usage: ctx.js skill add <ref> [--checksum <sha256>]'));
@@ -663,7 +814,37 @@ async function add(ref, options = {}) {
     throw new Error(`Invalid plugin name derived from reference: '${skillName}'`);
   }
 
-  // Supply-chain source pinning check (Wave 6)
+  // 1. Check for conflict with builtin skills first
+  const builtinPath = path.join(CORE_SKILLS, skillName);
+  if (fs.existsSync(builtinPath)) {
+    console.error(c.red(`\n[ERROR] '${skillName}' conflicts with a built-in skill.`));
+    console.error(c.red('  Built-in skills cannot be overridden via --add-skill.'));
+    console.error(c.dim(`  To customize a built-in skill for your project, run: contextos skill override ${skillName}`));
+    process.exit(1);
+  }
+
+  // 2. If single word not in catalog, check for typo suggestion
+  if (descriptor.type !== 'catalog' && !ref.includes('/') && !ref.includes('@')) {
+    const catalogDir = getCatalogDir();
+    if (fs.existsSync(catalogDir)) {
+      const catalogSkills = fs.readdirSync(catalogDir).filter(n => {
+        try {
+          return fs.statSync(path.join(catalogDir, n)).isDirectory();
+        } catch {
+          return false;
+        }
+      });
+      const suggestion = findClosestSkill(skillName, catalogSkills);
+      if (suggestion) {
+        console.error(c.red(`\n[ERROR] Skill '${skillName}' not found in catalog.`));
+        console.log(c.yellow(`  Did you mean: "${suggestion}"?`));
+        console.log(c.dim('  Run "contextos skill list --available" to see all catalog skills.'));
+        process.exit(1);
+      }
+    }
+  }
+
+  // 3. Supply-chain source pinning check (Wave 6)
   if (!dryRun && descriptor.type !== 'catalog') {
     const pinning = validatePluginPinning(
       {
@@ -687,15 +868,6 @@ async function add(ref, options = {}) {
   console.log('');
   console.log(c.bold(`Installing skill: ${c.cyan(skillName)}`));
   console.log(c.dim(`  Source: ${ref} (${descriptor.type})`));
-
-  // Check for conflict with builtin skills
-  const builtinPath = path.join(CORE_SKILLS, skillName);
-  if (fs.existsSync(builtinPath)) {
-    console.error(c.red(`\n[ERROR] '${skillName}' conflicts with a built-in skill.`));
-    console.error(c.red('  Built-in skills cannot be overridden via --add-skill.'));
-    console.error(c.dim('  To customize a built-in skill, fork the repo and submit a PR.'));
-    process.exit(1);
-  }
 
   // Check if already installed
   const lock     = readLock();
@@ -779,6 +951,21 @@ async function add(ref, options = {}) {
       // We don't need to do anything since it wasn't committed
     }
     console.error(c.red(`\n[ERROR] Failed to install '${skillName}': ${err.message}`));
+    const catalogDir = getCatalogDir();
+    if (fs.existsSync(catalogDir)) {
+      const catalogSkills = fs.readdirSync(catalogDir).filter(n => {
+        try {
+          return fs.statSync(path.join(catalogDir, n)).isDirectory();
+        } catch {
+          return false;
+        }
+      });
+      const suggestion = findClosestSkill(skillName, catalogSkills);
+      if (suggestion) {
+        console.log(c.yellow(`  Did you mean: "${suggestion}"?`));
+        console.log(c.dim('  Run "contextos skill list --available" to see all catalog skills.'));
+      }
+    }
     process.exit(1);
   } finally {
     if (lockToken) projectLock.release(lockToken);
@@ -898,25 +1085,46 @@ function remove(skillName) {
 }
 
 /**
- * skill list
+ * skill list [options]
  */
-function list() {
+function list(options = {}) {
+  const showAvailable = Boolean(options.available || options['--available'] || options.all);
   const lock = readLock();
 
   // Builtin skills
   const builtins = fs.existsSync(CORE_SKILLS)
-    ? fs.readdirSync(CORE_SKILLS).filter(n => fs.statSync(path.join(CORE_SKILLS, n)).isDirectory())
+    ? fs.readdirSync(CORE_SKILLS).filter(n => {
+        try {
+          return fs.statSync(path.join(CORE_SKILLS, n)).isDirectory();
+        } catch {
+          return false;
+        }
+      })
     : [];
 
   // Plugin skills
   const plugins = lock.plugins;
+
+  // Catalog skills
+  const catalogDir = getCatalogDir();
+  const catalogSkills = fs.existsSync(catalogDir)
+    ? fs.readdirSync(catalogDir).filter(n => {
+        try {
+          return fs.statSync(path.join(catalogDir, n)).isDirectory();
+        } catch {
+          return false;
+        }
+      })
+    : [];
+  const installedNames = new Set(plugins.map(p => p.name));
+  const availableCatalog = catalogSkills.filter(n => !installedNames.has(n));
 
   console.log('');
   console.log(c.bold('ContextOS Skills'));
   console.log('');
 
   // Built-ins
-  console.log(c.bold(`  Built-in (${builtins.length})`));
+  console.log(c.bold(`  Built-in Core (${builtins.length})`));
   for (const name of builtins) {
     console.log(`    ${c.cyan('●')} ${name}  ${c.dim('(core)')}`);
   }
@@ -924,14 +1132,31 @@ function list() {
   // Plugins
   console.log('');
   if (plugins.length === 0) {
-    console.log(c.bold('  Plugins (0)'));
-    console.log(c.dim('    No plugins installed yet.'));
-    console.log(c.dim('    Install one: node .agents/ctx.js skill add username/my-skill'));
+    console.log(c.bold('  Installed Plugins & Domain Skills (0)'));
+    console.log(c.dim('    No domain skills or plugins installed yet.'));
+    console.log(c.dim('    Install one: contextos skill add <name>  (or --all)'));
   } else {
-    console.log(c.bold(`  Plugins (${plugins.length})`));
+    console.log(c.bold(`  Installed Plugins & Domain Skills (${plugins.length})`));
     for (const p of plugins) {
       const when = p.installedAt ? new Date(p.installedAt).toLocaleDateString() : '?';
       console.log(`    ${c.green('●')} ${p.name}  ${c.dim(`← ${p.ref}  (installed ${when})`)}`);
+    }
+  }
+
+  // Available in Catalog
+  console.log('');
+  if (showAvailable || availableCatalog.length > 0) {
+    console.log(c.bold(`  Available in Catalog (${availableCatalog.length})`));
+    if (showAvailable) {
+      for (const name of availableCatalog) {
+        console.log(`    ${c.dim('○')} ${name}`);
+      }
+      console.log('');
+      console.log(c.dim('  Install with: contextos skill add <name>  (or contextos skill add --all)'));
+    } else {
+      console.log(c.dim(`    ${availableCatalog.length} domain skills available in local catalog.`));
+      console.log(c.dim('    Run "contextos skill list --available" to see all, or install with:'));
+      console.log(c.dim('    contextos skill add <name>  |  contextos skill add --all'));
     }
   }
 
@@ -939,7 +1164,7 @@ function list() {
 }
 
 /**
- * skill search <query>  — searches the hosted registry.json
+ * skill search <query> - searches the hosted registry.json
  */
 async function search(query) {
   console.log(c.dim(`\nFetching registry from: ${REGISTRY_URL}\n`));

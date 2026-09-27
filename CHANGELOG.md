@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-09-27
+
+### Added
+- **Terminal Visual Layer (`bin/lib/ui.js`)**:
+  - Zero-dependency CLI visualization module featuring a brand banner and formatted status badges.
+  - Aligned 4-step execution tracker (`[1/4]` to `[4/4]`) with clean indentation grid (step titles, `✓` checkmarks, sub-explanations).
+  - Dynamic interactive/batch progress bar (`renderProgressBar`) with TTY width detection and ANSI escape stripping for crisp boxed borders.
+  - Styled success summary card (`renderSuccessCard`) highlighting immediate next steps, profile switching, and export commands.
+- **Autonomous Offline Catalog Distribution**:
+  - `init` atomically distributes the 36-skill catalog into `.agents/catalog/skills` directly within consumer projects (326 KB).
+  - Consumer repositories can inspect (`contextos skill list --available`) and install (`contextos skill add <name>`) catalog skills completely offline without network access or global cache dependencies.
+- **Stack Presets & Bulk Installation**:
+  - Added `--preset <name>` support to `init` (`frontend`, `backend`, `devops`, `full`).
+  - Added `--all` flag to `init` (`contextos init --all`) and `skill add` (`contextos skill add --all`) to deploy all 36 catalog skills in a single operation.
+- **Intelligent Typo Suggestions**:
+  - Integrated Levenshtein distance matcher for catalog skill commands: suggests closest valid skill names on typos (e.g. `skill add reat` -> `react`).
+
 ## [2.1.1] - 2026-09-27
 
 ### Fixed

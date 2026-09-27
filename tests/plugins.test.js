@@ -1,7 +1,7 @@
 /**
  * tests/plugins.test.js
- * Tests for .agents/plugins.js — the skill plugin manager
- * Uses Node.js built-in test runner — zero dependencies.
+ * Tests for .agents/plugins.js - the skill plugin manager
+ * Uses Node.js built-in test runner - zero dependencies.
  */
 
 'use strict';
@@ -58,7 +58,7 @@ function makeSandbox() {
 //  File presence
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('plugins — file presence', () => {
+describe('plugins - file presence', () => {
   test('plugins.js exists at .agents/plugins.js', () => {
     assert.ok(fs.existsSync(PLUGINS_PATH), 'plugins.js should exist');
   });
@@ -98,7 +98,7 @@ describe('plugins — file presence', () => {
 //  ctx.js skill subcommand routing
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('ctx.js skill — command routing', () => {
+describe('ctx.js skill - command routing', () => {
   test('skill list runs and outputs builtin skills', () => {
     const { stdout, code } = runCtx('skill list');
     assert.equal(code, 0, 'skill list should exit 0');
@@ -124,7 +124,7 @@ describe('ctx.js skill — command routing', () => {
     // Use a GitHub ref that points to an actual known-good file
     // (we use the repo's own SKILL.md for a safe test)
     const { stdout, code } = runCtx('skill add kok-o/contextos-agents/.agents/core/skills/ponytail-mindset --dry-run');
-    // If network is unavailable the test will fail — that's expected on CI without network
+    // If network is unavailable the test will fail - that's expected on CI without network
     // We only check that it ran (don't assert code=0 since network may be absent)
     assert.ok(
       stdout.includes('DRY-RUN') || stdout.includes('Installing') || code !== 0,
@@ -142,7 +142,7 @@ describe('ctx.js skill — command routing', () => {
 //  Unit: parseRef logic (tested via sandbox)
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('plugins — parseRef and deriveSkillName logic', () => {
+describe('plugins - parseRef and deriveSkillName logic', () => {
   /**
    * We test the internal functions by requiring plugins.js directly.
    * Since it's a module we can call collectAllSkillDirs and readLock safely.
@@ -239,7 +239,7 @@ describe('plugins — parseRef and deriveSkillName logic', () => {
 //  Lock file management
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('plugins — lock file (plugins.json)', () => {
+describe('plugins - lock file (plugins.json)', () => {
   let sandbox;
 
   before(() => { sandbox = makeSandbox(); });
@@ -283,7 +283,7 @@ describe('plugins — lock file (plugins.json)', () => {
 //  bin/index.js --add-skill flag
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('bin/index.js — --add-skill flag', () => {
+describe('bin/index.js - --add-skill flag', () => {
   test('--help output includes --add-skill flag description', () => {
     const binPath = path.join(ROOT, 'bin', 'index.js');
     const out = execSync(`node "${binPath}" --help`, { stdio: 'pipe' }).toString();
@@ -315,7 +315,7 @@ describe('bin/index.js — --add-skill flag', () => {
 //  Prompt injection & checksum security
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('plugins — prompt injection & checksum security', () => {
+describe('plugins - prompt injection & checksum security', () => {
   const plugins = require(PLUGINS_PATH);
 
   test('scanForPromptInjection detects common prompt injection patterns', () => {
@@ -329,6 +329,57 @@ describe('plugins — prompt injection & checksum security', () => {
   test('scanForPromptInjection passes benign skill content', () => {
     const benign = '# React Best Practices\n\nAlways use hooks at the top level of components.\nMemoize expensive computations with useMemo.';
     assert.equal(plugins.scanForPromptInjection(benign), false);
+  });
+});
+
+describe('plugins - UX improvements (--all, --available, typo suggestions)', () => {
+  let sandboxDir;
+
+  before(() => {
+    sandboxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-plugin-ux-'));
+    fs.mkdirSync(path.join(sandboxDir, '.agents'), { recursive: true });
+    fs.copyFileSync(CTX_PATH, path.join(sandboxDir, '.agents', 'ctx.js'));
+    fs.copyFileSync(PLUGINS_PATH, path.join(sandboxDir, '.agents', 'plugins.js'));
+    const coreTarget = path.join(sandboxDir, '.agents', 'core', 'skills');
+    fs.cpSync(path.join(ROOT, '.agents', 'core', 'skills'), coreTarget, { recursive: true });
+  });
+
+  after(() => {
+    try {
+      fs.rmSync(sandboxDir, { recursive: true, force: true });
+    } catch {}
+  });
+
+  test('skill list --available displays catalog skills', () => {
+    const { stdout, code } = runCtx('skill list --available', sandboxDir);
+    assert.equal(code, 0);
+    assert.ok(stdout.includes('Available in Catalog'));
+    assert.ok(stdout.includes('fastapi'));
+    assert.ok(stdout.includes('react'));
+  });
+
+  test('skill add suggests typo correction for misspelled catalog skill', () => {
+    const { stdout, stderr, code } = runCtx('skill add fastap', sandboxDir);
+    assert.notEqual(code, 0);
+    const combined = stdout + stderr;
+    assert.ok(combined.includes('fastapi') || combined.includes('Did you mean'), 'Should suggest fastapi');
+  });
+
+  test('skill add on built-in suggests override command', () => {
+    const { stdout, stderr, code } = runCtx('skill add security', sandboxDir);
+    assert.notEqual(code, 0);
+    const combined = stdout + stderr;
+    assert.ok(combined.includes('skill override security'), 'Should suggest skill override');
+  });
+
+  test('skill add --all installs all catalog skills batch', () => {
+    const { stdout, code } = runCtx('skill add --all', sandboxDir);
+    assert.equal(code, 0);
+    assert.ok(stdout.includes('Batch install complete') || stdout.includes('catalog skills installed'));
+    const lock = JSON.parse(fs.readFileSync(path.join(sandboxDir, '.agents', 'plugins.json'), 'utf8'));
+    assert.ok(lock.plugins.length >= 30, 'Should have installed catalog skills');
+    assert.ok(fs.existsSync(path.join(sandboxDir, '.agents', 'plugins', 'fastapi', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(sandboxDir, '.agents', 'plugins', 'react', 'SKILL.md')));
   });
 });
 

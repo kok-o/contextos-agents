@@ -55,10 +55,13 @@ function printHelp() {
   console.log('  watch                           Start continuous file watcher and auto-sync daemon');
   console.log('  init                            Show initialization guide');
   console.log('  install-skill <ref>             Alias for skill add (install a plugin)');
-  console.log('  skill add   <ref>               Install a plugin skill (GitHub or npm)');
+  console.log('  skill add   <ref|--all>         Install a plugin skill or all catalog skills (--all)');
   console.log('  skill remove <name>             Uninstall a plugin skill');
-  console.log('  skill list                      List installed skills (builtin + plugins)');
+  console.log('  skill list [--available]        List installed skills (and available catalog skills)');
   console.log('  skill search [query]            Search the community skill registry');
+  console.log('  skill override <name>           Create editable project copy of an upstream skill');
+  console.log('  skill diff <name>               Show differences between local override and upstream');
+  console.log('  skill eject <name>              Eject upstream skill to standalone project skill');
   console.log('');
   console.log('Plugin ref formats:');
   console.log('  username/repo                    GitHub repo root SKILL.md');
@@ -634,15 +637,17 @@ if (command === 'export') {
   }
 
   if (subcommand === 'add') {
+    const isAll = args.includes('--all') || ref === '--all' || ref === 'all';
     const forceUnsafe = args.includes('--force-unsafe-prompts') || args.includes('--force-unsafe');
-    plugins.add(ref, { dryRun, checksum, forceUnsafe }).catch(err => {
+    plugins.add(isAll ? '--all' : ref, { dryRun, checksum, forceUnsafe, all: isAll }).catch(err => {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     });
   } else if (subcommand === 'remove') {
     plugins.remove(ref);
   } else if (subcommand === 'list') {
-    plugins.list();
+    const available = args.includes('--available') || args.includes('-a') || args.includes('--all');
+    plugins.list({ available });
   } else if (subcommand === 'search') {
     const query = args.slice(2).join(' ');
     plugins.search(query).catch(err => {

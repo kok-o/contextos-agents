@@ -288,4 +288,50 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
     // Original installation is completely intact
     assert.ok(fs.existsSync(path.join(recoverAppDir, '.agents', 'AGENTS.md')), 'Original installation must remain intact');
   });
+
+  test('UX Improvement: default init outputs Lean Core explanation and 7 core skills', () => {
+    const appDir = path.join(tmpBase, 'lean-core-init-app');
+    fs.mkdirSync(appDir, { recursive: true });
+
+    const output = execSync(`node "${pkgBin}" init --skip-compile`, {
+      cwd: appDir,
+      encoding: 'utf8',
+    });
+
+    assert.match(output, /Installed 7 foundational core skills/);
+    assert.match(output, /Why 7\? ContextOS uses a Lean Core/);
+    assert.match(output, /contextos skill add <name> \(or --all\)/);
+  });
+
+  test('UX Improvement: init --all installs full catalog skills in consumer project', () => {
+    const allAppDir = path.join(tmpBase, 'all-skills-init-app');
+    fs.mkdirSync(allAppDir, { recursive: true });
+
+    const output = execSync(`node "${pkgBin}" init --skip-compile --all`, {
+      cwd: allAppDir,
+      encoding: 'utf8',
+    });
+
+    assert.match(output, /Installing all 36 catalog skills/);
+    const pluginsLock = JSON.parse(fs.readFileSync(path.join(allAppDir, '.agents', 'plugins.json'), 'utf8'));
+    assert.ok(pluginsLock.plugins.length >= 30, 'Should have installed catalog skills into plugins.json');
+    assert.ok(fs.existsSync(path.join(allAppDir, '.agents', 'plugins', 'react', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(allAppDir, '.agents', 'plugins', 'fastapi', 'SKILL.md')));
+  });
+
+  test('UX Improvement: init --preset frontend installs frontend domain skills', () => {
+    const frontendAppDir = path.join(tmpBase, 'frontend-preset-app');
+    fs.mkdirSync(frontendAppDir, { recursive: true });
+
+    const output = execSync(`node "${pkgBin}" init --skip-compile --preset frontend`, {
+      cwd: frontendAppDir,
+      encoding: 'utf8',
+    });
+
+    assert.match(output, /Installing preset 'frontend' skills/);
+    assert.ok(fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', 'react', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', 'typescript', 'SKILL.md')));
+    // Backend skills should not be installed
+    assert.ok(!fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', 'fastapi')));
+  });
 });

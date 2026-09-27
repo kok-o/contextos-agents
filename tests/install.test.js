@@ -1,7 +1,7 @@
 /**
  * tests/install.test.js
- * Tests for bin/index.js — the main installer
- * Uses Node.js built-in test runner (node:test) — no dependencies needed
+ * Tests for bin/index.js - the main installer
+ * Uses Node.js built-in test runner (node:test) - no dependencies needed
  */
 
 const { test, describe, before, after } = require('node:test');
@@ -14,7 +14,7 @@ const { execSync } = require('child_process');
 const BIN_PATH = path.join(__dirname, '..', 'bin', 'index.js');
 const AGENTS_SOURCE = path.join(__dirname, '..', '.agents');
 
-describe('bin/index.js — installer', () => {
+describe('bin/index.js - installer', () => {
   let tmpDir;
   let createdStubMcp = false;
 
@@ -179,6 +179,25 @@ describe('bin/index.js — installer', () => {
     const ctxPath = path.join(__dirname, '..', '.agents', 'ctx.js');
     const output = execSync(`node "${ctxPath}" init`, { cwd: path.join(__dirname, '..') }).toString();
     assert.ok(output.includes('Initialization Guide'), 'Direct ctx.js init should print guide');
+  });
+
+  test('bin/lib/ui.js renders banner, steps, progress bar, and card cleanly', () => {
+    const ui = require('../bin/lib/ui.js');
+    assert.equal(typeof ui.renderBanner, 'function');
+    assert.equal(typeof ui.renderStep, 'function');
+    assert.equal(typeof ui.renderProgressBar, 'function');
+    assert.equal(typeof ui.renderSuccessCard, 'function');
+
+    // Test renderStep output format
+    assert.ok(ui.formatStepBadge(1, 4).includes('[1/4]'));
+
+    // Test executions do not throw
+    assert.doesNotThrow(() => {
+      ui.renderBanner('2.1.2');
+      ui.renderStep(1, 4, 'Test Step', 'Test detail', true);
+      ui.renderProgressBar(5, 10, 'test-item');
+      ui.renderSuccessCard();
+    });
   });
 });
 
