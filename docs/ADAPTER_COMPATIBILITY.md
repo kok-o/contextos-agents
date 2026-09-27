@@ -2,8 +2,6 @@
 
 This document establishes the authoritative technical contracts, entrypoints, scoping mechanisms, and verification statuses for all AI assistant adapters supported by ContextOS v2.0.
 
-Refer to [docs/ROADMAP.md](./ROADMAP.md) for the overarching phase milestone plan.
-
 ---
 
 ## 1. Supported Adapters & Contract Overview
@@ -11,12 +9,12 @@ Refer to [docs/ROADMAP.md](./ROADMAP.md) for the overarching phase milestone pla
 | Adapter | Product Target | Primary Entrypoint | Generated Output Files | Scoping Mechanism | Custom User Content Preservation | Verification Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | **Cursor** | Cursor 0.45+ | `.cursor/rules/*.mdc` | `.cursor/rules/*.mdc`, legacy `.cursorrules` | MDC frontmatter (`globs`, `alwaysApply`) | Managed frontmatter block; `.cursorrules` preserves user header | Verified in tests |
-| **Claude Code** | Claude Code CLI 0.2+ | `CLAUDE.md` | `CLAUDE.md`, `.agents/generated/claude/skills/**/SKILL.md` | Top-level memory index referencing modular skills | Managed provenance block with preserved user sections | In progress (Task 2.4) |
+| **Claude Code** | Claude Code CLI 0.2+ | `CLAUDE.md` | `CLAUDE.md`, `.agents/generated/claude/skills/**/SKILL.md` | Top-level memory index referencing modular skills | Managed provenance block with preserved user sections | Verified in tests |
 | **Gemini CLI** | Gemini CLI & Flash 3.8 | `GEMINI.md` | `GEMINI.md`, `.agents/skills/**/SKILL.md`, `.agents/generated/gemini/**` | Context inclusion and hierarchical rule imports | Preserved user rules block | Verified in tests |
 | **GitHub Copilot** | Copilot Chat & Agent | `.github/copilot-instructions.md` | `.github/copilot-instructions.md` | Modular instructions (`.github/instructions/` with `applyTo`) | Managed ContextOS provenance block | Verified in tests |
 | **Aider** | Aider 0.70+ | `.aider.conf.yml` | `.aider.conf.yml`, `CONVENTIONS.md` | Read-only conventions via `read: CONVENTIONS.md` | Existing YAML keys preserved; managed CONVENTIONS.md | Verified in tests |
 | **Zed** | Zed IDE 0.170+ | `.zed/rules.md` | `.zed/rules.md`, `.zed/prompts/*.md` | Project instructions and on-demand slash prompts | Managed rules header; prompt templates | Verified in tests |
-| **Antigravity** | Antigravity IDE & CLI | Isolated | Defers to `GEMINI.md` and `.agents/skills/` | Workspace skill discovery | Internal `.agents/rules/` strictly isolated from IDE | Evaluated (Task 2.9) |
+| **Antigravity** | Antigravity IDE & CLI | Isolated | Defers to `GEMINI.md` and `.agents/skills/` | Workspace skill discovery | Internal `.agents/rules/` strictly isolated from IDE | Verified in tests |
 
 ---
 
@@ -94,7 +92,7 @@ Refer to [docs/ROADMAP.md](./ROADMAP.md) for the overarching phase milestone pla
   - User prompts in `.zed/prompts/` not originating from ContextOS are preserved.
 
 ### 2.7 Google Antigravity IDE Assessment & Boundary Contract
-- **Investigation Finding (Task 2.9)**:
+- **Integration Architecture & Boundaries**:
   - Antigravity IDE and CLI look for project customizations in `.gemini/` or workspace rules.
   - Crucially, ContextOS internally reserves the `.agents/rules/` directory for its internal rule catalog engine (`.agents/rules/rule-catalog.js`).
   - **Decision**: ContextOS will NOT generate files inside `.agents/rules/` for external consumption. Instead, Antigravity IDE relies on `GEMINI.md` at root and `.agents/skills/` (the native skill hierarchy that Antigravity natively discovers via the Google Customization standard).

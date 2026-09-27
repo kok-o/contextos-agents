@@ -208,7 +208,7 @@ Installable into any project on demand via `contextos skill add <name>`, `contex
 
 Use these templates to quickly launch workflows:
 
-### 🟢 Scenario 1: Developing a New Feature (Full Lifecycle)
+### Scenario 1: Developing a New Feature (Full Lifecycle)
 
 > `[DOMAIN: Full-Stack] [PHASE: Define] [ROLE: Product Manager]`
 > `Skills: engineering-workflow, interview-me`
@@ -217,7 +217,7 @@ Use these templates to quickly launch workflows:
 
 ---
 
-### 🟡 Scenario 2: Transitioning from Plan to Implementation
+### Scenario 2: Transitioning from Plan to Implementation
 
 > `[DOMAIN: Full-Stack] [PHASE: Build] [ROLE: Senior Developer]`
 > `Skills: gemini-precision, ponytail-mindset`
@@ -226,7 +226,7 @@ Use these templates to quickly launch workflows:
 
 ---
 
-### 🎨 Scenario 3: Crafting Modern Premium Interfaces
+### Scenario 3: Crafting Modern Premium Interfaces
 
 > `[DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Designer]`
 > `Skills: ui-ux-pro, react, typescript`
@@ -235,7 +235,7 @@ Use these templates to quickly launch workflows:
 
 ---
 
-### 🛡️ Scenario 4: Security Audit and Code Review
+### Scenario 4: Security Audit and Code Review
 
 > `[DOMAIN: Backend] [PHASE: Review] [ROLE: Chief Security Officer]`
 > `Skills: security, engineering-workflow`
@@ -244,7 +244,7 @@ Use these templates to quickly launch workflows:
 
 ---
 
-### ⚡ Scenario 5: Refactoring and Performance Optimization
+### Scenario 5: Refactoring and Performance Optimization
 
 > `[DOMAIN: Full-Stack] [PHASE: Plan] [ROLE: Performance Engineer]`
 > `Skills: performance, react-best-practices, system-design`
