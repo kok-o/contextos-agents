@@ -2,7 +2,7 @@
 
 To ensure stability and secure deployments, the ContextOS project is strictly separated into different maturity boundaries. Features in Experimental or Labs stages are not included in the default `contextos-agents` npm package.
 
-## 🟢 Stable (Core)
+## Stable (Core)
 
 These components are production-ready, strictly versioned, and guaranteed for backwards compatibility. They form the `contextos-agents` root package.
 
@@ -12,14 +12,14 @@ These components are production-ready, strictly versioned, and guaranteed for ba
 *   **Staged Index Scanner & Safe Hooks:** Scanning Git index blobs for secrets and lazy stubs (`contextos scan`), and managing isolated pre-commit hooks (`contextos hook`).
 *   **Core Commands:** `init`, `export`, `resolve`, `doctor`, `watch`, `scan`, `hook`, `gate`.
 
-## 🟡 Beta (MCP Bridge)
+## Beta (MCP Bridge)
 
 These components are feature-complete but their APIs (specifically MCP schemas) may undergo minor changes. They are distributed via the separate `@contextos/mcp` package.
 
 *   **Read-Only MCP Server:** Tools for agents to read project status (`contextos_resolve`, `contextos_explain`, `contextos_status`).
 *   **Interactive CLI Framework:** Foundations for interactive shells, though not recommended for automated CI use.
 
-## 🟠 Experimental (Runtime)
+## Experimental (Runtime)
 
 These components handle execution and mutation. They carry security implications and should only be used in trusted repositories or local environments with explicit opt-in flags. In-flight action firewalling (such as real-time tool-call interception, taint analysis, and socket blocking) is out-of-scope for the core compiler and is best handled by dedicated local action firewalls (such as Stroq).
 
@@ -28,7 +28,7 @@ These components handle execution and mutation. They carry security implications
 *   **Mutating MCP Tools:** `contextos_delegate`, `contextos_merge`, `contextos_diff`.
 *   **OCI Verification Sandbox:** Docker-based execution testing (currently lacking cross-platform stability guarantees).
 
-## 🔴 Labs (Deprecated / Under Research)
+## Labs (Deprecated / Under Research)
 
 These components have been removed from standard distribution or are actively being researched. They should not be relied upon.
 

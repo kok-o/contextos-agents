@@ -266,8 +266,9 @@ Use these templates to quickly launch workflows:
 Explore deeper architecture guides, adapter references, and product specifications:
 
 - **Quickstart & Onboarding:** [docs/product/onboarding.md](./docs/product/onboarding.md) - Five-minute guide to installing, configuring, and verifying ContextOS.
-- **Adapter Compatibility Matrix:** [docs/ADAPTER_COMPATIBILITY.md](./docs/ADAPTER_COMPATIBILITY.md) - Support tiers, file layouts, and test coverage across 11 AI coding tools.
+- **Adapter Compatibility Matrix:** [docs/ADAPTER_COMPATIBILITY.md](./docs/ADAPTER_COMPATIBILITY.md) - Support tiers, file layouts, and test coverage across AI coding tools.
 - **Catalog Quality & Code Examples:** [docs/product/catalog-quality.md](./docs/product/catalog-quality.md) - Quality tiers and test runner for executable code snippets in `SKILL.md`.
-- **Pilot Protocol & Evaluation:** [docs/product/pilot-protocol.md](./docs/product/pilot-protocol.md) and [docs/product/pilot-results.md](./docs/product/pilot-results.md) - Team evaluation methodology and verified benchmark results.
 - **Architecture & Boundaries:** [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) and [docs/PRODUCT_BOUNDARIES.md](./docs/PRODUCT_BOUNDARIES.md) - Internal compiler pipeline and stable vs experimental scope boundaries.
-- **Project Roadmap:** [docs/ROADMAP.md](./docs/ROADMAP.md) - Evolution milestones and completed phases.
+- **Security Policy:** [docs/SECURITY.md](./docs/SECURITY.md) - Vulnerability reporting and security assurance standards.
+- **Architecture Decision Records:** [docs/decisions/](./docs/decisions/) - Key design choices, trade-offs, and governance foundations.
+- **Project Roadmap:** [docs/ROADMAP.md](./docs/ROADMAP.md) - Strategic evolution milestones and upcoming capabilities.

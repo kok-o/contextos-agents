@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/kok-o/contextos-agents">
-    <img src="./Frame%202.png" alt="ContextOS Logo" width="88" height="88" />
+    <img src="./assets/logo.png" alt="ContextOS Logo" width="88" height="88" />
   </a>
 </p>
 
