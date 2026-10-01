@@ -222,6 +222,27 @@ describe('Execution-Backed Runtime Benchmark Suite', () => {
     assert.ok(bad.error);
   });
 
+  test('TypeScript evaluation preserves comparisons, object literals and parameter properties', () => {
+    const result = executeInSandbox(`
+      export class Pagination {
+        constructor(public limit: number = 20) {}
+        parse(value: unknown) {
+          return { valid: typeof value === 'string', limit: this.limit, note: 'public readonly' };
+        }
+      }
+    `);
+    assert.equal(result.compiled, true, result.error?.message);
+    const parsed = new result.exports.Pagination(5).parse('page');
+    assert.equal(parsed.valid, true);
+    assert.equal(parsed.limit, 5);
+    assert.equal(parsed.note, 'public readonly');
+  });
+
+  test('TypeScript evaluation rejects truncated or placeholder source without repairing it', () => {
+    assert.equal(executeInSandbox('export function incomplete() { return 1;').compiled, false);
+    assert.equal(executeInSandbox('export function omitted() { throw ...; }').compiled, false);
+  });
+
   test('runRuntimeSuite verifies compliant security code and catches insecure code', async () => {
     const authSuite = RUNTIME_SUITES['auth-security'];
     assert.ok(authSuite);

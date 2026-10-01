@@ -1,0 +1,2338 @@
+{
+  "schemaVersion": 1,
+  "collectedAt": "2026-09-30T18:26:30.569Z",
+  "environment": {
+    "node": "v22.14.0",
+    "platform": "win32"
+  },
+  "checkout": {
+    "head": "75608ffb6c5b6ae1b37029bdd015eae3e39c9705",
+    "dirty": true,
+    "published": false
+  },
+  "candidates": [
+    {
+      "file": "scratch/release-candidate/contextos-agents-2.3.0.tgz",
+      "bytes": 383086,
+      "sha256": "8e87d51198c53d06ee4c78ef2949bf316388f09514eff1cdee4f6f398a193a0c"
+    },
+    {
+      "file": "scratch/release-candidate/contextos-mcp-0.4.0.tgz",
+      "bytes": 3521000,
+      "sha256": "29bd5b06d6b12deba6b111ac5ccbd3912e561444f089edf6523264fb376b37ac"
+    }
+  ],
+  "measurements": {
+    "bootstrapChars": 3356,
+    "cursorAlwaysOnChars": 3777,
+    "cursorAlwaysOnFiles": [
+      "00-project-rules.mdc"
+    ],
+    "routine": {
+      "skills": [
+        "engineering-workflow"
+      ],
+      "totalEstimatedTokens": 418,
+      "warnings": []
+    },
+    "auth": {
+      "skills": [
+        "engineering-workflow",
+        "security"
+      ],
+      "warnings": [
+        {
+          "code": "CTX_RESOLVER_BUDGET_EXCEEDED",
+          "message": "Context budget (100 tokens) exceeded by mandatory skill \"security\" and dependencies (total: 2655 tokens)"
+        }
+      ]
+    },
+    "workspacePackages": 3
+  },
+  "checks": [
+    {
+      "name": "root full suite",
+      "result": "PASS",
+      "passed": 507,
+      "failed": 0,
+      "skipped": 0,
+      "command": "npm test",
+      "evidence": {
+        "file": "scratch/r2-runtime-final-core-tests.log",
+        "bytes": 195046,
+        "sha256": "3daa5a577da57b85f19e01f4eefb079bb7010858fe8bb96579b7d48ec3c2306a"
+      }
+    },
+    {
+      "name": "MCP full suite",
+      "result": "PASS",
+      "passed": 599,
+      "failed": 0,
+      "skipped": 25,
+      "command": "cd contextos-mcp; npm test -- --maxWorkers=2",
+      "evidence": {
+        "file": "scratch/r2-entrypoint-mcp-tests.log",
+        "bytes": 23804,
+        "sha256": "ad0c3436efd3501f87116d872116fa204c137d2ce608b7b1009e1be0554ebeed"
+      }
+    },
+    {
+      "name": "MCP build",
+      "result": "PASS",
+      "command": "cd contextos-mcp; npm run build",
+      "evidence": {
+        "file": "scratch/r2-entrypoint-build.log",
+        "bytes": 843,
+        "sha256": "e37f03928d3d4dce41172c869d03c86be25a998ad7cd8215c5ca83a8235a3f27"
+      }
+    },
+    {
+      "name": "MCP lint",
+      "result": "PASS",
+      "warnings": 5,
+      "infos": 2,
+      "evidence": {
+        "file": "scratch/r2-entrypoint-mcp-lint.log",
+        "bytes": 5121,
+        "sha256": "7e1e6f025840b5729b43c96e427a05f50feb1f380a04d36742039a05f01295d0"
+      }
+    },
+    {
+      "name": "catalog validate",
+      "result": "PASS",
+      "core": 7,
+      "catalog": 36,
+      "evidence": {
+        "file": "scratch/r2-validate.log",
+        "bytes": 1555,
+        "sha256": "af7242dc1c3617973863459cc1801789f93fb1cc990c665f96f3c74c43e3f99a"
+      }
+    },
+    {
+      "name": "export drift",
+      "schemaVersion": "2.0.0",
+      "status": "pass",
+      "hasDrift": false,
+      "hasError": false,
+      "code": 0,
+      "totalFindings": 0,
+      "findings": {
+        "STALE_INPUT": [],
+        "MISSING_OUTPUT": [],
+        "MODIFIED_MANAGED_OUTPUT": [],
+        "ORPHAN_MANAGED_OUTPUT": [],
+        "ADAPTER_VERSION_MISMATCH": [],
+        "PROFILE_MISMATCH": [],
+        "CORRUPT_LOCKFILE": [],
+        "EMPTY_PROJECTION": [],
+        "CONFIG_ERROR": []
+      },
+      "collisions": [],
+      "diffs": [],
+      "projectedCount": 132,
+      "evidence": {
+        "file": "scratch/r2-final-drift.json",
+        "bytes": 469,
+        "sha256": "a38932fbc3f05c864fddae2497057c4224d782e1426ab228aaf1653a9bfa96a6"
+      }
+    },
+    {
+      "name": "tarball consumer",
+      "result": "PASS",
+      "coreVersion": "2.3.0",
+      "mcpVersion": "0.4.0",
+      "npmInstall": "local tarballs, real .bin wrappers",
+      "lifecycle": [
+        "init",
+        "skill add",
+        "override",
+        "compile",
+        "export all",
+        "drift check",
+        "update",
+        "uninstall"
+      ],
+      "userInstructionsPreserved": true,
+      "userOverridePreserved": true,
+      "consumerPath": "C:\\Users\\esenb\\Desktop\\contextos\\scratch\\release-consumer-dcb3f0488ba44a0f98500ef1bca77237",
+      "evidence": {
+        "file": "scratch/r2-entrypoint-release-consumer.log",
+        "bytes": 16730,
+        "sha256": "a72efdade6e5c8baa776cf96d2cb4da28c3ca5f83c8b9fc3af2458f89236ea2d"
+      }
+    },
+    {
+      "name": "secret scan",
+      "result": "PASS",
+      "evidence": {
+        "file": "scratch/r2-final-secret-check.log",
+        "bytes": 146,
+        "sha256": "1a23ef5f8b16f71155ccbad40f2c3318d2a44e2a6575e76be29ef95fca34ce32"
+      }
+    },
+    {
+      "name": "benchmark evaluator controls",
+      "result": "PASS",
+      "evidence": {
+        "file": "scratch/r2-benchmark-tests.log",
+        "bytes": 4533,
+        "sha256": "413ec53c3aa224260b2d6ee660434c4b7f7c7ee96691bedc38d83c8c84ad5570"
+      }
+    }
+  ],
+  "nativeDiscovery": {
+    "method": "Codex app-server skills/list",
+    "expected": 7,
+    "discovered": 7,
+    "inferenceRequests": 0,
+    "activationVerified": false,
+    "evidence": {
+      "file": "scratch/codex-discovery.json",
+      "bytes": 2696,
+      "sha256": "8a8f075d98d9e560920fedef5702b3e9984d498729186127821d6b7ccccf15d8"
+    }
+  },
+  "sourceHashes": [
+    {
+      "file": ".agents/AGENTS.md",
+      "bytes": 3356,
+      "sha256": "708c4082c1638b5e0cff3173261d3ebeec701965af74e624ca15bb0adf476474"
+    },
+    {
+      "file": ".agents/resolver/canonical-resolver.js",
+      "bytes": 56558,
+      "sha256": "d556d3aefe2144900f0e410110719fc80b9d289ee6af49d5ca8a1697f6e86f69"
+    },
+    {
+      "file": ".agents/workspace/workspace-graph.js",
+      "bytes": 23356,
+      "sha256": "960b748e7801f81219192c1d3052032d38b0af614361b96f1fa3ba96dfa7acca"
+    },
+    {
+      "file": "contextos-mcp/src/contextos/selector.ts",
+      "bytes": 3486,
+      "sha256": "9a390ea6d5e475b6cc56af6391ba57d9b7fdafb93817b90e5273b77a444c8893"
+    },
+    {
+      "file": "contextos-mcp/src/contextos/loader.ts",
+      "bytes": 6250,
+      "sha256": "0bde3a82f0b9d8727ac22983d39f222ea8421a482683d3d466a12ddda5f918f8"
+    },
+    {
+      "file": "benchmarks/lib/spend-guard.js",
+      "bytes": 2767,
+      "sha256": "944cf8b673382b9351306f0fd21508519e2ee7c24fef08bd1fab6dae50bcc74b"
+    },
+    {
+      "file": "benchmarks/lib/maintenance-suites.js",
+      "bytes": 4580,
+      "sha256": "a665ce16511a707c571f1de88666ae22c9546c0d455f302e07c0d17f6df16764"
+    },
+    {
+      "file": "benchmarks/lib/runtime-runner.js",
+      "bytes": 14396,
+      "sha256": "545335d93ecedc6883dd4d2df020c97591b192fe1bf75332caf935db45672de0"
+    },
+    {
+      "file": "benchmarks/reevaluate-budgeted-openai.js",
+      "bytes": 3750,
+      "sha256": "622e680ecb3648685d0a8288cd9b9267cd04dbbe68fa3fc4b61cf4cb7f4bcc76"
+    },
+    {
+      "file": "benchmarks/run-budgeted-openai.js",
+      "bytes": 6387,
+      "sha256": "1c4f402669900f7556b65ad153f897edd512509b1513e6d7bd268efd357b6ab5"
+    }
+  ],
+  "limitations": [
+    "25 skipped MCP tests are excluded from passed count",
+    "Native skill body activation unverified",
+    "Live Cursor and other client loading unverified",
+    "Two-week team pilot not started",
+    "Raw logs and paid API responses remain local in ignored scratch/"
+  ],
+  "modelExperiment": {
+    "report": {
+      "file": "scratch/live-benchmark/2026-09-30T18-03-29-593Z/report-reevaluated.json",
+      "bytes": 2156679,
+      "sha256": "862903b36343c637cee22ce8914d97a252450ae6bbaae62ed2ebcbe8c4adef39"
+    },
+    "model": "gpt-4.1-mini-2025-04-14",
+    "methodology": {
+      "taskCount": 6,
+      "repetitionsPerTask": 3,
+      "arms": [
+        "arm-a-vanilla",
+        "full-installed",
+        "arm-c-contextos-core"
+      ],
+      "primaryOutcome": "harness_verified_success; generated code passes the local compile gate and registered behavioral/security checks.",
+      "oracle": "Generated code is compiled and checked by the repository runtime suites after generation; this is harness verification, not independent human review.",
+      "contextTreatment": "Vanilla, all 11 installed skill entrypoints, or canonical focused selection against the same installed consumer. Saved answers are reevaluated without new generation.",
+      "hiddenOracleTests": "Runtime assertions are not included in the model prompt.",
+      "runtimeIsolation": "Generated code runs in a permission-limited Node child process with a minimal environment; this is defense in depth, not a hardened OS sandbox.",
+      "chatTokenUsage": "Chat UI token usage is unavailable unless manually supplied with the imported response.",
+      "successRateDenominator": "Quality success rates use completed evaluator runs; API and evaluator failures are reported separately and excluded from that denominator.",
+      "generationSettings": {
+        "temperature": 0.1,
+        "temperatureApplied": true,
+        "maxOutputTokens": 4096,
+        "maxAttempts": 1,
+        "requestTimeoutMs": 120000
+      },
+      "syntaxGate": "Native Node stripTypeScriptTypes in transform mode; no source repair; followed by CommonJS execution and registered assertions. Full TypeScript type checking is not included."
+    },
+    "summary": {
+      "requestedRuns": 54,
+      "completedRuns": 50,
+      "failedRuns": 4,
+      "apiErrors": 4,
+      "evaluatorErrors": 0,
+      "completePairs": 16,
+      "controlArm": "arm-a-vanilla",
+      "pairedDeltas": {
+        "full-installed": {
+          "against": "arm-a-vanilla",
+          "pairedTasks": 16,
+          "successDeltaPercentagePoints": -12.5
+        },
+        "arm-c-contextos-core": {
+          "against": "arm-a-vanilla",
+          "pairedTasks": 16,
+          "successDeltaPercentagePoints": -12.5
+        }
+      },
+      "arms": {
+        "arm-a-vanilla": {
+          "armId": "arm-a-vanilla",
+          "totalRuns": 16,
+          "successfulRuns": 8,
+          "successRate": 50,
+          "ci95": [
+            28,
+            72
+          ],
+          "totalCost": null,
+          "costKnown": false,
+          "costPerVerifiedSuccess": null,
+          "avgDurationMs": 13101,
+          "requestedRuns": 18,
+          "failedRuns": 2,
+          "apiErrors": 2,
+          "evaluatorErrors": 0,
+          "usage": {
+            "requestCount": 18,
+            "providerRequests": 16,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 2,
+            "unreportedRetryRequests": 0,
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null,
+            "reasoningTokens": null,
+            "cachedPromptTokens": null,
+            "knownTotalTokens": 23713,
+            "complete": false,
+            "source": "mixed"
+          }
+        },
+        "full-installed": {
+          "armId": "full-installed",
+          "totalRuns": 17,
+          "successfulRuns": 7,
+          "successRate": 41.2,
+          "ci95": [
+            21.6,
+            64
+          ],
+          "totalCost": null,
+          "costKnown": false,
+          "costPerVerifiedSuccess": null,
+          "avgDurationMs": 16936,
+          "requestedRuns": 18,
+          "failedRuns": 1,
+          "apiErrors": 1,
+          "evaluatorErrors": 0,
+          "usage": {
+            "requestCount": 18,
+            "providerRequests": 17,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 1,
+            "unreportedRetryRequests": 0,
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null,
+            "reasoningTokens": null,
+            "cachedPromptTokens": null,
+            "knownTotalTokens": 271161,
+            "complete": false,
+            "source": "mixed"
+          }
+        },
+        "arm-c-contextos-core": {
+          "armId": "arm-c-contextos-core",
+          "totalRuns": 17,
+          "successfulRuns": 7,
+          "successRate": 41.2,
+          "ci95": [
+            21.6,
+            64
+          ],
+          "totalCost": null,
+          "costKnown": false,
+          "costPerVerifiedSuccess": null,
+          "avgDurationMs": 12087,
+          "requestedRuns": 18,
+          "failedRuns": 1,
+          "apiErrors": 1,
+          "evaluatorErrors": 0,
+          "usage": {
+            "requestCount": 18,
+            "providerRequests": 17,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 1,
+            "unreportedRetryRequests": 0,
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null,
+            "reasoningTokens": null,
+            "cachedPromptTokens": null,
+            "knownTotalTokens": 86979,
+            "complete": false,
+            "source": "mixed"
+          }
+        }
+      }
+    },
+    "spending": {
+      "pricing": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "input": 0.4,
+        "cachedInput": 0.1,
+        "output": 1.6,
+        "source": "https://developers.openai.com/api/docs/models/gpt-4.1-mini"
+      },
+      "conservativeReservedUsd": 2.836962,
+      "knownReportedCostUsd": 0.15564039999999996,
+      "limits": "Reservations persist across launches. Unknown or timed-out requests remain reserved. Other project usage is outside this runner."
+    },
+    "arms": [
+      {
+        "armId": "arm-a-vanilla",
+        "totalRuns": 16,
+        "successfulRuns": 8,
+        "successRate": 50,
+        "ci95": [
+          28,
+          72
+        ],
+        "totalCost": null,
+        "costKnown": false,
+        "costPerVerifiedSuccess": null,
+        "avgDurationMs": 13101,
+        "requestedRuns": 18,
+        "failedRuns": 2,
+        "apiErrors": 2,
+        "evaluatorErrors": 0,
+        "usage": {
+          "requestCount": 18,
+          "providerRequests": 16,
+          "userReportedRequests": 0,
+          "estimatedRequests": 0,
+          "unavailableRequests": 2,
+          "unreportedRetryRequests": 0,
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "knownTotalTokens": 23713,
+          "complete": false,
+          "source": "mixed"
+        },
+        "measuredResponses": 16,
+        "knownUsage": {
+          "requestCount": 16,
+          "providerRequests": 16,
+          "userReportedRequests": 0,
+          "estimatedRequests": 0,
+          "unavailableRequests": 0,
+          "unreportedRetryRequests": 0,
+          "promptTokens": 4227,
+          "completionTokens": 19486,
+          "totalTokens": 23713,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "knownTotalTokens": 23713,
+          "complete": true,
+          "source": "provider"
+        },
+        "knownCostUsd": 0.032868400000000006,
+        "costPerVerifiedSuccessUsd": 0.004108550000000001
+      },
+      {
+        "armId": "full-installed",
+        "totalRuns": 17,
+        "successfulRuns": 7,
+        "successRate": 41.2,
+        "ci95": [
+          21.6,
+          64
+        ],
+        "totalCost": null,
+        "costKnown": false,
+        "costPerVerifiedSuccess": null,
+        "avgDurationMs": 16936,
+        "requestedRuns": 18,
+        "failedRuns": 1,
+        "apiErrors": 1,
+        "evaluatorErrors": 0,
+        "usage": {
+          "requestCount": 18,
+          "providerRequests": 17,
+          "userReportedRequests": 0,
+          "estimatedRequests": 0,
+          "unavailableRequests": 1,
+          "unreportedRetryRequests": 0,
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "knownTotalTokens": 271161,
+          "complete": false,
+          "source": "mixed"
+        },
+        "measuredResponses": 17,
+        "knownUsage": {
+          "requestCount": 17,
+          "providerRequests": 17,
+          "userReportedRequests": 0,
+          "estimatedRequests": 0,
+          "unavailableRequests": 0,
+          "unreportedRetryRequests": 0,
+          "promptTokens": 251202,
+          "completionTokens": 19959,
+          "totalTokens": 271161,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 188800,
+          "knownTotalTokens": 271161,
+          "complete": true,
+          "source": "provider"
+        },
+        "knownCostUsd": 0.07577520000000001,
+        "costPerVerifiedSuccessUsd": 0.010825028571428573
+      },
+      {
+        "armId": "arm-c-contextos-core",
+        "totalRuns": 17,
+        "successfulRuns": 7,
+        "successRate": 41.2,
+        "ci95": [
+          21.6,
+          64
+        ],
+        "totalCost": null,
+        "costKnown": false,
+        "costPerVerifiedSuccess": null,
+        "avgDurationMs": 12087,
+        "requestedRuns": 18,
+        "failedRuns": 1,
+        "apiErrors": 1,
+        "evaluatorErrors": 0,
+        "usage": {
+          "requestCount": 18,
+          "providerRequests": 17,
+          "userReportedRequests": 0,
+          "estimatedRequests": 0,
+          "unavailableRequests": 1,
+          "unreportedRetryRequests": 0,
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "knownTotalTokens": 86979,
+          "complete": false,
+          "source": "mixed"
+        },
+        "measuredResponses": 17,
+        "knownUsage": {
+          "requestCount": 17,
+          "providerRequests": 17,
+          "userReportedRequests": 0,
+          "estimatedRequests": 0,
+          "unavailableRequests": 0,
+          "unreportedRetryRequests": 0,
+          "promptTokens": 67464,
+          "completionTokens": 19515,
+          "totalTokens": 86979,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 37376,
+          "knownTotalTokens": 86979,
+          "complete": true,
+          "source": "provider"
+        },
+        "knownCostUsd": 0.046996800000000005,
+        "costPerVerifiedSuccessUsd": 0.006713828571428572
+      }
+    ],
+    "byTask": [
+      {
+        "taskId": "auth-security",
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "completed": 3,
+            "successes": 2
+          },
+          {
+            "armId": "full-installed",
+            "completed": 3,
+            "successes": 1
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "completed": 3,
+            "successes": 0
+          }
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "completed": 3,
+            "successes": 0
+          },
+          {
+            "armId": "full-installed",
+            "completed": 3,
+            "successes": 1
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "completed": 3,
+            "successes": 0
+          }
+        ]
+      },
+      {
+        "taskId": "resilient-api-client",
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "completed": 3,
+            "successes": 3
+          },
+          {
+            "armId": "full-installed",
+            "completed": 3,
+            "successes": 3
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "completed": 3,
+            "successes": 3
+          }
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "completed": 3,
+            "successes": 0
+          },
+          {
+            "armId": "full-installed",
+            "completed": 3,
+            "successes": 0
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "completed": 3,
+            "successes": 0
+          }
+        ]
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "completed": 3,
+            "successes": 2
+          },
+          {
+            "armId": "full-installed",
+            "completed": 3,
+            "successes": 0
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "completed": 3,
+            "successes": 3
+          }
+        ]
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "completed": 1,
+            "successes": 1
+          },
+          {
+            "armId": "full-installed",
+            "completed": 2,
+            "successes": 2
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "completed": 2,
+            "successes": 1
+          }
+        ]
+      }
+    ],
+    "outcomes": [
+      {
+        "taskId": "auth-security",
+        "armId": "arm-c-contextos-core",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "54857c15ac2e61c9237927063dfc3f14ca76bff00018d84a693ee78ceaa25360",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 4640,
+          "completionTokens": 2709,
+          "totalTokens": 7349,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "input-sanitization-validation",
+            "error": "Malformed login email must use a validation status (400 or 422), got 401"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 4/5",
+          "Security vulnerabilities detected: input-sanitization-validation"
+        ]
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "arm-a-vanilla",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 383,
+          "completionTokens": 2371,
+          "totalTokens": 2754,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "input-sanitization-validation",
+            "error": "Malformed login email must use a validation status (400 or 422), got 401"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 4/5",
+          "Security vulnerabilities detected: input-sanitization-validation"
+        ]
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "full-installed",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "cf17a1f3770cb3fb7bdbc95893cd0fe7e8330d83f27fdfd393d4a7ad85b929e3",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 14903,
+          "completionTokens": 2543,
+          "totalTokens": 17446,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "arm-a-vanilla",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 383,
+          "completionTokens": 2758,
+          "totalTokens": 3141,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "full-installed",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "cf17a1f3770cb3fb7bdbc95893cd0fe7e8330d83f27fdfd393d4a7ad85b929e3",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 14903,
+          "completionTokens": 2928,
+          "totalTokens": 17831,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14720,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "input-sanitization-validation",
+            "error": "Malformed login email must use a validation status (400 or 422), got 401"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 4/5",
+          "Security vulnerabilities detected: input-sanitization-validation"
+        ]
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "arm-c-contextos-core",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "54857c15ac2e61c9237927063dfc3f14ca76bff00018d84a693ee78ceaa25360",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 4640,
+          "completionTokens": 2442,
+          "totalTokens": 7082,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 4480,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "input-sanitization-validation",
+            "error": "Malformed login email must use a validation status (400 or 422), got 401"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 4/5",
+          "Security vulnerabilities detected: input-sanitization-validation"
+        ]
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "full-installed",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "cf17a1f3770cb3fb7bdbc95893cd0fe7e8330d83f27fdfd393d4a7ad85b929e3",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 14903,
+          "completionTokens": 2313,
+          "totalTokens": 17216,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14720,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "input-sanitization-validation",
+            "error": "Malformed login email must return a validation error status (400 or 422)"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 4/5",
+          "Security vulnerabilities detected: input-sanitization-validation"
+        ]
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "arm-c-contextos-core",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "54857c15ac2e61c9237927063dfc3f14ca76bff00018d84a693ee78ceaa25360",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 4640,
+          "completionTokens": 2263,
+          "totalTokens": 6903,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "input-sanitization-validation",
+            "error": "Malformed login email must use a validation status (400 or 422), got 401"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 4/5",
+          "Security vulnerabilities detected: input-sanitization-validation"
+        ]
+      },
+      {
+        "taskId": "auth-security",
+        "armId": "arm-a-vanilla",
+        "repetition": 3,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "6b494d74bccf4a08f2b2e68bd155f3a92caa5fa2645d8f125ed85bcff60141ab"
+        },
+        "usage": {
+          "promptTokens": 383,
+          "completionTokens": 2361,
+          "totalTokens": 2744,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "arm-a-vanilla",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 359,
+          "completionTokens": 1363,
+          "totalTokens": 1722,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_status' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property 'domainEvents' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "full-installed",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "139cf5aab0c0fe3df8cc4da2a6b660789664f2fd32c56ddebbd53182f101009e",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 14881,
+          "completionTokens": 1368,
+          "totalTokens": 16249,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "arm-c-contextos-core",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "f30774eb9659685c84c5aa538fa5a8979b8751c82dc827618b82fc34e5b83852",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 6258,
+          "completionTokens": 1493,
+          "totalTokens": 7751,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "full-installed",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "139cf5aab0c0fe3df8cc4da2a6b660789664f2fd32c56ddebbd53182f101009e",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 14881,
+          "completionTokens": 1349,
+          "totalTokens": 16230,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14720,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_status' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property '_status' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "arm-c-contextos-core",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "f30774eb9659685c84c5aa538fa5a8979b8751c82dc827618b82fc34e5b83852",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 6258,
+          "completionTokens": 1514,
+          "totalTokens": 7772,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 6016,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "arm-a-vanilla",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 359,
+          "completionTokens": 1476,
+          "totalTokens": 1835,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property 'domainEvents' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "arm-c-contextos-core",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "f30774eb9659685c84c5aa538fa5a8979b8751c82dc827618b82fc34e5b83852",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 6258,
+          "completionTokens": 1448,
+          "totalTokens": 7706,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 6016,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property '_items' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "arm-a-vanilla",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 359,
+          "completionTokens": 1433,
+          "totalTokens": 1792,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "order-state-invariants",
+            "error": "Cannot assign to read only property '_status' of object '#<Order>'"
+          },
+          {
+            "id": "domain-events-emission",
+            "error": "Cannot assign to read only property 'domainEvents' of object '#<Order>'"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/4"
+        ]
+      },
+      {
+        "taskId": "ddd-order-invariants",
+        "armId": "full-installed",
+        "repetition": 3,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "139cf5aab0c0fe3df8cc4da2a6b660789664f2fd32c56ddebbd53182f101009e",
+          "user": "f26fe574faf54bedbeee6f904b65d6746da00d08ad29b45aa0732b4770eaaa26"
+        },
+        "usage": {
+          "promptTokens": 14881,
+          "completionTokens": 1326,
+          "totalTokens": 16207,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14720,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "full-installed",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "fb2d164e94f56bb4f07a80e034f5f89b312833fe95d56288631bd10062db069e",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 14822,
+          "completionTokens": 1132,
+          "totalTokens": 15954,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "arm-c-contextos-core",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "dd5c99604151cab55ef83457f65eb7d9ec90af1348acde144e78b7fdbdb5cd2b",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 2566,
+          "completionTokens": 996,
+          "totalTokens": 3562,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "arm-a-vanilla",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 305,
+          "completionTokens": 1015,
+          "totalTokens": 1320,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "arm-c-contextos-core",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "dd5c99604151cab55ef83457f65eb7d9ec90af1348acde144e78b7fdbdb5cd2b",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 2566,
+          "completionTokens": 1234,
+          "totalTokens": 3800,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 2432,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "arm-a-vanilla",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 305,
+          "completionTokens": 1004,
+          "totalTokens": 1309,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "full-installed",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "fb2d164e94f56bb4f07a80e034f5f89b312833fe95d56288631bd10062db069e",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 14822,
+          "completionTokens": 923,
+          "totalTokens": 15745,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14592,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "arm-a-vanilla",
+        "repetition": 3,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 305,
+          "completionTokens": 973,
+          "totalTokens": 1278,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "full-installed",
+        "repetition": 3,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "fb2d164e94f56bb4f07a80e034f5f89b312833fe95d56288631bd10062db069e",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 14822,
+          "completionTokens": 819,
+          "totalTokens": 15641,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14592,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "resilient-api-client",
+        "armId": "arm-c-contextos-core",
+        "repetition": 3,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "dd5c99604151cab55ef83457f65eb7d9ec90af1348acde144e78b7fdbdb5cd2b",
+          "user": "a3092df8220a69cefccf85927cb68af370e9d4c5995af0c987b6fd9e6db299e0"
+        },
+        "usage": {
+          "promptTokens": 2566,
+          "completionTokens": 1313,
+          "totalTokens": 3879,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 2432,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "full-installed",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "fb2d164e94f56bb4f07a80e034f5f89b312833fe95d56288631bd10062db069e",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 14675,
+          "completionTokens": 589,
+          "totalTokens": 15264,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14208,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "arm-c-contextos-core",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "ad70e6b724bd988e9fb36d048d31d6d338c2770f1305d1083418b8e2feb712f5",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 1582,
+          "completionTokens": 378,
+          "totalTokens": 1960,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "arm-a-vanilla",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 158,
+          "completionTokens": 365,
+          "totalTokens": 523,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "arm-c-contextos-core",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "ad70e6b724bd988e9fb36d048d31d6d338c2770f1305d1083418b8e2feb712f5",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 1582,
+          "completionTokens": 403,
+          "totalTokens": 1985,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 1408,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "arm-a-vanilla",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 158,
+          "completionTokens": 395,
+          "totalTokens": 553,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "full-installed",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "fb2d164e94f56bb4f07a80e034f5f89b312833fe95d56288631bd10062db069e",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 14675,
+          "completionTokens": 356,
+          "totalTokens": 15031,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14464,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "arm-a-vanilla",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 158,
+          "completionTokens": 412,
+          "totalTokens": 570,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "full-installed",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "fb2d164e94f56bb4f07a80e034f5f89b312833fe95d56288631bd10062db069e",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 14675,
+          "completionTokens": 574,
+          "totalTokens": 15249,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14464,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "safe-pagination",
+        "armId": "arm-c-contextos-core",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "ad70e6b724bd988e9fb36d048d31d6d338c2770f1305d1083418b8e2feb712f5",
+          "user": "dd41872941a03527de5d3fc4a9bd23880908f639de0de9117cb3bda409118e93"
+        },
+        "usage": {
+          "promptTokens": 1582,
+          "completionTokens": 439,
+          "totalTokens": 2021,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 1408,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "pagination-input-security",
+            "error": "Missing expected exception."
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: pagination-input-security"
+        ]
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "arm-a-vanilla",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 150,
+          "completionTokens": 949,
+          "totalTokens": 1099,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "full-installed",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "d6eeb71441e5d460cbcbc9308fb8bd0aaf09b602f03c532943794b2243e34e0d",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 14665,
+          "completionTokens": 995,
+          "totalTokens": 15660,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "sort-determinism",
+            "error": "Cycle detected or unresolved dependencies involving: a"
+          },
+          {
+            "id": "sort-immutability",
+            "error": "Cycle detected or unresolved dependencies involving: a"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 1/3"
+        ]
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "arm-c-contextos-core",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "b96e93b8d62d0fbd5a5a211eec25e07635f0d3f8ebc4e9e3ac0b8f70d92305b0",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 5054,
+          "completionTokens": 652,
+          "totalTokens": 5706,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "full-installed",
+        "repetition": 2,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "d6eeb71441e5d460cbcbc9308fb8bd0aaf09b602f03c532943794b2243e34e0d",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 14665,
+          "completionTokens": 806,
+          "totalTokens": 15471,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14464,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "sort-determinism",
+            "error": "Cycle detected in dependency graph"
+          },
+          {
+            "id": "sort-immutability",
+            "error": "Cycle detected in dependency graph"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 1/3"
+        ]
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "arm-c-contextos-core",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "b96e93b8d62d0fbd5a5a211eec25e07635f0d3f8ebc4e9e3ac0b8f70d92305b0",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 5054,
+          "completionTokens": 605,
+          "totalTokens": 5659,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 4864,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "arm-a-vanilla",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 150,
+          "completionTokens": 993,
+          "totalTokens": 1143,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "arm-c-contextos-core",
+        "repetition": 3,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "b96e93b8d62d0fbd5a5a211eec25e07635f0d3f8ebc4e9e3ac0b8f70d92305b0",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 5054,
+          "completionTokens": 627,
+          "totalTokens": 5681,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 4864,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "arm-a-vanilla",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 150,
+          "completionTokens": 930,
+          "totalTokens": 1080,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "sort-determinism",
+            "error": "Cycle detected in dependencies"
+          },
+          {
+            "id": "sort-immutability",
+            "error": "Cycle detected in dependencies"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 1/3"
+        ]
+      },
+      {
+        "taskId": "stable-dependency-sort",
+        "armId": "full-installed",
+        "repetition": 3,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "d6eeb71441e5d460cbcbc9308fb8bd0aaf09b602f03c532943794b2243e34e0d",
+          "user": "2c397a038a8a05ea1b98ae9b3c103cb904b253ac56cf7ce36313c1b217b7c5bf"
+        },
+        "usage": {
+          "promptTokens": 14665,
+          "completionTokens": 952,
+          "totalTokens": 15617,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14464,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "sort-determinism",
+            "error": "Cycle detected in dependencies"
+          },
+          {
+            "id": "sort-immutability",
+            "error": "Cycle detected in dependencies"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 1/3"
+        ]
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "arm-a-vanilla",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": 162,
+          "completionTokens": 688,
+          "totalTokens": 850,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "full-installed",
+        "repetition": 1,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "cf17a1f3770cb3fb7bdbc95893cd0fe7e8330d83f27fdfd393d4a7ad85b929e3",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": 14682,
+          "completionTokens": 527,
+          "totalTokens": 15209,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14208,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "arm-c-contextos-core",
+        "repetition": 1,
+        "status": "completed",
+        "success": false,
+        "promptHashes": {
+          "system": "52b7417bb87314377511e82738d00524e351683ed8f0bc362f911859d6132fd2",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": 3582,
+          "completionTokens": 469,
+          "totalTokens": 4051,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 0,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [
+          {
+            "id": "redaction-prototype-security",
+            "error": "Cycle detected in input"
+          }
+        ],
+        "compilationError": null,
+        "evaluatorFailureReasons": [
+          "Runtime oracle failed: 2/3",
+          "Security vulnerabilities detected: redaction-prototype-security"
+        ]
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "full-installed",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "cf17a1f3770cb3fb7bdbc95893cd0fe7e8330d83f27fdfd393d4a7ad85b929e3",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": 14682,
+          "completionTokens": 459,
+          "totalTokens": 15141,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 14464,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "arm-c-contextos-core",
+        "repetition": 2,
+        "status": "completed",
+        "success": true,
+        "promptHashes": {
+          "system": "52b7417bb87314377511e82738d00524e351683ed8f0bc362f911859d6132fd2",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": 3582,
+          "completionTokens": 530,
+          "totalTokens": 4112,
+          "reasoningTokens": 0,
+          "cachedPromptTokens": 3456,
+          "source": "provider",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "compilationError": null,
+        "evaluatorFailureReasons": []
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "arm-a-vanilla",
+        "repetition": 2,
+        "status": "api_error",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "source": "unavailable",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "error": "OpenAI API 429: Rate limit reached for gpt-4.1-mini-2025-04-14 (for limit gpt-4.1-mini) in organization [ORG REDACTED] on requests per day (RPD): Limit 50, Used 50, Requested 1. Please try again in 28m48s. Visit https://platform.openai.com/account/rate-limits to learn more. You can increase your rate limit by adding a payment method to your account at https://platform.openai.com/account/billing."
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "arm-c-contextos-core",
+        "repetition": 3,
+        "status": "api_error",
+        "success": false,
+        "promptHashes": {
+          "system": "52b7417bb87314377511e82738d00524e351683ed8f0bc362f911859d6132fd2",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "source": "unavailable",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "error": "OpenAI API 429: Rate limit reached for gpt-4.1-mini-2025-04-14 (for limit gpt-4.1-mini) in organization [ORG REDACTED] on requests per day (RPD): Limit 50, Used 50, Requested 1. Please try again in 28m48s. Visit https://platform.openai.com/account/rate-limits to learn more. You can increase your rate limit by adding a payment method to your account at https://platform.openai.com/account/billing."
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "arm-a-vanilla",
+        "repetition": 3,
+        "status": "api_error",
+        "success": false,
+        "promptHashes": {
+          "system": "8950fe5b6f4f726d684e7af01837e22469b5a85390ce3d6a04921291c29faae6",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "source": "unavailable",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "error": "OpenAI API 429: Rate limit reached for gpt-4.1-mini-2025-04-14 (for limit gpt-4.1-mini) in organization [ORG REDACTED] on requests per day (RPD): Limit 50, Used 50, Requested 1. Please try again in 28m48s. Visit https://platform.openai.com/account/rate-limits to learn more. You can increase your rate limit by adding a payment method to your account at https://platform.openai.com/account/billing."
+      },
+      {
+        "taskId": "nested-secret-redaction",
+        "armId": "full-installed",
+        "repetition": 3,
+        "status": "api_error",
+        "success": false,
+        "promptHashes": {
+          "system": "cf17a1f3770cb3fb7bdbc95893cd0fe7e8330d83f27fdfd393d4a7ad85b929e3",
+          "user": "610e9cc4b66c4628bb57866d8cded13e01c0be380037eae2bc1df1246452b359"
+        },
+        "usage": {
+          "promptTokens": null,
+          "completionTokens": null,
+          "totalTokens": null,
+          "reasoningTokens": null,
+          "cachedPromptTokens": null,
+          "source": "unavailable",
+          "attemptCount": 1,
+          "unreportedAttempts": 0
+        },
+        "failedChecks": [],
+        "error": "OpenAI API 429: Rate limit reached for gpt-4.1-mini-2025-04-14 (for limit gpt-4.1-mini) in organization [ORG REDACTED] on requests per day (RPD): Limit 50, Used 50, Requested 1. Please try again in 28m48s. Visit https://platform.openai.com/account/rate-limits to learn more. You can increase your rate limit by adding a payment method to your account at https://platform.openai.com/account/billing."
+      }
+    ],
+    "originalTypeScriptSyntaxAudit": {
+      "typescriptVersion": "5.9.3",
+      "typeChecking": false,
+      "usesAutoRepair": false,
+      "checked": 50,
+      "invalid": []
+    },
+    "balancedComparison": {
+      "pairs": 16,
+      "arms": [
+        {
+          "armId": "arm-a-vanilla",
+          "completed": 16,
+          "successes": 8,
+          "knownCostUsd": 0.032868400000000006,
+          "usage": {
+            "requestCount": 16,
+            "providerRequests": 16,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 4227,
+            "completionTokens": 19486,
+            "totalTokens": 23713,
+            "reasoningTokens": 0,
+            "cachedPromptTokens": 0,
+            "knownTotalTokens": 23713,
+            "complete": true,
+            "source": "provider"
+          }
+        },
+        {
+          "armId": "full-installed",
+          "completed": 16,
+          "successes": 6,
+          "knownCostUsd": 0.07350720000000001,
+          "usage": {
+            "requestCount": 16,
+            "providerRequests": 16,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 236520,
+            "completionTokens": 19500,
+            "totalTokens": 256020,
+            "reasoningTokens": 0,
+            "cachedPromptTokens": 174336,
+            "knownTotalTokens": 256020,
+            "complete": true,
+            "source": "provider"
+          }
+        },
+        {
+          "armId": "arm-c-contextos-core",
+          "completed": 16,
+          "successes": 6,
+          "knownCostUsd": 0.0457528,
+          "usage": {
+            "requestCount": 16,
+            "providerRequests": 16,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 63882,
+            "completionTokens": 18985,
+            "totalTokens": 82867,
+            "reasoningTokens": 0,
+            "cachedPromptTokens": 33920,
+            "knownTotalTokens": 82867,
+            "complete": true,
+            "source": "provider"
+          }
+        }
+      ]
+    }
+  }
+}

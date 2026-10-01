@@ -1,0 +1,888 @@
+{
+  "timestamp": "2026-09-30T20:19:26.115Z",
+  "resultScope": "seeded-repository-regression; four modules; no general quality claim",
+  "reports": [
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/report.json",
+      "sha256": "95a0cec1b487e38d41209fe6521981aa98af530a1661a1622f76fe30636d134c",
+      "mode": "pilot",
+      "attemptsRecorded": 4,
+      "summary": {
+        "attemptsRecorded": 4,
+        "attemptsPlanned": 9,
+        "balancedTriples": 1,
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "attempts": 1,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 1,
+            "balancedSolved": 1,
+            "balancedAttempts": 1,
+            "standardRateEstimateUsd": 0.0005079,
+            "knownStandardRateEstimateUsd": 0.0005079,
+            "requests": 4,
+            "usage": {
+              "requestCount": 4,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 3124,
+              "completionTokens": 391,
+              "totalTokens": 3515,
+              "reasoningTokens": 142,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 3515,
+              "complete": true,
+              "source": "provider"
+            },
+            "balancedUsage": {
+              "requestCount": 4,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 3124,
+              "completionTokens": 391,
+              "totalTokens": 3515,
+              "reasoningTokens": 142,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 3515,
+              "complete": true,
+              "source": "provider"
+            },
+            "elapsedMs": 9665,
+            "toolCalls": 3
+          },
+          {
+            "armId": "full-installed",
+            "attempts": 2,
+            "apiErrors": 1,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 1,
+            "balancedSolved": 1,
+            "balancedAttempts": 1,
+            "standardRateEstimateUsd": null,
+            "knownStandardRateEstimateUsd": 0.0022264600000000004,
+            "requests": 5,
+            "usage": {
+              "requestCount": 5,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 1,
+              "unreportedRetryRequests": 0,
+              "promptTokens": null,
+              "completionTokens": null,
+              "totalTokens": null,
+              "reasoningTokens": null,
+              "cachedPromptTokens": null,
+              "knownTotalTokens": 61633,
+              "complete": false,
+              "source": "mixed"
+            },
+            "balancedUsage": {
+              "requestCount": 4,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 61207,
+              "completionTokens": 426,
+              "totalTokens": 61633,
+              "reasoningTokens": 132,
+              "cachedPromptTokens": 45636,
+              "knownTotalTokens": 61633,
+              "complete": true,
+              "source": "provider"
+            },
+            "elapsedMs": 11022,
+            "toolCalls": 3
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "attempts": 1,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 1,
+            "balancedSolved": 1,
+            "balancedAttempts": 1,
+            "standardRateEstimateUsd": 0.00050322,
+            "knownStandardRateEstimateUsd": 0.00050322,
+            "requests": 4,
+            "usage": {
+              "requestCount": 4,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 8816,
+              "completionTokens": 383,
+              "totalTokens": 9199,
+              "reasoningTokens": 135,
+              "cachedPromptTokens": 6332,
+              "knownTotalTokens": 9199,
+              "complete": true,
+              "source": "provider"
+            },
+            "balancedUsage": {
+              "requestCount": 4,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 8816,
+              "completionTokens": 383,
+              "totalTokens": 9199,
+              "reasoningTokens": 135,
+              "cachedPromptTokens": 6332,
+              "knownTotalTokens": 9199,
+              "complete": true,
+              "source": "provider"
+            },
+            "elapsedMs": 13319,
+            "toolCalls": 3
+          }
+        ],
+        "limitation": "Repeated seeded tasks in four modules are correlated. This corpus is calibration evidence, not proof of general coding quality or native client activation."
+      }
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/report.json",
+      "sha256": "6bc772d251178399389a3797f79b97cf85604c79c221115e4c88b63d0bd4e6e3",
+      "mode": "pilot",
+      "attemptsRecorded": 1,
+      "summary": {
+        "attemptsRecorded": 1,
+        "attemptsPlanned": 9,
+        "balancedTriples": 0,
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "attempts": 1,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 1,
+            "balancedSolved": 0,
+            "balancedAttempts": 0,
+            "standardRateEstimateUsd": 0.00046870000000000006,
+            "knownStandardRateEstimateUsd": 0.00046870000000000006,
+            "requests": 4,
+            "usage": {
+              "requestCount": 4,
+              "providerRequests": 4,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 3022,
+              "completionTokens": 333,
+              "totalTokens": 3355,
+              "reasoningTokens": 98,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 3355,
+              "complete": true,
+              "source": "provider"
+            },
+            "balancedUsage": {
+              "requestCount": 0,
+              "providerRequests": 0,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "totalTokens": 0,
+              "reasoningTokens": 0,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 0,
+              "complete": true,
+              "source": "not_applicable"
+            },
+            "elapsedMs": 24019,
+            "toolCalls": 3
+          },
+          {
+            "armId": "full-installed",
+            "attempts": 0,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 0,
+            "balancedSolved": 0,
+            "balancedAttempts": 0,
+            "standardRateEstimateUsd": 0,
+            "knownStandardRateEstimateUsd": 0,
+            "requests": 0,
+            "usage": {
+              "requestCount": 0,
+              "providerRequests": 0,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "totalTokens": 0,
+              "reasoningTokens": 0,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 0,
+              "complete": true,
+              "source": "not_applicable"
+            },
+            "balancedUsage": {
+              "requestCount": 0,
+              "providerRequests": 0,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "totalTokens": 0,
+              "reasoningTokens": 0,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 0,
+              "complete": true,
+              "source": "not_applicable"
+            },
+            "elapsedMs": 0,
+            "toolCalls": 0
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "attempts": 0,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 0,
+            "balancedSolved": 0,
+            "balancedAttempts": 0,
+            "standardRateEstimateUsd": 0,
+            "knownStandardRateEstimateUsd": 0,
+            "requests": 0,
+            "usage": {
+              "requestCount": 0,
+              "providerRequests": 0,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "totalTokens": 0,
+              "reasoningTokens": 0,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 0,
+              "complete": true,
+              "source": "not_applicable"
+            },
+            "balancedUsage": {
+              "requestCount": 0,
+              "providerRequests": 0,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "totalTokens": 0,
+              "reasoningTokens": 0,
+              "cachedPromptTokens": 0,
+              "knownTotalTokens": 0,
+              "complete": true,
+              "source": "not_applicable"
+            },
+            "elapsedMs": 0,
+            "toolCalls": 0
+          }
+        ],
+        "limitation": "Repeated seeded tasks in four modules are correlated. This corpus is calibration evidence, not proof of general coding quality or native client activation."
+      }
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/report.json",
+      "sha256": "db81d8487712444eb37d01193212fb9be678120b3ee51e5d478529628e56b040",
+      "mode": "pilot",
+      "attemptsRecorded": 7,
+      "summary": {
+        "attemptsRecorded": 7,
+        "attemptsPlanned": 9,
+        "balancedTriples": 2,
+        "arms": [
+          {
+            "armId": "arm-a-vanilla",
+            "attempts": 2,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 2,
+            "balancedSolved": 2,
+            "balancedAttempts": 2,
+            "standardRateEstimateUsd": 0.00105022,
+            "knownStandardRateEstimateUsd": 0.00105022,
+            "requests": 8,
+            "usage": {
+              "requestCount": 8,
+              "providerRequests": 8,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 11373,
+              "completionTokens": 755,
+              "totalTokens": 12128,
+              "reasoningTokens": 269,
+              "cachedPromptTokens": 5162,
+              "knownTotalTokens": 12128,
+              "complete": true,
+              "source": "provider"
+            },
+            "balancedUsage": {
+              "requestCount": 8,
+              "providerRequests": 8,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 11373,
+              "completionTokens": 755,
+              "totalTokens": 12128,
+              "reasoningTokens": 269,
+              "cachedPromptTokens": 5162,
+              "knownTotalTokens": 12128,
+              "complete": true,
+              "source": "provider"
+            },
+            "elapsedMs": 54417,
+            "toolCalls": 6
+          },
+          {
+            "armId": "full-installed",
+            "attempts": 2,
+            "apiErrors": 0,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 2,
+            "balancedSolved": 2,
+            "balancedAttempts": 2,
+            "standardRateEstimateUsd": 0.00382239,
+            "knownStandardRateEstimateUsd": 0.00382239,
+            "requests": 9,
+            "usage": {
+              "requestCount": 9,
+              "providerRequests": 9,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 150264,
+              "completionTokens": 1044,
+              "totalTokens": 151308,
+              "reasoningTokens": 472,
+              "cachedPromptTokens": 130289,
+              "knownTotalTokens": 151308,
+              "complete": true,
+              "source": "provider"
+            },
+            "balancedUsage": {
+              "requestCount": 9,
+              "providerRequests": 9,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 150264,
+              "completionTokens": 1044,
+              "totalTokens": 151308,
+              "reasoningTokens": 472,
+              "cachedPromptTokens": 130289,
+              "knownTotalTokens": 151308,
+              "complete": true,
+              "source": "provider"
+            },
+            "elapsedMs": 268994,
+            "toolCalls": 7
+          },
+          {
+            "armId": "arm-c-contextos-core",
+            "attempts": 3,
+            "apiErrors": 1,
+            "stepLimitFailures": 0,
+            "outputLimitFailures": 0,
+            "infrastructureFailures": 0,
+            "solved": 2,
+            "balancedSolved": 2,
+            "balancedAttempts": 2,
+            "standardRateEstimateUsd": null,
+            "knownStandardRateEstimateUsd": 0.0013055,
+            "requests": 14,
+            "usage": {
+              "requestCount": 14,
+              "providerRequests": 13,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 1,
+              "unreportedRetryRequests": 0,
+              "promptTokens": null,
+              "completionTokens": null,
+              "totalTokens": null,
+              "reasoningTokens": null,
+              "cachedPromptTokens": null,
+              "knownTotalTokens": 69519,
+              "complete": false,
+              "source": "mixed"
+            },
+            "balancedUsage": {
+              "requestCount": 8,
+              "providerRequests": 8,
+              "userReportedRequests": 0,
+              "estimatedRequests": 0,
+              "unavailableRequests": 0,
+              "unreportedRetryRequests": 0,
+              "promptTokens": 30745,
+              "completionTokens": 755,
+              "totalTokens": 31500,
+              "reasoningTokens": 302,
+              "cachedPromptTokens": 23850,
+              "knownTotalTokens": 31500,
+              "complete": true,
+              "source": "provider"
+            },
+            "elapsedMs": 188432,
+            "toolCalls": 11
+          }
+        ],
+        "limitation": "Repeated seeded tasks in four modules are correlated. This corpus is calibration evidence, not proof of general coding quality or native client activation."
+      }
+    }
+  ],
+  "latest": {
+    "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/report.json",
+    "sha256": "db81d8487712444eb37d01193212fb9be678120b3ee51e5d478529628e56b040",
+    "summary": {
+      "attemptsRecorded": 7,
+      "attemptsPlanned": 9,
+      "balancedTriples": 2,
+      "arms": [
+        {
+          "armId": "arm-a-vanilla",
+          "attempts": 2,
+          "apiErrors": 0,
+          "stepLimitFailures": 0,
+          "outputLimitFailures": 0,
+          "infrastructureFailures": 0,
+          "solved": 2,
+          "balancedSolved": 2,
+          "balancedAttempts": 2,
+          "standardRateEstimateUsd": 0.00105022,
+          "knownStandardRateEstimateUsd": 0.00105022,
+          "requests": 8,
+          "usage": {
+            "requestCount": 8,
+            "providerRequests": 8,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 11373,
+            "completionTokens": 755,
+            "totalTokens": 12128,
+            "reasoningTokens": 269,
+            "cachedPromptTokens": 5162,
+            "knownTotalTokens": 12128,
+            "complete": true,
+            "source": "provider"
+          },
+          "balancedUsage": {
+            "requestCount": 8,
+            "providerRequests": 8,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 11373,
+            "completionTokens": 755,
+            "totalTokens": 12128,
+            "reasoningTokens": 269,
+            "cachedPromptTokens": 5162,
+            "knownTotalTokens": 12128,
+            "complete": true,
+            "source": "provider"
+          },
+          "elapsedMs": 54417,
+          "toolCalls": 6
+        },
+        {
+          "armId": "full-installed",
+          "attempts": 2,
+          "apiErrors": 0,
+          "stepLimitFailures": 0,
+          "outputLimitFailures": 0,
+          "infrastructureFailures": 0,
+          "solved": 2,
+          "balancedSolved": 2,
+          "balancedAttempts": 2,
+          "standardRateEstimateUsd": 0.00382239,
+          "knownStandardRateEstimateUsd": 0.00382239,
+          "requests": 9,
+          "usage": {
+            "requestCount": 9,
+            "providerRequests": 9,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 150264,
+            "completionTokens": 1044,
+            "totalTokens": 151308,
+            "reasoningTokens": 472,
+            "cachedPromptTokens": 130289,
+            "knownTotalTokens": 151308,
+            "complete": true,
+            "source": "provider"
+          },
+          "balancedUsage": {
+            "requestCount": 9,
+            "providerRequests": 9,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 150264,
+            "completionTokens": 1044,
+            "totalTokens": 151308,
+            "reasoningTokens": 472,
+            "cachedPromptTokens": 130289,
+            "knownTotalTokens": 151308,
+            "complete": true,
+            "source": "provider"
+          },
+          "elapsedMs": 268994,
+          "toolCalls": 7
+        },
+        {
+          "armId": "arm-c-contextos-core",
+          "attempts": 3,
+          "apiErrors": 1,
+          "stepLimitFailures": 0,
+          "outputLimitFailures": 0,
+          "infrastructureFailures": 0,
+          "solved": 2,
+          "balancedSolved": 2,
+          "balancedAttempts": 2,
+          "standardRateEstimateUsd": null,
+          "knownStandardRateEstimateUsd": 0.0013055,
+          "requests": 14,
+          "usage": {
+            "requestCount": 14,
+            "providerRequests": 13,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 1,
+            "unreportedRetryRequests": 0,
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null,
+            "reasoningTokens": null,
+            "cachedPromptTokens": null,
+            "knownTotalTokens": 69519,
+            "complete": false,
+            "source": "mixed"
+          },
+          "balancedUsage": {
+            "requestCount": 8,
+            "providerRequests": 8,
+            "userReportedRequests": 0,
+            "estimatedRequests": 0,
+            "unavailableRequests": 0,
+            "unreportedRetryRequests": 0,
+            "promptTokens": 30745,
+            "completionTokens": 755,
+            "totalTokens": 31500,
+            "reasoningTokens": 302,
+            "cachedPromptTokens": 23850,
+            "knownTotalTokens": 31500,
+            "complete": true,
+            "source": "provider"
+          },
+          "elapsedMs": 188432,
+          "toolCalls": 11
+        }
+      ],
+      "limitation": "Repeated seeded tasks in four modules are correlated. This corpus is calibration evidence, not proof of general coding quality or native client activation."
+    }
+  },
+  "allAgentRequests": {
+    "savedResponses": 51,
+    "completed": 49,
+    "savedErrors": 2,
+    "knownStandardRateEstimateUsd": 0.012460109999999998,
+    "note": "Includes interrupted and superseded pilot attempts. Unknown request costs are retained in the shared ledger. Estimate is not the invoice when cache writes are unknown."
+  },
+  "native": {
+    "path": "scratch/luna-native/native-uF7xGk/report.json",
+    "sha256": "2321676a44d55b16f0d1c6bae9e162ae963f2e5bb413644f12b7c705685c3065",
+    "report": {
+      "timestamp": "2026-09-30T20:15:26.832Z",
+      "model": "gpt-6-luna",
+      "captureOnly": true,
+      "result": "BODY_INJECTION_PASS",
+      "exitCode": 1,
+      "timedOut": false,
+      "clientError": null,
+      "workflowBodyLoaded": true,
+      "probeBodyLoaded": true,
+      "markerReturned": false,
+      "unexpectedActionEvents": [],
+      "workflowSha256": "e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
+      "paidRequests": 0,
+      "nativeRequestsCaptured": 1,
+      "calls": [
+        {
+          "charge": null,
+          "reservedMicroUsd": 0,
+          "usage": null
+        }
+      ],
+      "remainingSharedBudgetUsd": 7.119254,
+      "limitation": "Actual native CLI request assembly captured locally. No model inference or marker adherence was tested; the CLI error is intentional. Does not establish automatic routing or Cursor activation."
+    }
+  },
+  "sharedLedger": {
+    "path": "scratch/live-benchmark/spend-ledger.json",
+    "sha256": "a2b392e6b5c801564b10480c8cfab0f5935f5700127d83f2b8069e835652200e",
+    "retainedUsd": 2.880746,
+    "remainingUsd": 7.119254
+  },
+  "controls": {
+    "path": "scratch/luna-benchmark/controls.json",
+    "sha256": "3baf6bd8e0c40491c4523db782e4c7b95912d5200d5c34442b2e5d948fd726c7"
+  },
+  "rawResponses": [
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/paths-traversal__full-installed__1-uiSuWI/response-1.json",
+      "sha256": "3fa0c8c5af550af193ab8629595f9c7c889ef45c5acda03e8370375e0f9ea115"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-a-vanilla__1-AeDJJS/response-1.json",
+      "sha256": "1076b96997b82cd8054c615f4638a255416b60083e32a7cd9ba96dcb616fe906"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-a-vanilla__1-AeDJJS/response-2.json",
+      "sha256": "997767b7d9d4b3169e93191c87a99a5b0b8202812602f41d646fa5904b8390c7"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-a-vanilla__1-AeDJJS/response-3.json",
+      "sha256": "dc0fea88c4a15d87c8ef9b321577460ad98963b2bde3faca01537478f31cd1d3"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-a-vanilla__1-AeDJJS/response-4.json",
+      "sha256": "02858a4429a355aaee4fe6d13c685108e678234a0f232e54cf83247e9dd1153a"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-c-contextos-core__1-mMrkDh/response-1.json",
+      "sha256": "3626fd7063be62c09e9252429b769792cbde7be7ce2241662fa1bfe680d6a2a5"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-c-contextos-core__1-mMrkDh/response-2.json",
+      "sha256": "a5e813f166ae3899678cead77af3a1525811fa395d737f8e54ab45d9ec47f307"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-c-contextos-core__1-mMrkDh/response-3.json",
+      "sha256": "5a390ed9b9f1e2fa9da5e7319d0dd647fda3f5c9dfbca543d48eacb7db919bdd"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__arm-c-contextos-core__1-mMrkDh/response-4.json",
+      "sha256": "0dbd55138889930873f39069174964d3c0164aa07c2496b2982268a9861aeefb"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__full-installed__1-glzdS9/response-1.json",
+      "sha256": "2a245ee9db26ae99ad0075032bf97180eed4c4c4d8d4800c70467c520f35ec24"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__full-installed__1-glzdS9/response-2.json",
+      "sha256": "bf257dd91a95c3cade0150cbc6e8f96785c242f1100b6f2b78f82430903a3b64"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__full-installed__1-glzdS9/response-3.json",
+      "sha256": "4b98436e227c4e5950ea83eee888a9fb3145ceff460df62ffc6758295118bf8d"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-44-28-883Z-pilot/resolve-budget__full-installed__1-glzdS9/response-4.json",
+      "sha256": "d4e2385f05e9e03e09cb2c916ff494322dba9b5427a0c2471341bbb160b409d0"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__arm-a-vanilla__1-c68p5Q/response-1.json",
+      "sha256": "ff06f801f40079d9305e2f2baa420c2d4970f546b832c4f6290b16d1dcda5202"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__arm-a-vanilla__1-c68p5Q/response-2.json",
+      "sha256": "5c6f0f9febbdc65dd6c914e73ae19b9daddac3beeaaac5e8d8ae53e0b8f59640"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__arm-a-vanilla__1-c68p5Q/response-3.json",
+      "sha256": "33e18369bb1790fd19d923c7baf99f00b5f9626e7404c5531d28f4e512860e8e"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__arm-a-vanilla__1-c68p5Q/response-4.json",
+      "sha256": "317404457b9638f83bb6d5e97161f2ca904290c010cf87aa8f9c7cd21fd7f610"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__full-installed__1-19ih0S/response-1.json",
+      "sha256": "b11dc57bcf1b84b8b921c2743da62a1980092cfb9ca1db7f7684af5f44232317"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__full-installed__1-19ih0S/response-2.json",
+      "sha256": "e0ccce360716a08b04fc5e4a9bff5a93fee72b101ee9f229c59490dd356d06b6"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-52-38-274Z-pilot/resolve-budget__full-installed__1-19ih0S/response-3.json",
+      "sha256": "d7830df6f35e2e71a3e6960c9c4bea46e0fce57e3b0c0251df6c87bba598a0bc"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-a-vanilla__1-5LgWOx/response-1.json",
+      "sha256": "b59d1b7bab69d8cd1682379389429d40c8a4f6fbc463d93c73576f0475d8d7d0"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-a-vanilla__1-5LgWOx/response-2.json",
+      "sha256": "f2ed7072f913e40a03de7a12604c2d372f60c60e68f9354f5eaccdb05debd1fb"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-a-vanilla__1-5LgWOx/response-3.json",
+      "sha256": "60e1e9e1806a41c8117a56d99804ea0994749f54ebfc5b8fbbfd8c99e25f6c2f"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-a-vanilla__1-5LgWOx/response-4.json",
+      "sha256": "29c06ef97b61fad26f42ee66aa014bfcbfa4f85def24644f43c4228aaf95a8b4"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-c-contextos-core__1-miHgrY/response-1.json",
+      "sha256": "282f250182e0bc31736d91440c57f69c6414875ca2f899597305028f6df749bc"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-c-contextos-core__1-miHgrY/response-2.json",
+      "sha256": "65502a0d9c1b6129fa20926327c83e4cdaff16958e2821638e4bad663bad834c"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-c-contextos-core__1-miHgrY/response-3.json",
+      "sha256": "5834c459c316efacfc2e895ad6634fe5f300480d2eaa4a95ce0a075ef9345619"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__arm-c-contextos-core__1-miHgrY/response-4.json",
+      "sha256": "c97976965823fcd0937dca92b90e891f5edb339ccf67d34a51513e646b456035"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__full-installed__1-h3ijSQ/response-1.json",
+      "sha256": "9b0316492baec1ed5a3cec117dc1cf0523f8bcb9086ba6de7ffaf6f335455345"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__full-installed__1-h3ijSQ/response-2.json",
+      "sha256": "321baaa31137411bfeae83fbb4814b09a0b168a0ab91701148784a5223cef819"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__full-installed__1-h3ijSQ/response-3.json",
+      "sha256": "6bfe132bb6c5832744512762c8b901f1528c2149d40f53e90c209c6de5c285b6"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__full-installed__1-h3ijSQ/response-4.json",
+      "sha256": "44ea018efb636b8fd31bc84c20f0b44a39b4f3e2d86ce541f75172773d8c39c0"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/paths-traversal__full-installed__1-h3ijSQ/response-5.json",
+      "sha256": "1ae142bc5b4192e18ae214ec86cad29d253175e5844adcbfb149fb1a60b755a3"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-a-vanilla__1-7pNBjh/response-1.json",
+      "sha256": "0688dac72215e26c1de5359cb1131a9334fd9cb72b4ef1bb21d61c219b869cc1"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-a-vanilla__1-7pNBjh/response-2.json",
+      "sha256": "ac9242f5811cdbed624a51ffd1f2bff5bbd65fb593de00c009c75fad0f7a33bd"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-a-vanilla__1-7pNBjh/response-3.json",
+      "sha256": "6a7161b8e46bd1aa72a6a65eb7e248f3f9a89fabc3589cca48baedfdbf059c21"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-a-vanilla__1-7pNBjh/response-4.json",
+      "sha256": "d3fb2051d8e9f12bf9bb73021cc1e3215ff78da3c33e83b8683a21736887e9f0"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-c-contextos-core__1-GuKJBn/response-1.json",
+      "sha256": "4e08d7749baf9b41501238756d0b903ba1b19e0b33d6a10e2b920199e932f08f"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-c-contextos-core__1-GuKJBn/response-2.json",
+      "sha256": "c52ac7ee31a851813244b4286d6c63b8e3043ce1cc16482e2627228cbde83f6c"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-c-contextos-core__1-GuKJBn/response-3.json",
+      "sha256": "0059ca5fc46f0088b70c0a1238db20199ac3064ce4ff66f8e68afcfb582190f9"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__arm-c-contextos-core__1-GuKJBn/response-4.json",
+      "sha256": "dc2233905720addd5e8ebdc30874a7b921f33fd3574d515b6bf09d793def133b"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__full-installed__1-vVBQxl/response-1.json",
+      "sha256": "c3cb3dce23753585651aadc23505d9daaf93d7c6650cb9d330f90a33aeeecc3c"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__full-installed__1-vVBQxl/response-2.json",
+      "sha256": "f5071369b459c4faa20b2d91aafa29090ae8dd3d77be194e6714e1dc878842d2"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__full-installed__1-vVBQxl/response-3.json",
+      "sha256": "3c9af0e97f8cb41b24597d74dbad4eef03b7513baea920575365259d608b5e90"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/resolve-budget__full-installed__1-vVBQxl/response-4.json",
+      "sha256": "453abac254bc31e67317c1a725b88e86965a194d635adf4b4d680cfc1845cfe3"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/workspace-limit__arm-c-contextos-core__1-0uR6rP/response-1.json",
+      "sha256": "67c3748f1e47bf966256f9ffc76afea71183e54e6083c4b4001ad1e66adbfb6a"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/workspace-limit__arm-c-contextos-core__1-0uR6rP/response-2.json",
+      "sha256": "89d7d4f29ebe9ccc5a71d76ccb569b0e1edee419b0fa8ac5937fecbd62b4c21f"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/workspace-limit__arm-c-contextos-core__1-0uR6rP/response-3.json",
+      "sha256": "3c4e39a0c30441913d4db41903da7e977a9f0706a1a63bd6c87d8cf77b6937c1"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/workspace-limit__arm-c-contextos-core__1-0uR6rP/response-4.json",
+      "sha256": "39d090b119cb0f31a4f2a4c5e6afcab5a01635e186b9bc01cb249cad60209d0d"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/workspace-limit__arm-c-contextos-core__1-0uR6rP/response-5.json",
+      "sha256": "04b7f20dbbbfa626492f072c5375de74f8903c2bd7a4463cd00a650e1870d2bf"
+    },
+    {
+      "path": "scratch/luna-benchmark/2026-09-30T19-57-14-165Z-pilot/workspace-limit__arm-c-contextos-core__1-0uR6rP/response-6.json",
+      "sha256": "1200f15f83db1eb652638db008ed8220736b5fdb04e681967591b63f152acb38"
+    }
+  ]
+}

@@ -40,6 +40,7 @@ function canonicalTaskText(task) {
 function taskCacheKey(task, arm) {
   return JSON.stringify({
     armId: arm.id,
+    contextRoot: arm.contextRoot || ROOT,
     id: task.id,
     title: task.title,
     category: task.category,
@@ -50,18 +51,18 @@ function taskCacheKey(task, arm) {
   });
 }
 
-function installedSkillPath(registrySkill) {
+function installedSkillPath(registrySkill, contextRoot = ROOT) {
   if (!registrySkill || typeof registrySkill.source !== 'string') return null;
-  const skillDirectory = path.dirname(path.resolve(ROOT, registrySkill.source));
+  const skillDirectory = path.dirname(path.resolve(contextRoot, registrySkill.source));
   const documentPath = path.resolve(skillDirectory, registrySkill.entrypoint || 'SKILL.md');
-  const relativeToAgents = path.relative(AGENTS_DIR, documentPath);
+  const relativeToAgents = path.relative(path.join(contextRoot, '.agents'), documentPath);
   if (relativeToAgents.startsWith('..') || path.isAbsolute(relativeToAgents)) return null;
   return documentPath;
 }
 
-function compileContextOSRegistry() {
+function compileContextOSRegistry(contextRoot = ROOT) {
   const { ManifestCompiler } = require('../../../.agents/compiler/manifest-compiler');
-  const compiler = new ManifestCompiler({ rootDir: ROOT, agentsDir: AGENTS_DIR });
+  const compiler = new ManifestCompiler({ rootDir: contextRoot, agentsDir: path.join(contextRoot, '.agents') });
   const result = compiler.compile();
   if (!result.success || !result.registry) {
     throw new Error('ContextOS benchmark context could not compile the installed skill manifests.');
@@ -73,13 +74,13 @@ function compileContextOSRegistry() {
   return result.registry;
 }
 
-function loadResolvedDocuments(resolution, registry) {
+function loadResolvedDocuments(resolution, registry, contextRoot = ROOT) {
   const documents = [];
   const missingSkillIds = [];
 
   for (const id of resolution.skills || []) {
     const registrySkill = registry.skills?.[id];
-    const documentPath = installedSkillPath(registrySkill);
+    const documentPath = installedSkillPath(registrySkill, contextRoot);
     if (!documentPath || !fs.existsSync(documentPath)) {
       missingSkillIds.push(id);
       continue;
@@ -104,7 +105,7 @@ function buildContextMetadata({ arm, registry, resolver, resolution, documents, 
   const unresolvedAnnotations = annotations.filter(id => !includedSkillIds.includes(id));
 
   return {
-    source: 'contextos-canonical-resolver',
+    source: arm.contextMode === 'full-installed' ? 'full-installed-entrypoints' : 'contextos-canonical-resolver',
     contextVersion: 'contextos-benchmark-context-v2',
     armId: arm.id,
     projectFixture: 'empty-workspace-v1',
@@ -130,18 +131,19 @@ function buildContextMetadata({ arm, registry, resolver, resolution, documents, 
       sha256: digest,
     })),
     coreInstruction: {
-      path: path.relative(ROOT, CORE_AGENT_INSTRUCTIONS).replace(/\\/g, '/'),
+      path: path.relative(ROOT, path.join(arm.contextRoot || ROOT, '.agents', 'AGENTS.md')).replace(/\\/g, '/'),
       sha256: sha256(coreInstruction),
     },
   };
 }
 
 function buildResolvedContext(task, arm) {
-  const registry = compileContextOSRegistry();
+  const contextRoot = arm.contextRoot || ROOT;
+  const registry = compileContextOSRegistry(contextRoot);
   const { CanonicalResolver } = require('../../../.agents/resolver/canonical-resolver');
   const resolver = new CanonicalResolver({
     rootDir: EMPTY_PROJECT_ROOT,
-    agentsDir: AGENTS_DIR,
+    agentsDir: path.join(contextRoot, '.agents'),
     registry,
     workspaceGraph: EMPTY_WORKSPACE_GRAPH,
   });
@@ -153,13 +155,15 @@ function buildResolvedContext(task, arm) {
     explicitPhase: 'Build',
     contextBudgetTokens: 8000,
   });
+  if (arm.contextMode === 'full-installed') resolution.skills = Object.keys(registry.skills).sort();
   // Runtime-suite annotations are evidence for auditing only. Selection comes from
   // the actual resolver's task analysis and installed manifest registry.
   resolution.taskSkillAnnotations = [...new Set(Array.isArray(task.skills) ? task.skills : [])];
 
-  const { documents, missingSkillIds } = loadResolvedDocuments(resolution, registry);
-  if (!fs.existsSync(CORE_AGENT_INSTRUCTIONS)) throw new Error('ContextOS core AGENTS.md instructions are missing.');
-  const coreInstruction = fs.readFileSync(CORE_AGENT_INSTRUCTIONS, 'utf8');
+  const { documents, missingSkillIds } = loadResolvedDocuments(resolution, registry, contextRoot);
+  const instructionPath = path.join(contextRoot, '.agents', 'AGENTS.md');
+  if (!fs.existsSync(instructionPath)) throw new Error('ContextOS core AGENTS.md instructions are missing.');
+  const coreInstruction = fs.readFileSync(instructionPath, 'utf8');
   const resolverFingerprint = fileFingerprint(path.join(AGENTS_DIR, 'resolver', 'canonical-resolver.js'));
   const compilerFingerprint = fileFingerprint(path.join(AGENTS_DIR, 'compiler', 'manifest-compiler.js'));
   const metadata = buildContextMetadata({

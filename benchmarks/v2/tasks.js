@@ -14,6 +14,12 @@ const TASK_DETAILS = {
   },
 };
 
+Object.assign(TASK_DETAILS, {
+  'safe-pagination': { description: 'Validate untrusted pagination query input without changing valid requests.' },
+  'stable-dependency-sort': { description: 'Implement deterministic dependency graph ordering for a context compiler.' },
+  'nested-secret-redaction': { description: 'Implement secret-safe logging without input mutation or prototype pollution.' },
+});
+
 const API_BENCHMARK_TASKS = Object.values(RUNTIME_SUITES).map(runtimeSuite => {
   const details = TASK_DETAILS[runtimeSuite.id];
   if (!details) throw new Error(`No API benchmark task description exists for ${runtimeSuite.id}`);
