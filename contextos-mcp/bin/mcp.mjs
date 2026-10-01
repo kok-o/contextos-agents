@@ -49,8 +49,8 @@ if (existsSync(distServer)) {
 } else {
 	const srcServer = join(__dirname, "..", "src", "mcp", "server.ts");
 	const { spawn } = await import("node:child_process");
-	const tsxBin = join(__dirname, "..", "node_modules", ".bin", process.platform === "win32" ? "tsx.cmd" : "tsx");
-	const child = spawn(tsxBin, [srcServer, ...process.argv.slice(2)], {
+	const tsxCli = join(__dirname, "..", "node_modules", "tsx", "dist", "cli.mjs");
+	const child = spawn(process.execPath, [tsxCli, srcServer, ...process.argv.slice(2)], {
 		stdio: "inherit",
 	});
 	child.on("exit", (code) => process.exit(code ?? 1));

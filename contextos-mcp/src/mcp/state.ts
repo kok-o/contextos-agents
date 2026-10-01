@@ -459,6 +459,9 @@ export function recordAsyncTask(dir: string, task: AsyncTaskRecord, _worktreeBas
 }
 
 export function getPersistedThreads(dir: string, _worktreeBaseDir?: string): ThreadState[] {
+	const canonicalDir = assertWithinRepository(dir, dir);
+	if (!fs.existsSync(path.join(canonicalDir, ".agents", ".contextos", "threads"))) return [];
+	assertWithinRepository(path.join(canonicalDir, ".agents", ".contextos", "threads"), canonicalDir);
 	const store = getThreadStore(dir);
 	if (store) {
 		return store.list() as ThreadState[];
@@ -467,8 +470,10 @@ export function getPersistedThreads(dir: string, _worktreeBaseDir?: string): Thr
 }
 
 export function getPersistedAsyncTasks(dir: string, _worktreeBaseDir?: string): Record<string, AsyncTaskRecord> {
-	const tasksPath = getAsyncTasksPath(dir);
+	const canonicalDir = assertWithinRepository(dir, dir);
+	const tasksPath = path.join(canonicalDir, ".agents", ".contextos", "runtime", ASYNC_TASKS_FILE_NAME);
 	if (fs.existsSync(tasksPath)) {
+		assertWithinRepository(tasksPath, canonicalDir);
 		try {
 			return JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
 		} catch {}

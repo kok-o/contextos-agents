@@ -1,115 +1,75 @@
-/**
- * Tests for ContextOS Selector & Loader:
- * - Dynamic relevance scoring
- * - Hard cap to 2–4 skills (preventing over-activation)
- * - Negative boundaries (casual words do not trigger heavy skills)
- * - Payload size budget enforcement (< 20k chars, avoiding 35k–51k bloat)
- */
-
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import * as os from "node:os";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildContextPrompt } from "../../src/contextos/loader.js";
+import { assembleContextPrompt } from "../../src/contextos/loader.js";
 import { selectContext } from "../../src/contextos/selector.js";
 
-const REPO_ROOT = path.resolve(__dirname, "../../..");
-
-describe("ContextOS Selector & Budget", () => {
-	it.skip("resolves frontend UI prompts to frontend skills within 2-4 skills", () => {
-		const res = selectContext("Build a responsive accessible modal dialog with React and Tailwind");
-		expect(res.skills).toContain("react");
-		expect(res.skills).toContain("ui-ux-pro");
-		expect(res.skills).toContain("web-accessibility");
-
-		// Negative checks: unrelated backend skills must NOT be activated
-		expect(res.skills).not.toContain("docker");
-		expect(res.skills).not.toContain("database");
-		expect(res.skills).not.toContain("nestjs");
-		expect(res.skills).not.toContain("fastapi");
-
-		// Range check
-		expect(res.skills.length).toBeGreaterThanOrEqual(2);
-		expect(res.skills.length).toBeLessThanOrEqual(4);
+const ROOT = path.resolve(__dirname, "../../..");
+describe("canonical selection and real source assembly", () => {
+	it("assembles a manifestless project skill through the real compiler and selector", () => {
+		const root = mkdtempSync(path.join(os.tmpdir(), "ctx-bare-assembly-"));
+		try {
+			cpSync(path.join(ROOT, ".agents/core"), path.join(root, ".agents/core"), { recursive: true });
+			mkdirSync(path.join(root, ".agents/resolver"), { recursive: true });
+			writeFileSync(
+				path.join(root, ".agents/resolver/canonical-resolver.js"),
+				`module.exports = require(${JSON.stringify(path.join(ROOT, ".agents/resolver/canonical-resolver.js"))});\n`,
+			);
+			mkdirSync(path.join(root, ".agents/project/skills/team-bare"), { recursive: true });
+			writeFileSync(
+				path.join(root, ".agents/project/skills/team-bare/SKILL.md"),
+				"---\nname: team-bare\ndescription: Team rules\n---\n# Team\nBARE_TEAM_RULE_MUST_SURVIVE\n",
+			);
+			const { ManifestCompiler } = createRequire(import.meta.url)(
+				path.join(ROOT, ".agents/compiler/manifest-compiler.js"),
+			);
+			const compiled = new ManifestCompiler({ rootDir: root }).compileAndWrite();
+			expect(compiled.success).toBe(true);
+			const assembled = assembleContextPrompt(root, "Implement @team-bare");
+			expect(assembled.prompt).toContain("BARE_TEAM_RULE_MUST_SURVIVE");
+			expect(assembled.report.sources.find((source) => source.id === "team-bare")?.path).toBe(
+				".agents/project/skills/team-bare/SKILL.md",
+			);
+		} finally {
+			expect(path.dirname(root)).toBe(path.resolve(os.tmpdir()));
+			expect(path.basename(root)).toMatch(/^ctx-bare-assembly-/);
+			rmSync(root, { recursive: true, force: true });
+		}
 	});
-
-	it.skip("filters casual words and prevents over-activation on ambiguous sentence", () => {
-		const res = selectContext(
-			"I need to update the user module and query the index type of the container session token",
+	it("loads the short workflow for routine work without role or implementation manuals", () => {
+		const selected = selectContext("Fix typo in README", { rootDir: ROOT, contextBudgetTokens: 1000 });
+		expect(selected.skills).toEqual(["engineering-workflow"]);
+		const result = assembleContextPrompt(ROOT, "Fix typo in README", { contextBudgetTokens: 1000 });
+		expect(result.prompt.length).toBeLessThan(6000);
+		expect(result.report.sources.map((source) => source.id)).toEqual(["AGENTS.md", "engineering-workflow"]);
+	});
+	it("preserves the exact full security body with a small soft token and character budget", () => {
+		const result = assembleContextPrompt(ROOT, "Review JWT authentication security", {
+			contextBudgetTokens: 100,
+			maxTotalSkillsChars: 100,
+		});
+		const source = result.report.sources.find((item) => item.id === "security");
+		expect(source).toBeDefined();
+		const body = readFileSync(path.join(ROOT, source!.path), "utf8")
+			.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "")
+			.trim();
+		expect(result.prompt).toContain(body);
+		expect(result.report.warnings.map((warning) => warning.code)).toContain("CTX_RESOLVER_BUDGET_EXCEEDED");
+	});
+	it("does not remove required safety instructions to satisfy maxSkills", () => {
+		const selected = selectContext("Build JWT authentication security", {
+			rootDir: ROOT,
+			contextBudgetTokens: 100,
+			maxSkills: 1,
+		});
+		expect(selected.skills).toContain("security");
+		expect(selected.warnings?.map((warning) => warning.code)).toContain("CTX_RESOLVER_SKILL_LIMIT_EXCEEDED");
+	});
+	it("returns an explicit hard-limit error instead of a truncated prompt", () => {
+		expect(() => assembleContextPrompt(ROOT, "Review authentication security", { hardLimitChars: 100 })).toThrow(
+			/hard limit/,
 		);
-
-		// Casual mentions must NOT activate heavy domain skills
-		expect(res.skills).not.toContain("docker"); // casual "container"
-		expect(res.skills).not.toContain("nestjs"); // casual "module"
-		expect(res.skills).not.toContain("typescript"); // casual "type"
-		expect(res.skills).not.toContain("database"); // casual "query" / "index"
-
-		// Total skills strictly capped
-		expect(res.skills.length).toBeLessThanOrEqual(4);
-	});
-
-	it.skip("strictly caps compound multi-topic prompts to maximum 4 skills", () => {
-		// Compound prompt touching Next.js, React, TypeScript, database, docker, auth, microservices, etc.
-		const compoundTask =
-			"Create a Next.js application with React components, TypeScript types, Tailwind styling, " +
-			"Prisma PostgreSQL database, REST API routes, Docker compose container, RabbitMQ microservices, " +
-			"JWT auth security, and Vitest unit testing suites";
-
-		const res = selectContext(compoundTask);
-
-		// Must NOT exceed 4 skills
-		expect(res.skills.length).toBeLessThanOrEqual(4);
-		expect(res.skills.length).toBeGreaterThanOrEqual(2);
-
-		// Highly scored skills must be present
-		const topCandidates = ["database", "docker", "nextjs", "react", "security", "testing"];
-		const hasTopCandidate = res.skills.some((s) => topCandidates.includes(s));
-		expect(hasTopCandidate).toBe(true);
-	});
-
-	it.skip("respects custom maxSkills option", () => {
-		const res = selectContext(
-			"Create a Next.js application with React components, TypeScript types, Tailwind styling, " +
-				"Prisma PostgreSQL database, and Docker container",
-			{ maxSkills: 2 },
-		);
-
-		expect(res.skills.length).toBeLessThanOrEqual(2);
-	});
-
-	it.skip("resolves Russian prompts accurately and within 2-4 skills limit", () => {
-		const res = selectContext("создай модальное окно авторизации на реакте и напиши юнит-тесты");
-
-		expect(res.skills).toContain("react");
-		expect(res.skills.length).toBeLessThanOrEqual(4);
-	});
-
-	it.skip("enforces prompt character budget and prevents 35k-51k bloat in buildContextPrompt", () => {
-		const compoundTask =
-			"Create a Next.js application with React components, TypeScript types, Tailwind styling, " +
-			"Prisma PostgreSQL database, REST API routes, Docker compose container, RabbitMQ microservices, " +
-			"JWT auth security, and Vitest unit testing suites";
-
-		const prompt = buildContextPrompt(REPO_ROOT, compoundTask);
-
-		expect(prompt.length).toBeGreaterThan(500); // Has essential content
-		// Strictly bounded under 20,000 chars (averaging 10k-16k, far below the old 35k-51k)
-		expect(prompt.length).toBeLessThan(20000);
-	});
-
-	it.skip("transitively resolves dependencies: react pulls typescript", () => {
-		const res = selectContext("build a custom react hook", { maxSkills: 4 });
-		expect(res.skills).toContain("react");
-		expect(res.skills).toContain("typescript");
-	});
-
-	it.skip("transitively resolves multi-level dependencies: nextjs pulls react and typescript", () => {
-		const res = selectContext("create nextjs app router server actions", { maxSkills: 4 });
-		expect(res.skills).toContain("nextjs");
-		expect(res.skills).toContain("react");
-		expect(res.skills).toContain("typescript");
-	});
-
-	it.skip("matches literal 'security review' to security skill", () => {
-		const res = selectContext("perform a security review of authentication endpoints");
-		expect(res.skills).toContain("security");
 	});
 });

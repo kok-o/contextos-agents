@@ -86,6 +86,41 @@ const sessions = new Map<string, SwarmSession>();
 /** Deduplicates concurrent getSession() calls for the same directory. */
 const pendingSessions = new Map<string, Promise<SwarmSession>>();
 
+/** Inspect existing state without initializing agents, worktrees or migrations. */
+export function inspectSession(dir: string) {
+	const canonicalDir = assertWithinRepository(path.resolve(dir), path.resolve(dir));
+	const session = sessions.get(canonicalDir);
+	if (session)
+		return {
+			dir: canonicalDir,
+			threads: getThreads(session),
+			asyncTasks: getAsyncJobs(session),
+			budget: getBudgetState(session),
+		};
+	const config = loadConfig(canonicalDir);
+	const threads = getPersistedThreads(canonicalDir, config.worktree_base_dir);
+	const asyncTasks = getPersistedAsyncTasks(canonicalDir, config.worktree_base_dir);
+	return {
+		dir: canonicalDir,
+		threads,
+		asyncTasks,
+		budget: {
+			totalSpentUsd: threads.reduce(
+				(sum, thread) => sum + (thread.result?.estimatedCostUsd ?? thread.estimatedCostUsd ?? 0),
+				0,
+			),
+			sessionLimitUsd: config.max_session_budget_usd,
+			totalTokens: threads.reduce(
+				(sum, thread) => ({
+					input: sum.input + (thread.result?.usage?.inputTokens || 0),
+					output: sum.output + (thread.result?.usage?.outputTokens || 0),
+				}),
+				{ input: 0, output: 0 },
+			),
+		},
+	};
+}
+
 /**
  * Lazily init agent backends (only once).
  * Agent modules self-register when imported.

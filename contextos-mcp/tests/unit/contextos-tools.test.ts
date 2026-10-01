@@ -138,6 +138,12 @@ const mockSession = {
 };
 
 vi.mock("../../src/mcp/session.js", () => ({
+	inspectSession: vi.fn(() => ({
+		dir: process.cwd(),
+		threads: mockThreads,
+		asyncTasks: {},
+		budget: { totalSpentUsd: 0.05, sessionLimitUsd: 10, totalTokens: { input: 5000, output: 2000 } },
+	})),
 	getSession: vi.fn(async (dir: string) => {
 		if (dir.includes("nonexistent")) throw new Error(`Directory does not exist: ${dir}`);
 		return mockSession;
