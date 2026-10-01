@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+  "sourceGraphHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
   "skills": {
     "context-manager": {
       "id": "context-manager",
@@ -67,7 +67,7 @@
       "type": "compiler",
       "entrypoint": "SKILL.md",
       "entrypointHash": "sha256:ab14bcd603573c975a69cb95b5ef8a305de8eb888c81c20c994121313f017239",
-      "resourceTreeHash": "sha256:48568f01d27fa53e2e01a6a63afd60eb2d43cabdc9eb2cfe6f02a2b67d0f53e1",
+      "resourceTreeHash": "sha256:1f9422adff6b9e69772dfeff2e1c9c9f8615b5fae56f8b60d2d7bef4a5c1c7fb",
       "estimatedTokens": 1365,
       "source": ".agents/core/skills/context-os/skill.yaml",
       "signals": {
@@ -133,13 +133,13 @@
       "id": "engineering-workflow",
       "displayName": "engineering-workflow",
       "version": "1.0.0",
-      "description": "Senior engineering workflow skill inspired by Addy Osmani's agent-skills. Enforces the full development lifecycle: spec → plan → build → test → review → ship. AI must never write code before a spec and plan are approved.\n",
+      "description": "Scope implementation work, verify behavior, and report evidence using a proportional lifecycle.",
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:88b606d086f63c5e293630ad84ff524d2542f2953fc1a5a451bd77352073b0ad",
-      "resourceTreeHash": "sha256:e78a054d8f54a72550cf10d551a82f56015aedb3f16a14021e654574bad5804f",
-      "estimatedTokens": 3083,
+      "entrypointHash": "sha256:e729b3bc21cecef2a39b64f0b301715974697600524629fa05609fd2d9175b48",
+      "resourceTreeHash": "sha256:6371d58615c6b5ba47c1523f6f99c106dcd9d99c5abc30338b4a3504271a23f1",
+      "estimatedTokens": 418,
       "source": ".agents/core/skills/engineering-workflow/skill.yaml",
       "signals": {
         "aliases": [
@@ -156,7 +156,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 3083
+        "estimatedTokens": 418
       },
       "resources": [
         {
@@ -173,6 +173,10 @@
         },
         {
           "path": "VALIDATION.json",
+          "mode": "on-demand"
+        },
+        {
+          "path": "references/workflow.md",
           "mode": "on-demand"
         }
       ],
@@ -235,13 +239,13 @@
       "id": "gstack-roles",
       "displayName": "gstack-roles",
       "version": "1.0.0",
-      "description": "Role-based AI specialist system inspired by Garry Tan's gstack. Defines 23 specialist roles (CEO, Eng Manager, Designer, QA, Security etc.) and teaches the AI to adopt the correct role before each task phase.\n",
+      "description": "Compatibility alias for engineering-workflow with optional specialist review perspectives.",
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:09334359de594f9c3e667ae0660db9a5c977c583b25ccf7de71fe25b7134454e",
-      "resourceTreeHash": "sha256:0bcfb511ef61a6782e3394c0779e5f5eed1833aff6e24c7749957df209c6185a",
-      "estimatedTokens": 1791,
+      "entrypointHash": "sha256:baeb5f187b8ea491f4854e6287c29d5c58b436c327e8df46c04651e6deb43513",
+      "resourceTreeHash": "sha256:d720b3727681e63f5212e97687b9ad32326685f22493214edc8750a3f504347a",
+      "estimatedTokens": 343,
       "source": ".agents/core/skills/gstack-roles/skill.yaml",
       "signals": {
         "aliases": [
@@ -258,7 +262,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 1791
+        "estimatedTokens": 343
       },
       "resources": [
         {
@@ -276,6 +280,10 @@
         {
           "path": "VALIDATION.json",
           "mode": "on-demand"
+        },
+        {
+          "path": "references/roles.md",
+          "mode": "on-demand"
         }
       ],
       "deprecated": true,
@@ -286,13 +294,13 @@
       "id": "ponytail-mindset",
       "displayName": "ponytail-mindset",
       "version": "1.0.0",
-      "description": "Minimalist coding mindset based on DietrichGebert/ponytail. Teaches the AI to write only what is strictly necessary. Uses a 7-rung ladder: YAGNI → reuse → stdlib → platform → deps → one-liner → minimum. Minimizes unnecessary boilerplate and over-engineering while keeping all safety, validation and security guards.\n",
+      "description": "Choose a minimal maintainable implementation for substantive Build tasks while preserving safety and verification.",
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:122a01d74edfebcfe18e163242a038d61c943f3320b582723eb1a185b6ee53d6",
-      "resourceTreeHash": "sha256:a181af2582fd80a893c52db6a59ceb038c52dbb310fffd99f0f8f7a55a568990",
-      "estimatedTokens": 1812,
+      "entrypointHash": "sha256:837795e41d09af94040fb9ae318126c6ff3a24bf35b43bbf4cb2888a5067a950",
+      "resourceTreeHash": "sha256:3a4d757373ad00ae321c25d0774d35d0f8c9f25b1e95d58303ffb68d0128fd59",
+      "estimatedTokens": 413,
       "source": ".agents/core/skills/ponytail-mindset/skill.yaml",
       "signals": {
         "aliases": [
@@ -309,7 +317,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 1812
+        "estimatedTokens": 413
       },
       "resources": [
         {
@@ -327,6 +335,10 @@
         {
           "path": "VALIDATION.json",
           "mode": "on-demand"
+        },
+        {
+          "path": "references/minimalism.md",
+          "mode": "on-demand"
         }
       ],
       "deprecated": false,
@@ -337,7 +349,7 @@
       "id": "security",
       "displayName": "Application Security",
       "version": "1.0.0",
-      "description": "ContextOS skill for Application Security",
+      "description": "Protect authentication, authorization, sensitive data, untrusted input, external integrations, and agent tool execution.",
       "category": "backend",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",

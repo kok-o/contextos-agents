@@ -13,9 +13,11 @@ flowchart TD
     A[Version-controlled skills and manifests] --> B[Validation and registry compilation]
     C[Project profile] --> D[Context resolver]
     B --> D
-    D --> E[Agent adapters]
+    D --> J[Task-specific skill recommendation]
+    A --> E[Agent adapters]
+    C --> E
     E --> F[Safe transactional writer]
-    F --> G[Native agent configuration]
+    F --> G[Client-specific configuration and templates]
     G --> H[Lockfile and drift detection]
     H --> I[Local validation and CI quality gate]
 ```
@@ -28,7 +30,7 @@ Engineering skills, rules, and profiles live in the project and are validated be
 
 ### Resolver and adapters
 
-The resolver selects the rules and skills relevant to a task or profile. Adapters compile those sources into supported formats for Gemini, Claude Code, Cursor, GitHub Copilot, Aider, and Zed.
+The resolver recommends rules and skills for a task, with a soft budget covering selected skill bodies. Ordinary adapters discover all effective installed skills and apply profile exclusions; they do not automatically consume task resolution. Discovery is shared with the compiler and includes standalone/bundle plugins, vendor skills and project overrides. The compatibility matrix distinguishes native configuration from instruction indexes and manual templates.
 
 ### Safe updates and generated files
 
@@ -36,7 +38,7 @@ Filesystem writes use project-relative paths, mutation locks, and journaled tran
 
 ### CI quality gate
 
-The quality gate runs validation and checks generated configuration and repository policies. It reports drift so teams can correct generated files before merging.
+The `gate` command checks adapter configuration drift. Application tests, typechecks, secret scanning and policy validation are separate checks; passing this gate does not establish application correctness.
 
 ## Separate packages and experimental features
 

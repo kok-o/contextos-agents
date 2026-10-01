@@ -1,0 +1,59 @@
+# Skill Packs — pre-configured skill bundles
+# Users select a pack instead of individual skills
+
+packs:
+  fullstack-next:
+    name: "Next.js Full-Stack"
+    description: "Full-stack web app with Next.js, React, TypeScript, Tailwind, Prisma"
+    skills: [nextjs, react, typescript, tailwind, prisma, testing, security]
+    profile: startup
+    generates: [PRD, ARCHITECTURE, DATABASE, API, UI, TASKS, PROJECT_GRAPH]
+
+  fastapi-backend:
+    name: "FastAPI Backend"
+    description: "Python backend with FastAPI, PostgreSQL, Docker"
+    skills: [fastapi, python, pydantic, postgres, docker, testing, security, rest]
+    profile: startup
+    generates: [PRD, ARCHITECTURE, DATABASE, API, TASKS, PROJECT_GRAPH]
+
+  react-spa:
+    name: "React SPA"
+    description: "Single Page Application with React, TypeScript, Tailwind"
+    skills: [react, typescript, tailwind, performance, web-accessibility, testing]
+    profile: startup
+    generates: [PRD, ARCHITECTURE, API, UI, TASKS, PROJECT_GRAPH]
+
+  nestjs-enterprise:
+    name: "NestJS Enterprise"
+    description: "Enterprise-grade Node.js backend with NestJS, DDD, full testing"
+    skills: [nestjs, typescript, node, postgres, ddd, security, testing, cicd, docker]
+    profile: enterprise
+    generates: [PRD, ARCHITECTURE, DATABASE, API, TASKS, ROADMAP, PROJECT_GRAPH]
+
+  design-system:
+    name: "Design System"
+    description: "UI/UX design system with accessibility and performance"
+    skills: [ui-design, ux-design, web-accessibility, performance]
+    profile: startup
+    generates: [PRD, UI, TASKS]
+
+  mobile-react-native:
+    name: "React Native Mobile"
+    description: "Cross-platform mobile app with React Native"
+    skills: [react, typescript, react-native, performance, web-accessibility]
+    profile: startup
+    generates: [PRD, ARCHITECTURE, API, UI, TASKS, PROJECT_GRAPH]
+
+  hackathon-fast:
+    name: "Hackathon Quick Start"
+    description: "Fastest possible setup — SQLite, minimal architecture"
+    skills: [react, typescript, node, sqlite]
+    profile: hackathon
+    generates: [TASKS, PROJECT_GRAPH]
+
+  ai-saas:
+    name: "AI SaaS Platform"
+    description: "SaaS with AI features, auth, payments, analytics"
+    skills: [nextjs, react, typescript, tailwind, prisma, security, stripe, openai]
+    profile: startup
+    generates: [PRD, ARCHITECTURE, DATABASE, API, UI, ROADMAP, TASKS, PROJECT_GRAPH]

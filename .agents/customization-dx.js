@@ -29,6 +29,7 @@ class SkillCustomizationManager {
   }
 
   _findUpstreamSkill(skillName) {
+    if (!/^[a-z0-9-]+$/.test(skillName)) throw new Error('Invalid skill ID');
     const inCore = path.join(this.coreSkillsDir, skillName);
     if (fs.existsSync(inCore)) return inCore;
 
@@ -59,16 +60,19 @@ class SkillCustomizationManager {
       throw err;
     }
 
-    fs.mkdirSync(targetDir, { recursive: true });
-
-    // Copy SKILL.md and skill.yaml if present
-    const files = fs.readdirSync(upstream);
-    for (const file of files) {
-      const srcFile = path.join(upstream, file);
-      if (fs.statSync(srcFile).isFile()) {
-        fs.copyFileSync(srcFile, path.join(targetDir, file));
+    // Validate the complete source tree before creating an override.
+    const { resolveManagedPath } = require('./filesystem/index.js');
+    const inspect = (dir) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const source = path.join(dir, entry.name);
+        if (entry.isSymbolicLink()) throw new Error(`Skill override refuses symlink: ${source}`);
+        resolveManagedPath(upstream, path.relative(upstream, source));
+        if (entry.isDirectory()) inspect(source);
       }
-    }
+    };
+    inspect(upstream);
+    resolveManagedPath(this.projectRoot, path.relative(this.projectRoot, targetDir));
+    fs.cpSync(upstream, targetDir, { recursive: true, errorOnExist: true, force: false });
 
     return {
       success: true,

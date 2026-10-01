@@ -650,6 +650,12 @@ class CanonicalResolver {
         }
       }
 
+      if (resolvedId === 'security' && ['keyword', 'file_glob', 'explicit', 'safety_required'].includes(kind)) {
+        if (profileExcluded.delete(resolvedId)) {
+          warnings.push({ code: 'CTX_REQUIRED_SECURITY_PROFILE_CONFLICT', message: 'Task safety guidance overrides the profile exclusion of security.' });
+        }
+        kind = 'safety_required';
+      }
       if (profileExcluded.has(resolvedId)) return;
       if (!evidenceBySkill.has(resolvedId)) evidenceBySkill.set(resolvedId, []);
       evidenceBySkill.get(resolvedId).push({ kind, weight, reason });
@@ -836,6 +842,10 @@ class CanonicalResolver {
       }
     }
 
+    if (risk.value === 'high' || risk.value === 'destructive') {
+      addEvidence('security', 'safety_required', 100, `Required safety guidance for ${risk.value} risk task`);
+    }
+
     // 3. Compute Candidate Scores & Intent Precedence
     const candidates = [];
     for (const [id, evList] of evidenceBySkill.entries()) {
@@ -850,7 +860,7 @@ class CanonicalResolver {
         if ((e.kind === 'keyword' || e.kind === 'alias') && e.weight >= 20) {
           hasDirectTaskIntent = true;
         }
-        if (e.kind === 'explicit' || e.kind === 'profile_required') {
+        if (e.kind === 'explicit' || e.kind === 'profile_required' || e.kind === 'safety_required') {
           isMandatory = true;
           hasDirectTaskIntent = true;
         }
@@ -929,7 +939,7 @@ class CanonicalResolver {
     const closureMap = new Map();
     for (const item of initialSelection) {
       const rawEst = skillsDict[item.id]?.estimatedTokens || 1000;
-      const estTokens = Math.min(rawEst, BUDGET_TIERS.SKILL_BODY);
+      const estTokens = rawEst;
       closureMap.set(item.id, {
         id: item.id,
         displayName: skillsDict[item.id]?.displayName || item.id,
@@ -953,7 +963,7 @@ class CanonicalResolver {
           }
         } else {
           const rawEst = skillsDict[reqId]?.estimatedTokens || 1000;
-          const estTokens = Math.min(rawEst, BUDGET_TIERS.SKILL_BODY);
+          const estTokens = rawEst;
           closureMap.set(reqId, {
             id: reqId,
             displayName: skillsDict[reqId]?.displayName || reqId,
@@ -1000,7 +1010,12 @@ class CanonicalResolver {
     }
 
     // 7. Token Budget Planner & Capability Clustering
-    const BASE_SKILLS = ['ponytail-mindset', 'engineering-workflow'];
+    const plannedPhase = resolvePhaseAndRole(explicitPhase, task, []).phase.value;
+    const BASE_SKILLS = ['engineering-workflow'];
+    if (risk.value !== 'routine' && plannedPhase === 'Build') BASE_SKILLS.push('ponytail-mindset');
+    for (let i = BASE_SKILLS.length - 1; i >= 0; i--) {
+      if (!skillsDict[BASE_SKILLS[i]]) BASE_SKILLS.splice(i, 1);
+    }
     let baseTokens = 0;
 
     for (const baseId of BASE_SKILLS) {
@@ -1009,7 +1024,8 @@ class CanonicalResolver {
       }
     }
 
-    let allocatedDynamicTokens = 0;
+    // Foundation bodies occupy the same budget as task-specific skills.
+    let allocatedDynamicTokens = baseTokens;
     const admitted = new Map(); // id -> candidate entry
 
     // Separate mandatory vs optional candidates
@@ -1017,7 +1033,7 @@ class CanonicalResolver {
     const optionalCandidates = [];
 
     for (const cand of closureMap.values()) {
-      const isMandatory = cand.reasons.some(r => r.kind === 'explicit' || r.kind === 'profile_required');
+      const isMandatory = cand.reasons.some(r => r.kind === 'explicit' || r.kind === 'profile_required' || r.kind === 'safety_required');
       if (isMandatory) {
         mandatoryCandidates.push(cand);
       } else {
@@ -1131,6 +1147,25 @@ class CanonicalResolver {
       }
     }
 
+    const totalSelectedTokens = finalSelected.reduce((sum, skill) => sum + skill.estimatedTokens, 0);
+    for (const skill of finalSelected) {
+      if (!skillsDict[skill.id]) {
+        warnings.push({ code: 'CTX_SELECTED_SKILL_UNAVAILABLE', message: `Selected skill "${skill.id}" has no installed manifest. Install it before assembling runtime context.` });
+      }
+    }
+    if (finalSelected.length > maxSkillsLimit) {
+      warnings.push({ code: 'CTX_RESOLVER_SKILL_LIMIT_EXCEEDED', message: `Required skills and dependencies occupy ${finalSelected.length} slots; soft maxSkills limit is ${maxSkillsLimit}.` });
+    }
+    if (finalSelected.length > maxSkillsLimit) {
+      warnings.push({ code: 'CTX_RESOLVER_SKILL_LIMIT_EXCEEDED', message: `Required skills and dependencies occupy ${finalSelected.length} slots; soft maxSkills limit is ${maxSkillsLimit}.` });
+    }
+    if (totalSelectedTokens > budgetTokens && !warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED')) {
+      warnings.push({
+        code: 'CTX_RESOLVER_BUDGET_EXCEEDED',
+        message: `Soft context budget (${budgetTokens} tokens) exceeded by required/foundation skill bodies (total: ${totalSelectedTokens} tokens). Client instructions and chat history are additional.`,
+      });
+    }
+
     // 9. Domain, Phase & Role
     let domain = request.domain || '';
     if (!domain) {
@@ -1208,7 +1243,7 @@ class CanonicalResolver {
       excluded,
       conflicts,
       warnings,
-      totalEstimatedTokens: baseTokens + allocatedDynamicTokens,
+      totalEstimatedTokens: totalSelectedTokens,
       // Legacy compatibility properties
       skills: allSelectedIds,
     };
@@ -1229,6 +1264,7 @@ class CanonicalResolver {
     const lines = [
       `[DOMAIN: ${res.domain}] [PHASE: ${phaseStr}] [ROLE: ${res.role}] [MODE: ${modeStr}] [LENSES: ${lensesStr}] [RISK: ${riskStr}]`,
       `Skills loaded: ${skillsList}`,
+      'Selection declaration only; skill bodies are read by the consuming client or prompt assembler.',
     ];
     if (res.workflow && res.workflow.steps && res.workflow.steps.length > 0) {
       lines.push(`Workflow (${res.workflow.name}): ${res.workflow.steps[0]}`);

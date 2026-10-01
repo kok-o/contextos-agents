@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { collectSkillDirectories, readMeaningfulMarkdown, extractYamlField } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillManifest, collectSkillDirectories, renderSkillResources } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'gemini@2';
@@ -21,61 +21,23 @@ function describe() {
 
 function renderGeminiSkill(skillDir, context) {
   const skillName = path.basename(skillDir);
-  const yamlPath = path.join(skillDir, 'skill.yaml');
-  const existingSkillMdPath = path.join(skillDir, 'SKILL.md');
+  const manifest = readSkillManifest(skillDir);
+  const existingSkillMdPath = getSkillEntrypointPath(skillDir);
 
-  if (!fs.existsSync(existingSkillMdPath) && !fs.existsSync(yamlPath)) {
+  if (!fs.existsSync(existingSkillMdPath)) {
     return [];
   }
 
-  let name = skillName;
-  let description = null;
-
-  if (fs.existsSync(yamlPath)) {
-    const yamlText = fs.readFileSync(yamlPath, 'utf8');
-    name = extractYamlField(yamlText, 'name') || skillName;
-    description = extractYamlField(yamlText, 'description');
-    if (!description) {
-      const descRegex = new RegExp(`^description:\\s*>\\s*\\n\\s*([^\\n]+)`, 'm');
-      const descMatch = yamlText.match(descRegex);
-      if (descMatch) description = descMatch[1].trim();
-    }
-  }
-  description = description || `ContextOS skill for ${name}`;
-
-  const files = fs.readdirSync(skillDir).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-  const mdFiles = files.filter(f => f.endsWith('.md'));
-
-  const primaryMd = mdFiles.includes('SKILL.md')
-    ? 'SKILL.md'
-    : (mdFiles.find(f => f === `${skillName}.md`) || mdFiles[0]);
-
-  let mergedContent = '';
-  if (primaryMd) {
-    let primaryText = fs.readFileSync(path.join(skillDir, primaryMd), 'utf8');
-    primaryText = primaryText.replace(/^---[\s\S]*?---\r?\n/, '');
-    mergedContent += primaryText;
-  }
-
-  const otherTopicFiles = mdFiles.filter(f => f !== primaryMd && f !== 'EXAMPLES.md' && f !== 'TROUBLESHOOTING.md');
-  const orderedExtras = [...otherTopicFiles];
-  if (mdFiles.includes('EXAMPLES.md') && primaryMd !== 'EXAMPLES.md') orderedExtras.push('EXAMPLES.md');
-  if (mdFiles.includes('TROUBLESHOOTING.md') && primaryMd !== 'TROUBLESHOOTING.md') orderedExtras.push('TROUBLESHOOTING.md');
-
-  for (const mdFile of orderedExtras) {
-    if (mergedContent.includes(`<!-- Source: ${mdFile} -->`)) continue;
-    const extraContent = readMeaningfulMarkdown(path.join(skillDir, mdFile));
-    if (extraContent) {
-      mergedContent += `\n\n<!-- Source: ${mdFile} -->\n\n` + extraContent;
-    }
-  }
+  const name = skillName;
+  const description = manifest?.description || `ContextOS skill for ${name}`;
+  const mergedContent = fs.readFileSync(existingSkillMdPath, 'utf8').replace(/^---[\s\S]*?---\r?\n/, '');
 
   const outputContent = `---
 name: ${name}
 description: >
   ${description}
 ---
-${mergedContent.trimStart()}
+${mergedContent.trim()}
 `.replace(/\r\n/g, '\n');
 
   const artifacts = [
@@ -99,6 +61,9 @@ ${mergedContent.trimStart()}
     },
   ];
 
+  artifacts.push(...renderSkillResources(skillDir, [
+    `.agents/generated/gemini/skills/${skillName}`, `.agents/skills/${skillName}`,
+  ], { kind: 'generated-adapter', generator: GENERATOR_ID, sourceSkillIds: [skillName], inputsHash: context?.sourceGraphHash || 'none' }));
   return artifacts;
 }
 

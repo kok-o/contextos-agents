@@ -1,0 +1,135 @@
+# Rule Engine
+# Conditional logic for context compilation based on project profile and task type
+
+rules:
+  # ═══════════════════════════════════════
+  # Profile-based rules
+  # ═══════════════════════════════════════
+
+  - name: mvp-minimal
+    description: MVP projects skip heavy infrastructure
+    if:
+      profile: mvp
+    then:
+      exclude_skills: [microservices, ddd, kubernetes, monitoring, cicd]
+      exclude_docs: [DEPLOYMENT.md]
+      prefer_skills: [sqlite, simple-auth, minimal-architecture]
+      max_doc_depth: 2  # Only Level 1 + Level 2
+
+  - name: enterprise-strict
+    description: Enterprise projects require full documentation and rigor
+    if:
+      profile: enterprise
+    then:
+      require_skills: [ddd, security, testing, cicd]
+      require_docs: [ARCHITECTURE.md, DATABASE.md, API.md, DECISIONS]
+      enforce_adr: true  # Every architectural decision must be recorded
+      enforce_testing: true
+      min_doc_depth: 3  # All levels required
+
+  - name: hackathon-speed
+    description: Hackathon mode — maximum speed, minimum ceremony
+    if:
+      profile: hackathon
+    then:
+      exclude_skills: [kubernetes, monitoring, cicd, ddd, microservices]
+      exclude_docs: [DEPLOYMENT.md, ROADMAP.md]
+      prefer_skills: [sqlite, simple-auth]
+      skip_review: true
+      max_doc_depth: 1  # Vision only
+
+  - name: startup-balanced
+    description: Startup balance between speed and quality
+    if:
+      profile: startup
+    then:
+      exclude_skills: [kubernetes, ddd]
+      prefer_skills: [postgres, jwt-auth, docker]
+      enforce_adr: false
+      max_doc_depth: 2
+
+  # ═══════════════════════════════════════
+  # Task-based rules
+  # ═══════════════════════════════════════
+
+  - name: frontend-task
+    description: Frontend tasks don't need database or deployment docs
+    if:
+      task_type: frontend
+    then:
+      load_docs: [UI.md, ARCHITECTURE.md, API.md]
+      skip_docs: [DATABASE.md, DEPLOYMENT.md]
+      load_skill_categories: [frontend, design]
+      skip_skill_categories: [backend, infrastructure]
+
+  - name: backend-task
+    description: Backend tasks don't need UI docs
+    if:
+      task_type: backend
+    then:
+      load_docs: [ARCHITECTURE.md, DATABASE.md, API.md]
+      skip_docs: [UI.md]
+      load_skill_categories: [backend, architecture]
+      skip_skill_categories: [design]
+
+  - name: architecture-task
+    description: Architecture tasks load everything at high level
+    if:
+      task_type: architecture
+    then:
+      load_docs: [PRD.md, ARCHITECTURE.md, DATABASE.md, API.md, PROJECT_GRAPH.md]
+      load_skill_categories: [architecture]
+      skip_skill_categories: [design]
+
+  - name: bugfix-task
+    description: Bugfixes need minimal context — focus on affected module
+    if:
+      task_type: bugfix
+    then:
+      load_docs: [PROJECT_GRAPH.md]  # Find affected module
+      max_doc_depth: 1
+      skip_docs: [PRD.md, ROADMAP.md]
+
+  - name: refactor-task
+    description: Refactoring needs architecture context
+    if:
+      task_type: refactor
+    then:
+      load_docs: [ARCHITECTURE.md, PROJECT_GRAPH.md]
+      load_skill_categories: [architecture]
+
+  # ═══════════════════════════════════════
+  # Stack-based rules
+  # ═══════════════════════════════════════
+
+  - name: react-ecosystem
+    description: React projects auto-load TypeScript
+    if:
+      skill_loaded: react
+    then:
+      auto_load: [typescript]
+      suggest: [tailwind, react-query]
+
+  - name: nextjs-ecosystem
+    description: Next.js implies React + TypeScript + SSR patterns
+    if:
+      skill_loaded: nextjs
+    then:
+      auto_load: [react, typescript]
+      suggest: [prisma, next-auth, tailwind]
+
+  - name: fastapi-ecosystem
+    description: FastAPI implies Python + Pydantic
+    if:
+      skill_loaded: fastapi
+    then:
+      auto_load: [python, pydantic]
+      suggest: [postgres, docker, testing]
+
+  - name: no-conflicts
+    description: Prevent incompatible frameworks
+    if:
+      any_loaded: [react, vue, angular, svelte]
+    then:
+      conflict_check: true
+      max_frontend_frameworks: 1

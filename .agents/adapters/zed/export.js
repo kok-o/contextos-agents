@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'zed@2';
@@ -21,7 +21,7 @@ function describe() {
 
 function buildSkillSection(skillDir) {
   const skillName = path.basename(skillDir);
-  const skillMdPath = path.join(skillDir, 'SKILL.md');
+  const skillMdPath = getSkillEntrypointPath(skillDir);
   const yamlPath = path.join(skillDir, 'skill.yaml');
 
   let title = skillName;

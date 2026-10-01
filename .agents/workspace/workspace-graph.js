@@ -23,6 +23,8 @@ const DEFAULT_IGNORED_DIRS = new Set([
   '.git',
   'node_modules',
   '.contextos-worktrees',
+  '.swarm-worktrees',
+  '.external-skills',
   '.agents',
   'dist',
   'build',
@@ -121,6 +123,7 @@ class WorkspaceGraphBuilder {
     this.maxDepth = options.maxDepth || 8;
     this.maxPackages = options.maxPackages || 500;
     this.ignoredDirs = new Set([...DEFAULT_IGNORED_DIRS, ...(options.ignoredDirs || [])]);
+    this.includeNestedRepositories = options.includeNestedRepositories === true;
   }
 
   /**
@@ -223,7 +226,11 @@ class WorkspaceGraphBuilder {
         return;
       }
 
-      for (const entry of entries) {
+      for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+        if (packages.length >= this.maxPackages) {
+          hitLimit = true;
+          break;
+        }
         if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
         if (this.ignoredDirs.has(entry.name)) continue;
 
@@ -236,10 +243,8 @@ class WorkspaceGraphBuilder {
         }
 
         // Symlink escape guard: must remain within root realpath
-        if (
-          !realEntryPath.startsWith(visitedDirs.values().next().value) &&
-          !realEntryPath.startsWith(realRoot)
-        ) {
+        const realRelative = path.relative(realRoot, realEntryPath);
+        if (realRelative === '..' || realRelative.startsWith(`..${path.sep}`) || path.isAbsolute(realRelative)) {
           continue;
         }
 
@@ -253,7 +258,12 @@ class WorkspaceGraphBuilder {
           workspaceGlobs.length === 0 ||
           workspaceGlobs.some((g) => g.test(relPath));
 
-        const pkg = this._inspectDirectoryForPackage(fullPath, relPath, realRoot);
+        if (fs.existsSync(path.join(fullPath, '.git')) &&
+            !this.includeNestedRepositories && !(workspaceGlobs.length > 0 && isDeclared)) {
+          continue;
+        }
+
+        const pkg = isDeclared ? this._inspectDirectoryForPackage(fullPath, relPath, realRoot) : null;
         if (pkg) {
           packages.push(pkg);
           packageIdSet.add(pkg.id);

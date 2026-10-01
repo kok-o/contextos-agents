@@ -1221,11 +1221,11 @@ async function search(query) {
  * both core (builtin) and plugins.
  * Adapters call this instead of reading CORE_SKILLS directly.
  */
-function collectAllSkillDirs(targetRoot) {
+function collectAllSkillDirs(targetRoot, options = {}) {
   const isTargetExplicit = Boolean(targetRoot);
   const root = targetRoot || process.cwd();
-  const agentsDir = path.join(root, '.agents');
-  const localCore = path.join(agentsDir, 'core', 'skills');
+  const agentsDir = options.agentsDir || path.join(root, '.agents');
+  const localCore = options.coreSkillsDir || path.join(agentsDir, 'core', 'skills');
   const localPlugins = path.join(agentsDir, 'plugins');
 
   const coreDir = fs.existsSync(localCore) ? localCore : (isTargetExplicit ? null : CORE_SKILLS);
@@ -1252,13 +1252,32 @@ function collectAllSkillDirs(targetRoot) {
           const subDir = path.join(nestedSkills, sub);
           if (fs.statSync(subDir).isDirectory()) dirs.push(subDir);
         }
-      } else if (fs.existsSync(path.join(d, 'SKILL.md')) || fs.existsSync(path.join(d, 'skill.yaml'))) {
+      } else if (fs.existsSync(path.join(d, 'SKILL.md')) || fs.existsSync(path.join(d, 'skill.yaml')) || fs.existsSync(path.join(d, 'skill.v2.yaml'))) {
         dirs.push(d);
       }
     }
   }
 
-  return dirs;
+  // Higher ownership tiers replace an upstream skill with the same ID. Preserve
+  // upstream duplicates so the compiler can still diagnose conflicting installs.
+  for (const tier of ['vendor', 'project']) {
+    const tierRoot = path.join(agentsDir, tier, 'skills');
+    if (!fs.existsSync(tierRoot)) continue;
+    for (const name of fs.readdirSync(tierRoot).sort()) {
+      const dir = path.join(tierRoot, name);
+      const { resolvedPath } = require('./filesystem/index.js').resolveManagedPath(root, path.relative(root, dir));
+      if (!fs.statSync(resolvedPath).isDirectory()) continue;
+      if (!fs.existsSync(path.join(dir, 'SKILL.md')) && !fs.existsSync(path.join(dir, 'skill.yaml')) && !fs.existsSync(path.join(dir, 'skill.v2.yaml'))) continue;
+      for (let i = dirs.length - 1; i >= 0; i--) {
+        if (path.basename(dirs[i]) === name) dirs.splice(i, 1);
+      }
+      dirs.push(dir);
+    }
+  }
+  if (isTargetExplicit) {
+    for (const dir of dirs) require('./filesystem/index.js').resolveManagedPath(root, path.relative(root, dir));
+  }
+  return dirs.sort();
 }
 
 module.exports = {
