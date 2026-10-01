@@ -30,7 +30,7 @@
 
 ---
 
-ContextOS is a deterministic context and policy compiler for AI coding agents. It transforms your team's version-controlled engineering rules into focused, verifiable context for Gemini, Claude Code, Cursor, GitHub Copilot, Aider, and Zed - and detects configuration drift in CI.
+ContextOS is a deterministic context and policy compiler for AI coding agents. It exports version-controlled engineering rules and detects configuration drift in CI. See the [adapter compatibility matrix](docs/ADAPTER_COMPATIBILITY.md) for native paths, instruction indexes and manual templates; client loader verification is separate from export tests.
 
 ## Installation
 
@@ -40,7 +40,13 @@ You do not need to clone anything manually. Just open your terminal in the root 
 npx contextos-agents init
 ```
 
-By default, ContextOS sets up a focused **Lean Core** (7 essential skills: `engineering-workflow`, `ponytail-mindset`, `gemini-precision`, `security`, `context-os`, `context-manager`, and `gstack-roles`). This ensures your AI agent context remains lightweight and focused, preventing context degradation.
+By default, ContextOS installs seven core skills: `engineering-workflow`, `ponytail-mindset`, `gemini-precision`, `security`, `context-os`, `context-manager`, and `gstack-roles`, then exports Gemini workspace skills. Supporting examples and references remain separate files. The actual context loaded and session cost depend on your client and task; ContextOS does not control an external client's chat history.
+
+Codex also discovers the shared `.agents/skills` directory. The default Cursor
+export always applies only the compact project bootstrap; skill bodies load by
+file patterns or agent request. Resolver token budgets are soft: mandatory safety
+guidance survives with an overflow warning. The experimental MCP prompt assembler
+keeps selected bodies whole and can reject an explicit hard character limit.
 
 Want more skills right away? Install pre-packaged presets or the entire catalog:
 
@@ -52,6 +58,11 @@ npx contextos-agents init --all               # Install all 36 catalog skills at
 ```
 
 ### Options
+
+Try the [small local demo](examples/quickstart/README.md) to install the current
+candidate in a new folder, select a TypeScript skill, and add a team rule without
+calling a model API. The [five-minute guide](docs/product/onboarding.md) explains
+the same workflow for an existing project.
 
 ```bash
 npx contextos-agents --help             # Show all options
@@ -188,11 +199,13 @@ contextos hook uninstall
 
 ### CI Quality Gate (`contextos gate`)
 
-Run the complete 8-point production quality gate locally:
+Check that generated adapter files match source skills and the active profile:
 
 ```bash
 contextos gate
 ```
+
+This is a configuration drift gate. Run your application's tests, typecheck and security checks separately. `resolve` recommends skills for a task; ordinary exports use all installed skills allowed by the profile. Resolver budgets are soft estimates of selected skill bodies and exclude client instructions, chat history and tool output.
 
 ### CI Quality Gate Action (contextos-gate)
 

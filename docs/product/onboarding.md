@@ -1,215 +1,115 @@
-# ContextOS Quickstart: 5-Minute Developer Onboarding
+# ContextOS: five-minute onboarding
 
-ContextOS compiles deterministic engineering rules, architectural policies, and specialist skills directly into native context instructions for AI coding assistants (Cursor, Claude Code, GitHub Copilot, Gemini CLI, Aider, and Zed).
+ContextOS selects engineering instructions for a task and exports them into client
+configuration files. Start with one task and one team rule. You need Node.js 22+
+and a project folder; these steps do not call a model API.
 
-Follow this 5-minute guide to equip your repository with version-controlled context governance.
-
----
-
-## 1. Quick Initialization (30 Seconds)
-
-Inside your project root, run the initialization command:
+## 1. Install in your project
 
 ```sh
-# Automatic stack detection and recommended profile setup
-npx contextos-agents init --auto
+npm install --save-dev contextos-agents
+npx --no-install contextos init --minimal
+npx --no-install contextos skill add typescript
 ```
 
-### Alternative Installation Modes
+On Windows PowerShell, use `npm.cmd` and `npx.cmd` if your script execution policy
+blocks the PowerShell wrappers. Commit your package lockfile to pin the version.
+The current repository candidate can instead be installed from its local tarball:
+see the [tested demo](../../examples/quickstart/README.md).
 
-- **Default Lean Core** (7 essential skills, zero token bloat):
-  ```sh
-  npx contextos-agents init
-  ```
-- **Domain presets** (targeted stack skills installed immediately):
-  ```sh
-  npx contextos-agents init --preset frontend   # React, Next.js, TypeScript, UI/UX
-  npx contextos-agents init --preset backend    # System design, Node, FastAPI, database
-  npx contextos-agents init --preset devops     # Docker, CI/CD, Terraform
-  ```
-- **Full catalog** (all 36 domain skills installed immediately):
-  ```sh
-  npx contextos-agents init --all
-  ```
-- **Minimal core only** (essential workflows without tech-specific catalog skills):
-  ```sh
-  npx contextos-agents init --minimal
-  ```
-- **Targeted editor setup** (e.g. Cursor only):
-  ```sh
-  npx contextos-agents init --agent cursor
-  ```
-- **Dry-run simulation** (inspect proposed file tree without writing to disk):
-  ```sh
-  npx contextos-agents init --dry-run
-  ```
+Initialization exports the shared `.agents/skills` projection. Codex can discover
+that path. Export another adapter explicitly when your team uses that client.
 
----
+## 2. Inspect a task's selection
 
-## 2. Structure of Your Project Context
+```sh
+npx --no-install contextos resolve "Implement TypeScript validation" --files src/order.ts --explain
+npx --no-install contextos resolve "Implement TypeScript validation" --files src/order.ts --json
+```
 
-After running `init`, ContextOS creates an isolated `.agents/` directory in your project root:
+The result identifies selected skills and the evidence for each selection. Token
+counts estimate skill bodies; client prompts, tools, and conversation history add
+more context. A soft budget may overflow to retain required instructions.
+
+## 3. Add your team's rule
+
+Copy the [team-order example](../../examples/quickstart/team-order/SKILL.md) and its
+[skill.yaml](../../examples/quickstart/team-order/skill.yaml) to:
 
 ```text
-.agents/
-  core/
-    skills/
-      engineering-workflow/   # Standard development lifecycle: Spec -> Plan -> Build -> Test -> Review -> Ship
-      ponytail-mindset/       # Minimalist 7-rung coding discipline (YAGNI, platform-first)
-      security/               # Mandatory application security and sanitization checks
-  AGENTS.md                   # Single source of truth for AI agents
-  contextos.lock.json         # Version-controlled lockfile tracking managed projections
+.agents/project/skills/team-order/
+  SKILL.md
+  skill.yaml
 ```
 
-> **Safety Guarantee**: ContextOS never touches your business source code. All generated adapter outputs are cleanly compartmentalized.
-
----
-
-## 3. Creating Your First Custom Rule
-
-You can add repository-specific engineering standards anytime:
-
-1. Create a directory under `.agents/core/skills/<skill-name>/`:
-   ```sh
-   mkdir -p .agents/core/skills/team-conventions
-   ```
-
-2. Add a `SKILL.md` file with metadata frontmatter:
-   ```markdown
-   ---
-   name: team-conventions
-   description: Team coding conventions, error handling, and API guidelines
-   ---
-   # Team Engineering Conventions
-
-   - All API endpoints must return standardized JSON payloads: `{ "ok": true, "data": ... }`.
-   - Never expose internal database IDs in public API responses.
-   - Use structured logging instead of console.log.
-   ```
-
----
-
-## 4. Exporting to AI Assistants
-
-Compile your single-source rules into your team's active editor environments:
+Edit the rule to fit your project. Use the project directory for your own skills;
+use `contextos skill override engineering-workflow` when customizing a built-in.
+Core updates retain project overrides.
 
 ```sh
-# Export to all supported editors simultaneously
-npx contextos-agents export all
-
-# Or export to specific tools:
-npx contextos-agents export cursor
-npx contextos-agents export claude
-npx contextos-agents export copilot
-npx contextos-agents export aider
-npx contextos-agents export zed
-npx contextos-agents export gemini
+npx --no-install contextos compile
+npx --no-install contextos resolve "Implement @team-order TypeScript validation" --files src/order.ts --explain
+npx --no-install contextos export all
 ```
 
-### What Gets Created
+The explicit `@team-order` request should select the team rule. Its generated
+native entrypoint is `.agents/skills/team-order/SKILL.md`. Edit source rules under
+`.agents/project`, then compile and export again.
 
-- **Cursor**: `.cursor/rules/*.mdc` (rich glob-scoped rules)
-- **Claude Code**: `CLAUDE.md` (preserved user instructions + synchronized ContextOS imports)
-- **GitHub Copilot**: `.github/copilot-instructions.md`
-- **Aider**: `.aider.conf.yml` (non-destructively merged read-only conventions)
-- **Zed**: `.zed/rules.md`
-
-Existing user configurations and custom rules are preserved with zero data loss.
-
----
-
-## 5. Local Quality Gate Verification
-
-Before committing code or opening a PR, ensure that generated editor rules are completely synchronized with your `.agents/` source rules:
+## 4. Verify exported files
 
 ```sh
-# Fast in-process drift verification
-npx contextos-agents gate
+npx --no-install contextos export all --check --json
 ```
 
-- Returns **code 0** (`PASS`): All managed projections match source specifications.
-- Returns **code 1** (`DRIFT`): Detected modified, deleted, or out-of-sync output files. Run `npx contextos-agents export all` to re-synchronize.
-- Returns **code 2** (`TOOL_ERROR`): Corrupted or unparseable project configuration.
+Exit zero means managed exports match the current sources. A changed source or
+missing export causes drift. If someone edited a managed output, review and move
+that change into its source before exporting; ownership conflicts can refuse an
+overwrite. Existing user files are not blanket overwrite targets.
 
----
+Useful paths:
 
-## 6. Continuous Integration (GitHub Actions)
+| Purpose | Path |
+| --- | --- |
+| Built-in source | `.agents/core/skills/` |
+| Your rules and overrides | `.agents/project/skills/` |
+| Shared native skills | `.agents/skills/` |
+| Compiled registry | `.agents/compiled/registry.v2.json` |
+| Managed artifact provenance | `.agents/lockfile.v2.json` |
 
-Add the isolated ContextOS Quality Gate to your repository CI workflow to automatically reject out-of-sync context in pull requests.
+For other clients, check the [adapter matrix](../ADAPTER_COMPATIBILITY.md). An
+export test proves the file configuration; it does not prove client loading or
+model adherence. In Codex, try a task explicitly referencing `$team-order` and
+inspect skill loading and the resulting patch.
 
-Create `.github/workflows/contextos-gate.yml`:
+## 5. Keep the check reproducible
+
+For your own trusted repository, a CI job can install the locked development
+package and run the same check:
 
 ```yaml
-name: ContextOS Quality Gate
-
-on:
-  pull_request:
-    branches: [main, master]
-  push:
-    branches: [main, master]
-
-jobs:
-  verify-context:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify ContextOS Projections
-        uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.2.0
-        with:
-          version: '2.2.0'
-          adapters: 'all'
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4
+    with:
+      node-version: "22"
+      cache: npm
+  - run: npm ci --ignore-scripts
+  - run: npx --no-install contextos export all --check --json
 ```
 
-The composite Action runs completely isolated from consumer code: it never invokes `npm ci`, never runs consumer shell scripts, and never executes untrusted code from PR forks.
+This installs your project's dependencies. For a gate isolated from consumer
+installation and scripts, use the composite action described in the [guide](../../GUIDE.md).
 
----
-
-## 7. Updates and Recovery
-
-- **Updating skills safely**:
-  ```sh
-  npx contextos-agents update
-  ```
-  Updates core definitions without overwriting or deleting your custom team skills.
-
-- **Checking project health**:
-  ```sh
-  npx contextos-agents doctor
-  ```
-
-- **Recovering from interrupted operations**:
-  ```sh
-  npx contextos-agents recover --list
-  npx contextos-agents recover --rollback <txId>
-  ```
-
----
-
-## 8. Pre-Commit Security & Runtime Defense
-
-For end-to-end security, combine static pre-commit scanning with real-time runtime protection:
-
-### Static Git Index Governance (ContextOS)
-
-Prevent dirty commits, leaked API keys, and lazy placeholder stubs:
+After changing source rules, compile, export, inspect the diff, and commit the
+source plus managed outputs and lockfile together. For updates and removal:
 
 ```sh
-# Scan staged index prior to commit
-npx contextos-agents scan --staged --enforce
-
-# Install safe pre-commit Git hook that runs in milliseconds
-npx contextos-agents hook install
+npx --no-install contextos update
+npx --no-install contextos uninstall --yes
 ```
 
-### In-Flight Runtime Defense (Stroq Synergy)
-
-While ContextOS governs rules, configs, and commits, coding agents can encounter indirect prompt injections during live execution (e.g. from malicious GitHub issues or untrusted packages). For enterprise setups, we recommend pairing ContextOS with a local runtime action firewall, such as [Stroq](https://github.com/AGGIB/Stroq):
-
-```sh
-# Guard agent sessions against data egress and injection
-npx @stroq/cli init
-```
-
-Together, ContextOS provides compile-time rule governance and commit gating, while Stroq intercepts live tool-calls to block credential exfiltration and unauthorized commands.
+The repository's installed-package acceptance gate verifies initialization,
+custom skill selection, export drift, update and uninstall preservation, and a
+read-only MCP protocol request in a fresh project. None of these checks measures
+AI answer quality or promises token savings.

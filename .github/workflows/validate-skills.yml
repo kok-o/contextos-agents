@@ -22,6 +22,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  installed-consumer:
+    uses: ./.github/workflows/consumer-install.yml
+
   # ───────────────────────────────────────────────────────────────────────────
   test:
     name: Tests (Node ${{ matrix.node }} on ${{ matrix.os }})

@@ -144,7 +144,7 @@ contextos hook install
 # Safely remove ContextOS hook block while preserving user hooks:
 contextos hook uninstall
 
-# Execute the 8-point CI quality gate:
+# Check generated adapter configuration drift:
 contextos gate
 ```
 
@@ -256,7 +256,7 @@ Use these templates to quickly launch workflows:
 ## 6. Best Practices for Working with Coding Agents
 
 1. **Clickable File Links:** When referring to files, use relative or absolute paths. Agents can navigate files directly via markdown links.
-2. **Never Skip Planning:** For tasks involving more than 1-2 lines of code, always require `/spec` and `/plan` first. This saves up to 80% of debugging time.
+2. **Use Proportional Planning:** Establish scope and acceptance criteria for substantial or ambiguous work. Routine edits can proceed directly, and existing implementation authorization carries forward.
 3. **Mandatory Proof-of-Work:** Require the agent to run `node .agents/ctx.js validate` and automated tests before marking tasks as complete.
 
 ---

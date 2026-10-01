@@ -9,6 +9,8 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 	let tempDir: string;
 	let extractedPkgDir: string;
 	let expectedVersion: string;
+	let buildDir: string;
+	let sharedRuntimeBefore: Buffer | undefined;
 
 	beforeAll(() => {
 		const pkgJson = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
@@ -16,12 +18,29 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 
 		tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "contextos-mcp-smoke-")));
 
-		// 1. Build and pack into tempDir
-		execSync("npm run build", { cwd: pkgDir, stdio: "pipe" });
-		execSync(`npm pack --pack-destination "${tempDir.replace(/\\/g, "/")}"`, {
-			cwd: pkgDir,
+		// Build in a private source copy; parallel handshake tests use pkgDir/dist.
+		const runtime = path.join(pkgDir, "dist/runtime/thread-store.cjs");
+		sharedRuntimeBefore = fs.existsSync(runtime) ? fs.readFileSync(runtime) : undefined;
+		buildDir = path.join(tempDir, "source");
+		fs.mkdirSync(buildDir);
+		for (const entry of ["src", "bin", "scripts", "package.json", "package-lock.json", "tsconfig.json"]) {
+			fs.cpSync(path.join(pkgDir, entry), path.join(buildDir, entry), { recursive: true });
+		}
+		fs.cpSync(path.resolve(pkgDir, "../.agents/transaction-core"), path.join(tempDir, ".agents/transaction-core"), {
+			recursive: true,
+		});
+		fs.symlinkSync(
+			fs.realpathSync(path.join(pkgDir, "node_modules")),
+			path.join(buildDir, "node_modules"),
+			process.platform === "win32" ? "junction" : "dir",
+		);
+		execSync("npm run build", { cwd: buildDir, stdio: "pipe" });
+		execSync(`npm pack --ignore-scripts --pack-destination "${tempDir.replace(/\\/g, "/")}"`, {
+			cwd: buildDir,
 			stdio: "pipe",
 		});
+		// Packaged handshake must not borrow sibling compiler files from the build.
+		fs.rmSync(path.join(tempDir, ".agents"), { recursive: true, force: true });
 
 		// 2. Find .tgz
 		const files = fs.readdirSync(tempDir);
@@ -41,11 +60,18 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 	}, 60_000);
 
 	afterAll(() => {
-		try {
-			fs.rmSync(tempDir, { recursive: true, force: true });
-		} catch {
-			// ignore cleanup error
-		}
+		if (!tempDir) return;
+		expect(path.dirname(tempDir)).toBe(fs.realpathSync(os.tmpdir()));
+		expect(path.basename(tempDir)).toMatch(/^contextos-mcp-smoke-/);
+		const dependencies = path.join(buildDir, "node_modules");
+		if (fs.existsSync(dependencies)) fs.unlinkSync(dependencies);
+		fs.rmSync(tempDir, { recursive: true, force: true });
+	});
+
+	it("leaves the shared checkout runtime unchanged during its isolated build", () => {
+		const runtime = path.join(pkgDir, "dist/runtime/thread-store.cjs");
+		expect(fs.existsSync(runtime)).toBe(sharedRuntimeBefore !== undefined);
+		if (sharedRuntimeBefore) expect(fs.readFileSync(runtime)).toEqual(sharedRuntimeBefore);
 	});
 
 	it("executes bin/mcp.mjs --version and outputs exact package version", () => {

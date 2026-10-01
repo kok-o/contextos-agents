@@ -1,0 +1,51 @@
+name: Installed package acceptance
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Exact commit or release tag to verify
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  consumer:
+    name: Tarball lifecycle (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm ci --ignore-scripts
+        working-directory: ./contextos-mcp
+      - run: npm run build
+      - run: npm run build
+        working-directory: ./contextos-mcp
+      - name: Pack both local candidates
+        run: |
+          node -e "require('fs').mkdirSync('scratch/release-candidate', { recursive: true })"
+          npm pack --ignore-scripts --pack-destination scratch/release-candidate
+          npm pack ./contextos-mcp --ignore-scripts --pack-destination scratch/release-candidate
+      - run: npm run check:consumer
+      - name: Retain package verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consumer-evidence-${{ matrix.os }}
+          path: |
+            scratch/release-install-result.json
+            scratch/release-consumer-*/mcp-handshake.json
+          if-no-files-found: warn

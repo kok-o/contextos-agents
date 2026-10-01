@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Installed-tarball acceptance gate for both packages on Windows, Linux and macOS,
+  including real CLI wrappers, project rules, update/uninstall preservation and
+  a read-only MCP status request. Stable publication depends on this gate.
+- A small TypeScript/team-rule demo and a corrected five-minute onboarding guide.
+
+### Fixed
+
+- Manifestless project skills now hash and load their actual entrypoint. All six
+  adapters honor custom entrypoints and prefer `skill.v2.yaml` consistently.
+- MCP tarball tests build in a private source copy so parallel protocol tests
+  retain a complete runtime in the checkout.
+- Installed-consumer acceptance covers manifestless rules and custom entrypoints
+  in both native exports and MCP prompt assembly.
+- Resolver parity tests always compile current MCP source in memory instead of
+  accepting an ignored, possibly stale local build.
+- Offline test fixtures no longer depend on a pre-existing scratch directory.
+- MCP builds clear their package-local `dist` before compilation, preventing
+  removed modules from remaining in later tarballs.
+
 ## [2.2.0] - 2026-09-27
 
 ### Added

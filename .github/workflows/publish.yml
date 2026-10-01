@@ -144,9 +144,15 @@ jobs:
       - run: npm pack --dry-run
         working-directory: ./contextos-mcp
 
+  installed-consumer:
+    needs: version
+    uses: ./.github/workflows/consumer-install.yml
+    with:
+      ref: ${{ needs.version.outputs.tag }}
+
   publish:
     name: Pack and publish core
-    needs: [version, tests, validate, docs, mcp]
+    needs: [version, tests, validate, docs, mcp, installed-consumer]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

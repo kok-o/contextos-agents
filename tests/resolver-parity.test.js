@@ -11,10 +11,7 @@ describe('W2.1: Resolver CLI/MCP Parity', () => {
   const ctxPath = path.join(rootDir, '.agents', 'ctx.js');
 
   function getMcpSelector() {
-    const distPath = path.resolve(__dirname, '../contextos-mcp/dist/contextos/selector.js');
-    if (fs.existsSync(distPath)) {
-      return require(distPath).selectContext;
-    }
+    // Always exercise current source: an ignored, stale dist must not mask drift.
     const tsPath = path.resolve(__dirname, '../contextos-mcp/src/contextos/selector.ts');
     if (fs.existsSync(tsPath)) {
       const { pathToFileURL } = require('url');
@@ -36,11 +33,11 @@ describe('W2.1: Resolver CLI/MCP Parity', () => {
       m._compile(code, tsPath);
       return m.exports.selectContext;
     }
-    throw new Error(`MCP selector not found at ${distPath} or ${tsPath}`);
+    throw new Error(`MCP selector source not found at ${tsPath}`);
   }
 
   test('parity corpus tests', () => {
-    // dynamically import the MCP selector (from dist if built, or compiled in-memory from source)
+    // Compile in memory so this gate is identical in a fresh checkout and locally.
     const selectContext = getMcpSelector();
 
     const fixturesPath = path.join(__dirname, 'fixtures', 'resolver');
