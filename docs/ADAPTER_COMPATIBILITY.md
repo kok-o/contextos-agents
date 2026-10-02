@@ -2,8 +2,10 @@
 
 This document records the export contracts for the ContextOS v2.3 local candidate. Passing structural or consumer tests does not establish that every client version loads an artifact. Native loader acceptance must be recorded separately.
 
-Release pair: core 2.3.0 / MCP 0.4.0. Remote Windows/Linux/macOS acceptance and
-the final revision-bound candidate remain pending; see [R2 preparation](R2_RELEASE_PREPARATION.md).
+Release pair: core 2.3.0 / MCP 0.4.0, source revision `4d633da`.
+Remote Windows/Linux/macOS core Node 22/24, MCP and installed lifecycle/migration
+acceptance passed in run `36970178246`. Live client behavior and the final candidate
+decision remain pending; see [R2 preparation](R2_RELEASE_PREPARATION.md).
 MCP supports default read-only inspection within this release scope. Execution,
 Python, crash recovery and concurrent runtime persistence are experimental;
 the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.

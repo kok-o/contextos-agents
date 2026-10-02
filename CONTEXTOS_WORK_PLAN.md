@@ -10,12 +10,15 @@
 [разбор MCP skips](docs/MCP_SKIPPED_TESTS.md),
 [migration/rollback](docs/COMPACT_CONTEXT_MIGRATION.md).
 
-1. Согласовать планы, roadmap и границы поддержки с фактическим поведением.
-2. Разобрать 25 исходных MCP skips и проверить stable read-only сценарии.
-3. Проверить переход core 2.2.0 / MCP 0.3.1 → кандидаты и checkpoint rollback.
-4. Выполнить удалённый CI Windows/Linux/macOS с логами и archive artifacts.
+1. Выполнено: планы, roadmap и границы поддержки согласованы с поведением.
+2. Выполнено: 25 исходных MCP skips разобраны; stable read-only сценарии проверены.
+   Семь experimental skips остаются явно ограниченными в поддержке.
+3. Выполнено: переход core 2.2.0 / MCP 0.3.1 → кандидаты и checkpoint rollback.
+4. Выполнено: удалённый CI Windows/Linux/macOS, core Node 22/24, MCP и consumer;
+   19/19 jobs PASS на `4d633da`, 12 artifacts с логами и архивами сохранены.
 5. После клиентского пилота и CI собрать кандидат одной проверенной ревизии;
-   решение о публикации принять отдельно.
+   решение о публикации принять отдельно. Проверенная CI-пара зафиксирована,
+   итоговый кандидат ожидает пилота; [CI report](docs/CI_R2_2026-10-02.md).
 
 Измерения качества, стоимости и длинных сессий на паузе до явного запроса.
 AST-графы, swarm и расширение каталога вне текущего фронта.
@@ -502,6 +505,8 @@ Rollback для каждого кода изменения: небольшой �
 **Продуктовый этап 1 октября:** чистый root gate 519/519; MCP 599 passed,
 25 skipped; установка свежих обоих npm tarball, project-rule, update/uninstall
 и read-only MCP call проверены. Добавлены installed-consumer CI gate, очистка
-MCP dist и небольшой onboarding demo. Удалённая CI matrix и реальная работа
-правила в клиенте остаются следующим шагом. Evidence:
+MCP dist и небольшой onboarding demo. На дату этого исторического этапа
+удалённая CI matrix ещё не была проверена; 2 октября она прошла 19/19 jobs
+на `4d633da`. Реальная работа правила в клиенте и пилот остаются открытыми.
+Текущий [CI report](docs/CI_R2_2026-10-02.md). Историческое evidence:
 [release acceptance](docs/RELEASE_ACCEPTANCE_2026-10-01.md).

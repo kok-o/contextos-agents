@@ -1,0 +1,36 @@
+{
+  "sourceRevision": "4d633da0b6180c266a6acf5034c4f310eb2ed348",
+  "ciRun": "https://github.com/kok-o/contextos-agents/actions/runs/36970178246",
+  "status": "CI_VERIFIED_PAIR_PILOT_PENDING",
+  "archives": [
+    {
+      "file": "contextos-agents-2.3.0.tgz",
+      "sha256": "db981c3f052b9bb5c724b41405873d8871c2c5d04958d34613d4af05e904db70",
+      "downloadedIntegrity": "PASS"
+    },
+    {
+      "file": "contextos-mcp-0.4.0.tgz",
+      "sha256": "340ad004ac47bab672fffb344b2116db60ed0a3e9ea9e0703c21d2904140df34",
+      "downloadedIntegrity": "PASS"
+    }
+  ],
+  "documents": [
+    {
+      "file": "CHANGELOG.md",
+      "sha256": "bdf37bbd96d89253bade7850867e2eab44fbca55b1091a62ba9cf4f9263d84e2"
+    },
+    {
+      "file": "ADAPTER_COMPATIBILITY.md",
+      "sha256": "b7675b9115728ec635c1cbe884bf88840dc6560c74adcd5d852756dd8c1ae97b"
+    },
+    {
+      "file": "COMPACT_CONTEXT_MIGRATION.md",
+      "sha256": "b5836ee34e6011f2f8f5b2a6a81b80da1ef6a09c453609711a497f7119026ef9"
+    },
+    {
+      "file": "CI_EVIDENCE.json",
+      "sha256": "3d4556bea36f672a50b28dac2019254a22fd39118f859a880ee114230d6e676b"
+    }
+  ],
+  "publication": "NOT_AUTHORIZED"
+}

@@ -66,7 +66,7 @@ the same workflow for an existing project.
 
 For the current R2 candidates, see the [release preparation status](docs/R2_RELEASE_PREPARATION.md)
 and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). Remote CI
-and the client pilot must pass before the final candidate and publication decision.
+passed on `4d633da`; the client pilot remains before the final candidate decision.
 
 ```bash
 npx contextos-agents --help             # Show all options

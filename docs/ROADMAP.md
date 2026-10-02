@@ -21,12 +21,12 @@ Updated 2 October 2026. Source candidates: `contextos-agents@2.3.0` and
 
 ## Next: complete R2 preparation
 
-1. Synchronize documentation and inventory MCP skips; cover stable API scenarios
+1. Completed: synchronize documentation and inventory MCP skips; cover stable API scenarios
    and state experimental limitations explicitly.
-2. Verify upgrade from published core 2.2.0 and checkpoint rollback preserving
+2. Completed: verify upgrade from published core 2.2.0 and checkpoint rollback preserving
    project rules, root instructions and overrides.
-3. Run Windows, Linux and macOS CI against one commit. Retain logs, installed
-   archive results, hashes and archives as artifacts.
+3. Completed: Windows/Linux/macOS CI on `4d633da`, 19/19 jobs PASS;
+   twelve artifacts retain logs, installation/migration results and archives.
 4. Complete the client pilot, then assemble one revision-bound candidate with
    changelog, migration, compatibility matrix and evidence.
 5. Make a separate publication decision after CI and pilot results.
