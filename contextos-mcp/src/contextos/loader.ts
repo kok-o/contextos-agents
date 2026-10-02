@@ -77,7 +77,7 @@ export function assembleContextPrompt(
 	};
 	const agentsDir = findAgentsDir(projectRoot);
 	if (!agentsDir) return { prompt: "", report };
-	const repositoryRoot = path.dirname(agentsDir);
+	const repositoryRoot = assertWithinRepository(path.dirname(agentsDir), path.dirname(agentsDir));
 	const selection = selectContext(task, { ...options, rootDir: repositoryRoot });
 	report.warnings.push(...(selection.warnings || []));
 	report.omissions.push(...(selection.excluded || []));

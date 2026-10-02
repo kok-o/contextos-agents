@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-02",
+  "baseRevision": "d6a2bd4e1d5efc745f58824ee72908b10be91903",
+  "scope": "Unpushed CI corrections",
+  "core": {
+    "passed": 524,
+    "failed": 0
+  },
+  "mcp": {
+    "passed": 623,
+    "failed": 0,
+    "skipped": 7
+  },
+  "sources": [
+    {
+      "file": ".github/workflows/validate-skills.yml",
+      "sha256": "3e1a942ff4e58f1171256cf40177b4abe5f47c56a1aa87ae02054ab0036162be"
+    },
+    {
+      "file": "contextos-mcp/src/contextos/loader.ts",
+      "sha256": "04aae7ca91a9af128fbd5d85bede02094e1ef6593dafafb191b68b9466db31b0"
+    },
+    {
+      "file": "contextos-mcp/tests/unit/context-assembly.test.ts",
+      "sha256": "2531524b0980fcb4ebc3fc888f48297943e8dfb10865372e0fb42e9e823f519c"
+    },
+    {
+      "file": "benchmarks/luna/fixture.js",
+      "sha256": "8c9bc595671316a780fe0d1e7d0718ca4fa0a47e3be02527c846b0e15842c5fd"
+    },
+    {
+      "file": "tests/luna-agent-benchmark.test.js",
+      "sha256": "5969485465c734a4c179ff9e612927bcd156106e9a54d5310566df17a49667ee"
+    },
+    {
+      "file": "CHANGELOG.md",
+      "sha256": "bdf37bbd96d89253bade7850867e2eab44fbca55b1091a62ba9cf4f9263d84e2"
+    }
+  ],
+  "files": [
+    {
+      "file": "docs/evidence/ci-r2-local-fixes-2026-10-02/r2-core-after-ci-fixes.log",
+      "sha256": "8bf39c545d38c6abdec5c54b830e5692345705a7b38a2156fcae1fd514c162d4"
+    },
+    {
+      "file": "docs/evidence/ci-r2-local-fixes-2026-10-02/r2-mcp-after-ci-fixes.log",
+      "sha256": "5fd0597f16cbb58d4e63b12c979e4f1f8debe61931a3d8e373a318a4614f3a6a"
+    },
+    {
+      "file": "docs/evidence/ci-r2-local-fixes-2026-10-02/r2-mcp-after-ci-fixes.json",
+      "sha256": "e75656b64e932e2663f0945a8a7fc4b38cfd83d06433bb93e68f12ffd3bc54ec"
+    },
+    {
+      "file": "docs/evidence/ci-r2-local-fixes-2026-10-02/r2-path-regressions.log",
+      "sha256": "18801e91f2e2a379fb0025b01462f2b80981ada062f8ae227aa25afecf536dfa"
+    },
+    {
+      "file": "docs/evidence/ci-r2-local-fixes-2026-10-02/r2-portable-fixture.log",
+      "sha256": "1dfbaa17dffbb6deaafcdbb7237a617833b2ac8d1a7ce3f4f39d00208e38ce1e"
+    }
+  ],
+  "remoteReverification": "PENDING",
+  "benchmarks": "PAUSED"
+}

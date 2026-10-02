@@ -34,7 +34,8 @@ fs.mkdirSync(output, { recursive: true });
 const evidenceFiles = logs.map(name => {
   const raw = fs.readFileSync(path.join(root, 'scratch', name), 'utf8');
   const data = raw.replace(/[A-Z]:\\\\Users\\\\[^\\\r\n"]+/g, '<USER_HOME>')
-    .replace(/[A-Z]:\\Users\\[^\\\r\n"]+/g, '<USER_HOME>').replace(/\r\n/g, '\n');
+    .replace(/[A-Z]:\\Users\\[^\\\r\n"]+/g, '<USER_HOME>')
+    .replace(/[A-Z]:\/Users\/[^/\s"]+/g, '<USER_HOME>').replace(/\r\n/g, '\n');
   fs.writeFileSync(path.join(output, name), data);
   return { path: `docs/evidence/r2-preparation-2026-10-02/${name}`, sha256: sha(data) };
 });

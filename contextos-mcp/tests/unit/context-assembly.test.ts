@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -33,6 +33,16 @@ function writeSkill(): string {
 	return body;
 }
 describe("complete context assembly", () => {
+	it("reports repository-relative sources when the repository is opened through a directory alias", () => {
+		writeSkill();
+		const alias = path.join(root, "repository-alias");
+		symlinkSync(root, alias, process.platform === "win32" ? "junction" : "dir");
+		const result = assembleContextPrompt(alias, "Review auth");
+		expect(result.report.sources.find((source) => source.id === "security")?.path).toBe(
+			".agents/project/skills/security/SKILL.md",
+		);
+		expect(result.prompt).toContain("Resolve references relative to .agents/project/skills/security.");
+	});
 	it("retains complete project overrides and safety tails beyond the soft limit with hashes", () => {
 		const body = writeSkill();
 		const result = assembleContextPrompt(root, "Review auth", { maxTotalSkillsChars: 100 });

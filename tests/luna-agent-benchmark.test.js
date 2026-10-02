@@ -37,13 +37,26 @@ test('model tools cannot access hidden oracles, other files, dependencies for wr
 
 test('permission-limited worker rejects network modules, host filesystem reads and constructor escape', async t => {
   const task = CASES[0]; const parent = temp(t);
-  for (const source of ["require('https');", "require('fs').readFileSync('C:/Users/esenb/.codex/config.toml');", "require.constructor('return process')();"]) {
+  const hostFile = path.join(parent, 'host-only.txt');
+  fs.writeFileSync(hostFile, 'OUTSIDE_PERMISSION_ALLOWLIST');
+  for (const source of ["require('https');", `require('fs').readFileSync(${JSON.stringify(hostFile)});`, "require.constructor('return process')();"]) {
     const fixture = createFixture(parent, task);
     fs.writeFileSync(path.join(fixture.root, task.file), source);
     const result = await evaluate(fixture, task);
     assert.equal(result.passed, false);
     assert.match(result.error, /not allowed|restricted|Code generation/);
   }
+});
+
+test('permission-limited fixture resolves a directory alias before granting filesystem access', async t => {
+  const parent = temp(t);
+  const alias = path.join(parent, 'parent-alias');
+  fs.symlinkSync(parent, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const task = CASES[0];
+  const fixture = createFixture(alias, task, { faulty: false });
+  assert.equal(path.dirname(fixture.root), fs.realpathSync(parent));
+  const result = await evaluate(fixture, task);
+  assert.equal(result.passed, true, JSON.stringify(result));
 });
 
 test('Luna reservations share the legacy cap, persist before HTTP, and retain uncertain requests', t => {

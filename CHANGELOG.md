@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- MCP source reports and reference directories stay repository-relative when a
+  workspace is opened through a directory alias, including macOS temporary paths.
+- Offline permission fixtures canonicalize their roots and test a real portable
+  out-of-allowlist file; CI matrices retain all platform outcomes without fail-fast.
 - Restored stable MCP registration/status/compare/diff handler coverage, with
   runtime opt-in and no-session-creation checks. Python availability now probes
   the same executable as the runtime on Windows.

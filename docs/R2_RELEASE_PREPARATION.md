@@ -8,7 +8,7 @@ Benchmarks are paused. No paid model requests or publication occurred.
 | --- | --- |
 | Plans/documentation | Work plan, roadmap, implementation status, changelog, compatibility and migration synchronized. Historical baselines remain labeled as historical. |
 | 25 baseline MCP skips | Inventory in [MCP_SKIPPED_TESTS.md](MCP_SKIPPED_TESTS.md). Five stable cases restored and three additional cases added. Correct Python probe executes 13 REPL cases locally. Seven experimental execution/persistence skips remain. |
-| Remote platform CI | Workflow dispatch and artifact retention prepared for Windows/Linux/macOS. No run of this working-tree snapshot is established yet. |
+| Remote platform CI | First run `36969036566` on `d6a2bd4`: all three installed consumer/migration jobs PASS, but macOS suites and Linux OCI FAIL; matrix cancellation affected remaining jobs. See [CI report](CI_R2_2026-10-02.md). Corrected revision/re-run pending. |
 | Migration/rollback | Published core 2.2.0 / MCP 0.3.1 → fresh candidate archives → checkpoint and old lockfile restore. Both versions restored, 325 configuration files restored byte-for-byte, export drift absent, user instructions and overrides preserved. |
 | Final release candidate | Pending remote CI and client pilot. Local archives and evidence are preparation artifacts, not publication approval. |
 

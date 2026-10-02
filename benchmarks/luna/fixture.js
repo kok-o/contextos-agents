@@ -13,6 +13,7 @@ const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 function createFixture(parent, task, { faulty = true, sources } = {}) {
   parent = path.resolve(parent);
   fs.mkdirSync(parent, { recursive: true });
+  parent = fs.realpathSync(parent);
   const root = fs.mkdtempSync(path.join(parent, 'fixture-'));
   const files = [task.file, ...task.dependencies];
   const provenance = [];
