@@ -1,0 +1,13 @@
+
+> contextos-agents@2.3.0 build
+> node .agents/ctx.js compile && node .agents/ctx.js export all
+
+
+✓ Successfully compiled 7 skills into Registry v2!
+  Source Graph Hash: sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94
+  Registry: .agents/compiled/registry.v2.json
+  Checksum: .agents/compiled/registry.v2.sha256
+
+Starting pure compiler export for all adapters...
+✓ All exports complete: 0 artifacts applied in a single transaction (tx: tx-1790916891838-90c4d90e).
+  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed

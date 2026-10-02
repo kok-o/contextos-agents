@@ -1,0 +1,494 @@
+
+> @contextos/mcp@0.4.0 test
+> vitest run --reporter=default --reporter=json --outputFile=../scratch/r2-mcp-tests-verified.json
+
+
+ RUN  v4.1.0 C:/Users/esenb/Desktop/contextos/contextos-mcp
+
+[file-policy] Blocked path: ../../.env
+[file-policy] Blocked path: .git/config
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tracked.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'staging'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'feature.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/thread-clean'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'feature.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/thread-live'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'live.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'live.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/read-only-inspection.test.ts (4 tests) 3050ms
+     ✓ preserves the Git failure and reports cleanup failure without changing the real index  512ms
+     ✓ reads tracked and untracked diffs without changing the real Git index  2039ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/thread-conflict'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/security.test.ts (17 tests) 4238ms
+       ✓ blocks dangerous module imports like os and subprocess  1435ms
+       ✓ blocks access to introspection sandbox-escape attributes  638ms
+       ✓ blocks unauthorized builtins like open  669ms
+       ✓ allows authorized safe operations in sandbox  662ms
+       ✓ blocks dangerous asyncio subprocess and network attributes  791ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'staging'
+warning: in the working copy of 'feature.ts', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/unit/reviewer-gate.test.ts (12 tests) 4860ms
+     ✓ audits clean combined staging branch  1917ms
+     ✓ rejects staging branch containing placeholders  2919ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/valid-1'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'valid.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+[contextos-loader] CTX_RESOLVER_BUDGET_EXCEEDED: Context budget (100 tokens) exceeded by mandatory skill "security" and dependencies (total: 2655 tokens)
+ ✓ tests/unit/worktree-safety.test.ts (3 tests) 5160ms
+     ✓ getDiff() does NOT stage untracked files into the real Git index  2279ms
+     ✓ commit() refuses to commit sensitive files and throws SECURITY_POLICY_FAILED  1234ms
+     ✓ getChangedFiles() returns modified and untracked files without modifying index  1643ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[contextos-loader] CTX_PROMPT_SOFT_BUDGET_EXCEEDED: Selected full skill bodies occupy 9978 characters; soft limit is 100.
+ ✓ tests/unit/selector.test.ts (5 tests) 1601ms
+     ✓ assembles a manifestless project skill through the real compiler and selector  453ms
+     ✓ loads the short workflow for routine work without role or implementation manuals  463ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/unit/strict-merge.test.ts (38 tests) 5729ms
+       ✓ blocks mergeThreadBranch when ineligible threadState is passed  881ms
+       ✓ detects live candidate amend in branch and blocks merge in mergeThreadBranch  2268ms
+       ✓ filters out ineligible threads in mergeAllThreads  2554ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+stdout | tests/unit/lease-takeover.test.ts > Lease Takeover and Fencing (W4.2) > allows expired lease takeover and prevents stale owner from writing
+LOCK FILE CONTENT: {
+  "ownerToken": "7efbb66f-9263-46d2-8674-411d4fd16ebb",
+  "fencingToken": 1,
+  "instanceId": "process-1",
+  "hostname": "koko",
+  "pid": 24660,
+  "processStartedAt": 1790916439118,
+  "heartbeatAt": 1790916439119,
+  "expiresAt": 1790916440119,
+  "repositoryFingerprint": "none"
+}
+DATE NOW: 1790916440281
+Acquired: true
+
+ ✓ tests/unit/lease-takeover.test.ts (1 test) 1213ms
+     ✓ allows expired lease takeover and prevents stale owner from writing  1210ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+Preparing worktree (new branch 'swarm/thread-running')
+ ✓ tests/integration/session-persistence.test.ts (8 tests) 1042ms
+     ✓ detects and purges orphan worktree directories  464ms
+ ✓ tests/mcp-handshake.test.ts (1 test) 833ms
+     ✓ boots bin/mcp.mjs, performs initialize handshake, and lists registered tools  830ms
+ ✓ tests/unit/crash-recovery.test.ts (1 test) 1548ms
+     ✓ reconciles running threads and preserves completed thread merge eligibility across restart  1544ms
+ ✓ tests/unit/write-scope.test.ts (3 tests) 7526ms
+     ✓ accepts untracked and staged files inside writeScope  1858ms
+     ✓ rejects untracked files outside writeScope  2763ms
+     ✓ detects committed renames outside writeScope  2902ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/thread-1'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'file1.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/thread-2'
+warning: in the working copy of 'file2.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/unit/session-dispatcher.test.ts (2 tests) 2507ms
+     ✓ initializes an ActionDispatcher on the session and dispatches valid actions  1380ms
+     ✓ rejects non-declarative action payloads  1124ms
+ ✓ tests/unit/config.test.ts (63 tests) 368ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/unit/memory.test.ts (34 tests) 298ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] queued
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] creating_worktree
+ ✓ tests/unit/session-persistence.test.ts (8 tests | 2 skipped) 964ms
+     ✓ detects and purges orphan worktree directories  447ms
+     ✓ skips orphan worktree if .contextos-session belongs to a different repository  341ms
+ ✓ tests/repository-boundary.test.ts (14 tests) 367ms
+ ✓ tests/unit/sandbox.test.ts (10 tests) 989ms
+     ✓ redacts sensitive environment tokens and secrets in host-unsafe execution output  943ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[contextos-loader] CTX_RESOLVER_BUDGET_EXCEEDED: required context
+[contextos-loader] CTX_PROMPT_SOFT_BUDGET_EXCEEDED: Selected full skill bodies occupy 24163 characters; soft limit is 100.
+ ✓ tests/unit/context-assembly.test.ts (5 tests) 217ms
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] agent_running
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] capturing_diff
+ ✓ tests/server-mode.test.ts (4 tests) 636ms
+     ✓ should fall back to subprocess mode when server mode disabled  608ms
+ ✓ tests/unit/cache.test.ts (16 tests) 62ms
+ ✓ tests/unit/hooks.test.ts (6 tests) 745ms
+     ✓ loads and executes hooks when allow_hooks is explicitly true  668ms
+ ✓ tests/unit/semaphore.test.ts (7 tests) 74ms
+ ✓ tests/unit/mcp-tools.test.ts (11 tests) 96ms
+ ✓ tests/unit/routing.test.ts (57 tests) 66ms
+ ✓ tests/unit/compression.test.ts (39 tests) 37ms
+ ✓ tests/unit/secret-filter.test.ts (12 tests) 28ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/unit/contextos-tools.test.ts (13 tests | 5 skipped) 78ms
+ ✓ tests/unit/cache-verification.test.ts (3 tests) 45ms
+ ✓ tests/action-dispatcher.test.ts (4 tests) 25ms
+ ✓ tests/unit/agents/provider.test.ts (10 tests) 23ms
+ ✓ tests/unit/plugin-supply-chain.test.ts (20 tests) 167ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/unit/theme.test.ts (19 tests) 21ms
+ ✓ tests/security-escape.test.ts (3 tests) 12ms
+ ✓ tests/unit/prompt.test.ts (9 tests) 20ms
+ ✓ tests/unit/cli-parsing.test.ts (9 tests) 17ms
+ ✓ tests/unit/reviewer-provider.test.ts (10 tests) 25ms
+ ✓ tests/ts-analyzer.test.ts (5 tests) 79ms
+ ✓ tests/unit/node-repl.test.ts (2 tests) 13ms
+ ✓ tests/unit/orchestrator-prompt.test.ts (1 test) 8ms
+ ✓ tests/unit/orthogonal-status.test.ts (2 tests) 9ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/alpha'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'alpha.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/beta'
+warning: in the working copy of 'beta.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/gamma'
+warning: in the working copy of 'gamma.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] reviewing
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] compressing
+[swarm-mcp] [mcp-375a4777-5e79-4d49-a8f2-ae25cb47cb0f] completed: 1 files, ~$0.0500 (1500+800 tokens)
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] queued
+ ✓ tests/unit/verification-spec.test.ts (18 tests) 16530ms
+     ✓ killProcessTree does not throw for non-existent PID or undefined  344ms
+       ✓ runs successful verification with node --version  1621ms
+       ✓ detects mutated candidate commit HEAD and marks STALE  1096ms
+       ✓ detects dirty working tree files after execution and marks STALE  972ms
+       ✓ handles abort signal cancellation cleanly  1402ms
+       ✓ runs verification in OCI Sandbox mode and records evidence (W5.4)  1487ms
+       ✓ fails-closed with UNAVAILABLE when oci-required mode engine is unavailable (W5.4)  7865ms
+       ✓ fails-closed with ERROR when image digest mismatch occurs (W5.4)  1714ms
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] creating_worktree
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] agent_running
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/completed-thread'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'done.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/running-thread'
+warning: in the working copy of 'running.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/failed-thread'
+warning: in the working copy of 'failed.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] reviewing
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] compressing
+[swarm-mcp] [mcp-cb42c5c7-2644-448b-8a29-70d826bb8510] completed: 1 files, ~$0.0500 (1500+800 tokens)
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/conflict-thread'
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/clean-thread'
+warning: in the working copy of 'clean.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] queued
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] creating_worktree
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] agent_running
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] reviewing
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] compressing
+[swarm-mcp] [mcp-3bf85cf4-2f44-4473-a510-610a90bde0a4] completed: 0 files, ~$0.0500
+ ✓ tests/integration/repl-protocol.test.ts (13 tests) 10436ms
+     ✓ start() succeeds and isAlive is true  684ms
+     ✓ execute('print("hello")') returns stdout with hello  787ms
+     ✓ execute('FINAL("done")') returns hasFinal=true, finalValue="done"  728ms
+     ✓ setContext sets context, then execute can read it  1133ms
+     ✓ variables persist across execute calls  618ms
+     ✓ execute('def') returns stderr with SyntaxError  527ms
+     ✓ execute('1/0') returns stderr with ZeroDivisionError  686ms
+     ✓ shutdown() sets isAlive to false  781ms
+     ✓ resetFinal clears the FINAL sentinel so hasFinal becomes false  803ms
+     ✓ handles multi-line code blocks  679ms
+     ✓ FINAL converts non-string values to string  823ms
+     ✓ REPL recovers after an error and continues working  1227ms
+     ✓ aborting the signal after start shuts down the REPL  958ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/conflict-first'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/clean-second'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'other.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] queued
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] creating_worktree
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] agent_running
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+Switched to a new branch 'swarm/late'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'shared.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'late.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+Switched to a new branch 'swarm/early'
+warning: in the working copy of 'early.ts', LF will be replaced by CRLF the next time Git touches it
+Switched to branch 'main'
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] reviewing
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] compressing
+[swarm-mcp] [mcp-3b7e43cd-6ed6-4841-811a-83c808d74caf] completed: 1 files, ~$0.0500 (1500+800 tokens)
+ ✓ tests/integration/merge.test.ts (10 tests) 27104ms
+     ✓ succeeds with a clean merge of non-conflicting changes  1967ms
+     ✓ detects conflict when two branches modify the same line  2321ms
+     ✓ returns a failure result for a non-existent branch  1151ms
+     ✓ merges multiple non-conflicting branches in order  3225ms
+     ✓ respects custom merge order  5802ms
+     ✓ skips non-completed threads  3587ms
+     ✓ continues merging after a conflict by default (continueOnConflict=true)  3615ms
+     ✓ stops on first conflict when continueOnConflict is false  3052ms
+     ✓ returns empty results when no threads are eligible  508ms
+     ✓ merges in completion order by default (earliest first)  1872ms
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] queued
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] creating_worktree
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] agent_running
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] reviewing
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] compressing
+[swarm-mcp] [mcp-5d22f6ab-e1f6-44c9-b17b-12d46d8064da] completed: 1 files, ~$0.0500 (1500+800 tokens)
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/smoke-tarball.test.ts (4 tests) 29385ms
+     ✓ completes stdio JSON-RPC initialize handshake in isolated environment without ERR_MODULE_NOT_FOUND  403ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] queued
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] creating_worktree
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] agent_running
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] reviewing
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] compressing
+[swarm-mcp] [mcp-dac35a47-55ea-4676-845b-67047e8dd3fd] completed: 1 files, ~$0.0500 (1500+800 tokens)
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] queued
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] creating_worktree
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/integration/worktree.test.ts (23 tests) 33972ms
+       ✓ creates the base directory  813ms
+       ✓ updates .gitignore with the base directory  923ms
+       ✓ does not duplicate .gitignore entry on repeated init  856ms
+       ✓ creates a worktree with branch swarm/<threadId> and returns correct WorktreeInfo  1596ms
+       ✓ creates multiple worktrees for different threads  2017ms
+       ✓ writes .contextos-session ownership marker in worktree  2788ms
+       ✓ returns correct diff and file list after modifying a file in the worktree  3753ms
+       ✓ returns correct diff when adding a new file  2211ms
+       ✓ reports no changes when worktree is clean  2526ms
+       ✓ returns stats summary for changed files  1441ms
+       ✓ commits changes and returns true  4011ms
+       ✓ returns false when there are no changes to commit  995ms
+       ✓ returns false on second commit with no new changes  1859ms
+       ✓ removes the worktree directory  902ms
+       ✓ keeps the branch by default  982ms
+       ✓ deletes the branch when deleteBranch is true  896ms
+       ✓ is a no-op for a non-existing thread  462ms
+       ✓ cleans up all worktrees and their branches  1784ms
+       ✓ removes the base directory when empty  888ms
+       ✓ returns WorktreeInfo for an existing worktree  838ms
+       ✓ returns undefined for a non-existing thread  501ms
+       ✓ returns undefined after worktree is destroyed  809ms
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] agent_running
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] verifying: node --version
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] reviewing
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] compressing
+[swarm-mcp] [mcp-16ac64f7-64c2-4882-a9d0-1c42185fc669] completed: 1 files, ~$0.0500 (1500+800 tokens)
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] queued
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] creating_worktree
+ ✓ tests/budget.test.ts (8 tests) 39165ms
+     ✓ should track token usage from mock agent  7491ms
+     ✓ should track budget state with token totals  11694ms
+     ✓ should record cost as estimated when model pricing unknown  4928ms
+     ✓ should calculate actual cost when model pricing is known  3476ms
+     ✓ should enforce budget based on actual spend  1149ms
+     ✓ should accumulate costs across multiple threads  4641ms
+     ✓ reserves budget before concurrent dispatch and releases reservations  2801ms
+     ✓ should include usage and cost info in compressed result  2981ms
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] agent_running
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] capturing_diff
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/retry.test.ts (7 tests) 40447ms
+     ✓ should succeed on first attempt without retry  4462ms
+     ✓ should retry failed threads up to max_retries  19451ms
+     ✓ should not retry when thread_retries is 0  2336ms
+     ✓ should apply exponential backoff between retries  4610ms
+     ✓ should log re-routing attempts in progress  4389ms
+     ✓ should track attempt count in thread state  4053ms
+     ✓ should respect abort signal during retry backoff  1140ms
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] reviewing
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] compressing
+[swarm-mcp] [mcp-c41c5ca5-c2b0-43f2-ba4d-7fc49362d8e6] completed: 1 files, ~$0.0500 (1500+800 tokens)
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/integration/thread-lifecycle.test.ts (9 tests) 41852ms
+     ✓ spawnThread succeeds and returns CompressedResult with success:true  7488ms
+     ✓ getThreads() returns spawned threads, getThread() finds by ID  12509ms
+     ✓ getBudgetState() shows spent amount after thread completion  4284ms
+     ✓ spawning identical thread twice returns cached result on second call  3513ms
+     ✓ spawn with __FAIL__ trigger returns success:false  2239ms
+     ✓ cancelThread returns true for running thread, false for completed  3078ms
+     ✓ cancelAll marks running threads as cancelled  1055ms
+     ✓ onThreadProgress callback is called during thread lifecycle  2665ms
+     ✓ getConcurrencyStats() reflects total spawned threads  5016ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/integration/mcp-session.test.ts (19 tests) 44366ms
+     ✓ creates a session for a valid git directory  1303ms
+     ✓ returns the same session on subsequent calls for the same directory  1045ms
+     ✓ returns different sessions for different directories  3428ms
+     ✓ deduplicates concurrent getSession() calls for the same directory  1269ms
+     ✓ spawns a thread using session defaults  7315ms
+     ✓ uses agent/model overrides when provided  5840ms
+     ✓ returns failure for __FAIL__ trigger  3501ms
+     ✓ returns threads spawned in the session  5299ms
+     ✓ returns empty threads for a fresh session  677ms
+     ✓ tracks budget across threads  3271ms
+     ✓ merges completed thread branches back to main  3624ms
+     ✓ returns empty array when no threads have been spawned  733ms
+     ✓ returns not-found for non-existent thread ID  754ms
+     ✓ returns cannot-cancel for already completed thread  3039ms
+     ✓ cancels all threads when no threadId specified  612ms
+     ✓ cleans up a session and removes it from the map  761ms
+     ✓ returns a message when no session exists for the directory  482ms
+     ✓ cleans up all active sessions  1403ms
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+ ✓ tests/integration.test.ts (27 tests) 59041ms
+     ✓ should create a worktree  1635ms
+     ✓ should capture diff after file changes  2027ms
+     ✓ should list changed files  2056ms
+     ✓ should commit changes  4488ms
+     ✓ should destroy a worktree and its branch  2911ms
+     ✓ should handle multiple concurrent worktrees  4087ms
+     ✓ should execute task and create files  1497ms
+     ✓ should handle forced failures  710ms
+     ✓ should create multiple files for multi tasks  1102ms
+     ✓ should spawn a thread and get compressed result  9110ms
+     ✓ should track thread state  3094ms
+     ✓ should handle failed threads  1842ms
+     ✓ should enforce total thread limit  2956ms
+     ✓ should run multiple threads in parallel  3577ms
+     ✓ should merge a single thread branch  1632ms
+     ✓ should merge multiple non-conflicting branches  2840ms
+     ✓ should detect merge conflicts  2920ms
+     ✓ should complete full pipeline: spawn → execute → diff → compress → merge  2844ms
+     ✓ should complete full parallel pipeline: 3 threads → merge all  6193ms
+     ✓ should handle abort/cancellation  904ms
+     ✓ should enforce session budget limit  600ms
+
+ Test Files  50 passed (50)
+      Tests  622 passed | 7 skipped (629)
+   Start at  09:47:12
+   Duration  60.19s (transform 9.38s, setup 0ms, import 20.23s, tests 387.10s, environment 15ms)
+
+JSON report written to C:/Users/esenb/Desktop/contextos/scratch/r2-mcp-tests-verified.json

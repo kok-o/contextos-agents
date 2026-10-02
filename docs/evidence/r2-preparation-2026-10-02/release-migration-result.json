@@ -1,0 +1,262 @@
+{
+  "result": "PASS",
+  "previousVersion": "2.2.0",
+  "candidateVersion": "2.3.0",
+  "platform": "win32",
+  "node": "v22.14.0",
+  "sourceRevision": "4bed8dd566f4eb308c3395530ff42172d503c9bf",
+  "rollback": "checkpoint + previous package-lock + npm ci",
+  "configurationFilesRestored": 325,
+  "userRulesPreserved": true,
+  "consumerPath": "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG",
+  "archives": [
+    {
+      "file": "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-previous\\contextos-agents-2.2.0.tgz",
+      "sha256": "5ce42425e24729e880d1a838dc544e95160c2e62f4579c5faf398758a7c9ff93"
+    },
+    {
+      "file": "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-candidate-2026-10-02\\contextos-agents-2.3.0.tgz",
+      "sha256": "06963fa87c0606f6d1d9b24b47ff5a32b72ff78cdd4011bd4cc42e8d4e22a352"
+    },
+    {
+      "file": "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-previous\\contextos-mcp-0.3.1.tgz",
+      "sha256": "1985f72b3d05ec0bb40c71e1382524bcbd4acb4d0ba4494b143b596bbf8adcf4"
+    },
+    {
+      "file": "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-candidate-2026-10-02\\contextos-mcp-0.4.0.tgz",
+      "sha256": "4148036a6d9553fd66b9b2ae4a7890c2ac6cd73792d24fc8a3d3c4722936a02d"
+    }
+  ],
+  "steps": [
+    {
+      "command": [
+        "git",
+        "init",
+        "-q"
+      ],
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js",
+        "install",
+        "--save-dev",
+        "--no-audit",
+        "--no-fund",
+        "--ignore-scripts",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-previous\\contextos-agents-2.2.0.tgz"
+      ],
+      "exitCode": 0,
+      "output": "\nadded 1 package in 4s\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js",
+        "install",
+        "--save-dev",
+        "--no-audit",
+        "--no-fund",
+        "--ignore-scripts",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-previous\\contextos-mcp-0.3.1.tgz"
+      ],
+      "exitCode": 0,
+      "output": "\nadded 155 packages in 22s\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "--version",
+        "--json"
+      ],
+      "exitCode": 0,
+      "output": "{\"package\":\"contextos-agents\",\"version\":\"2.2.0\"}\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "init",
+        "--minimal"
+      ],
+      "exitCode": 0,
+      "output": "\n ╭─────────────────────────────────────────────────────────────╮\n │   ContextOS  v2.2.0                                         │\n │   Deterministic Context & Policy Engine for Coding Agents   │\n ╰─────────────────────────────────────────────────────────────╯\n\n  [1/4]  Analyzing project environment & tech stack\n         ✓ Detected stack: Generic JavaScript environment\n\n  [2/4]  Deploying Lean Core engine (.agents/)\n         ✓ Installed 7 foundational core skills in .agents/core/skills/\n           Why 7? ContextOS uses a Lean Core to keep your AI context small, fast, and token-efficient.\n           To add domain skills (React, FastAPI, Docker, etc.): npx contextos skill add <name> (or --all)\n\n  [3/4]  Generating lockfile & security governance\n         ✓ contextos.lock.json synchronized\n\n  [4/4]  Configuring AI assistants & compiling rules\n         ✓ gemini synchronized\n\n\n ╭────────────────────────────────────────────────────────────────╮\n │  ✓ Project ready for AI coding agents!                         │\n │                                                                │\n │  Next steps:                                                   │\n │  1. Open project in your AI assistant (Gemini, Cursor, Copilot)│\n │     Rules are auto-loaded from .agents/AGENTS.md               │\n │                                                                │\n │  2. Explore and install domain skills:                         │\n │     contextos skill list --available                           │\n │     contextos skill add <name>    (or --all)                   │\n │                                                                │\n │  3. Inspect project health anytime:                            │\n │     contextos doctor                                           │\n ╰────────────────────────────────────────────────────────────────╯\n\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "skill",
+        "override",
+        "engineering-workflow"
+      ],
+      "exitCode": 0,
+      "output": "✓ Created skill override for 'engineering-workflow' at: <USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\.agents\\project\\skills\\engineering-workflow\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "compile"
+      ],
+      "exitCode": 0,
+      "output": "\n✓ Successfully compiled 7 skills into Registry v2!\n  Source Graph Hash: sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37\n  Registry: .agents/compiled/registry.v2.json\n  Checksum: .agents/compiled/registry.v2.sha256\n\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "export",
+        "all"
+      ],
+      "exitCode": 0,
+      "output": "Starting pure compiler export for all adapters...\n✓ All exports complete: 42 artifacts applied in a single transaction (tx: tx-1790917027414-472823f6).\n  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "export",
+        "all"
+      ],
+      "exitCode": 0,
+      "output": "Starting pure compiler export for all adapters...\n✓ All exports complete: 42 artifacts applied in a single transaction (tx: tx-1790917027987-28c29302).\n  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "export",
+        "all",
+        "--check",
+        "--json"
+      ],
+      "exitCode": 0,
+      "output": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 42\n}\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js",
+        "install",
+        "--save-dev",
+        "--no-audit",
+        "--no-fund",
+        "--ignore-scripts",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-candidate-2026-10-02\\contextos-agents-2.3.0.tgz"
+      ],
+      "exitCode": 0,
+      "output": "\nchanged 1 package in 4s\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js",
+        "install",
+        "--save-dev",
+        "--no-audit",
+        "--no-fund",
+        "--ignore-scripts",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\r2-candidate-2026-10-02\\contextos-mcp-0.4.0.tgz"
+      ],
+      "exitCode": 0,
+      "output": "\nadded 156 packages, removed 115 packages, and changed 6 packages in 15s\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "update"
+      ],
+      "exitCode": 0,
+      "output": "\nContextOS Safe Update \nTarget: <USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\n\nPlanned Actions:\n  ~ UPDATE    .agents/adapters/aider/export.js\n  ~ UPDATE    .agents/adapters/claude/export.js\n  ~ UPDATE    .agents/adapters/copilot/export.js\n  ~ UPDATE    .agents/adapters/cursor/export.js\n  ~ UPDATE    .agents/adapters/gemini/export.js\n  ~ UPDATE    .agents/adapters/pure-compiler.js\n  ~ UPDATE    .agents/adapters/shared.js\n  ~ UPDATE    .agents/adapters/zed/export.js\n  ~ UPDATE    .agents/AGENTS.md\n  ~ UPDATE    .agents/compiled/registry.v2.json\n  ~ UPDATE    .agents/compiled/registry.v2.sha256\n  ~ UPDATE    .agents/compiler/manifest-compiler.js\n  ~ UPDATE    .agents/core/skills/context-os/references/project-graph.md\n  + CREATE    .agents/core/skills/engineering-workflow/references/workflow.md\n  ~ UPDATE    .agents/core/skills/engineering-workflow/SKILL.md\n  ~ UPDATE    .agents/core/skills/engineering-workflow/skill.yaml\n  + CREATE    .agents/core/skills/gstack-roles/references/roles.md\n  ~ UPDATE    .agents/core/skills/gstack-roles/SKILL.md\n  ~ UPDATE    .agents/core/skills/gstack-roles/skill.yaml\n  + CREATE    .agents/core/skills/ponytail-mindset/references/minimalism.md\n  ~ UPDATE    .agents/core/skills/ponytail-mindset/SKILL.md\n  ~ UPDATE    .agents/core/skills/ponytail-mindset/skill.yaml\n  ~ UPDATE    .agents/core/skills/security/skill.yaml\n  ~ UPDATE    .agents/ctx.js\n  ~ UPDATE    .agents/customization-dx.js\n  ~ UPDATE    .agents/doctor.js\n  + CREATE    .agents/generated/claude/skills/context-manager/EXAMPLES.md\n  + CREATE    .agents/generated/claude/skills/context-manager/references/context-rules.md\n  ~ UPDATE    .agents/generated/claude/skills/context-manager/SKILL.md\n  + CREATE    .agents/generated/claude/skills/context-manager/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/context-manager/VALIDATION.json\n  + CREATE    .agents/generated/claude/skills/context-os/EXAMPLES.md\n  + CREATE    .agents/generated/claude/skills/context-os/packs.yaml\n  + CREATE    .agents/generated/claude/skills/context-os/references/context-rules.md\n  + CREATE    .agents/generated/claude/skills/context-os/references/pipeline.md\n  + CREATE    .agents/generated/claude/skills/context-os/references/project-graph.md\n  + CREATE    .agents/generated/claude/skills/context-os/rules.yaml\n  ~ UPDATE    .agents/generated/claude/skills/context-os/SKILL.md\n  + CREATE    .agents/generated/claude/skills/context-os/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/context-os/VALIDATION.json\n  + CREATE    .agents/generated/claude/skills/engineering-workflow/EXAMPLES.md\n  + CREATE    .agents/generated/claude/skills/engineering-workflow/references/workflow.md\n  ~ UPDATE    .agents/generated/claude/skills/engineering-workflow/SKILL.md\n  + CREATE    .agents/generated/claude/skills/engineering-workflow/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/engineering-workflow/VALIDATION.json\n  + CREATE    .agents/generated/claude/skills/gemini-precision/EXAMPLES.md\n  ~ UPDATE    .agents/generated/claude/skills/gemini-precision/SKILL.md\n  + CREATE    .agents/generated/claude/skills/gemini-precision/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/gemini-precision/VALIDATION.json\n  + CREATE    .agents/generated/claude/skills/gstack-roles/EXAMPLES.md\n  + CREATE    .agents/generated/claude/skills/gstack-roles/references/roles.md\n  ~ UPDATE    .agents/generated/claude/skills/gstack-roles/SKILL.md\n  + CREATE    .agents/generated/claude/skills/gstack-roles/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/gstack-roles/VALIDATION.json\n  + CREATE    .agents/generated/claude/skills/ponytail-mindset/EXAMPLES.md\n  + CREATE    .agents/generated/claude/skills/ponytail-mindset/references/minimalism.md\n  ~ UPDATE    .agents/generated/claude/skills/ponytail-mindset/SKILL.md\n  + CREATE    .agents/generated/claude/skills/ponytail-mindset/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/ponytail-mindset/VALIDATION.json\n  + CREATE    .agents/generated/claude/skills/security/EXAMPLES.md\n  ~ UPDATE    .agents/generated/claude/skills/security/SKILL.md\n  + CREATE    .agents/generated/claude/skills/security/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/claude/skills/security/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/context-manager/EXAMPLES.md\n  + CREATE    .agents/generated/gemini/skills/context-manager/references/context-rules.md\n  ~ UPDATE    .agents/generated/gemini/skills/context-manager/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/context-manager/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/context-manager/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/context-os/EXAMPLES.md\n  + CREATE    .agents/generated/gemini/skills/context-os/packs.yaml\n  + CREATE    .agents/generated/gemini/skills/context-os/references/context-rules.md\n  + CREATE    .agents/generated/gemini/skills/context-os/references/pipeline.md\n  + CREATE    .agents/generated/gemini/skills/context-os/references/project-graph.md\n  + CREATE    .agents/generated/gemini/skills/context-os/rules.yaml\n  ~ UPDATE    .agents/generated/gemini/skills/context-os/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/context-os/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/context-os/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/engineering-workflow/EXAMPLES.md\n  + CREATE    .agents/generated/gemini/skills/engineering-workflow/references/workflow.md\n  ~ UPDATE    .agents/generated/gemini/skills/engineering-workflow/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/engineering-workflow/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/engineering-workflow/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/gemini-precision/EXAMPLES.md\n  ~ UPDATE    .agents/generated/gemini/skills/gemini-precision/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/gemini-precision/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/gemini-precision/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/gstack-roles/EXAMPLES.md\n  + CREATE    .agents/generated/gemini/skills/gstack-roles/references/roles.md\n  ~ UPDATE    .agents/generated/gemini/skills/gstack-roles/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/gstack-roles/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/gstack-roles/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/ponytail-mindset/EXAMPLES.md\n  + CREATE    .agents/generated/gemini/skills/ponytail-mindset/references/minimalism.md\n  ~ UPDATE    .agents/generated/gemini/skills/ponytail-mindset/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/ponytail-mindset/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/ponytail-mindset/VALIDATION.json\n  + CREATE    .agents/generated/gemini/skills/security/EXAMPLES.md\n  ~ UPDATE    .agents/generated/gemini/skills/security/SKILL.md\n  + CREATE    .agents/generated/gemini/skills/security/TROUBLESHOOTING.md\n  + CREATE    .agents/generated/gemini/skills/security/VALIDATION.json\n  ~ UPDATE    .agents/plugins.js\n  ~ UPDATE    .agents/resolver/canonical-resolver.js\n  + CREATE    .agents/resolver/resolve-args.js\n  ~ UPDATE    .agents/stats.js\n  ~ UPDATE    .agents/workspace/workspace-graph.js\n\nSummary:\n  Created:    64\n  Updated:    41\n  Conflicts:  0 (written as .contextos.new)\n  Deleted:    0\n  Skipped:    65\n\n[OK] ContextOS successfully updated!\n\nRecompiling skills...\n✓ Gemini export complete: 74 files applied (tx: tx-1790917051567-7188f36f)\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "compile"
+      ],
+      "exitCode": 0,
+      "output": "\n✓ Successfully compiled 8 skills into Registry v2!\n  Source Graph Hash: sha256:49ff0576d48fcb4210be04e4de6fe0665c18011fe13e72f183f04173728f7db8\n  Registry: .agents/compiled/registry.v2.json\n  Checksum: .agents/compiled/registry.v2.sha256\n\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "export",
+        "all"
+      ],
+      "exitCode": 0,
+      "output": "Starting pure compiler export for all adapters...\n✓ All exports complete: 134 artifacts applied in a single transaction (tx: tx-1790917053311-f10e53b5).\n  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "export",
+        "all",
+        "--check",
+        "--json"
+      ],
+      "exitCode": 0,
+      "output": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 134\n}\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "--version",
+        "--json"
+      ],
+      "exitCode": 0,
+      "output": "{\"package\":\"contextos-agents\",\"version\":\"2.3.0\"}\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scripts\\check-installed-mcp.cjs",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG"
+      ],
+      "exitCode": 0,
+      "output": "Installed MCP handshake and read-only status: PASS\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "exitCode": 0,
+      "output": "\nadded 156 packages in 13s\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "--version",
+        "--json"
+      ],
+      "exitCode": 0,
+      "output": "{\"package\":\"contextos-agents\",\"version\":\"2.2.0\"}\n"
+    },
+    {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<USER_HOME>\\Desktop\\contextos\\scratch\\migration-consumer-space WcVyuG\\node_modules\\contextos-agents\\bin\\index.js",
+        "export",
+        "all",
+        "--check",
+        "--json"
+      ],
+      "exitCode": 0,
+      "output": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 42\n}\n"
+    }
+  ]
+}

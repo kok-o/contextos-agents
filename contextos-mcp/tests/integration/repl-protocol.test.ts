@@ -15,8 +15,9 @@ import { PythonRepl } from "../../src/core/repl.js";
 
 let hasPython = false;
 try {
-	execFileSync("python3", ["--version"], { stdio: "pipe" });
-	hasPython = true;
+	const python = process.platform === "win32" ? "python" : "python3";
+	const version = execFileSync(python, ["--version"], { stdio: "pipe", timeout: 5000 }).toString().trim();
+	hasPython = /^Python 3\./.test(version);
 } catch {
 	// python3 not available
 }

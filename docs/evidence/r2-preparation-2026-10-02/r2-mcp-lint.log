@@ -1,0 +1,129 @@
+
+> @contextos/mcp@0.4.0 lint
+> biome check src/ tests/
+
+tests\read-only-inspection.test.ts:22:12 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    20 │ 			const rel = prefix + entry.name;
+    21 │ 			if (entry.isDirectory()) {
+  > 22 │ 				result[rel + "/"] = "directory";
+       │ 				       ^^^^^^^^^
+    23 │ 				walk(join(dir, entry.name), rel + "/");
+    24 │ 			} else
+  
+  i Unsafe fix: Use a template literal.
+  
+     20  20 │         const rel = prefix + entry.name;
+     21  21 │         if (entry.isDirectory()) {
+     22     │ - → → → → result[rel·+·"/"]·=·"directory";
+         22 │ + → → → → result[`${rel}/`]·=·"directory";
+     23  23 │           walk(join(dir, entry.name), rel + "/");
+     24  24 │         } else
+  
+
+tests\read-only-inspection.test.ts:23:33 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    21 │ 			if (entry.isDirectory()) {
+    22 │ 				result[rel + "/"] = "directory";
+  > 23 │ 				walk(join(dir, entry.name), rel + "/");
+       │ 				                            ^^^^^^^^^
+    24 │ 			} else
+    25 │ 				result[rel] = createHash("sha256")
+  
+  i Unsafe fix: Use a template literal.
+  
+     21  21 │         if (entry.isDirectory()) {
+     22  22 │           result[rel + "/"] = "directory";
+     23     │ - → → → → walk(join(dir,·entry.name),·rel·+·"/");
+         23 │ + → → → → walk(join(dir,·entry.name),·`${rel}/`);
+     24  24 │         } else
+     25  25 │           result[rel] = createHash("sha256")
+  
+
+src\plugins\core\updater.ts:11:8 lint/complexity/noStaticOnlyClass ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Avoid classes that contain only static members.
+  
+     9 │ import { type AtomicUpdateOptions, type AtomicUpdateResult, THREAT_CODES } from "./types.js";
+    10 │ 
+  > 11 │ export class AtomicPluginUpdater {
+       │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 12 │ 	/**
+        ...
+  > 70 │ 		}
+  > 71 │ 	}
+  > 72 │ }
+       │ ^
+    73 │ 
+  
+  i Prefer using simple functions instead of classes with only static members.
+  
+
+src\plugins\loader.ts:48:8 lint/complexity/noStaticOnlyClass ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Avoid classes that contain only static members.
+  
+     46 │ }
+     47 │ 
+   > 48 │ export class PluginLoader {
+        │        ^^^^^^^^^^^^^^^^^^^^
+   > 49 │ 	/**
+         ...
+  > 170 │ 		return verifyNpmTarballIntegrity(tarballBuffer, expectedIntegrity);
+  > 171 │ 	}
+  > 172 │ }
+        │ ^
+    173 │ 
+  
+  i Prefer using simple functions instead of classes with only static members.
+  
+
+src\runtime\sandbox.cjs:18:9 lint/correctness/noUnusedVariables ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! This variable execFile is unused.
+  
+    16 │ "use strict";
+    17 │ 
+  > 18 │ const { execFile } = require("node:child_process");
+       │         ^^^^^^^^
+    19 │ const path = require("node:path");
+    20 │ const _fs = require("node:fs");
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+src\runtime\sandbox.cjs:155:23 lint/correctness/noUnusedVariables ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! This variable content is unused.
+  
+    153 │ 	 */
+    154 │ 	validateAdversarialAttempt(action = {}) {
+  > 155 │ 		const { targetPath, content, commandArgs } = action;
+        │ 		                    ^^^^^^^
+    156 │ 
+    157 │ 		// 1. Path traversal escape checks
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+src\runtime\state-machine.cjs:18:37 lint/correctness/noUnusedVariables ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! This variable computeDiffSha256 is unused.
+  
+    16 │ const fs = require("node:fs");
+    17 │ const path = require("node:path");
+  > 18 │ const { sha256, computeScopeSha256, computeDiffSha256, verifyAttestationSubject } = require("./attestations.cjs");
+       │                                     ^^^^^^^^^^^^^^^^^
+    19 │ 
+    20 │ // ── Status Enums (Section 15.1) ──────────────────────────────────────────────
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+Checked 129 files in 248ms. No fixes applied.
+Found 5 warnings.
+Found 2 infos.

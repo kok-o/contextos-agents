@@ -1,41 +1,45 @@
-# ContextOS Public Roadmap
+# ContextOS roadmap
 
-This document outlines the strategic evolution, architectural milestones, and planned capabilities for **ContextOS**.
+Updated 2 October 2026. Source candidates: `contextos-agents@2.3.0` and
+`@contextos/mcp@0.4.0`; these are not published releases.
+[The work plan](../CONTEXTOS_WORK_PLAN.md) defines acceptance criteria;
+[R2 preparation](R2_RELEASE_PREPARATION.md) records remaining release gates.
 
----
+## Implemented scope
 
-## Current Status: v2.2.0 (Stable Core)
+- Deterministic compilation and six adapter exports with user content preservation
+  and drift checks. The [compatibility matrix](ADAPTER_COMPATIBILITY.md) separates
+  export, discovery, activation and model behavior.
+- Short bootstrap, task/file selection, project overrides, whole selected bodies,
+  explained omissions and soft-budget overflow warnings.
+- Offline optional catalog, presets, staged scanning and consumer CI governance.
+  Export filters installed skills by profile; it does not resolve a task.
+- Default read-only MCP status, compare and diff. Execution, delegation, merging,
+  cleanup and Python REPL remain experimental.
+- Local archive installation/lifecycle checks. Remote platform CI is a release gate;
+  local Windows results do not certify Linux or macOS.
 
-- **Deterministic Context Compilation**: Zero-dependency compiler generating optimized instructions for Cursor (`.cursor/rules`), Claude Code (`CLAUDE.md`), Gemini (`GEMINI.md`), GitHub Copilot (`copilot-instructions.md`), Aider (`.aider.conf.yml`), and Zed (`.zed/rules.md`).
-- **Autonomous Offline Catalog**: 36 verified engineering skills distributed locally within `.agents/catalog/skills` for offline installation.
-- **Stack Presets & Bulk Installation**: Quick bootstrapping via `--preset frontend`, `--preset backend`, `--preset devops`, and `--all` flag.
-- **In-Process CI Quality Gate**: Automated drift verification (`contextos gate`) checking managed outputs against source skills in continuous integration.
-- **Staged Git Security Scanner**: In-memory inspection (`contextos scan`) preventing leaks of credentials and unfinished lazy stubs (`// TODO`).
-- **Pre-Commit Hook Governance**: Isolated Git hooks (`contextos hook install`) running non-destructive repository verification.
+## Next: complete R2 preparation
 
----
+1. Synchronize documentation and inventory MCP skips; cover stable API scenarios
+   and state experimental limitations explicitly.
+2. Verify upgrade from published core 2.2.0 and checkpoint rollback preserving
+   project rules, root instructions and overrides.
+3. Run Windows, Linux and macOS CI against one commit. Retain logs, installed
+   archive results, hashes and archives as artifacts.
+4. Complete the client pilot, then assemble one revision-bound candidate with
+   changelog, migration, compatibility matrix and evidence.
+5. Make a separate publication decision after CI and pilot results.
 
-## Upcoming Milestones
+## Measurements on pause
 
-### Milestone 1: Multi-Repository Governance (v2.3)
-- **Central Policy Synchronization**: Support inheriting organization-wide baseline policies and corporate security standards from central repositories.
-- **Selective Team Overrides**: Declarative inheritance layers enabling teams to extend organization standards with project-specific skills.
-- **Enterprise Rule Registry**: Private registry endpoints for proprietary company skills and compliance rules.
+Quality, cost and long-session measurements are incomplete. Small experiments do
+not establish general savings or improved answers. The user paused benchmarks on
+1 October; resume only on explicit request.
 
-### Milestone 2: Adaptive Context Engine (v2.4)
-- **Dynamic Task-Scoped Subsets**: Automatic pruning of active rules based on task descriptions and modified files to minimize token overhead.
-- **Model-Specific Token Optimizers**: Dynamic formatting adjustments tailored to specific context windows (e.g. Gemini Flash, Claude Sonnet, GPT-4o).
-- **Workspace Evidence Graph Extensions**: Multi-language dependency tree inspection for Python (poetry, uv), Go (go.mod), and Rust (Cargo.toml).
+## Deferred until demonstrated need
 
-### Milestone 3: Ecosystem & Extensibility (v3.0)
-- **Interactive Skill Generator**: Scaffolding CLI for community-authored skills with automatic schema validation and example test suites.
-- **IDE Extensions**: Native extensions for VS Code and JetBrains providing real-time drift visual indicators in the editor status bar.
-- **Community Plugin Hub**: Decentralized skill discovery and verified publisher signatures.
-
----
-
-## Contributing & Feedback
-
-Have ideas, feature requests, or suggestions for the roadmap?
-- Open a [GitHub Discussion](https://github.com/kok-o/contextos-agents/discussions) to propose new capabilities.
-- Submit a pull request following our [Contributing Guide](../CONTRIBUTING.md).
+AST/dependency graph extensions, swarm redesign, automatic learning, catalog
+expansion, private registries, organization policy synchronization, IDE extensions
+and a hosted service are research directions without promised versions or dates.
+They are outside R1/R2.

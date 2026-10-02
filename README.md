@@ -64,6 +64,10 @@ candidate in a new folder, select a TypeScript skill, and add a team rule withou
 calling a model API. The [five-minute guide](docs/product/onboarding.md) explains
 the same workflow for an existing project.
 
+For the current R2 candidates, see the [release preparation status](docs/R2_RELEASE_PREPARATION.md)
+and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). Remote CI
+and the client pilot must pass before the final candidate and publication decision.
+
 ```bash
 npx contextos-agents --help             # Show all options
 npx contextos-agents --version          # Show version

@@ -1,0 +1,29 @@
+
+ContextOS Validator — scanning skills...
+
+  Source: <USER_HOME>\Desktop\contextos\.agents (core + plugins)
+  Skills found: 7
+
+
+══════════════════════════════════════════
+  ContextOS — Skill Validation Report
+══════════════════════════════════════════
+
+  ✓ [frontmatter] 7 SKILL.md files with valid frontmatter
+  ✓ [yaml] 7 skill.yaml files validated
+  ✓ [stale] All compiled skills are up-to-date
+  ✓ [sync] gemini — all source skills compiled
+  ✓ [sync] claude — all source skills compiled
+  ✓ [deps] 7 skill.yaml dependency graphs validated
+  ✓ [content] 7 SKILL.md files meet minimum size requirement (≥100B)
+  ✓ [costar] 7 SKILL.md files follow the COSTAR template
+  ✓ [validation] 7 VALIDATION.json files are valid
+  ✓ [resources] 37 resource files verified across 7 skills
+  ✓ [profiles] 1 core profiles validated against skill registry
+  ✓ [registry-v2] Compiled registry v2 verified (7 skills, hash sha256:efcac8692b920...)
+  ✓ [catalog] 36 catalog skills validated (frontmatter, skill.yaml, validation metadata)
+
+──────────────────────────────────────────
+    ✓ PASSED  0 error(s)  0 warning(s)
+──────────────────────────────────────────
+

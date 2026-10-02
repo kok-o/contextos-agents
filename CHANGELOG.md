@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- R2 preparation: current scope/roadmap, explicit skipped-test inventory and
+  checkpoint migration/rollback acceptance from core 2.2.0 / MCP 0.3.1.
+- CI artifacts retain core/MCP test logs, MCP assertion JSON, both candidate
+  archives and installed lifecycle/migration results. Manual CI dispatch enabled.
+- Compact bootstrap and proportional workflows; required security guidance
+  survives profile exclusions and soft-budget overflow.
+- Default read-only MCP inspection and whole-body context assembly with source
+  hashes, omissions and overflow reports. Execution remains experimental.
 - Installed-tarball acceptance gate for both packages on Windows, Linux and macOS,
   including real CLI wrappers, project rules, update/uninstall preservation and
   a read-only MCP status request. Stable publication depends on this gate.
@@ -16,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restored stable MCP registration/status/compare/diff handler coverage, with
+  runtime opt-in and no-session-creation checks. Python availability now probes
+  the same executable as the runtime on Windows.
 - Manifestless project skills now hash and load their actual entrypoint. All six
   adapters honor custom entrypoints and prefer `skill.v2.yaml` consistently.
 - MCP tarball tests build in a private source copy so parallel protocol tests

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "pass",
+  "hasDrift": false,
+  "hasError": false,
+  "code": 0,
+  "totalFindings": 0,
+  "findings": {
+    "STALE_INPUT": [],
+    "MISSING_OUTPUT": [],
+    "MODIFIED_MANAGED_OUTPUT": [],
+    "ORPHAN_MANAGED_OUTPUT": [],
+    "ADAPTER_VERSION_MISMATCH": [],
+    "PROFILE_MISMATCH": [],
+    "CORRUPT_LOCKFILE": [],
+    "EMPTY_PROJECTION": [],
+    "CONFIG_ERROR": []
+  },
+  "collisions": [],
+  "diffs": [],
+  "projectedCount": 132
+}

@@ -48,6 +48,7 @@
                     "lint:md":  "markdownlint README.md CONTRIBUTING.md GUIDE.md \".agents/core/skills/**/*.md\" --ignore \".agents/generated/**\" --config .markdownlint.json",
                     "check:secrets":  "node scripts/check-secrets.js --all",
                     "check:consumer":  "node scripts/check-release-install.cjs",
+                    "check:migration":  "node scripts/check-release-migration.cjs",
                     "setup:hooks":  "node scripts/install-hooks.js",
                     "watch":  "node .agents/watch.js",
                     "test:skills":  "node scripts/verify-skill-examples.js",

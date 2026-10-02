@@ -198,7 +198,12 @@ const mockServer = {
 
 // ── Import + register ───────────────────────────────────────────────────────
 
+import { getSession, inspectSession } from "../../src/mcp/session.js";
 import { registerContextosTools } from "../../src/mcp/tools/contextos.js";
+
+vi.mock("../../src/worktree/manager.js", () => ({
+	readWorktreeDiff: vi.fn(async () => "diff --git a/hello.ts b/hello.ts\n+console.log('hello');"),
+}));
 
 beforeEach(() => {
 	registeredTools.clear();
@@ -209,14 +214,43 @@ beforeEach(() => {
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe("registerContextosTools", () => {
-	it.skip("registers all 6 ContextOS enterprise tools", () => {
-		expect(registeredTools.size).toBe(6);
-		expect(registeredTools.has("contextos_delegate")).toBe(true);
+	it("registers exactly three read-only tools by default", () => {
+		expect(registeredTools.size).toBe(3);
+		expect(registeredTools.has("contextos_delegate")).toBe(false);
 		expect(registeredTools.has("contextos_status")).toBe(true);
 		expect(registeredTools.has("contextos_compare")).toBe(true);
 		expect(registeredTools.has("contextos_diff")).toBe(true);
-		expect(registeredTools.has("contextos_merge")).toBe(true);
-		expect(registeredTools.has("contextos_cleanup")).toBe(true);
+		expect(registeredTools.has("contextos_merge")).toBe(false);
+		expect(registeredTools.has("contextos_cleanup")).toBe(false);
+	});
+
+	it("exposes mutation tools only with explicit experimental runtime opt-in", () => {
+		registeredTools.clear();
+		registerContextosTools(mockServer as any, process.cwd(), true);
+		expect([...registeredTools.keys()].sort()).toEqual([
+			"contextos_cleanup",
+			"contextos_compare",
+			"contextos_delegate",
+			"contextos_diff",
+			"contextos_merge",
+			"contextos_status",
+		]);
+	});
+
+	it("read-only handlers inspect state without creating a runtime session", async () => {
+		for (const name of ["contextos_status", "contextos_compare", "contextos_diff"]) {
+			const res = await registeredTools.get(name)!({ dir: process.cwd(), thread_id: "ctx_task1_openai" });
+			expect(res.isError).toBeFalsy();
+		}
+		expect(inspectSession).toHaveBeenCalledTimes(3);
+		expect(getSession).not.toHaveBeenCalled();
+	});
+
+	it("rejects a missing repository before inspecting state", async () => {
+		const res = await registeredTools.get("contextos_status")!({ dir: "nonexistent-release-repository" });
+		expect(res.isError).toBe(true);
+		expect(inspectSession).not.toHaveBeenCalled();
+		expect(getSession).not.toHaveBeenCalled();
 	});
 
 	describe("contextos_delegate", () => {
@@ -273,7 +307,7 @@ describe("registerContextosTools", () => {
 	});
 
 	describe("contextos_status", () => {
-		it.skip("returns session threads and budget statistics", async () => {
+		it("returns session threads and budget statistics", async () => {
 			const handler = registeredTools.get("contextos_status")!;
 			const res = await handler({ dir: process.cwd() });
 
@@ -286,7 +320,7 @@ describe("registerContextosTools", () => {
 	});
 
 	describe("contextos_compare", () => {
-		it.skip("detects potential file modification conflicts across agents", async () => {
+		it("detects potential file modification conflicts across agents", async () => {
 			const handler = registeredTools.get("contextos_compare")!;
 			const res = await handler({ dir: process.cwd() });
 
@@ -300,7 +334,7 @@ describe("registerContextosTools", () => {
 	});
 
 	describe("contextos_diff", () => {
-		it.skip("returns git diff for a valid completed thread", async () => {
+		it("returns git diff for a valid completed thread", async () => {
 			const handler = registeredTools.get("contextos_diff")!;
 			const res = await handler({
 				dir: process.cwd(),
@@ -313,7 +347,7 @@ describe("registerContextosTools", () => {
 			expect(parsed.diff).toContain("+console.log('hello');");
 		});
 
-		it.skip("returns error if thread does not exist", async () => {
+		it("returns error if thread does not exist", async () => {
 			const handler = registeredTools.get("contextos_diff")!;
 			const res = await handler({
 				dir: process.cwd(),

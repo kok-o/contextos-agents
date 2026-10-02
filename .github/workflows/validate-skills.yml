@@ -12,6 +12,7 @@
 name: Validate Skills
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main, master]
   push:
@@ -49,7 +50,18 @@ jobs:
         run: npm run check:secrets
 
       - name: Run test suite
-        run: npm test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force scratch | Out-Null
+          npm test 2>&1 | Tee-Object -FilePath scratch/core-tests.log
+          exit $LASTEXITCODE
+
+      - name: Retain root test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-evidence-${{ matrix.os }}-node-${{ matrix.node }}
+          path: scratch/core-tests.log
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-skills:
@@ -252,7 +264,20 @@ jobs:
 
       - name: Run MCP test suite (Vitest)
         working-directory: ./contextos-mcp
-        run: npm test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force ../scratch | Out-Null
+          npm test -- --reporter=default --reporter=json --outputFile=../scratch/mcp-tests.json 2>&1 | Tee-Object -FilePath ../scratch/mcp-tests.log
+          exit $LASTEXITCODE
+
+      - name: Retain MCP test logs and skip inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-evidence-${{ matrix.os }}
+          path: |
+            scratch/mcp-tests.log
+            scratch/mcp-tests.json
 
       - name: Verify npm package dry-run and CLI entry point
         working-directory: ./contextos-mcp

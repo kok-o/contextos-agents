@@ -2,6 +2,10 @@
 
 This document outlines how to upgrade to major versions of ContextOS and adapt to structural breaking changes.
 
+For the current core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 candidates,
+use the [concrete upgrade and checkpoint rollback guide](COMPACT_CONTEXT_MIGRATION.md).
+The sections below describe older migrations.
+
 ## Upgrading to v2.0 (The Context Governance Release)
 
 ContextOS v2.0 fundamentally reframes the project from an "Autonomous AI Swarm" to an **Agent Context Governance** engine. This brings several breaking changes to improve security, lower installation overhead, and prevent prompt bloat.

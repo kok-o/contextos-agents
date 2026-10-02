@@ -42,11 +42,12 @@ function main() {
   const packOutput = execSync('npm pack', { encoding: 'utf-8' }).trim();
   console.log(`Created: ${packOutput}`);
 
-  console.log('\n[SUCCESS] Release Candidate is ready.');
+  console.log('\n[SUCCESS] Local smoke/build checks completed; release acceptance remains pending.');
   console.log('Next steps:');
   console.log(`1. Update CHANGELOG.md for v${version}`);
-  console.log(`2. Test tarball in empty directory: npm i -g ${packOutput}`);
-  console.log(`3. Finalize CONTEXTOS_COMPLETION_PLAN.md to DONE`);
+  console.log('2. Pack both packages and run npm run check:consumer and npm run check:migration.');
+  console.log('3. Complete Windows/Linux/macOS CI and client pilot; see docs/R2_RELEASE_PREPARATION.md.');
+  console.log('4. Bind archives/evidence to one revision, then make a separate publication decision.');
 }
 
 main();

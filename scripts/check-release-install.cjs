@@ -122,6 +122,7 @@ try {
   assert.equal(read('.agents/project/skills/team-custom/RULES.md'), customRule);
   const result = {
     result: 'PASS', node: process.version, platform: os.platform(), coreVersion, mcpVersion,
+    sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     archives: archives.map(file => ({ file: path.basename(file), sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') })),
     lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', 'MCP handshake', 'uninstall'],
     userInstructionsPreserved: true, userOverridePreserved: true, quickstartFixture: 'PASS',
