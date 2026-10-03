@@ -672,6 +672,8 @@ export class ResilientHttpClient {
   }
 };
 
+Object.assign(RUNTIME_SUITES, require('./maintenance-suites').MAINTENANCE_SUITES);
+
 module.exports = {
   RUNTIME_SUITES,
   findExport,

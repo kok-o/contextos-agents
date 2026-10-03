@@ -116,8 +116,8 @@ function renderSuccessCard(options = {}) {
   console.log(renderCardLine(c.bold(c.green('✓ Project ready for AI coding agents!')), innerWidth));
   console.log(renderCardLine('', innerWidth));
   console.log(renderCardLine(c.bold('Next steps:'), innerWidth));
-  console.log(renderCardLine(`1. Open project in your AI assistant (${c.cyan('Gemini')}, ${c.cyan('Cursor')}, ${c.cyan('Copilot')})`, innerWidth));
-  console.log(renderCardLine(`   Rules are auto-loaded from ${c.cyan('.agents/AGENTS.md')}`, innerWidth));
+  console.log(renderCardLine('1. Default init exports Gemini workspace skills.', innerWidth));
+  console.log(renderCardLine(`   Other clients: ${c.cyan('contextos export <agent>')}`, innerWidth));
   console.log(renderCardLine('', innerWidth));
   console.log(renderCardLine('2. Explore and install domain skills:', innerWidth));
   console.log(renderCardLine(`   ${c.cyan('contextos skill list --available')}`, innerWidth));

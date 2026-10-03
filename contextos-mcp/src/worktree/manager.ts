@@ -15,7 +15,7 @@
 
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { WorktreeInfo, WorktreeSessionMarker } from "../core/types.js";
@@ -34,6 +34,56 @@ function git(args: string[], cwd: string, extraEnv?: NodeJS.ProcessEnv): Promise
 			}
 		});
 	});
+}
+
+/** Read a worktree without initializing a runtime or changing its real index. */
+export async function readWorktreeDiff(worktreePath: string, repoRoot: string): Promise<string> {
+	assertWithinRepository(worktreePath, repoRoot);
+	const tempBase = path.resolve(os.tmpdir());
+	const tempRoot = mkdtempSync(path.join(tempBase, "ctx-diff-"));
+	if (path.dirname(tempRoot) !== tempBase || !path.basename(tempRoot).startsWith("ctx-diff-")) {
+		throw new Error("Invalid temporary diff path");
+	}
+	const tmpIndex = path.join(tempRoot, "index");
+	const objects = path.join(tempRoot, "objects");
+	mkdirSync(objects);
+	let diff: string;
+	try {
+		const { stdout: originalObjects } = await git(["rev-parse", "--git-path", "objects"], worktreePath, {
+			GIT_OPTIONAL_LOCKS: "0",
+		});
+		const env = {
+			GIT_INDEX_FILE: tmpIndex,
+			GIT_OPTIONAL_LOCKS: "0",
+			GIT_OBJECT_DIRECTORY: objects,
+			GIT_ALTERNATE_OBJECT_DIRECTORIES: path.resolve(worktreePath, originalObjects.trim()),
+		};
+		await git(["read-tree", "HEAD"], worktreePath, env);
+		const { stdout: status } = await git(["status", "--porcelain", "-z"], worktreePath, { GIT_OPTIONAL_LOCKS: "0" });
+		const untracked = status
+			.split("\0")
+			.filter((s) => s.startsWith("?? "))
+			.map((s) => s.slice(3))
+			.filter((file) => file !== ".contextos-owner" && file !== ".contextos-session");
+		for (let i = 0; i < untracked.length; i += 100) {
+			await git(["add", "-N", "--", ...untracked.slice(i, i + 100)], worktreePath, env);
+		}
+		const { stdout } = await git(
+			["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
+			worktreePath,
+			env,
+		);
+		diff = redactSecrets(stdout || "(no changes)");
+	} catch (error) {
+		try {
+			rmSync(tempRoot, { recursive: true, force: true });
+		} catch (cleanupError) {
+			throw new AggregateError([error, cleanupError], "Git diff failed and temporary directory cleanup failed");
+		}
+		throw error;
+	}
+	rmSync(tempRoot, { recursive: true, force: true });
+	return diff;
 }
 
 /** Simple async mutex for serializing worktree creation. */
@@ -343,52 +393,7 @@ export class WorktreeManager {
 	async getDiff(threadId: string): Promise<string> {
 		const info = this.worktrees.get(threadId);
 		if (!info) throw new Error(`No worktree for thread ${threadId}`);
-		assertWithinRepository(info.path, this.repoRoot);
-
-		// Use an isolated temporary index file so the real Git index is NEVER modified by getDiff
-		const tmpIndex = path.join(os.tmpdir(), `ctx-idx-${randomUUID()}`);
-		try {
-			// Read current HEAD into tmp index
-			await git(["read-tree", "HEAD"], info.path, { GIT_INDEX_FILE: tmpIndex });
-
-			// Find untracked files using porcelain
-			const { stdout: status } = await git(["status", "--porcelain", "-z"], info.path);
-			const untracked = status
-				.split("\0")
-				.filter(Boolean)
-				.filter((s) => s.startsWith("?? "))
-				.map((s) => s.slice(3))
-				.filter((f) => f !== ".contextos-owner" && f !== ".contextos-session");
-
-			if (untracked.length > 0) {
-				// Add untracked files as intent-to-add so they appear in diff
-				const chunkSize = 100;
-				for (let i = 0; i < untracked.length; i += chunkSize) {
-					await git(["add", "-N", "--", ...untracked.slice(i, i + chunkSize)], info.path, {
-						GIT_INDEX_FILE: tmpIndex,
-					});
-				}
-			}
-
-			const { stdout: fullDiff } = await git(
-				["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-				info.path,
-				{ GIT_INDEX_FILE: tmpIndex },
-			);
-			return redactSecrets(fullDiff || "(no changes)");
-		} catch {
-			const { stdout: fallbackDiff } = await git(
-				["diff", "HEAD", "--", ":(exclude).contextos-owner", ":(exclude).contextos-session"],
-				info.path,
-			);
-			return redactSecrets(fallbackDiff || "(no changes)");
-		} finally {
-			try {
-				if (existsSync(tmpIndex)) unlinkSync(tmpIndex);
-			} catch {
-				/* cleanup best-effort */
-			}
-		}
+		return readWorktreeDiff(info.path, this.repoRoot);
 	}
 
 	/** Get diff stats (short summary). */

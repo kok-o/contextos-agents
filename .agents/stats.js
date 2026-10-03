@@ -6,7 +6,7 @@
  *   1. Full context payload (all skills + AGENTS.md)
  *   2. Profiled context payload (after applying active profile exclusions)
  *   3. Dynamically resolved context (lean on-demand skill set for typical tasks)
- *   4. Concrete token savings percentage and cost reductions
+ *   4. Character-based payload estimates, not provider billing or quality results
  */
 
 'use strict';
@@ -22,7 +22,6 @@ function estimateTokens(text) {
 
 function calculateContextStats(projectDir = process.cwd()) {
   const agentsDir = path.join(projectDir, '.agents');
-  const skillsDir = path.join(agentsDir, 'core', 'skills');
   const agentsMdPath = path.join(agentsDir, 'AGENTS.md');
 
   let agentsMdChars = 0;
@@ -31,15 +30,13 @@ function calculateContextStats(projectDir = process.cwd()) {
   }
 
   const skillCharMap = new Map();
-  if (fs.existsSync(skillsDir)) {
-    const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      const skillMd = path.join(skillsDir, entry.name, 'SKILL.md');
+  const { collectSkillDirectories } = require('./adapters/shared.js');
+  const allDirs = collectSkillDirectories({ exclude_skills: [] }, projectDir);
+  for (const directory of allDirs) {
+      const skillMd = path.join(directory, 'SKILL.md');
       if (fs.existsSync(skillMd)) {
-        skillCharMap.set(entry.name, fs.readFileSync(skillMd, 'utf8').length);
+        skillCharMap.set(path.basename(directory), fs.readFileSync(skillMd, 'utf8').length);
       }
-    }
   }
 
   const totalSkillCount = skillCharMap.size;
@@ -50,9 +47,9 @@ function calculateContextStats(projectDir = process.cwd()) {
 
   // Active profile
   const activeProfile = profiles.getActiveProfile(projectDir);
-  const profileName = activeProfile ? (activeProfile.name || activeProfile.profile) : 'startup (recommended)';
+  const profileName = activeProfile ? (activeProfile.name || activeProfile.profile) : 'none';
   const excludedSkills = new Set(
-    activeProfile ? activeProfile.exclude_skills || [] : (profiles.getProfile('startup')?.exclude_skills || [])
+    activeProfile ? activeProfile.exclude_skills || [] : []
   );
 
   let profileChars = agentsMdChars;

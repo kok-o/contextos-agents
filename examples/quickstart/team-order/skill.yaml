@@ -1,0 +1,6 @@
+schemaVersion: 2
+name: team-order
+type: instruction-only
+description: Team conventions for changes to the order module.
+resources:
+  - SKILL.md

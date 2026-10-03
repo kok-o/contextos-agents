@@ -22,6 +22,10 @@ export interface SelectedContext {
 	rules: string[];
 	/** Task-relevant skill directories from core/skills/. */
 	skills: string[];
+	skillSources?: Record<string, string>;
+	skillEntrypoints?: Record<string, string>;
+	warnings?: Array<{ code: string; message: string }>;
+	excluded?: Array<{ id: string; reasonCode: string }>;
 }
 
 export interface SelectorOptions {
@@ -29,8 +33,10 @@ export interface SelectorOptions {
 	rootDir?: string;
 	/** File paths touched or relevant to task for file-pattern boosting. */
 	files?: string[];
-	/** Custom token budget for context selection (defaults to 8000). */
+	/** Custom soft token budget; defaults to the canonical resolver risk tier. */
 	contextBudgetTokens?: number;
+	maxSkills?: number;
+	explicitPhase?: string;
 }
 
 /**
@@ -75,16 +81,27 @@ export function selectContext(task: string, options: SelectorOptions = {}): Sele
 	const res = canonical.resolve({
 		task,
 		files: options.files || [],
-		contextBudgetTokens: options.contextBudgetTokens ?? 8000,
+		contextBudgetTokens: options.contextBudgetTokens,
+		maxSkills: options.maxSkills,
+		explicitPhase: options.explicitPhase,
 	});
 
-	let domainSkills: string[] = (res.selected || []).map((s: { id: string }) => s.id);
-	if (typeof (options as any).maxSkills === "number" && domainSkills.length > (options as any).maxSkills) {
-		domainSkills = domainSkills.slice(0, (options as any).maxSkills);
+	const domainSkills: string[] = (res.selected || []).map((s: { id: string }) => s.id);
+	const skillSources: Record<string, string> = {};
+	const skillEntrypoints: Record<string, string> = {};
+	for (const id of domainSkills) {
+		const skill = canonical.registry?.skills?.[id];
+		const source = skill?.source;
+		if (source) skillSources[id] = source;
+		if (skill?.entrypoint) skillEntrypoints[id] = skill.entrypoint;
 	}
 	return {
 		coreRules: ["AGENTS.md"],
 		rules: [],
 		skills: domainSkills,
+		skillSources,
+		skillEntrypoints,
+		warnings: res.warnings || [],
+		excluded: res.excluded || [],
 	};
 }

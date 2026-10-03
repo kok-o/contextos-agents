@@ -1,19 +1,18 @@
 {
   "name": "@contextos/mcp",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "ContextOS Execution Layer and MCP Server",
   "type": "module",
   "bin": {
     "contextos-mcp": "./bin/mcp.mjs"
   },
-  "main": "dist/index.js",
   "files": [
     "dist",
     "bin"
   ],
   "scripts": {
     "dev": "tsx src/main.ts",
-    "build": "tsc && npm run build:bundle && node -e \"require('fs').mkdirSync('dist/core', {recursive: true}); require('fs').copyFileSync('src/core/runtime.py', 'dist/core/runtime.py'); require('fs').cpSync('src/runtime', 'dist/runtime', {recursive: true});\"",
+    "build": "node scripts/clean-dist.cjs && tsc && npm run build:bundle && node -e \"require('fs').mkdirSync('dist/core', {recursive: true}); require('fs').copyFileSync('src/core/runtime.py', 'dist/core/runtime.py'); require('fs').cpSync('src/runtime', 'dist/runtime', {recursive: true});\"",
     "build:bundle": "esbuild src/mcp/server.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/mcp/server.js --banner:js=\"import { createRequire as topLevelCreateRequire } from 'module'; const require = topLevelCreateRequire(import.meta.url);\" && esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
     "build:supply-chain": "esbuild src/plugins/adapter.ts --bundle --platform=node --target=node20 --format=cjs --outfile=../.agents/runtime/plugin-supply-chain-bundle.js",
     "start": "node dist/main.js",

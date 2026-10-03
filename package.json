@@ -1,6 +1,6 @@
 {
     "name":  "contextos-agents",
-    "version":  "2.2.0",
+    "version":  "2.3.0",
     "description":  "Deterministic context and policy compiler for supported AI coding agents.",
     "bin":  {
                 "contextos":  "./bin/index.js",
@@ -47,10 +47,13 @@
                     "validate:catalog":  "node .agents/ctx.js validate --catalog",
                     "lint:md":  "markdownlint README.md CONTRIBUTING.md GUIDE.md \".agents/core/skills/**/*.md\" --ignore \".agents/generated/**\" --config .markdownlint.json",
                     "check:secrets":  "node scripts/check-secrets.js --all",
+                    "check:consumer":  "node scripts/check-release-install.cjs",
+                    "check:migration":  "node scripts/check-release-migration.cjs",
+                    "check:release-surface":  "node scripts/check-release-surface.cjs",
                     "setup:hooks":  "node scripts/install-hooks.js",
                     "watch":  "node .agents/watch.js",
                     "test:skills":  "node scripts/verify-skill-examples.js",
-                    "test":  "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/benchmark-api.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js tests/init-engine.test.js tests/mutation-paths.test.js tests/tarball-smoke.test.js tests/catalog-export-integration.test.js tests/consumer-gate.test.js tests/adapter-compatibility.test.js tests/consumer-init.test.js tests/skill-examples.test.js tests/scan.test.js tests/hooks.test.js tests/recovery-cli.test.js tests/doctor-v2.test.js tests/resolver-parity.test.js tests/watch-coalescing.test.js",
+                    "test":  "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/benchmark-api.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js tests/init-engine.test.js tests/mutation-paths.test.js tests/tarball-smoke.test.js tests/catalog-export-integration.test.js tests/consumer-gate.test.js tests/adapter-compatibility.test.js tests/consumer-init.test.js tests/skill-examples.test.js tests/scan.test.js tests/hooks.test.js tests/recovery-cli.test.js tests/doctor-v2.test.js tests/resolver-parity.test.js tests/watch-coalescing.test.js tests/consumer-stabilization.test.js tests/focused-context.test.js tests/spend-guard.test.js tests/maintenance-benchmark.test.js tests/luna-agent-benchmark.test.js tests/release-surface.test.js",
                     "prepublishOnly":  "npm run validate \u0026\u0026 npm run build"
                 },
     "keywords":  [

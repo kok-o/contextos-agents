@@ -238,8 +238,8 @@ function checkSecretScanner(projectDir) {
       id: 'secret_scanner',
       status: STATUS.FAIL,
       ok: false,
-      message: 'potential secrets detected in workspace',
-      remediation: 'Run `npm run check:secrets` and resolve flagged secrets or add to allowlist',
+      message: err.status === 1 ? 'potential secrets detected in workspace' : `Secret scanner unavailable (exit ${err.status ?? err.code ?? 'unknown'}): ${(err.stderr || err.message || '').toString().split(/\r?\n/).find(Boolean) || 'execution failed'}`,
+      remediation: err.status === 1 ? 'Run `npm run check:secrets` and resolve flagged secrets or add to allowlist' : 'Run `npm run check:secrets` and resolve the scanner execution error; this does not establish that secrets were found',
     };
   }
 }

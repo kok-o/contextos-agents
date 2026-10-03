@@ -115,6 +115,38 @@ function readMeaningfulMarkdown(filePath) {
   return content;
 }
 
+/** Read the same manifest precedence and entrypoint used by the compiler. */
+function readSkillManifest(skillDir) {
+  const manifestPath = ['skill.v2.yaml', 'skill.yaml'].map(name => path.join(skillDir, name)).find(file => fs.existsSync(file));
+  return manifestPath ? require('../compiler/vendor/yaml.js').parse(fs.readFileSync(manifestPath, 'utf8')) : {};
+}
+
+function getSkillEntrypointPath(skillDir) {
+  const manifest = readSkillManifest(skillDir);
+  return require('../filesystem/index.js').resolveManagedPath(skillDir, manifest?.entrypoint || 'SKILL.md').resolvedPath;
+}
+
+/** Copy declared resources beside exported entrypoints without inlining them. */
+function renderSkillResources(skillDir, destinations, metadata) {
+  const manifest = readSkillManifest(skillDir);
+  const resources = manifest?.resources || [];
+  const { resolveManagedPath } = require('../filesystem/index.js');
+  const artifacts = [];
+  const seen = new Set();
+  for (const resource of resources) {
+    const rel = typeof resource === 'string' ? resource : resource.path;
+    if (rel === 'SKILL.md' || rel === manifest?.entrypoint || seen.has(rel)) continue;
+    seen.add(rel);
+    const { resolvedPath, relativePosixPath } = resolveManagedPath(skillDir, rel);
+    if (!fs.statSync(resolvedPath).isFile()) throw new Error(`Skill resource must be a file: ${rel}`);
+    for (const destination of destinations) {
+      const mediaType = /\.(md|txt|js|ts|py)$/i.test(rel) ? 'text/plain' : /\.ya?ml$/i.test(rel) ? 'application/yaml' : /\.json$/i.test(rel) ? 'text/plain' : 'application/octet-stream';
+      artifacts.push({ ...metadata, path: `${destination}/${relativePosixPath}`, content: fs.readFileSync(resolvedPath), mediaType });
+    }
+  }
+  return artifacts;
+}
+
 module.exports = {
   AGENTS_DIR,
   AGENTS_MD_PATH,
@@ -124,5 +156,7 @@ module.exports = {
   readMeaningfulMarkdown,
   resetDirectory,
   stripFrontmatter,
+  renderSkillResources,
+  readSkillManifest,
+  getSkillEntrypointPath,
 };
-

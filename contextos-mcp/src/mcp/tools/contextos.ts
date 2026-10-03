@@ -17,20 +17,13 @@ import { existsSync, lstatSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { buildContextPrompt } from "../../contextos/loader.js";
+import { assembleContextPrompt } from "../../contextos/loader.js";
 import { parseVerificationSpec, runWorktreeVerification } from "../../orchestration/verification-runner.js";
 import { assertWithinRepository } from "../../security/repository-boundary.js";
 import { redactSecrets } from "../../security/secret-filter.js";
+import { readWorktreeDiff } from "../../worktree/manager.js";
 import { isEligibleForMerge, mergeThreadBranch } from "../../worktree/merge.js";
-import {
-	cleanupSession,
-	getAsyncJobs,
-	getBudgetState,
-	getSession,
-	getThreads,
-	recordAsyncJob,
-	spawnThread,
-} from "../session.js";
+import { cleanupSession, getSession, getThreads, inspectSession, recordAsyncJob, spawnThread } from "../session.js";
 import { recordThreadState } from "../state.js";
 
 export { parseVerificationSpec, runWorktreeVerification };
@@ -222,7 +215,9 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 
 				try {
 					// Load ContextOS rules with file context ranking
-					const contextPrompt = buildContextPrompt(resolvedDir, args.task, { files: focusFiles });
+					const { prompt: contextPrompt, report: contextReport } = assembleContextPrompt(resolvedDir, args.task, {
+						files: focusFiles,
+					});
 					log(`ContextOS prompt: ${contextPrompt.length} chars`);
 
 					const session = await getSession(resolvedDir);
@@ -333,6 +328,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 							task_id: taskId,
 							status: "running",
 							contextos_rules_loaded: contextPrompt.length > 0,
+							context_report: contextReport,
 							mode: args.mode || "parallel",
 							agents: args.agents.map((a, i) => ({
 								thread_id: threadIds[i],
@@ -361,6 +357,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 						task_id: taskId,
 						status: "completed",
 						contextos_rules_loaded: contextPrompt.length > 0,
+						context_report: contextReport,
 						agents: threadResults,
 					});
 				} catch (err) {
@@ -395,10 +392,8 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 			}
 
 			try {
-				const session = await getSession(resolvedDir);
-				const threads = getThreads(session);
-				const budget = getBudgetState(session);
-				const asyncTasks = getAsyncJobs(session);
+				const inspection = inspectSession(resolvedDir);
+				const { threads, budget, asyncTasks } = inspection;
 
 				const threadSummaries = threads.map((t) => ({
 					id: t.id,
@@ -417,7 +412,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 				}));
 
 				return jsonResult({
-					dir: session.dir,
+					dir: inspection.dir,
 					threads: threadSummaries,
 					async_tasks: asyncTasks,
 					counts: {
@@ -464,8 +459,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 			}
 
 			try {
-				const session = await getSession(resolvedDir);
-				const threads = getThreads(session);
+				const { threads } = inspectSession(resolvedDir);
 				const completed = threads.filter((t) => t.status === "completed" && t.result?.success);
 
 				if (completed.length === 0) {
@@ -535,8 +529,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 			}
 
 			try {
-				const session = await getSession(resolvedDir);
-				const threads = getThreads(session);
+				const { threads } = inspectSession(resolvedDir);
 				const thread = threads.find((t) => t.id === args.thread_id);
 
 				if (!thread) {
@@ -547,9 +540,7 @@ export function registerContextosTools(server: McpServer, defaultDir?: string, e
 					return errorResult(`Thread ${args.thread_id} has no worktree (status: ${thread.status})`);
 				}
 
-				// Get diff from the worktree manager through the session
-				const worktreeManager = session.threadManager.getWorktreeManager();
-				const diff = await worktreeManager.getDiff(thread.id);
+				const diff = await readWorktreeDiff(thread.worktreePath, resolvedDir);
 
 				return jsonResult({
 					thread_id: thread.id,

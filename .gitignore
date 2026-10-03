@@ -29,6 +29,7 @@ build/
 *.tsbuildinfo
 coverage/
 .nyc_output/
+.tmp*
 
 # Environment and Secrets
 .env
@@ -79,3 +80,29 @@ CONTEXTOS_COMPLETION_PLAN.md
 ENTERPRISE_ROADMAP.md
 VIDEO_DEMO_SCENARIO.md
 CONTEXTOS_FEEDBACK.md
+
+# Local planning and historical audit diaries (keep on disk, outside Git)
+/CONTEXTOS_WORK_PLAN.md
+/IMPROVEMENT_PLAN.md
+/docs/PERSONAL_WORKFLOW_ROADMAP.md
+/docs/AUDIT_*.md
+/docs/INDEPENDENT_REVIEW_*.md
+/docs/IMPLEMENTATION_STATUS_*.md
+/docs/STABILIZATION_*.md
+/docs/RELEASE_ACCEPTANCE_*.md
+/docs/API_BENCHMARK_*.md
+/docs/LUNA_BENCHMARK_*.md
+/docs/SOL_BENCHMARK_*.md
+
+# Raw test/API evidence stays local or in CI artifacts; retain reviewed manifests
+/docs/evidence/*
+!/docs/evidence/ci-r2-accepted-2026-10-02.json
+!/docs/evidence/release-2.3.json
+
+# Machine-specific API probes and one-off evidence collectors
+/benchmarks/analyze-sol.js
+/benchmarks/continue-sol-capped.js
+/benchmarks/run-sol-agent.js
+/benchmarks/sol-session-smoke.js
+/benchmarks/verify-sol-evidence.js
+/scripts/collect-r2-evidence.cjs

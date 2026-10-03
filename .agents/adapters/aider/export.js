@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 const YAML = require('../../compiler/vendor/yaml.js');
 
@@ -20,9 +20,9 @@ function describe() {
   };
 }
 
-function buildSkillSection(skillDir) {
+function buildSkillSection(skillDir, context) {
   const skillName = path.basename(skillDir);
-  const skillMdPath = path.join(skillDir, 'SKILL.md');
+  const skillMdPath = getSkillEntrypointPath(skillDir);
   const yamlPath = path.join(skillDir, 'skill.yaml');
 
   let title = skillName;
@@ -44,7 +44,8 @@ function buildSkillSection(skillDir) {
   }
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
-  const skillRef = `*Source: \`.agents/skills/${skillName}/SKILL.md\` - Load via \`/read .agents/skills/${skillName}/SKILL.md\`*\n`;
+  const sourcePath = path.relative(context?.projectRoot || '.', skillMdPath).split(path.sep).join('/');
+  const skillRef = `*Source: \`${sourcePath}\` - Load via \`/read ${sourcePath}\`*\n`;
   return `\n## Skill: ${title}\n${descLine}${skillRef}`;
 }
 
@@ -94,17 +95,9 @@ function render(context) {
       throw new Error(`Failed to parse existing .aider.conf.yml: ${err.message}. Aborting to protect existing configuration from data loss.`);
     }
   } else {
-    aiderConfContent = [
-      yamlProv,
-      '# Load project conventions as a read-only context file on every session',
-      'read:',
-      '  - CONVENTIONS.md',
-      '',
-      '# Auto commit edits with standard git format',
-      'auto-commits: true',
-      'dirty-commits: true',
-      '',
-    ].join('\n');
+    aiderConfContent = yamlProv + '\n' + YAML.stringify({
+      read: ['CONVENTIONS.md'], 'auto-commits': true, 'dirty-commits': true,
+    });
   }
 
   // 2. CONVENTIONS.md
@@ -126,13 +119,15 @@ function render(context) {
 
   const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
-    const section = buildSkillSection(skill);
+    const section = buildSkillSection(skill, context);
     if (section) convSections.push(section);
   }
 
   return [
     {
       path: '.aider.conf.yml',
+      preservesUserContent: true,
+      expectedBeforeHash: fs.existsSync(existingAiderConfPath) ? require('../../filesystem/index.js').computeExactHash(fs.readFileSync(existingAiderConfPath)) : 'NONE',
       content: aiderConfContent.replace(/\r\n/g, '\n'),
       mediaType: 'application/yaml',
       kind: 'generated-adapter',

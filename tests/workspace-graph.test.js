@@ -29,6 +29,60 @@ function removeDir(dir) {
   }
 }
 
+test('workspace discovery excludes reserved clones and runtime worktrees without changing evidence', t => {
+  const root = createTempDir();
+  t.after(() => removeDir(root));
+  fs.mkdirSync(path.join(root, '.git'));
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'owner', dependencies: { react: '1' } }));
+  const builder = new WorkspaceGraphBuilder();
+  const before = builder.build(root);
+  for (const directory of ['.external-skills', '.swarm-worktrees']) {
+    const foreign = path.join(root, directory, 'foreign');
+    fs.mkdirSync(foreign, { recursive: true });
+    fs.writeFileSync(path.join(foreign, 'package.json'), JSON.stringify({ name: 'foreign', dependencies: { fastapi: '1' } }));
+  }
+  assert.deepEqual(builder.build(root), before);
+});
+
+test('declared workspaces scope manifests while allowing explicitly declared nested repositories', t => {
+  const root = createTempDir();
+  t.after(() => removeDir(root));
+  fs.mkdirSync(path.join(root, '.git'));
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'owner', workspaces: ['packages/*'] }));
+  for (const directory of ['packages/real', 'examples/unrelated']) {
+    fs.mkdirSync(path.join(root, directory, '.git'), { recursive: true });
+    fs.writeFileSync(path.join(root, directory, 'package.json'), JSON.stringify({ name: directory }));
+  }
+  assert.deepEqual(new WorkspaceGraphBuilder().build(root).packages.map(p => p.id).sort(), ['owner', 'packages/real']);
+});
+
+test('nested repositories require explicit opt-in when no workspace declaration exists', t => {
+  const root = createTempDir();
+  t.after(() => removeDir(root));
+  fs.mkdirSync(path.join(root, '.git'));
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'owner' }));
+  const clone = path.join(root, 'cloned-repo');
+  fs.mkdirSync(path.join(clone, '.git'), { recursive: true });
+  fs.writeFileSync(path.join(clone, 'package.json'), JSON.stringify({ name: 'foreign' }));
+  assert.deepEqual(new WorkspaceGraphBuilder().build(root).packages.map(p => p.id), ['owner']);
+  assert.deepEqual(new WorkspaceGraphBuilder({ includeNestedRepositories: true }).build(root).packages.map(p => p.id).sort(), ['foreign', 'owner']);
+});
+
+test('maxPackages is a strict global bound across nested and sibling packages', t => {
+  const root = createTempDir();
+  t.after(() => removeDir(root));
+  fs.mkdirSync(path.join(root, '.git'));
+  for (const directory of ['.', 'a/one', 'a/two', 'z']) {
+    fs.mkdirSync(path.join(root, directory), { recursive: true });
+    fs.writeFileSync(path.join(root, directory, 'package.json'), JSON.stringify({ name: directory }));
+  }
+  const builder = new WorkspaceGraphBuilder({ maxPackages: 2 });
+  const graph = builder.build(root);
+  assert.equal(graph.packages.length, 2);
+  assert.equal(graph.partial, true);
+  assert.deepEqual(builder.build(root), graph);
+});
+
 test('workspace-graph.js — Workspace Evidence Graph Builder', async (t) => {
 
   await t.test('globToRegex compiles workspace glob patterns correctly', () => {

@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter, readMeaningfulMarkdown } = require('../shared.js');
+const { getSkillEntrypointPath, AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'cursor@2';
@@ -20,11 +20,6 @@ function describe() {
 }
 
 function getSkillGlobsAndFlags(skillName, skillDir = null) {
-  const ALWAYS_APPLY_SKILLS = ['engineering-workflow', 'gstack-roles', 'ponytail-mindset', 'gemini-precision'];
-  if (ALWAYS_APPLY_SKILLS.includes(skillName)) {
-    return { globs: '', alwaysApply: true };
-  }
-
   // 1. Dynamic extraction from skill.yaml if available
   if (skillDir) {
     const yamlPath = path.join(skillDir, 'skill.yaml');
@@ -78,7 +73,7 @@ function getSkillGlobsAndFlags(skillName, skillDir = null) {
 
 function buildSkillSection(skillDir) {
   const skillName = path.basename(skillDir);
-  const skillMdPath = path.join(skillDir, 'SKILL.md');
+  const skillMdPath = getSkillEntrypointPath(skillDir);
   const yamlPath = path.join(skillDir, 'skill.yaml');
 
   let title = skillName;
@@ -92,7 +87,7 @@ function buildSkillSection(skillDir) {
   if (!fs.existsSync(skillMdPath)) return null;
 
   const raw = fs.readFileSync(skillMdPath, 'utf8');
-  const body = stripFrontmatter(raw);
+  const body = stripFrontmatter(raw).trimEnd();
 
   if (!description) {
     const firstLine = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
@@ -103,9 +98,9 @@ function buildSkillSection(skillDir) {
   return `\n## Skill: ${title}\n${descLine}*Rule file: \`.cursor/rules/${skillName}.mdc\` (load on demand)*\n`;
 }
 
-function generateCursorMdc(skillDir) {
+function generateCursorMdc(skillDir, context) {
   const skillName = path.basename(skillDir);
-  const skillMdPath = path.join(skillDir, 'SKILL.md');
+  const skillMdPath = getSkillEntrypointPath(skillDir);
   const yamlPath = path.join(skillDir, 'skill.yaml');
 
   if (!fs.existsSync(skillMdPath)) return null;
@@ -120,13 +115,7 @@ function generateCursorMdc(skillDir) {
   }
 
   let raw = fs.readFileSync(skillMdPath, 'utf8');
-  const examples = readMeaningfulMarkdown(path.join(skillDir, 'EXAMPLES.md'));
-  if (examples) raw += '\n\n' + examples;
-
-  const troubleshooting = readMeaningfulMarkdown(path.join(skillDir, 'TROUBLESHOOTING.md'));
-  if (troubleshooting) raw += '\n\n' + troubleshooting;
-
-  const body = stripFrontmatter(raw);
+  const body = stripFrontmatter(raw).trimEnd();
   const { globs, alwaysApply } = getSkillGlobsAndFlags(skillName, skillDir);
 
   let cleanDescription = description.replace(/\r?\n+/g, ' ').replace(/"/g, "'").trim();
@@ -140,6 +129,8 @@ alwaysApply: ${alwaysApply}
 ---
 
 # Skill: ${title}
+
+Resolve supporting resource paths relative to \`${path.relative(context?.projectRoot || process.cwd(), skillDir).replace(/\\/g, '/')}\`. Read examples and references only when needed.
 
 ${body}
 `;
@@ -189,7 +180,7 @@ ${agentsMd}
 
   const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
-    const mdc = generateCursorMdc(skill);
+    const mdc = generateCursorMdc(skill, context);
     if (mdc) {
       const fullMdc = mdc.mdcContent.replace(/\r\n/g, '\n');
       artifacts.push({

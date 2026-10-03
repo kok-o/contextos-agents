@@ -2,7 +2,7 @@
 
 'use strict';
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -31,22 +31,30 @@ function main() {
   run('node scripts/check-secrets.js --all');
 
   // 3. Tests
-  run('node --test --test-concurrency=1 tests/*.test.js');
+  run('npm test');
 
   // 4. Build MCP core
   const mcpDir = path.join(__dirname, '../contextos-mcp');
   run('npm run build', { cwd: mcpDir });
+  run('npm run check:release-surface');
 
   // 5. Pack tarball
   console.log('\nPacking tarball...');
-  const packOutput = execSync('npm pack', { encoding: 'utf-8' }).trim();
-  console.log(`Created: ${packOutput}`);
+  const candidates = path.join(__dirname, '../scratch/release-candidate');
+  fs.mkdirSync(candidates, { recursive: true });
+  const npm = process.env.npm_execpath || path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
+  for (const cwd of [path.join(__dirname, '..'), mcpDir]) {
+    const packed = JSON.parse(execFileSync(process.execPath, [npm, 'pack', '--ignore-scripts', '--json', '--pack-destination', candidates], { cwd, encoding: 'utf8' }))[0];
+    console.log(`Created: ${path.join(candidates, packed.filename)}`);
+  }
+  run('npm run check:consumer');
 
-  console.log('\n[SUCCESS] Release Candidate is ready.');
+  console.log('\n[SUCCESS] Local smoke/build checks completed; release acceptance remains pending.');
   console.log('Next steps:');
   console.log(`1. Update CHANGELOG.md for v${version}`);
-  console.log(`2. Test tarball in empty directory: npm i -g ${packOutput}`);
-  console.log(`3. Finalize CONTEXTOS_COMPLETION_PLAN.md to DONE`);
+  console.log('2. Pack both packages and run npm run check:consumer and npm run check:migration.');
+  console.log('3. Complete Windows/Linux/macOS CI and client pilot; see docs/R2_RELEASE_PREPARATION.md.');
+  console.log('4. Bind archives/evidence to one revision, then make a separate publication decision.');
 }
 
 main();

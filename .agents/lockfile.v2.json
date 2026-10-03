@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "revision": 635,
+  "revision": 642,
   "package": {
     "name": "contextos-project",
     "version": "1.0.0",
@@ -21,382 +21,1192 @@
   ],
   "managedFiles": {
     ".agents/generated/gemini/skills/context-manager/SKILL.md": {
-      "exactSha256": "sha256:55a66ad83700d0f76165a30728e71c9537027f27ad9be888c2bdabd1d663a71b",
-      "semanticTextSha256": "sha256:55a66ad83700d0f76165a30728e71c9537027f27ad9be888c2bdabd1d663a71b",
+      "exactSha256": "sha256:91e393524d632f019b870b00a7b76fdf4ec0a37acb20f893e6e213cc70a3ec5b",
+      "semanticTextSha256": "sha256:91e393524d632f019b870b00a7b76fdf4ec0a37acb20f893e6e213cc70a3ec5b",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790420048808-c3192d01"
+      "lastTransaction": "tx-1790845862166-96d8f055"
     },
     ".agents/skills/context-manager/SKILL.md": {
-      "exactSha256": "sha256:55a66ad83700d0f76165a30728e71c9537027f27ad9be888c2bdabd1d663a71b",
-      "semanticTextSha256": "sha256:55a66ad83700d0f76165a30728e71c9537027f27ad9be888c2bdabd1d663a71b",
+      "exactSha256": "sha256:91e393524d632f019b870b00a7b76fdf4ec0a37acb20f893e6e213cc70a3ec5b",
+      "semanticTextSha256": "sha256:91e393524d632f019b870b00a7b76fdf4ec0a37acb20f893e6e213cc70a3ec5b",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790417951978-2ddc0cc2"
+      "lastTransaction": "tx-1790845862166-96d8f055"
     },
     ".agents/generated/gemini/skills/context-os/SKILL.md": {
-      "exactSha256": "sha256:d4a7c609cc128ebd9d0461623eba18bf2e118a7a3d298b3d4b5221000e9e6601",
-      "semanticTextSha256": "sha256:d4a7c609cc128ebd9d0461623eba18bf2e118a7a3d298b3d4b5221000e9e6601",
+      "exactSha256": "sha256:e7eda3e2ce9d38e1dd4d787e45dbb0f254826c0b9b95233364a722963eb73d51",
+      "semanticTextSha256": "sha256:e7eda3e2ce9d38e1dd4d787e45dbb0f254826c0b9b95233364a722963eb73d51",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790713303100-858f6525"
     },
     ".agents/skills/context-os/SKILL.md": {
-      "exactSha256": "sha256:d4a7c609cc128ebd9d0461623eba18bf2e118a7a3d298b3d4b5221000e9e6601",
-      "semanticTextSha256": "sha256:d4a7c609cc128ebd9d0461623eba18bf2e118a7a3d298b3d4b5221000e9e6601",
+      "exactSha256": "sha256:e7eda3e2ce9d38e1dd4d787e45dbb0f254826c0b9b95233364a722963eb73d51",
+      "semanticTextSha256": "sha256:e7eda3e2ce9d38e1dd4d787e45dbb0f254826c0b9b95233364a722963eb73d51",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790713303100-858f6525"
     },
     ".agents/generated/gemini/skills/engineering-workflow/SKILL.md": {
-      "exactSha256": "sha256:0eafd4ee7a53534a8b3a4471730bad07c4e8d82651bdcb16decb24b630327151",
-      "semanticTextSha256": "sha256:0eafd4ee7a53534a8b3a4471730bad07c4e8d82651bdcb16decb24b630327151",
+      "exactSha256": "sha256:e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
+      "semanticTextSha256": "sha256:e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".agents/skills/engineering-workflow/SKILL.md": {
-      "exactSha256": "sha256:0eafd4ee7a53534a8b3a4471730bad07c4e8d82651bdcb16decb24b630327151",
-      "semanticTextSha256": "sha256:0eafd4ee7a53534a8b3a4471730bad07c4e8d82651bdcb16decb24b630327151",
+      "exactSha256": "sha256:e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
+      "semanticTextSha256": "sha256:e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".agents/generated/gemini/skills/gemini-precision/SKILL.md": {
-      "exactSha256": "sha256:3ae6eb913edd0f7a78b43f7210be6b53d2027c2e009744c85dd5bddcdca3366c",
-      "semanticTextSha256": "sha256:3ae6eb913edd0f7a78b43f7210be6b53d2027c2e009744c85dd5bddcdca3366c",
+      "exactSha256": "sha256:6f42bd8c8d15e4285a461cde23f0c7170616590a9950d89fa8aa0088a1593552",
+      "semanticTextSha256": "sha256:6f42bd8c8d15e4285a461cde23f0c7170616590a9950d89fa8aa0088a1593552",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442430780-f32d22f6"
+      "lastTransaction": "tx-1790713303100-858f6525"
     },
     ".agents/skills/gemini-precision/SKILL.md": {
-      "exactSha256": "sha256:3ae6eb913edd0f7a78b43f7210be6b53d2027c2e009744c85dd5bddcdca3366c",
-      "semanticTextSha256": "sha256:3ae6eb913edd0f7a78b43f7210be6b53d2027c2e009744c85dd5bddcdca3366c",
+      "exactSha256": "sha256:6f42bd8c8d15e4285a461cde23f0c7170616590a9950d89fa8aa0088a1593552",
+      "semanticTextSha256": "sha256:6f42bd8c8d15e4285a461cde23f0c7170616590a9950d89fa8aa0088a1593552",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442430780-f32d22f6"
+      "lastTransaction": "tx-1790713303100-858f6525"
     },
     ".agents/generated/gemini/skills/gstack-roles/SKILL.md": {
-      "exactSha256": "sha256:58c4124372b69c823032d373d54ac3dbaa7adf6ae8cc54313f6b02cc578514f5",
-      "semanticTextSha256": "sha256:58c4124372b69c823032d373d54ac3dbaa7adf6ae8cc54313f6b02cc578514f5",
+      "exactSha256": "sha256:e773ea899de33a7b656af4a330c2e5b7e10874f8d34f9c82581de5d97f9afff7",
+      "semanticTextSha256": "sha256:e773ea899de33a7b656af4a330c2e5b7e10874f8d34f9c82581de5d97f9afff7",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".agents/skills/gstack-roles/SKILL.md": {
-      "exactSha256": "sha256:58c4124372b69c823032d373d54ac3dbaa7adf6ae8cc54313f6b02cc578514f5",
-      "semanticTextSha256": "sha256:58c4124372b69c823032d373d54ac3dbaa7adf6ae8cc54313f6b02cc578514f5",
+      "exactSha256": "sha256:e773ea899de33a7b656af4a330c2e5b7e10874f8d34f9c82581de5d97f9afff7",
+      "semanticTextSha256": "sha256:e773ea899de33a7b656af4a330c2e5b7e10874f8d34f9c82581de5d97f9afff7",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".agents/generated/gemini/skills/ponytail-mindset/SKILL.md": {
-      "exactSha256": "sha256:3dcf349c54a9fa4fae4d1221bbe0c4be299938c15ebe0aba58f1b33720d0a8a2",
-      "semanticTextSha256": "sha256:3dcf349c54a9fa4fae4d1221bbe0c4be299938c15ebe0aba58f1b33720d0a8a2",
+      "exactSha256": "sha256:d47e1789224c0dbe0527e0ab3abe647e5796aee65c7d230bbcb971b30e734107",
+      "semanticTextSha256": "sha256:d47e1789224c0dbe0527e0ab3abe647e5796aee65c7d230bbcb971b30e734107",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790420048808-c3192d01"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".agents/skills/ponytail-mindset/SKILL.md": {
-      "exactSha256": "sha256:3dcf349c54a9fa4fae4d1221bbe0c4be299938c15ebe0aba58f1b33720d0a8a2",
-      "semanticTextSha256": "sha256:3dcf349c54a9fa4fae4d1221bbe0c4be299938c15ebe0aba58f1b33720d0a8a2",
+      "exactSha256": "sha256:d47e1789224c0dbe0527e0ab3abe647e5796aee65c7d230bbcb971b30e734107",
+      "semanticTextSha256": "sha256:d47e1789224c0dbe0527e0ab3abe647e5796aee65c7d230bbcb971b30e734107",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1789118710888-4a685de0"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".agents/generated/gemini/skills/security/SKILL.md": {
-      "exactSha256": "sha256:eb76f2b0b8ef99631ef1c3a853c3841665ab828a1ad893d910703b6c9ba4f9f3",
-      "semanticTextSha256": "sha256:eb76f2b0b8ef99631ef1c3a853c3841665ab828a1ad893d910703b6c9ba4f9f3",
+      "exactSha256": "sha256:d28ad519465e407d4614b02f6bf06ee2834af9e83c94463ba84733fafdb9bad4",
+      "semanticTextSha256": "sha256:d28ad519465e407d4614b02f6bf06ee2834af9e83c94463ba84733fafdb9bad4",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".agents/skills/security/SKILL.md": {
-      "exactSha256": "sha256:eb76f2b0b8ef99631ef1c3a853c3841665ab828a1ad893d910703b6c9ba4f9f3",
-      "semanticTextSha256": "sha256:eb76f2b0b8ef99631ef1c3a853c3841665ab828a1ad893d910703b6c9ba4f9f3",
+      "exactSha256": "sha256:d28ad519465e407d4614b02f6bf06ee2834af9e83c94463ba84733fafdb9bad4",
+      "semanticTextSha256": "sha256:d28ad519465e407d4614b02f6bf06ee2834af9e83c94463ba84733fafdb9bad4",
       "kind": "generated-adapter",
       "generator": "gemini@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".agents/generated/claude/skills/context-manager/SKILL.md": {
-      "exactSha256": "sha256:56b52c7f9861465635e98d464b28108810dc4c6d1ce0cf6348a087a3833afcff",
-      "semanticTextSha256": "sha256:56b52c7f9861465635e98d464b28108810dc4c6d1ce0cf6348a087a3833afcff",
+      "exactSha256": "sha256:7472e9bd84aca07b0bf90b886b3f1cf9a5faeae41e541342789b8089a690033b",
+      "semanticTextSha256": "sha256:7472e9bd84aca07b0bf90b886b3f1cf9a5faeae41e541342789b8089a690033b",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790420049809-d12b9a77"
+      "lastTransaction": "tx-1790712873319-d57a6490"
     },
     ".agents/generated/claude/skills/context-os/SKILL.md": {
-      "exactSha256": "sha256:d92c9683eca1ba437cd8deba23abccf4e410db386cd3f5dea8477b4bfd6fa35a",
-      "semanticTextSha256": "sha256:d92c9683eca1ba437cd8deba23abccf4e410db386cd3f5dea8477b4bfd6fa35a",
+      "exactSha256": "sha256:30505c6178efdc2034764e30a01e8b3845327f8528084f2eab61222852af4ef2",
+      "semanticTextSha256": "sha256:30505c6178efdc2034764e30a01e8b3845327f8528084f2eab61222852af4ef2",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790712873319-d57a6490"
     },
     ".agents/generated/claude/skills/engineering-workflow/SKILL.md": {
-      "exactSha256": "sha256:ace7850af77e884d43fe762fddd89cf8726fc051c8810ce764e0537c6e555cd9",
-      "semanticTextSha256": "sha256:ace7850af77e884d43fe762fddd89cf8726fc051c8810ce764e0537c6e555cd9",
+      "exactSha256": "sha256:9f47659bf6e9f0a4950e8d014b19c278c080eac62b4bc6d1e07ea1de7f39b014",
+      "semanticTextSha256": "sha256:9f47659bf6e9f0a4950e8d014b19c278c080eac62b4bc6d1e07ea1de7f39b014",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".agents/generated/claude/skills/gemini-precision/SKILL.md": {
-      "exactSha256": "sha256:a09acace5dc1b6aa2deaa57baf2b5d97574aeac84c3d944592ecaa24eb313c6c",
-      "semanticTextSha256": "sha256:a09acace5dc1b6aa2deaa57baf2b5d97574aeac84c3d944592ecaa24eb313c6c",
+      "exactSha256": "sha256:9efef86daed8b9a92f76d6fe610e5528dd1de769ef42162ad272bfe6e58eaa23",
+      "semanticTextSha256": "sha256:9efef86daed8b9a92f76d6fe610e5528dd1de769ef42162ad272bfe6e58eaa23",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442430780-f32d22f6"
+      "lastTransaction": "tx-1790712873319-d57a6490"
     },
     ".agents/generated/claude/skills/gstack-roles/SKILL.md": {
-      "exactSha256": "sha256:9d06d36725b6568aa4491548a8e8b74723cd1552f2415150f0579837b568bf49",
-      "semanticTextSha256": "sha256:9d06d36725b6568aa4491548a8e8b74723cd1552f2415150f0579837b568bf49",
+      "exactSha256": "sha256:82a9a5f8f5f27799ac037004397c6b2be2bfde1e2e94343a939c7c610cee3651",
+      "semanticTextSha256": "sha256:82a9a5f8f5f27799ac037004397c6b2be2bfde1e2e94343a939c7c610cee3651",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".agents/generated/claude/skills/ponytail-mindset/SKILL.md": {
-      "exactSha256": "sha256:c7f74446c5a9dcc88afaae2ffea82a0adf010d25d492323ccb71953df33694b0",
-      "semanticTextSha256": "sha256:c7f74446c5a9dcc88afaae2ffea82a0adf010d25d492323ccb71953df33694b0",
+      "exactSha256": "sha256:17b2ac39ef7a85a2aeceaf647524337701fb817760d0fb2634380ebde7f01b9a",
+      "semanticTextSha256": "sha256:17b2ac39ef7a85a2aeceaf647524337701fb817760d0fb2634380ebde7f01b9a",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790420049809-d12b9a77"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".agents/generated/claude/skills/security/SKILL.md": {
-      "exactSha256": "sha256:0d092666a02379130ca0299ef0ebb957ce5742b55c1c84128172bc404e8a5da7",
-      "semanticTextSha256": "sha256:0d092666a02379130ca0299ef0ebb957ce5742b55c1c84128172bc404e8a5da7",
+      "exactSha256": "sha256:eef332da99ea206e0e895678576188653dcd5b84e9ea4746b0955c3ce711ee51",
+      "semanticTextSha256": "sha256:eef332da99ea206e0e895678576188653dcd5b84e9ea4746b0955c3ce711ee51",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790712873319-d57a6490"
     },
     ".cursor/rules/00-project-rules.mdc": {
-      "exactSha256": "sha256:640d21fc7a58b0d7effbdd48fccc8d360bc0fe09656ae46a2d4edd691d9ab4e0",
-      "semanticTextSha256": "sha256:640d21fc7a58b0d7effbdd48fccc8d360bc0fe09656ae46a2d4edd691d9ab4e0",
+      "exactSha256": "sha256:2d4101ab3ec1707c8e9f1f7b552511ee6fca5b5b72520b3432e61acc0b78777f",
+      "semanticTextSha256": "sha256:2d4101ab3ec1707c8e9f1f7b552511ee6fca5b5b72520b3432e61acc0b78777f",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444204507-c102d3fc"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".cursor/rules/context-manager.mdc": {
-      "exactSha256": "sha256:b568a9918bcc0bafdc4e00ff17210f86cac1bd0432a4d3d603ee72e02b6db985",
-      "semanticTextSha256": "sha256:b568a9918bcc0bafdc4e00ff17210f86cac1bd0432a4d3d603ee72e02b6db985",
+      "exactSha256": "sha256:afb34251d49954be93576eac9712d5d80352d2028b98064e05034bb092ef766d",
+      "semanticTextSha256": "sha256:afb34251d49954be93576eac9712d5d80352d2028b98064e05034bb092ef766d",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1789118710888-4a685de0"
+      "lastTransaction": "tx-1790713971984-b3cb9dd1"
     },
     ".cursor/rules/context-os.mdc": {
-      "exactSha256": "sha256:4a865fffe855c0ba33098340ee3885445a54c5062fa53e17c152571d50615439",
-      "semanticTextSha256": "sha256:4a865fffe855c0ba33098340ee3885445a54c5062fa53e17c152571d50615439",
+      "exactSha256": "sha256:fdab3f247bc95736ace15ba1279dbfc7b2342a411f6fa23c648a3b534fd9298d",
+      "semanticTextSha256": "sha256:fdab3f247bc95736ace15ba1279dbfc7b2342a411f6fa23c648a3b534fd9298d",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790713971984-b3cb9dd1"
     },
     ".cursor/rules/engineering-workflow.mdc": {
-      "exactSha256": "sha256:491f915debd38ab03df8aaf2d9db1fdde5442700035f79c4b51283e49f6b9637",
-      "semanticTextSha256": "sha256:491f915debd38ab03df8aaf2d9db1fdde5442700035f79c4b51283e49f6b9637",
+      "exactSha256": "sha256:a76d27eff5cd22cc7a70a7eb67449f71f444eacb2dde9f81a5e8eb8b7e2e2bce",
+      "semanticTextSha256": "sha256:a76d27eff5cd22cc7a70a7eb67449f71f444eacb2dde9f81a5e8eb8b7e2e2bce",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".cursor/rules/gemini-precision.mdc": {
-      "exactSha256": "sha256:d44279a288a843a8ae875d3adc2d5dfb69633caac0dfef4b44de479eafa80fb0",
-      "semanticTextSha256": "sha256:d44279a288a843a8ae875d3adc2d5dfb69633caac0dfef4b44de479eafa80fb0",
+      "exactSha256": "sha256:76171653858fe9ed5d5f544a668d2be9cbbdfaa5889098589a26d73988c45597",
+      "semanticTextSha256": "sha256:76171653858fe9ed5d5f544a668d2be9cbbdfaa5889098589a26d73988c45597",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442430780-f32d22f6"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".cursor/rules/gstack-roles.mdc": {
-      "exactSha256": "sha256:770d907dbb5f5cf9f6207420c27c246134c724107e983d6fcf8402bcb179f6b9",
-      "semanticTextSha256": "sha256:770d907dbb5f5cf9f6207420c27c246134c724107e983d6fcf8402bcb179f6b9",
+      "exactSha256": "sha256:ff03394a23ef9708decd62c0494cdce7fb164b2bc19328afca766f1f81d7d327",
+      "semanticTextSha256": "sha256:ff03394a23ef9708decd62c0494cdce7fb164b2bc19328afca766f1f81d7d327",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790442374586-0c034774"
+      "lastTransaction": "tx-1790779054263-bf42bdae"
     },
     ".cursor/rules/ponytail-mindset.mdc": {
-      "exactSha256": "sha256:9f770ffda17116afc01a14ecbbd8035f52d44a71b70f10ed67373b20c21cecc7",
-      "semanticTextSha256": "sha256:9f770ffda17116afc01a14ecbbd8035f52d44a71b70f10ed67373b20c21cecc7",
+      "exactSha256": "sha256:ce7551cc35d8c21256eda207a533b969196bab4594090528ae72441e4d2446a0",
+      "semanticTextSha256": "sha256:ce7551cc35d8c21256eda207a533b969196bab4594090528ae72441e4d2446a0",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1789118710888-4a685de0"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".cursor/rules/security.mdc": {
-      "exactSha256": "sha256:470f33ce693ba796a7c9f44aea8ea8482f7c45e18d969722410b642aad2d5460",
-      "semanticTextSha256": "sha256:470f33ce693ba796a7c9f44aea8ea8482f7c45e18d969722410b642aad2d5460",
+      "exactSha256": "sha256:a056fb545e7c1f73ab8e5dc8060f89685d33cb57b6e3937a098119c4d525b3e4",
+      "semanticTextSha256": "sha256:a056fb545e7c1f73ab8e5dc8060f89685d33cb57b6e3937a098119c4d525b3e4",
       "kind": "generated-adapter",
       "generator": "cursor@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790790137593-8d62be7a"
     },
     ".github/copilot-instructions.md": {
-      "exactSha256": "sha256:69778174446fd4822b9a6f7f31298250fe91b1f7503168992b7b9764ec4b234d",
-      "semanticTextSha256": "sha256:69778174446fd4822b9a6f7f31298250fe91b1f7503168992b7b9764ec4b234d",
+      "exactSha256": "sha256:5381a8639793376ab6837c9ade065bceab5ee617cdfe03d1583889c5a67cbe91",
+      "semanticTextSha256": "sha256:5381a8639793376ab6837c9ade065bceab5ee617cdfe03d1583889c5a67cbe91",
       "kind": "generated-adapter",
       "generator": "copilot@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".aider.conf.yml": {
-      "exactSha256": "sha256:178e6511c2e2907b4fcb2a4e69a35019c3bb9e7207b376a66c9b8ac35c612890",
-      "semanticTextSha256": "sha256:178e6511c2e2907b4fcb2a4e69a35019c3bb9e7207b376a66c9b8ac35c612890",
+      "exactSha256": "sha256:08b932482284376b699456c9b80f73306d5884d1b95103b3a372eb0ae8a2e6da",
+      "semanticTextSha256": "sha256:08b932482284376b699456c9b80f73306d5884d1b95103b3a372eb0ae8a2e6da",
       "kind": "generated-adapter",
       "generator": "aider@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     "CONVENTIONS.md": {
-      "exactSha256": "sha256:b037fc490ecfefafbe6ec25734afcac16a724a9c83d911478f6da139e52b550f",
-      "semanticTextSha256": "sha256:b037fc490ecfefafbe6ec25734afcac16a724a9c83d911478f6da139e52b550f",
+      "exactSha256": "sha256:3f9a5d0521b87cadabbed8e3b2d1015c674d66173da3a8b026248dedd122bf4f",
+      "semanticTextSha256": "sha256:3f9a5d0521b87cadabbed8e3b2d1015c674d66173da3a8b026248dedd122bf4f",
       "kind": "generated-adapter",
       "generator": "aider@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444204507-c102d3fc"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/context-manager.md": {
-      "exactSha256": "sha256:34258724abe7fe0414e366554c43bf06ebba51124a85025c41951713bb8b96aa",
-      "semanticTextSha256": "sha256:34258724abe7fe0414e366554c43bf06ebba51124a85025c41951713bb8b96aa",
+      "exactSha256": "sha256:7acf65eb5ab137fc9944d9bc3b0c568939a52fbfbb840507c226d9718728454b",
+      "semanticTextSha256": "sha256:7acf65eb5ab137fc9944d9bc3b0c568939a52fbfbb840507c226d9718728454b",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/context-os.md": {
-      "exactSha256": "sha256:2cea7ec497c8687e840628ba334e8a99b34a17618762a3a9e157cf94f67f2177",
-      "semanticTextSha256": "sha256:2cea7ec497c8687e840628ba334e8a99b34a17618762a3a9e157cf94f67f2177",
+      "exactSha256": "sha256:96c1e660da28e05a66522c26554ea6e100e5716d22496582299920504e76eb80",
+      "semanticTextSha256": "sha256:96c1e660da28e05a66522c26554ea6e100e5716d22496582299920504e76eb80",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/engineering-workflow.md": {
-      "exactSha256": "sha256:d6cb69eed52dc862fe1fd681c52383c8100ba60abee31d8d5b64733b10fc30db",
-      "semanticTextSha256": "sha256:d6cb69eed52dc862fe1fd681c52383c8100ba60abee31d8d5b64733b10fc30db",
+      "exactSha256": "sha256:03fad6c2619f1b2193e93708ccc84cd71e0e6a77480e709baa1c52a849964c74",
+      "semanticTextSha256": "sha256:03fad6c2619f1b2193e93708ccc84cd71e0e6a77480e709baa1c52a849964c74",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/gemini-precision.md": {
-      "exactSha256": "sha256:ea9892134c17a9031f5083928eeb3a1fbd14dcaa74233866c894bc18d76c1720",
-      "semanticTextSha256": "sha256:ea9892134c17a9031f5083928eeb3a1fbd14dcaa74233866c894bc18d76c1720",
+      "exactSha256": "sha256:3f2637626132ca1674117e3e5e94b6d42fcb4eb06cf02da0a8796572f124e5d0",
+      "semanticTextSha256": "sha256:3f2637626132ca1674117e3e5e94b6d42fcb4eb06cf02da0a8796572f124e5d0",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/gstack-roles.md": {
-      "exactSha256": "sha256:a33b5b2174dad55e7ee0110f0db58e7d8cdbbe7912ecdf8a4ad6665e08866f8e",
-      "semanticTextSha256": "sha256:a33b5b2174dad55e7ee0110f0db58e7d8cdbbe7912ecdf8a4ad6665e08866f8e",
+      "exactSha256": "sha256:dbc46da24166f68defdbcf0f5a5ab40e3bf2890b129d3b88c88b31d002faa442",
+      "semanticTextSha256": "sha256:dbc46da24166f68defdbcf0f5a5ab40e3bf2890b129d3b88c88b31d002faa442",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/ponytail-mindset.md": {
-      "exactSha256": "sha256:bb74df227bae50a5bce3d225502b169b03a405d7625f6c7fc916c8ec7d6f8134",
-      "semanticTextSha256": "sha256:bb74df227bae50a5bce3d225502b169b03a405d7625f6c7fc916c8ec7d6f8134",
+      "exactSha256": "sha256:8b3985a89a68d0e742f0bef53281ceb503089c0aad8f6aa20129a10ebf16f17a",
+      "semanticTextSha256": "sha256:8b3985a89a68d0e742f0bef53281ceb503089c0aad8f6aa20129a10ebf16f17a",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/security.md": {
-      "exactSha256": "sha256:82c55e5db46a9109f3cea0ac964020999ba8f7b76751e29dd27d76def7fdccd4",
-      "semanticTextSha256": "sha256:82c55e5db46a9109f3cea0ac964020999ba8f7b76751e29dd27d76def7fdccd4",
+      "exactSha256": "sha256:bb71eca1e248e03d77486ad7621907fa1131e1e7829423e6ed3bd32dac966e6e",
+      "semanticTextSha256": "sha256:bb71eca1e248e03d77486ad7621907fa1131e1e7829423e6ed3bd32dac966e6e",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444156306-b52116a0"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/rules.md": {
-      "exactSha256": "sha256:f163605182d157a21a64752207aed0282522efa134d12c53a7b3c89108519c68",
-      "semanticTextSha256": "sha256:f163605182d157a21a64752207aed0282522efa134d12c53a7b3c89108519c68",
+      "exactSha256": "sha256:c4fd01ca224542e1d7bb9dce107519f208af8e66a0b15ee5d52d0934b0fd0e0f",
+      "semanticTextSha256": "sha256:c4fd01ca224542e1d7bb9dce107519f208af8e66a0b15ee5d52d0934b0fd0e0f",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444204507-c102d3fc"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     ".zed/prompts/contextos.md": {
-      "exactSha256": "sha256:7ceb764a5a2b31e3a843ef4051b1dddd5dfa199ca0090c0077214c22b7bd3c0f",
-      "semanticTextSha256": "sha256:7ceb764a5a2b31e3a843ef4051b1dddd5dfa199ca0090c0077214c22b7bd3c0f",
+      "exactSha256": "sha256:10244d034b6ca496e06aaaa9834fe5d076626a210256a5f8f469efb444306cec",
+      "semanticTextSha256": "sha256:10244d034b6ca496e06aaaa9834fe5d076626a210256a5f8f469efb444306cec",
       "kind": "generated-adapter",
       "generator": "zed@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
-      "lastTransaction": "tx-1790444204507-c102d3fc"
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     },
     "CLAUDE.md": {
       "exactSha256": "sha256:7b3613a66463efef86b63c1a9ac8c880959979a502047f904dfb7a2635971784",
       "semanticTextSha256": "sha256:7b3613a66463efef86b63c1a9ac8c880959979a502047f904dfb7a2635971784",
       "kind": "generated-adapter",
       "generator": "claude@2",
-      "inputsHash": "sha256:938c5051454535087e03f26af35c434cf194f414d2ec8044b4ae754e8524cf37",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
       "mode": 420,
       "lastTransaction": "tx-1790528462774-f0b0dae0"
+    },
+    ".agents/generated/gemini/skills/context-manager/EXAMPLES.md": {
+      "exactSha256": "sha256:31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "semanticTextSha256": "sha256:31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-manager/EXAMPLES.md": {
+      "exactSha256": "sha256:31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "semanticTextSha256": "sha256:31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-manager/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "semanticTextSha256": "sha256:b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-manager/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "semanticTextSha256": "sha256:b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-manager/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-manager/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-manager/references/context-rules.md": {
+      "exactSha256": "sha256:090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "semanticTextSha256": "sha256:090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-manager/references/context-rules.md": {
+      "exactSha256": "sha256:090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "semanticTextSha256": "sha256:090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/EXAMPLES.md": {
+      "exactSha256": "sha256:ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "semanticTextSha256": "sha256:ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/EXAMPLES.md": {
+      "exactSha256": "sha256:ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "semanticTextSha256": "sha256:ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "semanticTextSha256": "sha256:c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "semanticTextSha256": "sha256:c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/packs.yaml": {
+      "exactSha256": "sha256:029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "semanticTextSha256": "sha256:029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/packs.yaml": {
+      "exactSha256": "sha256:029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "semanticTextSha256": "sha256:029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/references/context-rules.md": {
+      "exactSha256": "sha256:12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "semanticTextSha256": "sha256:12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/references/context-rules.md": {
+      "exactSha256": "sha256:12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "semanticTextSha256": "sha256:12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/references/pipeline.md": {
+      "exactSha256": "sha256:89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "semanticTextSha256": "sha256:89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/references/pipeline.md": {
+      "exactSha256": "sha256:89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "semanticTextSha256": "sha256:89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/context-os/references/project-graph.md": {
+      "exactSha256": "sha256:42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "semanticTextSha256": "sha256:42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/skills/context-os/references/project-graph.md": {
+      "exactSha256": "sha256:42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "semanticTextSha256": "sha256:42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/gemini/skills/context-os/rules.yaml": {
+      "exactSha256": "sha256:56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "semanticTextSha256": "sha256:56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/context-os/rules.yaml": {
+      "exactSha256": "sha256:56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "semanticTextSha256": "sha256:56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/engineering-workflow/EXAMPLES.md": {
+      "exactSha256": "sha256:d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "semanticTextSha256": "sha256:d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/engineering-workflow/EXAMPLES.md": {
+      "exactSha256": "sha256:d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "semanticTextSha256": "sha256:d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/engineering-workflow/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "semanticTextSha256": "sha256:a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/engineering-workflow/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "semanticTextSha256": "sha256:a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/engineering-workflow/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/engineering-workflow/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/gemini-precision/EXAMPLES.md": {
+      "exactSha256": "sha256:36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "semanticTextSha256": "sha256:36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/gemini-precision/EXAMPLES.md": {
+      "exactSha256": "sha256:36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "semanticTextSha256": "sha256:36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/gemini-precision/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "semanticTextSha256": "sha256:f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/gemini-precision/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "semanticTextSha256": "sha256:f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/gemini-precision/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/gemini-precision/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/gstack-roles/EXAMPLES.md": {
+      "exactSha256": "sha256:c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "semanticTextSha256": "sha256:c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/gstack-roles/EXAMPLES.md": {
+      "exactSha256": "sha256:c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "semanticTextSha256": "sha256:c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/gstack-roles/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "semanticTextSha256": "sha256:27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/gstack-roles/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "semanticTextSha256": "sha256:27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/gstack-roles/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/gstack-roles/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/ponytail-mindset/EXAMPLES.md": {
+      "exactSha256": "sha256:79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "semanticTextSha256": "sha256:79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/ponytail-mindset/EXAMPLES.md": {
+      "exactSha256": "sha256:79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "semanticTextSha256": "sha256:79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/ponytail-mindset/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "semanticTextSha256": "sha256:2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/ponytail-mindset/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "semanticTextSha256": "sha256:2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/ponytail-mindset/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/ponytail-mindset/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/security/EXAMPLES.md": {
+      "exactSha256": "sha256:0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "semanticTextSha256": "sha256:0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/security/EXAMPLES.md": {
+      "exactSha256": "sha256:0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "semanticTextSha256": "sha256:0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/security/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "semanticTextSha256": "sha256:4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/security/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "semanticTextSha256": "sha256:4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/security/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/skills/security/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-manager/EXAMPLES.md": {
+      "exactSha256": "sha256:31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "semanticTextSha256": "sha256:31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-manager/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "semanticTextSha256": "sha256:b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-manager/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-manager/references/context-rules.md": {
+      "exactSha256": "sha256:090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "semanticTextSha256": "sha256:090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/EXAMPLES.md": {
+      "exactSha256": "sha256:ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "semanticTextSha256": "sha256:ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "semanticTextSha256": "sha256:c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/packs.yaml": {
+      "exactSha256": "sha256:029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "semanticTextSha256": "sha256:029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/references/context-rules.md": {
+      "exactSha256": "sha256:12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "semanticTextSha256": "sha256:12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/references/pipeline.md": {
+      "exactSha256": "sha256:89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "semanticTextSha256": "sha256:89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/context-os/references/project-graph.md": {
+      "exactSha256": "sha256:42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "semanticTextSha256": "sha256:42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/claude/skills/context-os/rules.yaml": {
+      "exactSha256": "sha256:56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "semanticTextSha256": "sha256:56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/engineering-workflow/EXAMPLES.md": {
+      "exactSha256": "sha256:d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "semanticTextSha256": "sha256:d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/engineering-workflow/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "semanticTextSha256": "sha256:a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/engineering-workflow/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/gemini-precision/EXAMPLES.md": {
+      "exactSha256": "sha256:36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "semanticTextSha256": "sha256:36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/gemini-precision/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "semanticTextSha256": "sha256:f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/gemini-precision/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/gstack-roles/EXAMPLES.md": {
+      "exactSha256": "sha256:c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "semanticTextSha256": "sha256:c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/gstack-roles/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "semanticTextSha256": "sha256:27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/gstack-roles/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/ponytail-mindset/EXAMPLES.md": {
+      "exactSha256": "sha256:79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "semanticTextSha256": "sha256:79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/ponytail-mindset/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "semanticTextSha256": "sha256:2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/ponytail-mindset/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/security/EXAMPLES.md": {
+      "exactSha256": "sha256:0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "semanticTextSha256": "sha256:0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/security/TROUBLESHOOTING.md": {
+      "exactSha256": "sha256:4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "semanticTextSha256": "sha256:4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/claude/skills/security/VALIDATION.json": {
+      "exactSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "semanticTextSha256": "sha256:984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790712873319-d57a6490"
+    },
+    ".agents/generated/gemini/skills/engineering-workflow/references/workflow.md": {
+      "exactSha256": "sha256:6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "semanticTextSha256": "sha256:6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/skills/engineering-workflow/references/workflow.md": {
+      "exactSha256": "sha256:6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "semanticTextSha256": "sha256:6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/gemini/skills/gstack-roles/references/roles.md": {
+      "exactSha256": "sha256:f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "semanticTextSha256": "sha256:f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/skills/gstack-roles/references/roles.md": {
+      "exactSha256": "sha256:f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "semanticTextSha256": "sha256:f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/gemini/skills/ponytail-mindset/references/minimalism.md": {
+      "exactSha256": "sha256:4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "semanticTextSha256": "sha256:4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/skills/ponytail-mindset/references/minimalism.md": {
+      "exactSha256": "sha256:4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "semanticTextSha256": "sha256:4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "kind": "generated-adapter",
+      "generator": "gemini@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/claude/skills/engineering-workflow/references/workflow.md": {
+      "exactSha256": "sha256:6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "semanticTextSha256": "sha256:6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/claude/skills/gstack-roles/references/roles.md": {
+      "exactSha256": "sha256:f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "semanticTextSha256": "sha256:f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
+    },
+    ".agents/generated/claude/skills/ponytail-mindset/references/minimalism.md": {
+      "exactSha256": "sha256:4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "semanticTextSha256": "sha256:4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "kind": "generated-adapter",
+      "generator": "claude@2",
+      "inputsHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+      "mode": 420,
+      "lastTransaction": "tx-1790846913436-9dfc9143"
     }
   }
 }

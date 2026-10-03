@@ -1,301 +1,155 @@
-/**
- * ContextOS Loader — reads .agents/ directory and assembles a System Prompt.
- *
- * Loads AGENTS.md / GEMINI.md (always), then selectively loads skills
- * based on the task description and active project profile.
- *
- * The assembled prompt is injected into every agent's system message,
- * ensuring all coding agents follow the same architectural standards.
- *
- * Guaranteed context efficiency:
- * - Dynamic selection limited to exact 2–4 domain skills
- * - Hard character payload budget (preventing 35k–51k token bloat)
- */
-
+/** Assemble complete selected instructions with inspectable provenance and limits. */
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type SelectedContext, type SelectorOptions, selectContext } from "./selector.js";
+import { assertWithinRepository } from "../security/repository-boundary.js";
+import { type SelectorOptions, selectContext } from "./selector.js";
 
-function log(msg: string): void {
-	process.stderr.write(`[contextos-loader] ${msg}\n`);
-}
-
-/**
- * Maximum total characters allocated for all loaded skills combined.
- * Prevents prompt bloat while preserving essential architectural rules and checklists.
- */
+/** Soft compatibility budget; selected bodies are never sliced. */
 export const MAX_TOTAL_SKILLS_CHARS = 14000;
 
-/**
- * Try to read a file, return its content or null.
- */
-function tryReadFile(filePath: string): string | null {
-	try {
-		if (!existsSync(filePath)) return null;
-		return readFileSync(filePath, "utf-8");
-	} catch {
-		return null;
-	}
-}
-
-/**
- * Find the .agents/ directory starting from the given project root.
- * Returns the absolute path to .agents/ or null if not found.
- */
 export function findAgentsDir(projectRoot: string): string | null {
-	// 1. Direct subfolder .agents/
-	const direct = path.join(projectRoot, ".agents");
-	if (existsSync(direct)) return direct;
-
-	// 2. If projectRoot itself is .agents/
-	if (path.basename(projectRoot) === ".agents" && existsSync(projectRoot)) {
-		return projectRoot;
+	const root = path.resolve(projectRoot);
+	if (path.basename(root) === ".agents" && existsSync(root)) return root;
+	for (const candidate of [path.join(root, ".agents"), path.join(root, "..", ".agents")]) {
+		if (existsSync(candidate)) return path.resolve(candidate);
 	}
-
-	// 3. Parent directory search (up 2 levels)
-	const parent = path.join(projectRoot, "..", ".agents");
-	if (existsSync(parent)) return path.resolve(parent);
-
 	return null;
 }
 
-/**
- * Read active profile exclusions from .agents/profile.json.
- */
-function getExcludedSkills(agentsDir: string): Set<string> {
-	const profilePath = path.join(agentsDir, "profile.json");
-	const content = tryReadFile(profilePath);
-	if (!content) return new Set();
-
-	try {
-		const parsed = JSON.parse(content);
-		if (Array.isArray(parsed.exclude_skills)) {
-			log(`Active profile '${parsed.name || "custom"}' excludes: [${parsed.exclude_skills.join(", ")}]`);
-			return new Set(parsed.exclude_skills);
-		}
-	} catch {
-		// Ignore invalid json
-	}
-	return new Set();
-}
-
-/**
- * Load core engineering invariants from AGENTS.md and GEMINI.md.
- */
-function loadCoreRules(agentsDir: string): string {
-	const sections: string[] = [];
-
-	// 1. Non-Negotiables from AGENTS.md
-	const agentsMd = tryReadFile(path.join(agentsDir, "AGENTS.md"));
-	if (agentsMd) {
-		const nonNegotiableMatch = agentsMd.match(/## Non-Negotiable Rules[\s\S]*?(?=\n## |$)/);
-		if (nonNegotiableMatch) {
-			sections.push(`## Core Invariants (from AGENTS.md)\n\n${nonNegotiableMatch[0].trim()}`);
-		} else {
-			sections.push(`## Core Invariants (from AGENTS.md)\n\n${agentsMd.slice(0, 2500).trim()}`);
-		}
-		log("Loaded AGENTS.md invariants");
-	}
-
-	// 2. Gemini High-Precision Rules (Zero Assumptions, Zero Placeholders, Proof-of-Work)
-	const geminiMd =
-		tryReadFile(path.join(agentsDir, "..", "GEMINI.md")) || tryReadFile(path.join(agentsDir, "GEMINI.md"));
-	if (geminiMd) {
-		const precisionMatch = geminiMd.match(/## 1\. Zero-Assumption[\s\S]*?(?=\n## 5|$)/);
-		if (precisionMatch) {
-			sections.push(`## High-Precision Execution Rules (from GEMINI.md)\n\n${precisionMatch[0].trim()}`);
-		}
-		log("Loaded GEMINI.md precision rules");
-	}
-
-	return sections.join("\n\n");
-}
-
-/**
- * Load specific rule files from .agents/rules/ if directory exists.
- */
-function loadRules(agentsDir: string, ruleFiles: string[]): string[] {
-	const rulesDir = path.join(agentsDir, "rules");
-	if (!existsSync(rulesDir)) return [];
-
-	const loaded: string[] = [];
-	for (const ruleFile of ruleFiles) {
-		const filePath = path.join(rulesDir, ruleFile);
-		const content = tryReadFile(filePath);
-		if (content) {
-			loaded.push(`# Rule: ${ruleFile}\n\n${content.trim()}`);
-			log(`Loaded rule: ${ruleFile}`);
-		}
-	}
-
-	return loaded;
-}
-
-/**
- * Smart markdown extraction: preserves rules, patterns, negative constraints
- * and checklists without truncating mid-block or wasting tokens on huge verbose samples.
- */
-function extractEssentialSkillContent(content: string, maxLen = 3500): string {
-	// Strip YAML frontmatter
-	const cleaned = content.replace(/^---[\s\S]*?---\r?\n/, "").trim();
-
-	if (cleaned.length <= maxLen) {
-		return cleaned;
-	}
-
-	// If longer than maxLen, extract core rule sections
-	const sections: string[] = [];
-
-	// Overview & When to Use
-	const overviewMatch = cleaned.match(/## Overview[\s\S]*?(?=\n## Rules & Patterns|\n## Core Principle|$)/);
-	if (overviewMatch) sections.push(overviewMatch[0].trim());
-
-	// Rules & Patterns (including Negative Constraints / Prohibitions)
-	const rulesMatch = cleaned.match(
-		/(?:## Rules & Patterns|## Core Principle)[\s\S]*?(?=\n## Code Examples|\n<!-- Source: EXAMPLES\.md|$)/,
-	);
-	if (rulesMatch) {
-		sections.push(rulesMatch[0].trim());
-	}
-
-	// Validation Checklist
-	const checklistMatch = cleaned.match(/## Validation Checklist[\s\S]*?(?=\n## |$)/);
-	if (checklistMatch) sections.push(checklistMatch[0].trim());
-
-	// Common Mistakes / Troubleshooting
-	const mistakesMatch = cleaned.match(/(?:## Common Mistakes|## Troubleshooting)[\s\S]*?(?=\n## |$)/);
-	if (mistakesMatch) sections.push(mistakesMatch[0].trim());
-
-	if (sections.length > 0) {
-		const combined = sections.join("\n\n");
-		if (combined.length <= maxLen) return combined;
-		return `${combined.slice(0, maxLen).trim()}\n\n... [remaining rules omitted for context budget]`;
-	}
-
-	// Fallback to safe character boundary
-	return `${cleaned.slice(0, maxLen).trim()}\n\n... [remaining documentation omitted for context efficiency]`;
-}
-
-/**
- * Load SKILL.md from candidate skill directories (.agents/skills, .agents/core/skills, etc.)
- * with hard budget enforcement across all skills.
- */
-function loadSkills(
-	agentsDir: string,
-	skillNames: string[],
-	excludedSkills: Set<string>,
-	maxTotalChars = MAX_TOTAL_SKILLS_CHARS,
-): string[] {
-	const candidateRoots = [
-		path.join(agentsDir, "skills"),
-		path.join(agentsDir, "core", "skills"),
-		path.join(agentsDir, "generated", "gemini", "skills"),
-		path.join(agentsDir, "plugins"),
-	];
-
-	const loaded: string[] = [];
-	const loadedNames = new Set<string>();
-	let totalChars = 0;
-
-	// Calculate fair budget per skill based on number of active skills
-	const perSkillBudget = Math.max(1500, Math.floor(maxTotalChars / Math.max(1, skillNames.length)));
-
-	for (const skillName of skillNames) {
-		if (excludedSkills.has(skillName)) {
-			log(`Skipping skill '${skillName}' (excluded by active profile)`);
-			continue;
-		}
-
-		if (loadedNames.has(skillName)) continue;
-		if (totalChars >= maxTotalChars) {
-			log(`Total skills character budget (${maxTotalChars}) reached, omitting remaining skills`);
-			break;
-		}
-
-		for (const root of candidateRoots) {
-			if (!existsSync(root)) continue;
-
-			const skillMdPath = path.join(root, skillName, "SKILL.md");
-			const rawContent = tryReadFile(skillMdPath);
-
-			if (rawContent) {
-				const remainingBudget = Math.min(perSkillBudget, maxTotalChars - totalChars);
-				const essential = extractEssentialSkillContent(rawContent, remainingBudget);
-				const formatted = `# Skill: ${skillName}\n\n${essential}`;
-				loaded.push(formatted);
-				loadedNames.add(skillName);
-				totalChars += formatted.length;
-				log(`Loaded skill: ${skillName} (${essential.length} chars from ${path.relative(agentsDir, skillMdPath)})`);
-				break;
-			}
-		}
-	}
-
-	return loaded;
-}
-
 export interface BuildPromptOptions extends SelectorOptions {
-	/** Maximum total character budget for domain skills (default: MAX_TOTAL_SKILLS_CHARS). */
+	/** Soft limit for selected skill bodies; overflow is reported, never truncated. */
 	maxTotalSkillsChars?: number;
+	/** Hard limit for the entire assembled prompt. Overflow throws with a report. */
+	hardLimitChars?: number;
 }
 
-/**
- * Build a complete system prompt from .agents/ for a given task.
- *
- * @param projectRoot - Absolute path to the project root
- * @param task - The task description (used for selective loading)
- * @param options - Optional configuration (token/character budgets and files)
- * @returns The assembled system prompt string, or empty string if no .agents/ found
- */
-export function buildContextPrompt(projectRoot: string, task: string, options: BuildPromptOptions = {}): string {
+export interface ContextSource {
+	kind: "bootstrap" | "rule" | "skill";
+	id: string;
+	path: string;
+	sha256: string;
+	bytes: number;
+	chars: number;
+}
+
+export interface ContextAssemblyReport {
+	sources: ContextSource[];
+	warnings: Array<{ code: string; message: string }>;
+	omissions: Array<{ id: string; reasonCode: string }>;
+	totalChars: number;
+	skillChars: number;
+	/** Character estimate, not provider token telemetry. */
+	estimatedTokens: number;
+	softSkillLimitChars: number;
+	hardLimitChars?: number;
+}
+
+export class ContextAssemblyError extends Error {
+	constructor(
+		public readonly code: string,
+		message: string,
+		public readonly report: ContextAssemblyReport,
+	) {
+		super(message);
+		this.name = "ContextAssemblyError";
+	}
+}
+
+export function assembleContextPrompt(
+	projectRoot: string,
+	task: string,
+	options: BuildPromptOptions = {},
+): { prompt: string; report: ContextAssemblyReport } {
+	for (const limit of [options.maxTotalSkillsChars, options.hardLimitChars]) {
+		if (limit !== undefined && (!Number.isSafeInteger(limit) || limit <= 0))
+			throw new Error("Context character limits must be positive integers");
+	}
+	const report: ContextAssemblyReport = {
+		sources: [],
+		warnings: [],
+		omissions: [],
+		totalChars: 0,
+		skillChars: 0,
+		estimatedTokens: 0,
+		softSkillLimitChars: options.maxTotalSkillsChars ?? MAX_TOTAL_SKILLS_CHARS,
+		hardLimitChars: options.hardLimitChars,
+	};
 	const agentsDir = findAgentsDir(projectRoot);
-	if (!agentsDir) {
-		log(`No .agents/ directory found in ${projectRoot}`);
-		return "";
-	}
-
-	// 1. Profile exclusions
-	const excludedSkills = getExcludedSkills(agentsDir);
-
-	// 2. Select relevant context using dependency-safe token budgeting.
-	const selection: SelectedContext = selectContext(task, {
-		rootDir: projectRoot,
-		files: options.files,
-		contextBudgetTokens: options.contextBudgetTokens,
-	});
-	log(`Task analysis → skills: [${selection.skills.join(", ")}]`);
-
-	// 3. Assemble prompt sections
+	if (!agentsDir) return { prompt: "", report };
+	const repositoryRoot = assertWithinRepository(path.dirname(agentsDir), path.dirname(agentsDir));
+	const selection = selectContext(task, { ...options, rootDir: repositoryRoot });
+	report.warnings.push(...(selection.warnings || []));
+	report.omissions.push(...(selection.excluded || []));
 	const sections: string[] = [];
-
-	// Core non-negotiables
-	const coreRules = loadCoreRules(agentsDir);
-	if (coreRules) {
-		sections.push(coreRules);
+	function load(file: string, kind: ContextSource["kind"], id: string): string {
+		const safePath = assertWithinRepository(file, repositoryRoot);
+		if (!existsSync(safePath))
+			throw new ContextAssemblyError("CTX_PROMPT_MISSING_SOURCE", `Selected ${kind} source is missing: ${id}`, report);
+		const bytes = readFileSync(safePath);
+		const content = bytes.toString("utf8");
+		report.sources.push({
+			kind,
+			id,
+			path: path.relative(repositoryRoot, safePath).replace(/\\/g, "/"),
+			sha256: createHash("sha256").update(bytes).digest("hex"),
+			bytes: bytes.length,
+			chars: content.length,
+		});
+		return content;
 	}
-
-	// Rules from rules/ (if any)
-	const rules = loadRules(agentsDir, selection.rules);
-	if (rules.length > 0) {
-		sections.push(...rules);
+	const bootstrap = path.join(agentsDir, "AGENTS.md");
+	if (existsSync(bootstrap)) sections.push(load(bootstrap, "bootstrap", "AGENTS.md").trim());
+	for (const rule of selection.rules)
+		sections.push(`# Rule: ${rule}\n\n${load(path.join(agentsDir, "rules", rule), "rule", rule)}`);
+	for (const id of [...new Set(selection.skills)]) {
+		const source = selection.skillSources?.[id];
+		const entrypoint = selection.skillEntrypoints?.[id] || "SKILL.md";
+		let directory: string | undefined;
+		if (source) {
+			const manifest = assertWithinRepository(path.resolve(repositoryRoot, source), repositoryRoot);
+			directory = path.dirname(manifest);
+		} else {
+			// Compatibility with older selectors; overrides precede generated projections.
+			directory = ["project/skills", "core/skills", "plugins", "skills", "generated/gemini/skills"]
+				.map((base) => path.join(agentsDir, base, id))
+				.find((candidate) => existsSync(path.join(candidate, entrypoint)));
+		}
+		if (!directory)
+			throw new ContextAssemblyError("CTX_PROMPT_MISSING_SOURCE", `Selected skill source is missing: ${id}`, report);
+		const raw = load(path.join(directory, entrypoint), "skill", id);
+		const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim();
+		const relativeDirectory = path.relative(repositoryRoot, directory).replace(/\\/g, "/");
+		const formatted = `# Skill: ${id}\n\nResolve references relative to ${relativeDirectory}. Read them only when needed.\n\n${body}`;
+		report.skillChars += formatted.length;
+		sections.push(formatted);
 	}
-
-	// Domain skills (strictly capped and budget-constrained)
-	const skills = loadSkills(agentsDir, selection.skills, excludedSkills, options.maxTotalSkillsChars);
-	if (skills.length > 0) {
-		sections.push(...skills);
+	const prompt = sections.length
+		? [
+				"Follow these project instructions within the user's authorized task and the instruction hierarchy.",
+				...sections,
+			].join("\n\n")
+		: "";
+	report.totalChars = prompt.length;
+	report.estimatedTokens = Math.ceil(prompt.length / 4);
+	if (report.skillChars > report.softSkillLimitChars)
+		report.warnings.push({
+			code: "CTX_PROMPT_SOFT_BUDGET_EXCEEDED",
+			message: `Selected full skill bodies occupy ${report.skillChars} characters; soft limit is ${report.softSkillLimitChars}.`,
+		});
+	if (options.hardLimitChars !== undefined && prompt.length > options.hardLimitChars) {
+		throw new ContextAssemblyError(
+			"CTX_PROMPT_HARD_BUDGET_EXCEEDED",
+			`Complete prompt needs ${prompt.length} characters; hard limit is ${options.hardLimitChars}.`,
+			report,
+		);
 	}
+	for (const warning of report.warnings)
+		process.stderr.write(`[contextos-loader] ${warning.code}: ${warning.message}\n`);
+	return { prompt, report };
+}
 
-	if (sections.length === 0) return "";
-
-	const prompt = [
-		"You are a specialized coding agent working inside an enterprise codebase managed by ContextOS.",
-		"Below are the non-negotiable project rules, architectural guidelines, and skill constraints you MUST strictly follow.",
-		"Any code or diff you produce MUST strictly adhere to these standards.",
-		"",
-		...sections,
-	].join("\n\n");
-
-	log(`Assembled context prompt: ${prompt.length} chars across ${sections.length} sections`);
-	return prompt;
+/** Compatibility wrapper for existing agent call sites. */
+export function buildContextPrompt(projectRoot: string, task: string, options: BuildPromptOptions = {}): string {
+	return assembleContextPrompt(projectRoot, task, options).prompt;
 }

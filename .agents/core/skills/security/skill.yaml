@@ -1,6 +1,7 @@
 schemaVersion: 2
 id: security
 name: Application Security
+description: Protect authentication, authorization, sensitive data, untrusted input, external integrations, and agent tool execution.
 category: backend
 type: instruction-only
 requires: []

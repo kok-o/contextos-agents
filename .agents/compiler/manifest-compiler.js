@@ -655,34 +655,10 @@ class ManifestCompiler {
   compile() {
     this.diagnostics = [];
     const manifestsById = {};
-    const skillDirs = [];
-
-    // 1. Discover skill directories
-    if (fs.existsSync(this.coreSkillsDir)) {
-      const entries = fs.readdirSync(this.coreSkillsDir, { withFileTypes: true });
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          skillDirs.push(path.join(this.coreSkillsDir, entry.name));
-        }
-      }
-    }
-
-    // Also check plugins
-    const pluginsDir = path.join(this.agentsDir, 'plugins');
-    if (fs.existsSync(pluginsDir)) {
-      const pluginEntries = fs.readdirSync(pluginsDir, { withFileTypes: true });
-      for (const pe of pluginEntries) {
-        if (pe.isDirectory()) {
-          const pSkills = path.join(pluginsDir, pe.name, 'skills');
-          if (fs.existsSync(pSkills)) {
-            const subs = fs.readdirSync(pSkills, { withFileTypes: true });
-            for (const sub of subs) {
-              if (sub.isDirectory()) skillDirs.push(path.join(pSkills, sub.name));
-            }
-          }
-        }
-      }
-    }
+    const skillDirs = require('../plugins.js').collectAllSkillDirs(path.dirname(this.agentsDir), {
+      coreSkillsDir: this.coreSkillsDir,
+      agentsDir: this.agentsDir,
+    });
 
     // Sort skill directories for determinism
     skillDirs.sort();
@@ -697,7 +673,7 @@ class ManifestCompiler {
         // Synthesize minimal manifest from directory name & SKILL.md
         const id = path.basename(dir);
         const norm = this.normalizeManifest(dir, `id: ${id}\nname: ${id}\n`);
-        norm.source = path.relative(this.rootDir, dir).replace(/\\/g, '/');
+        norm.source = path.relative(this.rootDir, path.join(dir, norm.entrypoint)).replace(/\\/g, '/');
         manifestsById[id] = norm;
         continue;
       }

@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { collectSkillDirectories, readMeaningfulMarkdown } = require('../shared.js');
+const { getSkillEntrypointPath, collectSkillDirectories } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'claude@2';
@@ -23,7 +23,7 @@ function describe() {
 
 function renderClaudeSkill(skillDir, context) {
   const skillName = path.basename(skillDir);
-  const existingSkillMdPath = path.join(skillDir, 'SKILL.md');
+  const existingSkillMdPath = getSkillEntrypointPath(skillDir);
 
   if (!fs.existsSync(existingSkillMdPath)) {
     return null;
@@ -31,22 +31,12 @@ function renderClaudeSkill(skillDir, context) {
 
   let content = fs.readFileSync(existingSkillMdPath, 'utf8');
 
-  const examples = readMeaningfulMarkdown(path.join(skillDir, 'EXAMPLES.md'));
-  if (examples) {
-    content += '\n\n' + examples;
-  }
-
-  const troubleshooting = readMeaningfulMarkdown(path.join(skillDir, 'TROUBLESHOOTING.md'));
-  if (troubleshooting) {
-    content += '\n\n' + troubleshooting;
-  }
-
   // Strip YAML frontmatter
   content = content.replace(/^---[\s\S]*?---\r?\n/, '');
 
   return {
     path: `.agents/generated/claude/skills/${skillName}/SKILL.md`,
-    content: content.trimStart().replace(/\r\n/g, '\n'),
+    content: (content.trim() + '\n').replace(/\r\n/g, '\n'),
     mediaType: 'text/markdown',
     kind: 'generated-adapter',
     generator: GENERATOR_ID,
@@ -79,6 +69,11 @@ ${skillEntries}
 ${CLAUDE_END_MARKER}`;
 
   let finalContent;
+  if (existingContent.includes(CLAUDE_START_MARKER) || existingContent.includes(CLAUDE_END_MARKER)) {
+    if (existingContent.split(CLAUDE_START_MARKER).length !== 2 || existingContent.split(CLAUDE_END_MARKER).length !== 2 || existingContent.indexOf(CLAUDE_END_MARKER) < existingContent.indexOf(CLAUDE_START_MARKER)) {
+      throw new Error('Malformed ContextOS block in CLAUDE.md; refusing to overwrite.');
+    }
+  }
   if (existingContent.includes(CLAUDE_START_MARKER)) {
     const regex = new RegExp(`${CLAUDE_START_MARKER}[\\s\\S]*?${CLAUDE_END_MARKER}`);
     finalContent = existingContent.replace(regex, managedBlock);
@@ -90,6 +85,8 @@ ${CLAUDE_END_MARKER}`;
 
   return {
     path: 'CLAUDE.md',
+    preservesUserContent: true,
+    expectedBeforeHash: fs.existsSync(claudePath) ? require('../../filesystem/index.js').computeExactHash(Buffer.from(existingContent)) : 'NONE',
     content: finalContent.replace(/\r\n/g, '\n'),
     mediaType: 'text/markdown',
     kind: 'generated-adapter',
@@ -106,6 +103,9 @@ function render(context) {
   for (const skill of skills) {
     const art = renderClaudeSkill(skill, context);
     if (art) artifacts.push(art);
+    if (art) artifacts.push(...require('../shared.js').renderSkillResources(skill, [path.posix.dirname(art.path)], {
+      kind: art.kind, generator: art.generator, sourceSkillIds: art.sourceSkillIds, inputsHash: art.inputsHash,
+    }));
   }
 
   if (skills.length > 0) {

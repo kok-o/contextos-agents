@@ -1,0 +1,346 @@
+{
+  "date": "2026-10-02",
+  "runId": 36970178246,
+  "sourceRevision": "4d633da0b6180c266a6acf5034c4f310eb2ed348",
+  "url": "https://github.com/kok-o/contextos-agents/actions/runs/36970178246",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 110722322591,
+      "name": "Registry Schema Validation",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322685,
+      "name": "Tests (Node 22 on macos-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322696,
+      "name": "ctx.js validate & drift check (windows-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322720,
+      "name": "contextos-mcp (windows-latest, Lint, Test, Build, Pack Smoke-Test)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322741,
+      "name": "ctx.js validate & drift check (macos-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322746,
+      "name": "installed-consumer / Tarball lifecycle (windows-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322758,
+      "name": "installed-consumer / Tarball lifecycle (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322777,
+      "name": "contextos-mcp (ubuntu-latest, Lint, Test, Build, Pack Smoke-Test)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322793,
+      "name": "Markdown Lint",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322812,
+      "name": "OCI Sandbox Integration Smoke Test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322842,
+      "name": "ctx.js validate & drift check (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322851,
+      "name": "contextos-mcp (macos-latest, Lint, Test, Build, Pack Smoke-Test)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322859,
+      "name": "installed-consumer / Tarball lifecycle (macos-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322883,
+      "name": "YAML Frontmatter Lint",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322893,
+      "name": "Tests (Node 22 on windows-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322951,
+      "name": "Tests (Node 24 on macos-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722322966,
+      "name": "Tests (Node 24 on ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722323001,
+      "name": "Tests (Node 24 on windows-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 110722323064,
+      "name": "Tests (Node 22 on ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "platforms": [
+    {
+      "platform": "windows",
+      "core": [
+        {
+          "node": "22",
+          "passed": 524,
+          "failed": 0
+        },
+        {
+          "node": "24",
+          "passed": 524,
+          "failed": 0
+        }
+      ],
+      "mcp": {
+        "passed": 623,
+        "failed": 0,
+        "skipped": 7,
+        "skippedNames": [
+          "registerContextosTools contextos_delegate delegates synchronously and returns completed results",
+          "registerContextosTools contextos_delegate blocks file paths that escape repository boundary",
+          "registerContextosTools contextos_delegate delegates asynchronously (wait: false) and returns immediately",
+          "registerContextosTools contextos_merge merges the selected thread branch",
+          "registerContextosTools contextos_cleanup cleans up session resources",
+          "MCP Session Persistence & Orphan Management recovers running thread to interrupted after process crash and preserves cost",
+          "MCP Session Persistence & Orphan Management preserves five rapid thread updates with a monotonic sequence"
+        ]
+      },
+      "install": "PASS",
+      "migration": "PASS",
+      "restoredFiles": 325,
+      "archives": [
+        {
+          "file": "contextos-agents-2.3.0.tgz",
+          "sha256": "db981c3f052b9bb5c724b41405873d8871c2c5d04958d34613d4af05e904db70",
+          "downloadedIntegrity": "PASS"
+        },
+        {
+          "file": "contextos-mcp-0.4.0.tgz",
+          "sha256": "340ad004ac47bab672fffb344b2116db60ed0a3e9ea9e0703c21d2904140df34",
+          "downloadedIntegrity": "PASS"
+        }
+      ]
+    },
+    {
+      "platform": "ubuntu",
+      "core": [
+        {
+          "node": "22",
+          "passed": 524,
+          "failed": 0
+        },
+        {
+          "node": "24",
+          "passed": 524,
+          "failed": 0
+        }
+      ],
+      "mcp": {
+        "passed": 623,
+        "failed": 0,
+        "skipped": 7,
+        "skippedNames": [
+          "registerContextosTools contextos_delegate delegates synchronously and returns completed results",
+          "registerContextosTools contextos_delegate blocks file paths that escape repository boundary",
+          "registerContextosTools contextos_delegate delegates asynchronously (wait: false) and returns immediately",
+          "registerContextosTools contextos_merge merges the selected thread branch",
+          "registerContextosTools contextos_cleanup cleans up session resources",
+          "MCP Session Persistence & Orphan Management recovers running thread to interrupted after process crash and preserves cost",
+          "MCP Session Persistence & Orphan Management preserves five rapid thread updates with a monotonic sequence"
+        ]
+      },
+      "install": "PASS",
+      "migration": "PASS",
+      "restoredFiles": 325,
+      "archives": [
+        {
+          "file": "contextos-agents-2.3.0.tgz",
+          "sha256": "db981c3f052b9bb5c724b41405873d8871c2c5d04958d34613d4af05e904db70",
+          "downloadedIntegrity": "PASS"
+        },
+        {
+          "file": "contextos-mcp-0.4.0.tgz",
+          "sha256": "340ad004ac47bab672fffb344b2116db60ed0a3e9ea9e0703c21d2904140df34",
+          "downloadedIntegrity": "PASS"
+        }
+      ]
+    },
+    {
+      "platform": "macos",
+      "core": [
+        {
+          "node": "22",
+          "passed": 524,
+          "failed": 0
+        },
+        {
+          "node": "24",
+          "passed": 524,
+          "failed": 0
+        }
+      ],
+      "mcp": {
+        "passed": 623,
+        "failed": 0,
+        "skipped": 7,
+        "skippedNames": [
+          "registerContextosTools contextos_delegate delegates synchronously and returns completed results",
+          "registerContextosTools contextos_delegate blocks file paths that escape repository boundary",
+          "registerContextosTools contextos_delegate delegates asynchronously (wait: false) and returns immediately",
+          "registerContextosTools contextos_merge merges the selected thread branch",
+          "registerContextosTools contextos_cleanup cleans up session resources",
+          "MCP Session Persistence & Orphan Management recovers running thread to interrupted after process crash and preserves cost",
+          "MCP Session Persistence & Orphan Management preserves five rapid thread updates with a monotonic sequence"
+        ]
+      },
+      "install": "PASS",
+      "migration": "PASS",
+      "restoredFiles": 325,
+      "archives": [
+        {
+          "file": "contextos-agents-2.3.0.tgz",
+          "sha256": "db981c3f052b9bb5c724b41405873d8871c2c5d04958d34613d4af05e904db70",
+          "downloadedIntegrity": "PASS"
+        },
+        {
+          "file": "contextos-mcp-0.4.0.tgz",
+          "sha256": "340ad004ac47bab672fffb344b2116db60ed0a3e9ea9e0703c21d2904140df34",
+          "downloadedIntegrity": "PASS"
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11211975040,
+      "name": "core-evidence-macos-latest-node-24",
+      "digest": "sha256:8ec5a55f67058d090efc9d804b566ac1c4efdc1e299713f5c1a3b5b4ed997dfb",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211975040"
+    },
+    {
+      "id": 11211905384,
+      "name": "core-evidence-macos-latest-node-22",
+      "digest": "sha256:a60bad32ee4b57aac2a603f0c36d0991a7e999f7f110c328eb5d2d2dbdb64a23",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211905384"
+    },
+    {
+      "id": 11211880474,
+      "name": "mcp-evidence-macos-latest",
+      "digest": "sha256:7dcd0b363d31d30888bd84c783416fc5179fcb36c6f46f76b2328d0ea49e6c71",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211880474"
+    },
+    {
+      "id": 11211820580,
+      "name": "consumer-evidence-ubuntu-latest",
+      "digest": "sha256:e5311c57028b25c89447a9ab1c9ac92f7663ddf5ae41896867f376cb221fc628",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211820580"
+    },
+    {
+      "id": 11211815743,
+      "name": "core-evidence-windows-latest-node-24",
+      "digest": "sha256:770a9656ee345bc008564340d9495a7bacd8276d5f96fe08cfccc53f26c44434",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211815743"
+    },
+    {
+      "id": 11211436092,
+      "name": "core-evidence-windows-latest-node-22",
+      "digest": "sha256:999fe8a64777b02ff6bd10f0c571317b3fd53c0ae3d24697bda77c5074c0d07a",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211436092"
+    },
+    {
+      "id": 11211341105,
+      "name": "consumer-evidence-macos-latest",
+      "digest": "sha256:0c677284f35aa04628c9d8b1d66d1b19e7701d4b2f2668ea142a7997d17a87e6",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211341105"
+    },
+    {
+      "id": 11211192370,
+      "name": "core-evidence-ubuntu-latest-node-22",
+      "digest": "sha256:cc53b81f63679a3dbf1df5dee23bed06d0732b770b5c7d57302e3b4fbf6c4679",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211192370"
+    },
+    {
+      "id": 11211107894,
+      "name": "core-evidence-ubuntu-latest-node-24",
+      "digest": "sha256:2cb82e746da73620fa006b1fb0e68e3f4222052bb4e32b81cc8913d4323ca257",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211107894"
+    },
+    {
+      "id": 11211008629,
+      "name": "mcp-evidence-windows-latest",
+      "digest": "sha256:7e387d81d91de599ac1aefd31230d75f6123063eb0560abaaaab5581e2bd1f06",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11211008629"
+    },
+    {
+      "id": 11210988421,
+      "name": "mcp-evidence-ubuntu-latest",
+      "digest": "sha256:9fac3f5e2f3e6578b581aea6e537e526bfcb6935300c620f6ff03deb0b53929f",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11210988421"
+    },
+    {
+      "id": 11210804607,
+      "name": "consumer-evidence-windows-latest",
+      "digest": "sha256:401dc47dc47b599e84f5c83c2811c73fafe1f7faa318d25423aa0cae4fcf564b",
+      "expiresAt": "2026-12-31T05:42:56Z",
+      "url": "https://api.github.com/repos/kok-o/contextos-agents/actions/artifacts/11210804607"
+    }
+  ],
+  "publication": "NOT_AUTHORIZED",
+  "clientPilot": "PENDING",
+  "benchmarks": "PAUSED"
+}

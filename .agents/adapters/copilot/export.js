@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'copilot@2';
@@ -19,9 +19,9 @@ function describe() {
   };
 }
 
-function buildSkillSection(skillDir) {
+function buildSkillSection(skillDir, context) {
   const skillName = path.basename(skillDir);
-  const skillMdPath = path.join(skillDir, 'SKILL.md');
+  const skillMdPath = getSkillEntrypointPath(skillDir);
   const yamlPath = path.join(skillDir, 'skill.yaml');
 
   let title = skillName;
@@ -43,7 +43,8 @@ function buildSkillSection(skillDir) {
   }
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
-  const skillRef = `*Source: \`.agents/skills/${skillName}/SKILL.md\` (Read on demand)*\n`;
+  const sourcePath = path.relative(context?.projectRoot || '.', skillMdPath).split(path.sep).join('/');
+  const skillRef = `*Source: \`${sourcePath}\` (Read on demand)*\n`;
   return `\n### ${title}\n${descLine}${skillRef}`;
 }
 
@@ -62,7 +63,7 @@ function render(context) {
     `# GitHub Copilot Instructions — ContextOS\n\n` +
     `## Project Rules\n\n` +
     `### Step 0 — Identify Before Acting\n\n` +
-    `Before writing a single line of code or plan, state:\n` +
+    `When useful for substantial work, identify:\n` +
     `\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n` +
     `> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.\n\n` +
     `### Non-Negotiable Rules\n\n` +
@@ -89,22 +90,42 @@ function render(context) {
       const rawTags = extractYamlField(yaml, 'tags');
       if (rawTags) tags = rawTags.replace(/[\[\]]/g, '');
     }
-    const relPath = `.agents/core/skills/${skillName}/SKILL.md`;
+    const relPath = path.relative(context?.projectRoot || '.', getSkillEntrypointPath(skill)).replace(/\\/g, '/');
     lines.push(`| \`${tags}\` | **${skillName}** | \`${relPath}\` |\n`);
   }
   lines.push(`\n---\n`);
 
   for (const skill of skills) {
-    const section = buildSkillSection(skill);
+    const section = buildSkillSection(skill, context);
     if (section) {
       lines.push(section);
     }
   }
 
+  const target = path.join(context?.projectRoot || '.', '.github/copilot-instructions.md');
+  const existing = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
+  const start = '<!-- CONTEXTOS:START -->';
+  const end = '<!-- CONTEXTOS:END -->';
+  const block = `${start}\n${lines.join('').replace(/\r\n/g, '\n')}${end}`;
+  let content;
+  if (existing.includes(start) || existing.includes(end)) {
+    if (existing.split(start).length !== 2 || existing.split(end).length !== 2 || existing.indexOf(end) < existing.indexOf(start)) {
+      throw new Error('Malformed ContextOS block in Copilot instructions; refusing to overwrite.');
+    }
+    content = existing.slice(0, existing.indexOf(start)) + block + existing.slice(existing.indexOf(end) + end.length);
+  } else {
+    const { LockfileV2Manager, computeExactHash } = require('../../filesystem/index.js');
+    const managed = new LockfileV2Manager(context?.projectRoot || '.').read()?.managedFiles?.['.github/copilot-instructions.md'];
+    const legacyManaged = managed?.generator === GENERATOR_ID && managed.exactSha256 === computeExactHash(Buffer.from(existing));
+    content = legacyManaged ? block + '\n' : existing + (existing && !existing.endsWith('\n') ? '\n' : '') + (existing ? '\n' : '') + block + '\n';
+  }
+
   return [
     {
       path: '.github/copilot-instructions.md',
-      content: lines.join('').replace(/\r\n/g, '\n'),
+      content,
+      preservesUserContent: true,
+      expectedBeforeHash: fs.existsSync(target) ? require('../../filesystem/index.js').computeExactHash(Buffer.from(existing)) : 'NONE',
       mediaType: 'text/markdown',
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
