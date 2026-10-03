@@ -7,3 +7,4 @@ trajectories/
 .swarm-worktrees/
 *.tgz
 .DS_Store
+.tmp*
