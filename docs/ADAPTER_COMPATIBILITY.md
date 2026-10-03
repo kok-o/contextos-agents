@@ -2,9 +2,10 @@
 
 This document records the export contracts for the ContextOS v2.3 local candidate. Passing structural or consumer tests does not establish that every client version loads an artifact. Native loader acceptance must be recorded separately.
 
-Release pair: core 2.3.0 / MCP 0.4.0. Historical accepted source revision: `4d633da`.
-Remote Windows/Linux/macOS core Node 22/24, MCP and installed lifecycle/migration
-acceptance passed in run `36970178246`. Explicit Codex CLI 0.159.2 native activation
+Release pair: core 2.3.0 / MCP 0.4.0. The [release manifest](evidence/release-2.3.json)
+binds the candidate source and archives to Windows/Linux/macOS core Node 22/24,
+MCP and installed lifecycle/migration acceptance. The earlier `4d633da` run is
+historical evidence. Explicit Codex CLI 0.159.2 native activation
 with GPT-6.1 Sol/high passed on 2 October; automatic routing, other live clients
 and the final candidate decision remain pending. See [calibration evidence](BENCHMARK_RESULTS.md)
 and [R2 preparation](R2_RELEASE_PREPARATION.md).

@@ -65,9 +65,10 @@ calling a model API. The [five-minute guide](docs/product/onboarding.md) explain
 the same workflow for an existing project.
 
 For the current R2 candidates, see the [release preparation status](docs/R2_RELEASE_PREPARATION.md)
-and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). Remote CI
-passed on `4d633da`; subsequent cleanup needs CI on its own revision. The client
-pilot and publication decision remain pending. Internal plans, local API probes
+and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). The
+[release manifest](docs/evidence/release-2.3.json) records the verified source,
+cross-platform CI and candidate archive identities. The client pilot and
+publication decision remain pending. Internal plans, local API probes
 and raw logs are excluded from the public release surface.
 
 ```bash

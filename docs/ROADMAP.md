@@ -17,7 +17,8 @@ publication remains a separate decision. See [release preparation](R2_RELEASE_PR
 
 ## Remaining release gates
 
-1. Verify the cleaned release revision and both archive identities in CI.
+1. Retain the verified source, CI results and archive identities in the
+   [release manifest](evidence/release-2.3.json).
 2. Complete the client pilot. Explicit Codex activation is verified; automatic
    routing, Cursor activation and external user workflows remain unverified.
 3. Review the revision-bound changelog, compatibility matrix and evidence,
