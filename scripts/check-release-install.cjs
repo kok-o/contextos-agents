@@ -34,7 +34,7 @@ function npmCli() {
 
 fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
 const consumer = fs.mkdtempSync(path.join(root, 'scratch/release-consumer-space '));
-const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache') };
+const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache'), NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=4096' };
 function run(executable, args, options = {}) {
   return execFileSync(executable, args, { cwd: consumer, env, encoding: 'utf8', timeout: 180000, windowsHide: true, ...options });
 }

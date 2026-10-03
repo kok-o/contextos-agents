@@ -11,6 +11,8 @@
 *.css text eol=lf
 *.html text eol=lf
 *.sh text eol=lf
+*.py text eol=lf
+LICENSE text eol=lf
 
 # Windows scripts must keep CRLF
 *.bat text eol=crlf
