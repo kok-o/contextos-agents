@@ -140,6 +140,8 @@ locally. Model adherence and Cursor behavior still require client interaction.
 
 ## Model comparisons are paused
 
-The user paused benchmarks on 1 October 2026. Resume only on explicit request.
-Existing fixed-model results do not establish universal quality improvement or
-savings for long client sessions. Migration and release gates make no paid calls.
+The completed calibration is summarized in [benchmark results](BENCHMARK_RESULTS.md).
+Further quality, cost and long-session measurements remain paused until an
+explicit request. Existing fixed-model results do not establish universal quality
+improvement or savings for long client sessions. Migration and release gates make
+no paid calls.

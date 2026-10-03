@@ -1,19 +1,137 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-03",
-  "status": "preparation-in-progress",
+  "status": "verified-release-candidate",
+  "sourceRevision": "81f39aea6108cda99eae9c07216882685b7a1d1a",
   "versions": {
     "core": "2.3.0",
     "mcp": "0.4.0"
   },
   "publication": "not-authorized",
-  "previousAcceptedCi": {
-    "sourceRevision": "4d633da0b6180c266a6acf5034c4f310eb2ed348",
-    "runId": 36970178246
+  "archives": [
+    {
+      "file": "contextos-agents-2.3.0.tgz",
+      "sha256": "bd499532b3a77db28f3ad6dba0abc3893bfbd05554484fc1be4417da3452c199",
+      "bytes": 383297
+    },
+    {
+      "file": "contextos-mcp-0.4.0.tgz",
+      "sha256": "53eaa8982ab7b14c80ead370664931840c21281a998d927ded3ecbe0aa56a26c",
+      "bytes": 1922920
+    }
+  ],
+  "ci": {
+    "runId": 37122760907,
+    "url": "https://github.com/kok-o/contextos-agents/actions/runs/37122760907",
+    "conclusion": "success",
+    "successfulJobs": 19,
+    "coreNodeVersions": [
+      22,
+      24
+    ],
+    "artifacts": "core-evidence-*, mcp-evidence-*, consumer-evidence-*",
+    "platforms": [
+      {
+        "runner": "windows-latest",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "migration": "PASS",
+        "configurationFilesRestored": 325,
+        "userRulesPreserved": true,
+        "releaseSurface": "PASS",
+        "mcpTests": {
+          "passed": 623,
+          "skipped": 7,
+          "failed": 0
+        }
+      },
+      {
+        "runner": "ubuntu-latest",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "migration": "PASS",
+        "configurationFilesRestored": 325,
+        "userRulesPreserved": true,
+        "releaseSurface": "PASS",
+        "mcpTests": {
+          "passed": 623,
+          "skipped": 7,
+          "failed": 0
+        }
+      },
+      {
+        "runner": "macos-latest",
+        "node": "v22.23.2",
+        "installation": "PASS",
+        "migration": "PASS",
+        "configurationFilesRestored": 325,
+        "userRulesPreserved": true,
+        "releaseSurface": "PASS",
+        "mcpTests": {
+          "passed": 623,
+          "skipped": 7,
+          "failed": 0
+        }
+      }
+    ]
+  },
+  "priorCleanedRuns": [
+    {
+      "runId": 37122127364,
+      "sourceRevision": "a1b4d4574493cc33ffd995ae696024967f565cb9",
+      "conclusion": "success",
+      "successfulJobs": 19,
+      "disposition": "Superseded by final README update"
+    },
+    {
+      "runId": 37122507331,
+      "sourceRevision": "a3974121563fe8bd6f775adcec0b8f08eaea5145",
+      "conclusion": "failure",
+      "successfulJobs": 18,
+      "reason": "Windows packaged smoke teardown hit EBUSY before child process close; 623 MCP assertions passed",
+      "disposition": "Fixed teardown by awaiting process close and retrying transient removal errors"
+    }
+  ],
+  "local": {
+    "isolatedCommittedSource": true,
+    "installation": "PASS",
+    "migration": "PASS",
+    "coreTests": {
+      "passed": 530,
+      "failed": 0
+    },
+    "mcpTests": {
+      "passed": 623,
+      "skipped": 7,
+      "failed": 0
+    },
+    "secretScan": "PASS",
+    "exactConfiguredCredentialsHistoryScan": {
+      "checkedBlobs": 3469,
+      "findings": 0,
+      "scope": "Currently configured credentials only; unknown historical credentials are outside this check"
+    }
+  },
+  "cleanup": {
+    "localFilesRemovedFromGitTracking": 39,
+    "filesPreservedLocally": true,
+    "previousPublicHistoryRewritten": false,
+    "localPlansRawLogsAndApiProbesExcluded": true
+  },
+  "localFailedAttempt": {
+    "phase": "Installing published core 2.2.0 before upgrade",
+    "error": "Windows EPERM renaming .agents.staging to .agents",
+    "evidence": "Local scratch/release-2.3-previous-init-failure.json and .log retained",
+    "disposition": "Repeated in a fresh disposable consumer; final acceptance requires successful retry and CI migration results"
+  },
+  "support": {
+    "stableMcp": "Default read-only inspection",
+    "experimentalMcp": "Execution, Python, crash recovery and concurrent runtime persistence; seven documented skipped tests",
+    "explicitCodexActivation": "Previously verified CLI 0.159.2 with Sol/high; automatic routing unverified"
   },
   "remaining": [
-    "Exact cleaned revision CI and archive identity",
-    "Client pilot",
+    "Client pilot: automatic routing, Cursor and external user workflows",
     "Separate publication decision"
-  ]
+  ],
+  "evidenceUpdates": "Subsequent documentation-only evidence commits do not change this candidate source revision or archive identity"
 }
