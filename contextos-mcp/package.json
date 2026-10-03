@@ -6,7 +6,6 @@
   "bin": {
     "contextos-mcp": "./bin/mcp.mjs"
   },
-  "main": "dist/index.js",
   "files": [
     "dist",
     "bin"

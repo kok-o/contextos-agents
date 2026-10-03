@@ -175,8 +175,9 @@ jobs:
           const packed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' }))[0];
           const files = packed.files.map(file => file.path);
           if (!files.includes('NOTICE')) throw new Error('NOTICE is missing from the npm package');
-          const benchmarks = files.filter(file => file === 'benchmarks' || file.startsWith('benchmarks/'));
-          if (benchmarks.length) throw new Error(`Benchmark files must not ship in core: ${benchmarks.join(', ')}`);
+          const { validatePackagePaths } = require('./scripts/check-release-surface.cjs');
+          const violations = validatePackagePaths(files, 'core');
+          if (violations.length) throw new Error(`Unexpected package contents: ${violations.join(', ')}`);
           console.log(`Tarball contents verified (${files.length} files).`);
           NODE
 

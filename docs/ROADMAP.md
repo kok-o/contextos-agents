@@ -1,45 +1,37 @@
 # ContextOS roadmap
 
-Updated 2 October 2026. Source candidates: `contextos-agents@2.3.0` and
-`@contextos/mcp@0.4.0`; these are not published releases.
-[The work plan](../CONTEXTOS_WORK_PLAN.md) defines acceptance criteria;
-[R2 preparation](R2_RELEASE_PREPARATION.md) records remaining release gates.
+Updated 3 October 2026. Core 2.3.0 and MCP 0.4.0 are prepared candidates;
+publication remains a separate decision. See [release preparation](R2_RELEASE_PREPARATION.md).
 
-## Implemented scope
+## Implemented
 
-- Deterministic compilation and six adapter exports with user content preservation
-  and drift checks. The [compatibility matrix](ADAPTER_COMPATIBILITY.md) separates
-  export, discovery, activation and model behavior.
-- Short bootstrap, task/file selection, project overrides, whole selected bodies,
-  explained omissions and soft-budget overflow warnings.
-- Offline optional catalog, presets, staged scanning and consumer CI governance.
-  Export filters installed skills by profile; it does not resolve a task.
-- Default read-only MCP status, compare and diff. Execution, delegation, merging,
-  cleanup and Python REPL remain experimental.
-- Local archive installation/lifecycle checks. Remote platform CI is a release gate;
-  local Windows results do not certify Linux or macOS.
+- Deterministic compilation, six adapter exports, preservation of user content,
+  project overrides and drift checks.
+- Compact bootstrap, task/file selection, whole selected skill bodies and
+  warnings for missing sources, omissions and soft-budget overflow.
+- Required safety guidance survives profile exclusions and small soft budgets.
+- Offline catalog, presets, staged scanning and installed-consumer CI.
+- Default read-only MCP inspection; runtime execution remains experimental.
+- Upgrade from core 2.2.0 / MCP 0.3.1 and checkpoint rollback preserving rules.
+- Windows/Linux/macOS acceptance, including real npm archive installation.
 
-## Next: complete R2 preparation
+## Remaining release gates
 
-1. Completed: synchronize documentation and inventory MCP skips; cover stable API scenarios
-   and state experimental limitations explicitly.
-2. Completed: verify upgrade from published core 2.2.0 and checkpoint rollback preserving
-   project rules, root instructions and overrides.
-3. Completed: Windows/Linux/macOS CI on `4d633da`, 19/19 jobs PASS;
-   twelve artifacts retain logs, installation/migration results and archives.
-4. Complete the client pilot, then assemble one revision-bound candidate with
-   changelog, migration, compatibility matrix and evidence.
-5. Make a separate publication decision after CI and pilot results.
+1. Verify the cleaned release revision and both archive identities in CI.
+2. Complete the client pilot. Explicit Codex activation is verified; automatic
+   routing, Cursor activation and external user workflows remain unverified.
+3. Review the revision-bound changelog, compatibility matrix and evidence,
+   then decide whether to publish.
 
-## Measurements on pause
+## Quality and cost
 
-Quality, cost and long-session measurements are incomplete. Small experiments do
-not establish general savings or improved answers. The user paused benchmarks on
-1 October; resume only on explicit request.
+[Calibration results](BENCHMARK_RESULTS.md) compare compact selection, full
+instructions and vanilla prompts. They do not establish a general quality
+advantage or production long-session performance. The next measurement phase
+uses real repository tasks and longer sessions with independent acceptance.
 
 ## Deferred until demonstrated need
 
-AST/dependency graph extensions, swarm redesign, automatic learning, catalog
-expansion, private registries, organization policy synchronization, IDE extensions
-and a hosted service are research directions without promised versions or dates.
-They are outside R1/R2.
+AST graph extensions, swarm redesign, automatic learning, catalog expansion,
+private registries, organization policy synchronization, IDE extensions and a
+hosted service are research directions without promised versions or dates.

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-03",
+  "status": "preparation-in-progress",
+  "versions": {
+    "core": "2.3.0",
+    "mcp": "0.4.0"
+  },
+  "publication": "not-authorized",
+  "previousAcceptedCi": {
+    "sourceRevision": "4d633da0b6180c266a6acf5034c4f310eb2ed348",
+    "runId": 36970178246
+  },
+  "remaining": [
+    "Exact cleaned revision CI and archive identity",
+    "Client pilot",
+    "Separate publication decision"
+  ]
+}

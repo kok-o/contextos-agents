@@ -86,6 +86,34 @@ test('settlement uses verified completed usage, discounts cache, avoids double b
   assert.equal(budget.settle(invalidTicket, completed([], { input_tokens: 9999999, output_tokens: 1 })), null);
 });
 
+test('Sol high uses its own rates, preserves the shared cap, and retains unexpected-model reservations', async t => {
+  const ledger = path.join(temp(t), 'ledger.json');
+  fs.writeFileSync(ledger, JSON.stringify({ limitMicroUsd: 10000000, reservedMicroUsd: 2880746 }));
+  const budget = new Budget(ledger);
+  const body = bodyFor('instructions', [], { model: 'gpt-6.1-sol', reasoningEffort: 'high' });
+  assert.equal(body.reasoning.effort, 'high');
+  const ticket = budget.reserve(body);
+  assert.ok(ticket.amount > reservation(bodyFor('instructions', [])) * 19);
+  assert.equal(budget.settle(ticket, completed([])), null);
+  const response = { ...completed([], { input_tokens: 1000, output_tokens: 200, input_tokens_details: { cached_tokens: 500 } }), model: body.model };
+  const charge = budget.settle(ticket, response);
+  assert.equal(charge.standardRateEstimateUsd, 0.00305);
+  assert.equal(charge.retainedMicroUsd, 4125);
+  assert.equal(budget.ledger.reservedMicroUsd, 2880746 + 4125);
+  assert.throws(() => reservation({ ...body, model: 'unpriced-model' }), /Unsupported/);
+  assert.throws(() => reservation({ ...body, service_tier: 'priority' }), /Unsupported/);
+  await request(body, 'unused', { fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify(response) }) });
+  await assert.rejects(request(body, 'unused', { fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify(completed([])) }) }), /unexpected model/);
+  assert.throws(() => parseOptions(['--reasoning', 'none']), /Invalid reasoning/);
+  const written = budget.reserve(body);
+  const withWrites = { ...response, usage: { ...response.usage, input_tokens_details: { cached_tokens: 500, cache_write_tokens: 500 } } };
+  const writtenCharge = budget.settle(written, withWrites);
+  assert.equal(writtenCharge.invoiceCostKnown, true);
+  assert.equal(writtenCharge.standardRateEstimateUsd, 0.0033);
+  const conflicting = budget.reserve(body);
+  assert.equal(budget.settle(conflicting, { ...withWrites, usage: { ...withWrites.usage, input_tokens_details: { cached_tokens: 500, cache_write_tokens: 500, cache_creation_tokens: 0 } } }), null);
+});
+
 test('real tool loop repairs a fixture, preserves reasoning items, and passes the hidden consumer contracts', async t => {
   const root = temp(t), task = CASES[0], fixture = createFixture(root, task);
   const budget = new Budget(path.join(root, 'ledger.json'));
@@ -169,4 +197,38 @@ test('TPM pacing waits without network calls or reservations and uses bounded sl
   assert.ok(first > 0); assert.ok(now > first); assert.ok(delays.every(delay => delay <= 30000));
   await pacer.wait(bodyFor('x'.repeat(100000), []));
   await assert.rejects(new Pacer({ tokensPerMinute: 1000 }).wait(body), /too large/);
+});
+
+test('raised authorization preserves historical spend and refuses requests beyond cumulative $50', t => {
+  const ledger = path.join(temp(t), 'ledger.json');
+  fs.writeFileSync(ledger, JSON.stringify({ limitMicroUsd: 10000000, reservedMicroUsd: 49999999 }));
+  const budget = new Budget(ledger, { limitUsd: 50 });
+  assert.equal(budget.ledger.reservedMicroUsd, 49999999);
+  assert.throws(() => budget.reserve(bodyFor('neutral', [])), /SPEND_LIMIT/);
+  assert.equal(JSON.parse(fs.readFileSync(ledger)).reservedMicroUsd, 49999999);
+  assert.throws(() => new Budget(ledger, { limitUsd: 51 }), /authorized/);
+  const options = parseOptions(['--budget-usd', '50', '--max-steps', '0', '--tpm', '500000', '--rpm', '500']);
+  assert.equal(options.maxSteps, null); assert.equal(options.limitUsd, 50);
+});
+
+test('RPM pacing enforces a rolling window independently of token capacity', async () => {
+  let now = 0;
+  const pacer = new Pacer({ tokensPerMinute: 500000, requestsPerMinute: 2, now: () => now, sleep: async delay => { now += delay; } });
+  const body = bodyFor('neutral', []);
+  await pacer.wait(body); const first = now;
+  await pacer.wait(body); await pacer.wait(body);
+  assert.ok(now >= first + 60000);
+  assert.throws(() => new Pacer({ requestsPerMinute: 501 }), /Invalid RPM/);
+});
+
+test('uncapped attempts continue past six requests and still retain the cumulative spend guard', async t => {
+  const root = temp(t), task = CASES[0], fixture = createFixture(root, task);
+  let calls = 0;
+  const result = await runAttempt({ fixture, task, instructions: 'neutral', maxSteps: null,
+    budget: new Budget(path.join(root, 'ledger.json'), { limitUsd: 50 }), key: 'unused', save() {},
+    requestImpl: async () => ++calls <= 7 ? completed([{ type: 'function_call', call_id: `call-${calls}`, name: 'read_file', arguments: JSON.stringify({ path: task.file }) }]) : completed([]) });
+  assert.equal(result.requestCount, 8); assert.equal(result.finished, true); assert.equal(result.stoppedAtStepLimit, false);
+  const limited = await runAttempt({ fixture, task, instructions: 'neutral', maxSteps: null,
+    budget: new Budget(path.join(root, 'tight.json'), { limitUsd: 0.000001 }), key: 'unused', save() {}, requestImpl: async () => { throw new Error('Must not send'); } });
+  assert.equal(limited.requestCount, 0); assert.match(limited.apiError, /SPEND_LIMIT/);
 });

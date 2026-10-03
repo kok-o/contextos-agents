@@ -44,6 +44,8 @@ jobs:
           npm run build 2>&1 | Tee-Object -FilePath ../scratch/mcp-build.log
           exit $LASTEXITCODE
         working-directory: ./contextos-mcp
+      - name: Verify Git and npm release surfaces
+        run: npm run check:release-surface
       - name: Pack both local candidates
         run: |
           node -e "require('fs').mkdirSync('scratch/release-candidate', { recursive: true })"
@@ -69,6 +71,7 @@ jobs:
           path: |
             scratch/release-install-result.json
             scratch/release-migration-result.json
+            scratch/release-surface.json
             scratch/*.log
             scratch/release-candidate/*.tgz
             scratch/r2-previous/*.tgz

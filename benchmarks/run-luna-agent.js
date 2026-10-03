@@ -5,7 +5,7 @@ const path = require('node:path');
 const { CASES } = require('./luna/cases');
 const { ORACLES } = require('./luna/oracles');
 const { ROOT, hash, createFixture, runTool, evaluate, validateControls } = require('./luna/fixture');
-const { PRICING, Budget, reservation, atomicJson } = require('./luna/spending');
+const { PRICING, pricingFor, Budget, reservation, atomicJson } = require('./luna/spending');
 const { bodyFor, initialInput, runAttempt, redact } = require('./luna/client');
 const { ARMS } = require('./v2/arms/arm-definitions');
 const { buildPromptContext } = require('./v2/harness/prompts');
@@ -18,18 +18,28 @@ const PILOT_IDS = ['resolve-budget', 'paths-traversal', 'workspace-limit'];
 const CONTROLLER_FILES = ['benchmarks/run-luna-agent.js', ...['cases.js', 'oracles.js', 'fixture.js', 'worker.cjs', 'spending.js', 'client.js', 'pacing.js'].map(name => `benchmarks/luna/${name}`), 'benchmarks/v2/harness/prompts.js', '.agents/resolver/canonical-resolver.js', '.agents/compiler/manifest-compiler.js'];
 
 function parseOptions(args) {
-  const options = { mode: 'pilot', run: false, resume: null, controlsOnly: false, tpm: 60000 };
+  const options = { mode: 'pilot', run: false, resume: null, controlsOnly: false, tpm: 60000, rpm: 500, limitUsd: 10, maxSteps: 6, model: PRICING.model, reasoningEffort: 'medium' };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--run') options.run = true;
     else if (args[i] === '--controls-only') options.controlsOnly = true;
     else if (args[i] === '--mode') options.mode = args[++i];
     else if (args[i] === '--resume') options.resume = args[++i];
     else if (args[i] === '--tpm') options.tpm = Number(args[++i]);
+    else if (args[i] === '--rpm') options.rpm = Number(args[++i]);
+    else if (args[i] === '--budget-usd') options.limitUsd = Number(args[++i]);
+    else if (args[i] === '--max-steps') { const value = Number(args[++i]); options.maxSteps = value === 0 ? null : value; }
+    else if (args[i] === '--model') options.model = args[++i];
+    else if (args[i] === '--reasoning') options.reasoningEffort = args[++i];
     else throw new Error('Usage: node benchmarks/run-luna-agent.js [--mode pilot|full] [--run] [--resume RUN_ID] [--controls-only] [--tpm N]');
   }
   if (!['pilot', 'full'].includes(options.mode) || (options.resume !== null && (typeof options.resume !== 'string' || !/^[A-Za-z0-9_.-]+$/.test(options.resume) || options.resume.startsWith('.')))) throw new Error('Invalid mode or resume identifier');
   if (options.controlsOnly && (options.run || options.resume)) throw new Error('Controls-only cannot make or resume paid requests');
   if (!Number.isSafeInteger(options.tpm) || options.tpm < 1000 || options.tpm > 10000000) throw new Error('Invalid TPM pacing limit');
+  if (!Number.isSafeInteger(options.rpm) || options.rpm < 1 || options.rpm > 500) throw new Error('Invalid RPM pacing limit');
+  if (!(options.limitUsd > 0 && options.limitUsd <= 50)) throw new Error('Invalid authorized budget');
+  if (options.maxSteps !== null && (!Number.isSafeInteger(options.maxSteps) || options.maxSteps < 1)) throw new Error('Invalid step limit');
+  pricingFor(options.model);
+  if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(options.reasoningEffort)) throw new Error('Invalid reasoning effort');
   return options;
 }
 
@@ -65,11 +75,12 @@ function buildPlan(options, consumer, sources) {
   }
   const controller = CONTROLLER_FILES.map(file => ({ file, sha256: hash(fs.readFileSync(path.join(ROOT, file))) }));
   const sourceHashes = Object.entries(sources).map(([file, content]) => ({ file, sha256: hash(content) }));
-  return { schemaVersion: 1, datasetKind: 'seeded-repository-regression', mode: options.mode, model: PRICING.model,
-    reasoningEffort: 'medium', maxSteps: 6, maxOutputTokens: 4096, tpmPacing: options.tpm, repeats, attempts: entries.length,
+  const model = options.model || PRICING.model, reasoningEffort = options.reasoningEffort || 'medium';
+  return { schemaVersion: 1, datasetKind: 'seeded-repository-regression', mode: options.mode, model,
+    reasoningEffort, maxSteps: options.maxSteps === undefined ? 6 : options.maxSteps, maxOutputTokens: 4096, tpmPacing: options.tpm, rpmPacing: options.rpm ?? 500, authorizedBudgetUsd: options.limitUsd ?? 10, repeats, attempts: entries.length,
     tasks: tasks.map(({ id, file, title, contract, group }) => ({ id, file, title, contract, group })),
     arms: arms.map(arm => arm.id), entries, controller, sourceHashes, oracleSha256: hash(JSON.stringify(ORACLES)),
-    fingerprint: hash(JSON.stringify({ controller, sourceHashes, tasks, mode: options.mode, tpm: options.tpm, entries: entries.map(({ id, instructionsSha256 }) => ({ id, instructionsSha256 })) })) };
+    fingerprint: hash(JSON.stringify({ controller, sourceHashes, tasks, mode: options.mode, model, reasoningEffort, tpm: options.tpm, rpm: options.rpm, maxSteps: options.maxSteps, entries: entries.map(({ id, instructionsSha256 }) => ({ id, instructionsSha256 })) })) };
 }
 
 function summarize(results, plan) {
@@ -101,18 +112,21 @@ function summarize(results, plan) {
     }), limitation: 'Repeated seeded tasks in four modules are correlated. This corpus is calibration evidence, not proof of general coding quality or native client activation.' };
 }
 
-function findPassingPilot() {
-  if (!fs.existsSync(OUTPUT)) return null;
-  for (const name of fs.readdirSync(OUTPUT).sort().reverse()) {
-    const reportPath = path.join(OUTPUT, name, 'report.json');
+function findPassingPilot(output = OUTPUT, profile = { model: PRICING.model, reasoningEffort: 'medium' }) {
+  if (!fs.existsSync(output)) return null;
+  for (const name of fs.readdirSync(output).sort().reverse()) {
+    const reportPath = path.join(output, name, 'report.json');
     if (!fs.existsSync(reportPath)) continue;
     const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-    if (report.plan?.mode === 'pilot' && report.results?.length === 9 && report.results.every(result => result.finished && !result.apiError && !result.acceptance.infrastructureError) && report.results.some(result => result.acceptance.passed && result.toolCalls > 0)) return { path: reportPath, sha256: hash(fs.readFileSync(reportPath)), controller: report.plan.controller, sourceHashes: report.plan.sourceHashes };
+    if (report.plan?.model === profile.model && report.plan?.reasoningEffort === profile.reasoningEffort && report.plan?.mode === 'pilot' && report.results?.length === 9 && report.results.every(result => result.finished && !result.apiError && !result.acceptance.infrastructureError) && report.results.some(result => result.acceptance.passed && result.toolCalls > 0)) return { path: reportPath, sha256: hash(fs.readFileSync(reportPath)), controller: report.plan.controller, sourceHashes: report.plan.sourceHashes };
   }
   return null;
 }
 
 async function main(options = parseOptions(process.argv.slice(2))) {
+  const pricing = pricingFor(options.model || PRICING.model);
+  const profile = { model: pricing.model, reasoningEffort: options.reasoningEffort || 'medium' };
+  const OUTPUT = path.join(ROOT, pricing.model === PRICING.model ? 'scratch/luna-benchmark' : 'scratch/sol-benchmark');
   fs.mkdirSync(OUTPUT, { recursive: true }); fs.mkdirSync(SHARED, { recursive: true });
   const lockPath = path.join(SHARED, 'run.lock');
   const lock = fs.openSync(lockPath, 'wx');
@@ -126,12 +140,12 @@ async function main(options = parseOptions(process.argv.slice(2))) {
     if (options.controlsOnly) return;
     const consumer = prepareConsumer(OUTPUT);
     const plan = buildPlan(options, consumer, sources);
-    const budget = new Budget(path.join(SHARED, 'spend-ledger.json'));
-    const pacer = new Pacer({ tokensPerMinute: options.tpm, onWait: delay => console.log(`TPM pacing: waiting ${(delay / 1000).toFixed(1)}s before the next request.`) });
+    const budget = new Budget(path.join(SHARED, 'spend-ledger.json'), { limitUsd: options.limitUsd ?? 10 });
+    const pacer = new Pacer({ tokensPerMinute: options.tpm, requestsPerMinute: options.rpm ?? 500, onWait: delay => console.log(`Rate pacing: waiting ${(delay / 1000).toFixed(1)}s before the next request.`) });
     const firstRequestUpper = plan.entries.reduce((max, entry) => {
       const task = CASES.find(item => item.id === entry.taskId);
       const input = initialInput({ files: [task.file, ...task.dependencies], editable: task.file }, task);
-      return Math.max(max, reservation(bodyFor(entry.instructions, input)));
+      return Math.max(max, reservation(bodyFor(entry.instructions, input, profile)));
     }, 0);
     // Also validate the expected first file-read response before any paid call;
     // later transcript growth still passes through both pacing and spend guards.
@@ -139,16 +153,16 @@ async function main(options = parseOptions(process.argv.slice(2))) {
       const task = CASES.find(item => item.id === entry.taskId);
       const input = initialInput({ files: [task.file, ...task.dependencies], editable: task.file }, task);
       input.push({ type: 'function_call_output', call_id: 'preflight', output: sources[task.file] });
-      const expected = bodyFor(entry.instructions, input);
+      const expected = bodyFor(entry.instructions, input, profile);
       reservation(expected);
       if (Math.ceil(Buffer.byteLength(JSON.stringify(expected)) / 3) + expected.max_output_tokens > options.tpm) throw new Error('TPM pacing limit is too small for the source-read preflight');
     }
-    atomicJson(path.join(OUTPUT, 'preflight.json'), { ...plan, pricing: PRICING, remainingSharedBudgetUsd: budget.remainingUsd,
-      firstRequestReservationUpperUsd: firstRequestUpper / 1e6, note: '180 full attempts can require up to 1080 HTTP requests. Future tool-output sizes and costs are unknown; each request is checked against the shared $10 cap.' });
-    console.log(`${plan.mode}: ${plan.attempts} attempts, up to ${plan.attempts * plan.maxSteps} HTTP requests; shared remaining budget $${budget.remainingUsd.toFixed(4)}.`);
+    atomicJson(path.join(OUTPUT, 'preflight.json'), { ...plan, pricing, remainingSharedBudgetUsd: budget.remainingUsd,
+      firstRequestReservationUpperUsd: firstRequestUpper / 1e6, note: 'Each request is checked against the authorized cumulative budget; maxSteps null means no per-attempt request count cap.' });
+    console.log(`${plan.mode}: ${plan.attempts} attempts, ${plan.maxSteps === null ? 'no request count cap' : `up to ${plan.attempts * plan.maxSteps} HTTP requests`}; shared remaining budget $${budget.remainingUsd.toFixed(4)}.`);
     if (!options.run) return;
     if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is unavailable. Use the masked run-luna-agent.ps1 launcher.');
-    const pilot = plan.mode === 'full' ? findPassingPilot() : null;
+    const pilot = plan.mode === 'full' ? findPassingPilot(OUTPUT, profile) : null;
     if (plan.mode === 'full' && (!pilot || JSON.stringify(pilot.controller) !== JSON.stringify(plan.controller) || JSON.stringify(pilot.sourceHashes) !== JSON.stringify(plan.sourceHashes))) throw new Error('A completed tool-capable pilot with the same controller and sources is required before the full run');
     const runId = options.resume || `${new Date().toISOString().replace(/[:.]/g, '-')}-${plan.mode}`;
     const runDir = path.join(OUTPUT, runId);
@@ -161,7 +175,7 @@ async function main(options = parseOptions(process.argv.slice(2))) {
       atomicJson(path.join(runDir, `resume-history-${Date.now()}.json`), saved);
     } else fs.mkdirSync(runDir);
     const writeReport = () => atomicJson(path.join(runDir, 'report.json'), { timestamp: new Date().toISOString(), plan, controls, pilot,
-      results, summary: summarize(results, plan), spending: { remainingSharedBudgetUsd: budget.remainingUsd, retainedSharedUsd: budget.ledger.reservedMicroUsd / 1e6, pricing: PRICING } });
+      results, summary: summarize(results, plan), spending: { remainingSharedBudgetUsd: budget.remainingUsd, retainedSharedUsd: budget.ledger.reservedMicroUsd / 1e6, pricing } });
     writeReport();
     for (const entry of plan.entries) {
       if (results.some(result => result.id === entry.id)) continue;
@@ -170,9 +184,9 @@ async function main(options = parseOptions(process.argv.slice(2))) {
       const fixture = createFixture(artifactDir, task, { sources });
       const before = runTool(fixture, 'read_file', { path: task.file });
       fs.writeFileSync(path.join(artifactDir, 'before.js'), before);
-      const attempt = await runAttempt({ fixture, task, instructions: entry.instructions, budget, key: process.env.OPENAI_API_KEY, pacer,
+      const attempt = await runAttempt({ fixture, task, instructions: entry.instructions, budget, key: process.env.OPENAI_API_KEY, pacer, profile, maxSteps: plan.maxSteps,
         save: (step, value) => atomicJson(path.join(artifactDir, `response-${step}.json`), value),
-        onStep: step => console.log(`${entry.id}: request ${step}/${plan.maxSteps}`) });
+        onStep: step => console.log(`${entry.id}: request ${step}${plan.maxSteps === null ? '' : `/${plan.maxSteps}`}`) });
       const acceptance = await evaluate(fixture, task);
       const after = runTool(fixture, 'read_file', { path: task.file });
       fs.writeFileSync(path.join(artifactDir, 'after.js'), after);

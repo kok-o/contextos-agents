@@ -131,7 +131,7 @@ The `benchmarks/` directory contains maintainer research tooling. It is not part
 
 ## Skill Manifest V2 Format (`skill.yaml`)
 
-Each skill must include a `skill.yaml` alongside `SKILL.md` conforming to the Manifest V2 schema ([`.agents/schemas/skill.v2.schema.json`](./.agents/schemas/skill.v2.schema.json)):
+Each skill must include a `skill.yaml` alongside `SKILL.md` conforming to the Manifest V2 schema ([`.agents/schemas/skill.manifest.v2.json`](./.agents/schemas/skill.manifest.v2.json)):
 
 ```yaml
 schemaVersion: 2

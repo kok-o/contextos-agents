@@ -2,10 +2,12 @@
 
 This document records the export contracts for the ContextOS v2.3 local candidate. Passing structural or consumer tests does not establish that every client version loads an artifact. Native loader acceptance must be recorded separately.
 
-Release pair: core 2.3.0 / MCP 0.4.0, source revision `4d633da`.
+Release pair: core 2.3.0 / MCP 0.4.0. Historical accepted source revision: `4d633da`.
 Remote Windows/Linux/macOS core Node 22/24, MCP and installed lifecycle/migration
-acceptance passed in run `36970178246`. Live client behavior and the final candidate
-decision remain pending; see [R2 preparation](R2_RELEASE_PREPARATION.md).
+acceptance passed in run `36970178246`. Explicit Codex CLI 0.159.2 native activation
+with GPT-6.1 Sol/high passed on 2 October; automatic routing, other live clients
+and the final candidate decision remain pending. See [calibration evidence](BENCHMARK_RESULTS.md)
+and [R2 preparation](R2_RELEASE_PREPARATION.md).
 MCP supports default read-only inspection within this release scope. Execution,
 Python, crash recovery and concurrent runtime persistence are experimental;
 the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.
@@ -22,7 +24,7 @@ the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.
 | **GitHub Copilot** | Copilot | `.github/copilot-instructions.md` | Root instruction file | Shared instruction block and skill source index | Managed block preserves user text | Structural/consumer preservation tests |
 | **Aider** | Aider | `.aider.conf.yml` | Config and CONVENTIONS.md | `read: CONVENTIONS.md` | YAML values merged; generated conventions protected | Structural/consumer idempotence tests |
 | **Zed** | Manual templates | `.zed/rules.md` | Rules and prompt templates | Manual import; this rules path is not a documented native instruction entrypoint | Generated files protected | Structural tests; native loading unverified |
-| **Codex** | Native skill discovery | `.agents/skills/*/SKILL.md` | Shared native skill projection from Gemini export | Metadata discovery; bodies read on activation | Existing root AGENTS.md untouched | Local discovery 7/7 and explicit full-body CLI payload PASS; model adherence unverified |
+| **Codex** | Native skill discovery | `.agents/skills/*/SKILL.md` | Shared native skill projection from Gemini export | Metadata discovery; bodies read on activation | Existing root AGENTS.md untouched | Discovery 7/7; explicit body load and marker adherence PASS in CLI 0.159.2 with Sol/high; automatic routing unverified |
 
 Default init exports Gemini skills. Ordinary export applies profile filtering to the installed skill set; it does not run task-specific resolution. Antigravity compatibility has not been independently verified.
 
@@ -76,8 +78,9 @@ The same `.agents/skills` projection is discovered natively by Codex. The local
 app-server `skills/list` check found all seven core skills without inference
 requests. A later controlled `codex exec` probe confirmed full selected bodies in
 the CLI payload without paid inference. These establish discovery and explicit
-injection; model adherence and Cursor activation remain unverified. See the
-[recorded probe](LUNA_BENCHMARK_RESULTS_2026-10-01.md).
+injection. A subsequent Sol/high probe verified marker adherence for explicit
+activation in CLI 0.159.2; automatic routing and Cursor activation remain
+unverified. See the [recorded results](BENCHMARK_RESULTS.md).
 
 ### 2.4 GitHub Copilot (.github/copilot-instructions.md)
 

@@ -1,20 +1,27 @@
 # ContextOS MCP Server
 
-An execution layer for the [ContextOS](https://github.com/kok-o/contextos-agents) framework. Exposes an MCP (Model Context Protocol) interface that allows orchestrating agents (like Antigravity) to spawn parallel coding agents in isolated Git worktrees.
+MCP integration for [ContextOS](https://github.com/kok-o/contextos-agents).
+The 0.4.0 candidate exposes read-only status, comparison and diff inspection by
+default. Inspection does not create agents, worktrees or runtime sessions.
 
-![ContextOS MCP Demo](./demo.png)
+The supported package entrypoint is the `contextos-mcp` executable; a root
+JavaScript library import is not a supported interface.
 
-## Features
-- **Selective & Multilingual Context Loading:** Dynamically reads rules and skills from your `.agents/` directory using bilingual (English & Russian) keyword triggers. Extracts essential sections (`extractEssentialSkillContent`), significantly reducing prompt token overhead while auto-injecting project invariants from `AGENTS.md` and `GEMINI.md`.
-- **Git Worktree Isolation & Concurrency Safety:** Spawns agents in isolated `git worktree` environments (`.swarm-worktrees/`). Agents cannot corrupt your main working tree, and transient git lock contention (`.git/index.lock`) is mitigated with mutexes and retries.
-- **Disk-Backed Session Persistence & Recovery:** All thread lifecycles, states, and diffs are persisted to `.swarm-worktrees/session-state.json`. If the MCP server or IDE process restarts, background tasks and branches remain trackable and recoverable.
-- **Automated In-Worktree Proof-of-Work Verification:** Support for `verify_command` (e.g. `npm test`, `pytest`) executes test suites directly in the agent's worktree before marking tasks as successful.
-- **Non-Blocking Asynchronous Delegation:** Optional `wait: false` returns immediate task and thread IDs, preventing MCP client timeouts on long-running jobs and enabling polling via `contextos_status`.
-- **Deep Orphan Purging:** `contextos_cleanup` with `purge_orphans: true` automatically detects and deletes abandoned `swarm/*` branches and stale worktree directories.
-- **Multi-Engine Agent Backends:** Flexible choice of execution engines (`direct-llm`, `opencode`, `claude-code`, `codex`, `aider`).
-- **Security Boundary:** Built-in secret filtering blocks LLM agents from reading `.env` files, SSH keys, or escaping the worktree boundary.
-- **Deterministic 3-Way Merge:** The MCP server computes structured diffs, identifies conflicts, and safely executes `git merge` only when instructed by the orchestrator.
-- **Direct API & Router Support:** Direct multi-provider integration with Anthropic, OpenAI, Google Gemini, OpenRouter, Groq, and Ollama via `pi-ai`.
+## Stable and experimental scope
+
+- Default MCP registration and read-only handlers are covered by protocol and
+  installed-archive tests on Windows, Linux and macOS.
+- Selected context bodies are preserved whole, with source hashes, omissions and
+  budget-overflow reporting. Soft limits do not truncate safety instructions.
+- Agent execution, asynchronous delegation, worktree merging/cleanup, Python REPL
+  and runtime persistence/recovery require explicit `--enable-runtime` opt-in.
+  They remain experimental; seven skipped execution/recovery/concurrency cases
+  prevent a stable support claim for those scenarios.
+- Worktrees provide Git isolation. Processes still have host-user privileges;
+  this is not an operating-system sandbox or proof of production security.
+
+See the [support boundaries](https://github.com/kok-o/contextos-agents/blob/main/docs/PRODUCT_BOUNDARIES.md)
+and [skipped-test inventory](https://github.com/kok-o/contextos-agents/blob/main/docs/MCP_SKIPPED_TESTS.md).
 
 ## Security & Execution Model
 

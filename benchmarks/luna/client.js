@@ -12,9 +12,9 @@ const TOOLS = [
     parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
 ];
 
-function bodyFor(instructions, input) {
-  return { model: PRICING.model, instructions, input, tools: TOOLS, parallel_tool_calls: false,
-    reasoning: { effort: 'medium' }, max_output_tokens: 4096, service_tier: 'default', store: false };
+function bodyFor(instructions, input, { model = PRICING.model, reasoningEffort = 'medium' } = {}) {
+  return { model, instructions, input, tools: TOOLS, parallel_tool_calls: false,
+    reasoning: { effort: reasoningEffort }, max_output_tokens: 4096, service_tier: 'default', store: false };
 }
 
 function initialInput(fixture, task) {
@@ -40,17 +40,17 @@ async function request(body, key, { fetchImpl = fetch, timeoutMs = 120000 } = {}
     error.httpStatus = response.status; throw error;
   }
   const result = JSON.parse(text);
-  if (result.model && result.model !== PRICING.model) throw new Error('Provider returned an unexpected model');
+  if (result.model && result.model !== body.model) throw new Error('Provider returned an unexpected model');
   return result;
 }
 
-async function runAttempt({ fixture, task, instructions, budget, key, save, maxSteps = 6, requestImpl = request, onStep = () => {}, pacer }) {
-  const input = initialInput(fixture, task);
+async function runAttempt({ fixture, task, instructions, budget, key, save, maxSteps = 6, continuationInput, requestImpl = request, onStep = () => {}, pacer, profile }) {
+  const input = continuationInput ? structuredClone(continuationInput) : initialInput(fixture, task);
   const usage = [], trace = [], charges = [];
   let finished = false, apiError = null, requestCount = 0, stoppedAtOutputLimit = false;
   const started = Date.now();
-  for (let step = 1; step <= maxSteps; step++) {
-    const body = bodyFor(instructions, input);
+  for (let step = 1; maxSteps === null || step <= maxSteps; step++) {
+    const body = bodyFor(instructions, input, profile);
     let ticket;
     let usageRecorded = false;
     try {

@@ -5,6 +5,8 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { parseEnv } = require('node:util');
+const { getStagedBlob } = require('../bin/lib/git-snapshot');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 
@@ -36,22 +38,20 @@ function isExempt(filePath) {
 function getFilesToScan(mode) {
   try {
     if (mode === '--staged') {
-      const output = execFileSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACM'], {
+      const output = execFileSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACM', '-z', '--no-ext-diff'], {
         cwd: ROOT_DIR,
         encoding: 'utf8',
       });
-      return output.split(/\r?\n/).map(f => f.trim()).filter(Boolean);
+      return output.split('\0').filter(Boolean);
     }
 
     // Default or --all: scan git tracked files + untracked files in working tree
-    const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT_DIR, encoding: 'utf8' })
-      .split(/\r?\n/)
-      .map(f => f.trim())
+    const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT_DIR, encoding: 'utf8' })
+      .split('\0')
       .filter(Boolean);
 
-    const untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: ROOT_DIR, encoding: 'utf8' })
-      .split(/\r?\n/)
-      .map(f => f.trim())
+    const untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard', '-z'], { cwd: ROOT_DIR, encoding: 'utf8' })
+      .split('\0')
       .filter(Boolean);
 
     return Array.from(new Set([...tracked, ...untracked]));
@@ -72,7 +72,7 @@ function findLocalEnvFiles(dir = ROOT_DIR) {
       return;
     }
     for (const entry of entries) {
-      if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '.swarm-worktrees') {
+      if (['node_modules', '.git', '.swarm-worktrees', '.contextos-worktrees', '.external-skills', 'scratch'].includes(entry.name)) {
         continue;
       }
       const fullPath = path.join(currentDir, entry.name);
@@ -90,11 +90,11 @@ function findLocalEnvFiles(dir = ROOT_DIR) {
   return envFiles;
 }
 
-function scanFile(relPath, { isLocalEnvOnly = false } = {}) {
+function scanFile(relPath, { isLocalEnvOnly = false, snapshot } = {}) {
   const fullPath = path.resolve(ROOT_DIR, relPath);
-  if (!fs.existsSync(fullPath)) return [];
+  if (!snapshot && !fs.existsSync(fullPath)) return [];
 
-  const stat = fs.statSync(fullPath);
+  const stat = snapshot ? { size: snapshot.length, isDirectory: () => false } : fs.statSync(fullPath);
   if (stat.isDirectory()) return [];
 
   const violations = [];
@@ -133,7 +133,7 @@ function scanFile(relPath, { isLocalEnvOnly = false } = {}) {
 
   let content;
   try {
-    content = fs.readFileSync(fullPath, 'utf8');
+    content = snapshot ? snapshot.toString('utf8') : fs.readFileSync(fullPath, 'utf8');
   } catch {
     return violations; // binary or unreadable
   }
@@ -161,11 +161,17 @@ function main() {
   const mode = process.argv.includes('--staged') ? '--staged' : '--all';
   const files = getFilesToScan(mode);
 
-  const localEnvFiles = mode !== '--staged' ? findLocalEnvFiles() : [];
-  const scannedSet = new Set(files);
-  const extraEnvFiles = localEnvFiles.filter(f => !scannedSet.has(f));
-
-  const totalFilesCount = files.length + extraEnvFiles.length;
+  const localEnvFiles = findLocalEnvFiles();
+  const knownSecrets = [];
+  for (const file of localEnvFiles) {
+    const values = parseEnv(fs.readFileSync(path.join(ROOT_DIR, file), 'utf8'));
+    for (const [name, value] of Object.entries(values)) {
+      if (/(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(name) && value.length >= 16) knownSecrets.push(Buffer.from(value));
+    }
+  }
+  // Ignored .env credentials are expected local configuration. Scan their exact
+  // values against every exportable file, including normally exempt fixtures.
+  const totalFilesCount = files.length;
   if (totalFilesCount === 0) {
     console.log('[check-secrets] No files to scan.');
     process.exit(0);
@@ -175,16 +181,15 @@ function main() {
 
   const allViolations = [];
   for (const file of files) {
-    const v = scanFile(file);
+    const snapshot = mode === '--staged' ? getStagedBlob(file, ROOT_DIR) : undefined;
+    const v = scanFile(file, { snapshot });
     if (v.length > 0) {
       allViolations.push(...v);
     }
-  }
-
-  for (const envFile of extraEnvFiles) {
-    const v = scanFile(envFile, { isLocalEnvOnly: true });
-    if (v.length > 0) {
-      allViolations.push(...v);
+    const fullPath = path.join(ROOT_DIR, file);
+    const data = snapshot || (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile() ? fs.readFileSync(fullPath) : null);
+    if (data && knownSecrets.some(secret => data.includes(secret))) {
+      allViolations.push({ file, type: 'Local credential copied into exportable file', details: 'Credential value redacted.' });
     }
   }
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-03
+
+Prepared release candidate; npm publication and the release tag remain pending.
+The companion MCP candidate is `@contextos/mcp@0.4.0`.
+
 ### Added
 
 - R2 preparation: current scope/roadmap, explicit skipped-test inventory and
@@ -24,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Removed the MCP package's stale library `main` pointing to a nonexistent file;
+  the supported entrypoint remains the `contextos-mcp` executable.
+- Release checks reject local plans, raw evidence and credentials in Git/npm;
+  ignored local `.env` files are allowed, but copied values and staged leaks fail.
 - MCP source reports and reference directories stay repository-relative when a
   workspace is opened through a directory alias, including macOS temporary paths.
 - Offline permission fixtures canonicalize their roots and test a real portable
@@ -46,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.0] - 2026-09-27
 
 ### Added
+
 - **Terminal Visual Layer (`bin/lib/ui.js`)**:
   - Zero-dependency CLI visualization module featuring a brand banner and formatted status badges.
   - Aligned 4-step execution tracker (`[1/4]` to `[4/4]`) with clean indentation grid (step titles, `✓` checkmarks, sub-explanations).
@@ -63,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.1] - 2026-09-27
 
 ### Fixed
+
 - **NPM Package Catalog Distribution**: Included `catalog` in npm package distribution (`package.json` `files` field), ensuring catalog skills install cleanly in consumer projects without requiring local repository checkouts.
 - **Fail-Closed Inspection Exit Codes**: Standardized exit codes across `scan` and `gate`: all reading, git, or configuration failures return code `2` with explicit diagnostics in both enforce and advisory modes; code `0` is returned strictly when verification completes cleanly with no blocking violations; code `1` is returned on blocking violations.
 - **Literal Git Pathspecs & Diff Isolation**: Added `--literal-pathspecs`, `--no-ext-diff`, and `--no-textconv` to staged git diff and blob inspections, eliminating filename regex fragility and supporting paths with spaces, Unicode, and glob characters.
@@ -82,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0] - 2026-09-26
 
 ### Added
+
 - **4 New Industry Catalog Skills**:
   - `security-audit`: In-depth vulnerability scanning, SAST/DAST automation, dependency checking, privilege escalation prevention, and SAIF/CIS benchmark mapping.
   - `api-design`: Deterministic API design guidelines, RESTful contracts, idempotent operations, cursor pagination, rate limiting, and OpenAPI specifications.
@@ -101,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Developer Onboarding and Pilot Protocol (`docs/product/`)**: 5-minute quickstart guide, multi-repository pilot protocol, and topology validation results across Node/TS, pure Python/Go, and legacy config repositories.
 
 ### Changed
+
 - **Catalog Skill Count**: Expanded verified catalog from 32 to 36 specialized skills (43 skills total including 7 core skills).
 - **Catalog Sanitation**: Removed 13 redundant legacy markdown files across catalog skills to enforce single-source-of-truth standards.
 - **CLI Help Index**: Updated `contextos --help` command registry to include `scan`, `hook`, `recover`, and `explain`.
@@ -110,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-09-13
 
 ### Changed (Breaking)
+
 - Minimum supported Node.js version is now 22. Node.js 18 and 20 have reached end of life.
 - **Product Repositioning:** ContextOS is now explicitly positioned as an Agent Context Governance tool (a deterministic context compiler), shifting away from "Autonomous AI Swarm" messaging.
 - **Distribution Boundary:** The ContextOS MCP server and execution runtime are no longer bundled within the core `contextos-agents` package. They will be distributed separately via the `@contextos/mcp` package.
@@ -117,8 +131,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Catalog Boundary:** The default installation profile has been reduced to a "Neutral Bootstrap" (core workflow, context management, security). Framework-specific and highly opinionated design skills are no longer installed by default.
 
 ### Added
+
 - **Migration Commands:** Added `contextos profile prune` to safely remove optional skills that are no longer part of the default profile.
 - **Boundary Documentation:** Added `docs/PRODUCT_BOUNDARIES.md` and `docs/MIGRATION.md`.
 
 ### Removed
+
 - Unverified benchmark marketing claims regarding token reduction percentages have been removed until the reproducible Benchmark v2 suite is finalized.
