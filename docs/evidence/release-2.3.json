@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-03",
-  "status": "verified-release-candidate",
-  "sourceRevision": "81f39aea6108cda99eae9c07216882685b7a1d1a",
+  "status": "verified-stable-release",
+  "sourceRevision": "97ea455f3f942416e324c7308acecaa91846d5c5",
   "versions": {
     "core": "2.3.0",
     "mcp": "0.4.0"
   },
-  "publication": "not-authorized",
+  "publication": "published-and-verified",
   "archives": [
     {
       "file": "contextos-agents-2.3.0.tgz",
@@ -21,10 +21,10 @@
     }
   ],
   "ci": {
-    "runId": 37122760907,
-    "url": "https://github.com/kok-o/contextos-agents/actions/runs/37122760907",
+    "runId": 37129710149,
+    "url": "https://github.com/kok-o/contextos-agents/actions/runs/37129710149",
     "conclusion": "success",
-    "successfulJobs": 19,
+    "successfulJobs": 21,
     "coreNodeVersions": [
       22,
       24
