@@ -14,7 +14,12 @@ function sameHash(actual, expected) {
     && crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expected, 'hex'));
 }
 function npm(args, cwd = root) {
-  const cli = process.env.npm_execpath || path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
+  const nodeDirectory = path.dirname(process.execPath);
+  const cli = [process.env.npm_execpath,
+    path.join(nodeDirectory, 'node_modules/npm/bin/npm-cli.js'),
+    path.resolve(nodeDirectory, '../lib/node_modules/npm/bin/npm-cli.js')]
+    .find(file => file && fs.existsSync(file));
+  if (!cli) throw new Error('npm CLI not found; invoke through npm exec or use a standard Node installation');
   try {
     return execFileSync(process.execPath, [cli, ...args], { cwd, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 180000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   } catch {
