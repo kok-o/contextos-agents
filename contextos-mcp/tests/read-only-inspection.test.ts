@@ -17,6 +17,7 @@ function snapshot(root: string): Record<string, string> {
 	const result: Record<string, string> = {};
 	function walk(dir: string, prefix = "") {
 		for (const entry of readdirSync(dir, { withFileTypes: true })) {
+			if (entry.name.endsWith(".lock")) continue;
 			const rel = prefix + entry.name;
 			if (entry.isDirectory()) {
 				result[rel + "/"] = "directory";

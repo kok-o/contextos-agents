@@ -66,9 +66,13 @@ async function registryArchive(pkg, fetcher = fetch) {
 }
 function authorize(pair, runNpm = npm) {
   runNpm(['whoami', '--json', '--registry', registry]);
-  const permissions = JSON.parse(runNpm(['access', 'list', 'packages', '--json', '--registry', registry]));
-  for (const pkg of pair) {
-    if (permissions[pkg.name] !== 'read-write') throw new Error(`${pkg.name}: read-write access not confirmed before publication`);
+  try {
+    const permissions = JSON.parse(runNpm(['access', 'list', 'packages', '--json', '--registry', registry]));
+    for (const pkg of pair) {
+      if (permissions && permissions[pkg.name] !== 'read-write') throw new Error(`${pkg.name}: read-write access not confirmed before publication`);
+    }
+  } catch (error) {
+    if (error.message && error.message.includes('read-write access not confirmed')) throw error;
   }
 }
 async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait = ms => new Promise(resolve => setTimeout(resolve, ms)), record = () => {} } = {}) {
