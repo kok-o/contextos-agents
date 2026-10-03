@@ -151,7 +151,7 @@ jobs:
       ref: ${{ needs.version.outputs.tag }}
 
   publish:
-    name: Pack and publish core
+    name: Pack and publish core and MCP
     needs: [version, tests, validate, docs, mcp, installed-consumer]
     runs-on: ubuntu-latest
     steps:
@@ -168,7 +168,7 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: Verify published tarball contents
+      - name: Verify published core tarball contents
         run: |
           node - <<'NODE'
           const { execFileSync } = require('node:child_process');
@@ -178,21 +178,45 @@ jobs:
           const { validatePackagePaths } = require('./scripts/check-release-surface.cjs');
           const violations = validatePackagePaths(files, 'core');
           if (violations.length) throw new Error(`Unexpected package contents: ${violations.join(', ')}`);
-          console.log(`Tarball contents verified (${files.length} files).`);
+          console.log(`Core tarball contents verified (${files.length} files).`);
           NODE
 
-      - name: Publish to npm
+      - name: Publish core to npm
         run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Build and verify MCP tarball contents
+        run: |
+          cd ./contextos-mcp
+          npm ci
+          npm run build
+          node - <<'NODE'
+          const { execFileSync } = require('node:child_process');
+          const packed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' }))[0];
+          const files = packed.files.map(file => file.path);
+          const { validatePackagePaths } = require('../scripts/check-release-surface.cjs');
+          const violations = validatePackagePaths(files, 'mcp');
+          if (violations.length) throw new Error(`Unexpected package contents: ${violations.join(', ')}`);
+          console.log(`MCP tarball contents verified (${files.length} files).`);
+          NODE
+
+      - name: Publish MCP to npm
+        run: |
+          cd ./contextos-mcp
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Write release summary
         run: |
           VERSION="${{ needs.version.outputs.version }}"
-          echo "## Published contextos-agents@${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          MCP_VERSION="$(node -p "require('./contextos-mcp/package.json').version")"
+          echo "## Published contextos-agents@${VERSION} and @contextos/mcp@${MCP_VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| npm | [contextos-agents@${VERSION}](https://www.npmjs.com/package/contextos-agents) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Package | Version | Link |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| contextos-agents | \`${VERSION}\` | [contextos-agents@${VERSION}](https://www.npmjs.com/package/contextos-agents) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| @contextos/mcp | \`${MCP_VERSION}\` | [@contextos/mcp@${MCP_VERSION}](https://www.npmjs.com/package/@contextos/mcp) |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tag | \`${{ needs.version.outputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tests, validation, docs, MCP checks | Passed |" >> "$GITHUB_STEP_SUMMARY"
