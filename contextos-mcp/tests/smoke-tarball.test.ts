@@ -11,6 +11,7 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 	let expectedVersion: string;
 	let buildDir: string;
 	let sharedRuntimeBefore: Buffer | undefined;
+	let childClosed: Promise<void> | undefined;
 
 	beforeAll(() => {
 		const pkgJson = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
@@ -59,13 +60,14 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 		expect(fs.existsSync(extractedPkgDir)).toBe(true);
 	}, 60_000);
 
-	afterAll(() => {
+	afterAll(async () => {
+		await childClosed;
 		if (!tempDir) return;
 		expect(path.dirname(tempDir)).toBe(fs.realpathSync(os.tmpdir()));
 		expect(path.basename(tempDir)).toMatch(/^contextos-mcp-smoke-/);
 		const dependencies = path.join(buildDir, "node_modules");
 		if (fs.existsSync(dependencies)) fs.unlinkSync(dependencies);
-		fs.rmSync(tempDir, { recursive: true, force: true });
+		fs.rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 	});
 
 	it("leaves the shared checkout runtime unchanged during its isolated build", () => {
@@ -104,6 +106,8 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 				NODE_ENV: "production",
 			},
 		});
+		// Windows keeps the process working directory locked until close, not kill().
+		childClosed = new Promise<void>((resolve) => child.once("close", () => resolve()));
 
 		let stdoutBuffer = "";
 		let stderrBuffer = "";
@@ -163,6 +167,7 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 			child.stdout.on("data", checkBuffer);
 		});
 
+		await childClosed;
 		expect(stderrBuffer).not.toContain("ERR_MODULE_NOT_FOUND");
 		expect(response.jsonrpc).toBe("2.0");
 		expect(response.id).toBe(1);
