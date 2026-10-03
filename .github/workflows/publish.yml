@@ -193,7 +193,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: release-publication-evidence
+          name: release-publication-evidence-attempt-${{ github.run_attempt }}
           path: |
             scratch/release-candidate/*.tgz
             scratch/release-publish-*.json
@@ -248,7 +248,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: registry-evidence-${{ matrix.os }}
+          name: registry-evidence-${{ matrix.os }}-attempt-${{ github.run_attempt }}
           path: |
             scratch/registry-release-candidate/*.tgz
             scratch/registry-*.log
