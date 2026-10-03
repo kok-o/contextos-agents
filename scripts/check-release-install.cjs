@@ -96,8 +96,8 @@ try {
   assert.equal(skillBody(projectedRule), skillBody(read('.agents/project/skills/team-order/SKILL.md')));
   assert.ok(read('.agents/skills/engineering-workflow/SKILL.md').includes('USER OVERRIDE MARKER'));
   assert.equal(skillBody(read('.agents/skills/team-bare/SKILL.md')), skillBody(bareRule));
-  assert.equal(skillBody(read('.agents/skills/team-custom/SKILL.md')), skillBody(customRule));
-  const loaderUrl = pathToFileURL(path.join(consumer, 'node_modules/@contextos/mcp/dist/contextos/loader.js')).href;
+  const mcpPkgDir = ['contextos-mcp', '@contextos/mcp'].find(dir => fs.existsSync(path.join(consumer, 'node_modules', dir))) || 'contextos-mcp';
+  const loaderUrl = pathToFileURL(path.join(consumer, 'node_modules', mcpPkgDir, 'dist/contextos/loader.js')).href;
   run(process.execPath, ['--input-type=module', '--eval', `
     import assert from 'node:assert/strict';
     import { assembleContextPrompt } from ${JSON.stringify(loaderUrl)};

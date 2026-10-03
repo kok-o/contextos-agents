@@ -12,7 +12,7 @@ function fixture(t) {
     assert.ok(path.basename(directory).startsWith('ctx-release-publish-'));
     fs.rmSync(directory, { recursive: true, force: true, maxRetries: 5 });
   });
-  return ['contextos-agents', '@contextos/mcp'].map((name, index) => {
+  return ['contextos-agents', 'contextos-mcp'].map((name, index) => {
     const archive = path.join(directory, `${index}.tgz`);
     const bytes = Buffer.from(`verified archive ${index}`);
     fs.writeFileSync(archive, bytes);
@@ -35,7 +35,7 @@ test('preflight inspects both archives before publishing, then verifies each upl
     inspect: async pkg => { events.push(`inspect:${pkg.name}`); return published.has(pkg.name) ? pkg.bytes : null; },
     runNpm: runner(pair, pkg => { events.push(`publish:${pkg.name}`); published.add(pkg.name); })
   });
-  assert.deepEqual(events.slice(0, 3), ['inspect:contextos-agents', 'inspect:@contextos/mcp', 'publish:contextos-agents']);
+  assert.deepEqual(events.slice(0, 3), ['inspect:contextos-agents', 'inspect:contextos-mcp', 'publish:contextos-agents']);
   assert.equal(published.size, 2);
 });
 test('tampered local archive blocks all network and publication calls', async t => {
@@ -62,7 +62,7 @@ test('partial publication is recorded; retry verifies core and publishes only MC
   assert.equal(records.at(-1).length, 1);
   calls.length = 0;
   const result = await publishPair(pair, { inspect, runNpm: runner(pair, pkg => { calls.push(pkg.name); published.add(pkg.name); }) });
-  assert.deepEqual(calls, ['@contextos/mcp']);
+  assert.deepEqual(calls, ['contextos-mcp']);
   assert.equal(result[0].action, 'verified-existing');
 });
 test('fully published identical pair needs no npm authentication or mutation', async t => {
@@ -77,13 +77,13 @@ test('upload error after registry accepted bytes is recovered by identity check'
   assert.equal(result.length, 2);
 });
 test('registry distinguishes 404 from authentication/server failures', async () => {
-  const pkg = { name: '@contextos/mcp', version: '0.4.0', sha256: '0'.repeat(64) };
+  const pkg = { name: 'contextos-mcp', version: '0.4.0', sha256: '0'.repeat(64) };
   assert.equal(await registryArchive(pkg, async () => new Response('', { status: 404 })), null);
   for (const status of [401, 403, 500]) await assert.rejects(registryArchive(pkg, async () => new Response('', { status })), /HTTP/);
 });
 test('registry download checks package identity, origin and exact bytes', async () => {
   const bytes = Buffer.from('verified registry archive');
-  const pkg = { name: '@contextos/mcp', version: '0.4.0', sha256: digest(bytes) };
+  const pkg = { name: 'contextos-mcp', version: '0.4.0', sha256: digest(bytes) };
   const fetcher = (tarball, data = bytes, identity = pkg) => async url => String(url).endsWith('.tgz')
     ? new Response(data) : Response.json({ name: identity.name, version: identity.version, dist: { tarball } });
   assert.deepEqual(await registryArchive(pkg, fetcher('https://registry.npmjs.org/mcp.tgz')), bytes);

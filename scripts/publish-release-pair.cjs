@@ -29,7 +29,7 @@ function npm(args, cwd = root) {
 }
 function packages(directory) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'docs/evidence/release-2.3.json')));
-  return [['core', '.', 'contextos-agents'], ['mcp', 'contextos-mcp', '@contextos/mcp']].map(([kind, folder, name]) => {
+  return [['core', '.', 'contextos-agents'], ['mcp', 'contextos-mcp', 'contextos-mcp']].map(([kind, folder, name]) => {
     const pkg = JSON.parse(fs.readFileSync(path.join(root, folder, 'package.json')));
     const lock = JSON.parse(fs.readFileSync(path.join(root, folder, 'package-lock.json')));
     if (pkg.name !== name || pkg.version !== manifest.versions[kind] || lock.version !== pkg.version || lock.packages[''].version !== pkg.version) throw new Error(`${kind}: version/identity mismatch`);

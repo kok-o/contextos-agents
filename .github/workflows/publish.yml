@@ -204,12 +204,12 @@ jobs:
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           MCP_VERSION="$(node -p "require('./contextos-mcp/package.json').version")"
-          echo "## Published contextos-agents@${VERSION} and @contextos/mcp@${MCP_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Published contextos-agents@${VERSION} and contextos-mcp@${MCP_VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Package | Version | Link |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| contextos-agents | \`${VERSION}\` | [contextos-agents@${VERSION}](https://www.npmjs.com/package/contextos-agents) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| @contextos/mcp | \`${MCP_VERSION}\` | [@contextos/mcp@${MCP_VERSION}](https://www.npmjs.com/package/@contextos/mcp) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| contextos-mcp | \`${MCP_VERSION}\` | [contextos-mcp@${MCP_VERSION}](https://www.npmjs.com/package/contextos-mcp) |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tag | \`${{ needs.version.outputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tests, validation, docs, MCP checks | Passed |" >> "$GITHUB_STEP_SUMMARY"
 

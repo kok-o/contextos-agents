@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * contextos-mcp — ContextOS Execution Layer and MCP Server CLI
+ * contextos-mcp - ContextOS Execution Layer and MCP Server CLI
  *
  * This binary directly boots the ContextOS MCP server via stdio transport.
  * It targets compiled dist/mcp/server.js in production, falling back to
@@ -23,7 +23,7 @@ if (process.argv.includes("--version") || process.argv.includes("-v")) {
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
 	console.log(`
-contextos-mcp — ContextOS Execution Layer and MCP Server CLI
+contextos-mcp - ContextOS Execution Layer and MCP Server CLI
 
 Usage:
   contextos-mcp [options]

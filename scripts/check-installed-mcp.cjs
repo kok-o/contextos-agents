@@ -7,7 +7,8 @@ const readline = require('node:readline');
 const root = path.resolve(process.argv[2] || '.');
 const runtimePaths = ['.agents/.contextos', '.contextos-session', '.contextos-worktrees'];
 const before = runtimePaths.map(file => fs.existsSync(path.join(root, file)));
-const child = spawn(process.execPath, [path.join(root, 'node_modules/@contextos/mcp/bin/mcp.mjs')], {
+const mcpFolder = ['contextos-mcp', '@contextos/mcp'].find(folder => fs.existsSync(path.join(root, 'node_modules', folder))) || 'contextos-mcp';
+const child = spawn(process.execPath, [path.join(root, 'node_modules', mcpFolder, 'bin/mcp.mjs')], {
   cwd: root, stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true,
 });
 const input = readline.createInterface({ input: child.stdout });
@@ -49,7 +50,7 @@ input.on('line', line => {
       assert.equal(status.counts.total, 0);
       assert.deepEqual(runtimePaths.map(file => fs.existsSync(path.join(root, file))), before);
       fs.writeFileSync(path.join(root, 'mcp-handshake.json'), JSON.stringify({
-        result: 'PASS', installedVersion: require(path.join(root, 'node_modules/@contextos/mcp/package.json')).version,
+        result: 'PASS', installedVersion: require(path.join(root, 'node_modules', mcpFolder, 'package.json')).version,
         tools: ['contextos_compare', 'contextos_diff', 'contextos_status'], statusCall: 'PASS',
         runtimePathsUnchanged: true, runtimeRequests: 0,
       }, null, 2));
