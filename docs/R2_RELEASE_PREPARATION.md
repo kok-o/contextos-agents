@@ -50,3 +50,32 @@ The [compatibility matrix](ADAPTER_COMPATIBILITY.md),
 [calibration summary](BENCHMARK_RESULTS.md) and [pilot protocol](PILOT_PROTOCOL.md)
 state the limits of current evidence. General quality and production long-session
 claims remain unsupported. Publication requires a separate decision.
+
+## Publication and partial-release recovery
+
+Publishing a GitHub Release triggers `publish.yml`; pushing a tag alone does not.
+Pin the release tag to the reviewed commit explicitly. Before either npm upload,
+the workflow builds both packages, packs real archives, checks their surfaces and
+compares SHA-256 with the reviewed manifest. Installed-consumer CI performs the
+same archive-identity check on Windows, Linux and macOS.
+
+The publish helper checks both registry versions before the first upload. An
+existing version is accepted only if its downloaded bytes match the expected
+hash. A 401, 403 or server error fails the preflight; only 404 means absent.
+If an upload is needed, npm authentication and account read-write access to both
+packages are checked first using `NPM_TOKEN`. Token-specific restrictions and
+automation/2FA policies can still reject an actual upload; the existence of a
+GitHub secret alone does not prove usable publishing rights.
+
+Two npm publications are sequential, not atomic. If the second upload fails,
+the first package remains published. Retained publication evidence records
+completed uploads. Rerun the failed publish job at the same immutable tag: the
+helper verifies and skips the existing identical archive, then uploads the
+missing package. A mismatching existing version blocks recovery; never overwrite
+the evidence or unpublish a version to force a retry. Both archives are uploaded
+with lifecycle scripts disabled, so publishing cannot silently rebuild them.
+
+After both uploads, separate Windows/Linux/macOS jobs download both versions
+from npm, verify hashes and exercise installed lifecycle, upgrade and checkpoint
+rollback. Their logs, results and registry archives remain CI artifacts. Only
+successful registry acceptance establishes a checked published release.

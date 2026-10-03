@@ -47,10 +47,7 @@ jobs:
       - name: Verify Git and npm release surfaces
         run: npm run check:release-surface
       - name: Pack both local candidates
-        run: |
-          node -e "require('fs').mkdirSync('scratch/release-candidate', { recursive: true })"
-          npm pack --ignore-scripts --pack-destination scratch/release-candidate
-          npm pack ./contextos-mcp --ignore-scripts --pack-destination scratch/release-candidate
+        run: node scripts/publish-release-pair.cjs prepare
       - name: Check installed archives and checkpoint rollback
         shell: pwsh
         run: |

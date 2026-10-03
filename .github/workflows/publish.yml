@@ -1,4 +1,4 @@
-name: Publish stable core package
+name: Publish reviewed core and MCP archives
 
 on:
   release:
@@ -6,6 +6,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: npm-release-pair
+  cancel-in-progress: false
 
 jobs:
   version:
@@ -168,45 +172,33 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: Verify published core tarball contents
-        run: |
-          node - <<'NODE'
-          const { execFileSync } = require('node:child_process');
-          const packed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' }))[0];
-          const files = packed.files.map(file => file.path);
-          if (!files.includes('NOTICE')) throw new Error('NOTICE is missing from the npm package');
-          const { validatePackagePaths } = require('./scripts/check-release-surface.cjs');
-          const violations = validatePackagePaths(files, 'core');
-          if (violations.length) throw new Error(`Unexpected package contents: ${violations.join(', ')}`);
-          console.log(`Core tarball contents verified (${files.length} files).`);
-          NODE
+      - run: npm ci --ignore-scripts
+        working-directory: ./contextos-mcp
+      - run: node --test tests/release-publish.test.js
+      - run: npm run build
+      - run: npm run build
+        working-directory: ./contextos-mcp
+      - run: npm run check:release-surface
+      - name: Pack both archives and verify reviewed SHA-256 identities
+        run: node scripts/publish-release-pair.cjs prepare
+      - name: Verify the exact prepared archives in an installed consumer
+        run: node scripts/check-release-install.cjs
 
-      - name: Publish core to npm
-        run: npm publish --access public
+      - name: Preflight both registry identities and publish missing archives
+        run: node scripts/publish-release-pair.cjs publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Build and verify MCP tarball contents
-        run: |
-          cd ./contextos-mcp
-          npm ci
-          npm run build
-          node - <<'NODE'
-          const { execFileSync } = require('node:child_process');
-          const packed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' }))[0];
-          const files = packed.files.map(file => file.path);
-          const { validatePackagePaths } = require('../scripts/check-release-surface.cjs');
-          const violations = validatePackagePaths(files, 'mcp');
-          if (violations.length) throw new Error(`Unexpected package contents: ${violations.join(', ')}`);
-          console.log(`MCP tarball contents verified (${files.length} files).`);
-          NODE
-
-      - name: Publish MCP to npm
-        run: |
-          cd ./contextos-mcp
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Retain prepared archives and publication progress
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-publication-evidence
+          path: |
+            scratch/release-candidate/*.tgz
+            scratch/release-publish-*.json
+            scratch/release-install-result.json
+            scratch/release-surface.json
 
       - name: Write release summary
         run: |
@@ -220,3 +212,45 @@ jobs:
           echo "| @contextos/mcp | \`${MCP_VERSION}\` | [@contextos/mcp@${MCP_VERSION}](https://www.npmjs.com/package/@contextos/mcp) |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tag | \`${{ needs.version.outputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tests, validation, docs, MCP checks | Passed |" >> "$GITHUB_STEP_SUMMARY"
+
+  registry-acceptance:
+    name: Published registry lifecycle (${{ matrix.os }})
+    needs: publish
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --ignore-scripts
+      - name: Download and verify both published archives
+        run: node scripts/publish-release-pair.cjs download
+      - name: Verify registry installation, upgrade and checkpoint rollback
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force scratch/r2-previous | Out-Null
+          node scripts/check-release-install.cjs scratch/registry-release-candidate 2>&1 | Tee-Object -FilePath scratch/registry-install.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm pack contextos-agents@2.2.0 --ignore-scripts --pack-destination scratch/r2-previous
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm pack @contextos/mcp@0.3.1 --ignore-scripts --pack-destination scratch/r2-previous
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-release-migration.cjs scratch/r2-previous/contextos-agents-2.2.0.tgz scratch/registry-release-candidate/contextos-agents-2.3.0.tgz scratch/r2-previous/contextos-mcp-0.3.1.tgz 2>&1 | Tee-Object -FilePath scratch/registry-migration.log
+          exit $LASTEXITCODE
+      - name: Retain registry acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-evidence-${{ matrix.os }}
+          path: |
+            scratch/registry-release-candidate/*.tgz
+            scratch/registry-*.log
+            scratch/release-install-result.json
+            scratch/release-migration-result.json
