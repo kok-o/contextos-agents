@@ -6,7 +6,7 @@ const { execFileSync } = require('node:child_process');
 const { parseEnv } = require('node:util');
 const { BLOCKED_EXACT_NAMES, BLOCKED_EXTENSIONS } = require('../bin/lib/scan');
 const root = path.resolve(__dirname, '..');
-const publicEvidence = new Set(['docs/evidence/ci-r2-accepted-2026-10-02.json', 'docs/evidence/release-2.3.json']);
+const publicEvidence = new Set(['docs/evidence/ci-r2-accepted-2026-10-02.json', 'docs/evidence/release-2.3.json', 'docs/evidence/release-2.3.1.json']);
 const internalDocs = /^(?:CONTEXTOS_WORK_PLAN\.md|IMPROVEMENT_PLAN\.md|docs\/(?:PERSONAL_WORKFLOW_ROADMAP|AUDIT_.+|INDEPENDENT_REVIEW_.+|IMPLEMENTATION_STATUS_.+|STABILIZATION_.+|RELEASE_ACCEPTANCE_.+|API_BENCHMARK_.+|LUNA_BENCHMARK_.+|SOL_BENCHMARK_.+)\.md)$/;
 
 function privateFile(file) {

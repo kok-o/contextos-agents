@@ -63,7 +63,10 @@ Try the [small local demo](examples/quickstart/README.md) to install the package
 calling a model API. The [five-minute guide](docs/product/onboarding.md) explains
 the same workflow for an existing project.
 
-Core 2.3.0 and MCP 0.4.0 are published. See the [release status](docs/R2_RELEASE_PREPARATION.md)
+Core 2.3.1 / MCP 0.4.1 are being prepared as a maintenance release; they are not yet published.
+See the [candidate checklist](docs/PATCH_RELEASE_2.3.1.md) and
+[live client check](docs/LIVE_CLIENT_CHECK_RU.md).
+Core 2.3.0 and MCP 0.4.0 remain the published pair. See the [release status](docs/R2_RELEASE_PREPARATION.md)
 and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). The
 [release manifest](docs/evidence/release-2.3.json) records the released source,
 cross-platform CI and archive identities. Automatic client routing and the external
@@ -228,14 +231,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.0
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.1
         with:
-          version: '2.3.0'       # Pinned version of contextos-agents runner
+          version: '2.3.1'       # Pinned version of contextos-agents runner
           adapters: 'all'        # Adapters to verify (or specific: 'cursor', 'claude')
           working-directory: '.' # Project root directory
 ```
 
-Keep the explicit `version` above: the existing `v2.3.0` action tag defaults to CLI 2.2.0. Updating the action source does not change that tag; users must set `version` or move to a future fixed tag.
+The example targets the forthcoming v2.3.1 release; use it after that tag and package are published.
+Until then, keep both pins at v2.3.0 / 2.3.0. The existing `v2.3.0` action tag defaults to CLI 2.2.0,
+so retain the explicit `version`. Updating the action source does not change an existing tag.
 
 The action executes the verified ContextOS quality gate in-process from the pinned package version, verifying generated AI adapter configs against source skills without executing untrusted scripts from pull requests, and without requiring a Node.js project or running `npm test`.
 

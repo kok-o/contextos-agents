@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-04",
+  "status": "preparation-in-progress",
+  "sourceRevision": null,
+  "versions": {
+    "core": "2.3.1",
+    "mcp": "0.4.1"
+  },
+  "publication": "not-published",
+  "archives": [],
+  "ci": null,
+  "support": {
+    "stableMcp": "Default read-only inspection",
+    "experimentalMcp": "Execution, Python, crash recovery and concurrent persistence; seven existing skipped tests",
+    "liveClientCheck": "Protocol prepared; current candidate not verified in a live client"
+  }
+}

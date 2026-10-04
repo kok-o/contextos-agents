@@ -1,6 +1,8 @@
 # ContextOS MCP Server
 
 MCP integration for [ContextOS](https://github.com/kok-o/contextos-agents).
+Version 0.4.1 is a maintenance candidate: TypeScript moves to development
+dependencies, with production-only installed-consumer coverage. Publication is pending.
 The published 0.4.0 release exposes read-only status, comparison and diff inspection by
 default. Inspection does not create agents, worktrees or runtime sessions.
 

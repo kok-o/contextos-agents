@@ -27,11 +27,13 @@ function npm(args, cwd = root) {
     throw new Error(`npm ${args[0]} failed; check registry permissions, automation/2FA policy and connectivity`);
   }
 }
-function packages(directory) {
-  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'docs/evidence/release-2.3.json')));
+function packages(directory, projectRoot = root) {
+  const core = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json')));
+  if (!/^\d+\.\d+\.\d+$/.test(core.version)) throw new Error('Expected a stable core release version');
+  const manifest = JSON.parse(fs.readFileSync(path.join(projectRoot, `docs/evidence/release-${core.version}.json`)));
   return [['core', '.', 'contextos-agents'], ['mcp', 'contextos-mcp', 'contextos-mcp']].map(([kind, folder, name]) => {
-    const pkg = JSON.parse(fs.readFileSync(path.join(root, folder, 'package.json')));
-    const lock = JSON.parse(fs.readFileSync(path.join(root, folder, 'package-lock.json')));
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, folder, 'package.json')));
+    const lock = JSON.parse(fs.readFileSync(path.join(projectRoot, folder, 'package-lock.json')));
     if (pkg.name !== name || pkg.version !== manifest.versions[kind] || lock.version !== pkg.version || lock.packages[''].version !== pkg.version) throw new Error(`${kind}: version/identity mismatch`);
     const file = `${name.replace('@', '').replace('/', '-')}-${pkg.version}.tgz`;
     const expected = manifest.archives.find(a => a.file === file);
@@ -131,4 +133,4 @@ async function main(mode) {
   } else throw new Error('Expected prepare, publish or download');
 }
 if (require.main === module) main(process.argv[2]).catch(error => { console.error(error.message); process.exitCode = 1; });
-module.exports = { digest, sameHash, verifyLocal, registryArchive, authorize, publishPair };
+module.exports = { digest, sameHash, packages, verifyLocal, registryArchive, authorize, publishPair };

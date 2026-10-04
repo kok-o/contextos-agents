@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { digest, registryArchive, publishPair } = require('../scripts/publish-release-pair.cjs');
+const { digest, packages, verifyLocal, registryArchive, publishPair } = require('../scripts/publish-release-pair.cjs');
 function fixture(t) {
   const directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-release-publish-')));
   t.after(() => {
@@ -29,6 +29,36 @@ function runner(pair, publish) {
     return '';
   };
 }
+
+test('a patch release selects its own manifest and refuses stale identities', t => {
+  const oldPair = fixture(t);
+  const root = path.dirname(oldPair[0].archive);
+  const write = (file, value) => {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), JSON.stringify(value));
+  };
+  const versions = { core: '2.3.1', mcp: '0.4.1' };
+  const archives = [];
+  for (const [folder, name, version] of [['.', 'contextos-agents', versions.core], ['contextos-mcp', 'contextos-mcp', versions.mcp]]) {
+    write(`${folder}/package.json`, { name, version });
+    write(`${folder}/package-lock.json`, { version, packages: { '': { name, version } } });
+    const file = `${name}-${version}.tgz`;
+    const bytes = Buffer.from(`patch archive ${name}`);
+    fs.writeFileSync(path.join(root, file), bytes);
+    archives.push({ file, sha256: digest(bytes) });
+  }
+  write('docs/evidence/release-2.3.json', { versions: { core: '2.3.0', mcp: '0.4.0' }, archives: [] });
+  // A historical manifest must not be used as fallback if patch evidence is missing.
+  assert.throws(() => packages(root, root), /ENOENT/);
+  write('docs/evidence/release-2.3.1.json', { versions, archives });
+  const selected = packages(root, root);
+  assert.deepEqual(selected.map(pkg => pkg.version), ['2.3.1', '0.4.1']);
+  verifyLocal(selected);
+  write('contextos-mcp/package-lock.json', { version: '0.4.0', packages: { '': { version: '0.4.0' } } });
+  assert.throws(() => packages(root, root), /version\/identity mismatch/);
+  fs.writeFileSync(selected[0].archive, oldPair[0].bytes);
+  assert.throws(() => verifyLocal(selected), /differs/);
+});
 test('preflight inspects both archives before publishing, then verifies each upload', async t => {
   const pair = fixture(t); const events = []; const published = new Set();
   await publishPair(pair, {

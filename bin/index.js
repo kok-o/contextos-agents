@@ -100,7 +100,7 @@ Options:
   --project <path>    Specify target project root directory (default: current directory)
   --target <adapters> Target adapter(s) to verify or export (default: all)
   --github-annotations Emit GitHub Actions workflow commands and step summary
-  --with-mcp, --mcp   [DEPRECATED] Use the separate @contextos/mcp package instead
+  --with-mcp, --mcp   [DEPRECATED] Use the separate contextos-mcp package instead
   --skip-compile      Skip running ctx.js export after installation
   --add-skill <ref>   Install a community plugin skill after setup
 

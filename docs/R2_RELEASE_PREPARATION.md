@@ -4,6 +4,9 @@ Updated 4 October 2026. Both packages are published and recorded as verified in
 the release manifest. This document also describes the preparation and recovery
 procedure for subsequent releases; new changes require their own acceptance.
 
+Core 2.3.1 / MCP 0.4.1 preparation is tracked separately in the
+[patch checklist](PATCH_RELEASE_2.3.1.md). The published 2.3.0 manifest remains historical evidence.
+
 ## Package and source identity
 
 Both package versions and lockfiles must match. Candidate archives, installation
@@ -60,6 +63,8 @@ Pin the release tag to the reviewed commit explicitly. Before either npm upload,
 the workflow builds both packages, packs real archives, checks their surfaces and
 compares SHA-256 with the reviewed manifest. Installed-consumer CI performs the
 same archive-identity check on Windows, Linux and macOS.
+Starting with 2.3.1, the helper selects `docs/evidence/release-<core-version>.json`;
+it never replaces or silently reuses a previous release's archive identities.
 
 The publish helper checks both registry versions before the first upload. An
 existing version is accepted only if its downloaded bytes match the expected

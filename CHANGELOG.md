@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.1] - Unreleased
+
+Prepared with companion `contextos-mcp@0.4.1`; publication is pending.
+The [candidate checklist](docs/PATCH_RELEASE_2.3.1.md) records the release gates.
+
 ### Fixed
 
 - Correct current MCP install commands, release status, resolver examples and the
@@ -16,6 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   checkpoint migration for both legacy and current MCP package names.
 - Guard public install/version instructions and ensure every core test is run
   either by the root suite or its documented separate CI step.
+- Canonicalize installed MCP paths when a temporary directory has an OS alias.
+- Select reviewed manifests by the core version and use the candidate version in
+  registry migration checks, retaining historical release evidence.
+
+### Documentation
+
+- Add a reproducible live-client check with independent fixtures, explicit and
+  automatic activation, negative controls and an evidence template.
 
 ## [2.3.0] - 2026-10-03
 

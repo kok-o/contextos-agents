@@ -1,6 +1,6 @@
 {
   "name": "contextos-agents",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Deterministic context and policy compiler for supported AI coding agents.",
   "bin": {
     "contextos": "./bin/index.js",
