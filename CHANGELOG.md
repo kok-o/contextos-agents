@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.3.1] - Unreleased
+## [2.3.1] - 2026-10-04
 
-Prepared with companion `contextos-mcp@0.4.1`; publication is pending.
-The [candidate checklist](docs/PATCH_RELEASE_2.3.1.md) records the release gates.
+Release pair: `contextos-agents@2.3.1` and `contextos-mcp@0.4.1`.
+The [release checklist](docs/PATCH_RELEASE_2.3.1.md) records publication and acceptance.
 
 ### Fixed
 

@@ -36,6 +36,19 @@ The live-check fixture uses an explicit `skill.yaml` description. Current export
 fall back to a generic routing description for manifestless skills; body export
 coverage does not establish useful automatic routing for that variant.
 
+The [live CLI check](evidence/release-2.3.1.json) passed three scenarios on
+2026-10-04 with Codex CLI 0.149.1, API authentication and `gpt-6-astra` at low
+reasoning effort. The negative control produced no marker; explicit invocation
+injected the native skill body; automatic selection read the native exported
+skill from its catalog entry and produced the expected marker. Each condition
+used a fresh session and an independent installed-consumer project. Source and
+export hashes remained unchanged, and a separate Node process checked results.
+This is one run per condition, not a reliability benchmark. Unrelated-task and
+updated-skill scenarios, desktop clients and the external pilot remain unverified.
+The CLI used fallback model metadata; the original sandbox-blocked attempt and
+the successful retry traces are retained in the local evidence directory listed
+in the report. The retry kept the Windows sandbox enabled.
+
 ## Acceptance before publication
 
 - Match both package.json versions and both lockfile root versions.

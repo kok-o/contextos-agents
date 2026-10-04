@@ -96,7 +96,7 @@
   "support": {
     "stableMcp": "Default read-only inspection",
     "experimentalMcp": "Execution, Python, crash recovery and concurrent persistence; seven existing skipped tests",
-    "liveClientCheck": "Protocol prepared; current candidate not verified in a live client"
+    "liveClientCheck": "Codex CLI 0.149.1 / gpt-6-astra low / API: negative, explicit and automatic scenarios passed once each; see liveCli below. Other clients and remaining scenarios unverified."
   },
   "verificationRevision": "f0bcf7628b8c5874315785412da399c56bddcfa9",
   "local": {
@@ -133,6 +133,152 @@
   "evidenceUpdates": "Later evidence and live-fixture documentation commits do not change either package archive. CI identifies the exact tested revision; archive hashes are rechecked after evidence updates.",
   "remaining": [
     "Separate publication decision",
-    "Live client checks and external pilot"
-  ]
+    "Unrelated-task and updated-skill CLI scenarios, desktop client checks and external pilot"
+  ],
+  "liveCli": {
+    "date": "2026-10-04",
+    "status": "PASS: 3/3 bounded CLI scenarios",
+    "client": "codex-cli 0.149.1",
+    "model": "gpt-6-astra",
+    "reasoningEffort": "low",
+    "authentication": "API key",
+    "archiveSha256": "c11d5d4d36f2703f7733a8e2d1d9d9fb311635db6b71d2fcc6b09a37967c7ad0",
+    "windowsSandbox": "elevated",
+    "runs": [
+      {
+        "condition": "negative",
+        "threadId": "01a1068a-5a03-7c21-826b-f699b93ea62c",
+        "exitCode": 0,
+        "durationSeconds": 55.731,
+        "result": {
+          "ok": true
+        },
+        "behaviorPassed": true,
+        "discovery": false,
+        "bodyLoaded": false,
+        "loadMechanism": "not applicable: probe absent",
+        "statusFileSha256": "33db1a23336ea33e4161cb989a46670daa4a133164bfccc51ffbcf04df0524b9",
+        "usage": {
+          "input_tokens": 105660,
+          "cached_input_tokens": 91124,
+          "cache_write_input_tokens": 13992,
+          "output_tokens": 800,
+          "reasoning_output_tokens": 36
+        }
+      },
+      {
+        "condition": "explicit",
+        "threadId": "01a1068b-314b-71b2-88e9-21e6aa073a1a",
+        "exitCode": 0,
+        "durationSeconds": 49.69,
+        "result": {
+          "ok": true,
+          "source": "ctx-0168d982e5bd46b9"
+        },
+        "behaviorPassed": true,
+        "discovery": true,
+        "bodyLoaded": true,
+        "loadMechanism": "native explicit skill injection",
+        "statusFileSha256": "96c12b97570cf37544ff5f83b73ae417a86963ae52c2c33811e9e7df331cc3df",
+        "usage": {
+          "input_tokens": 111701,
+          "cached_input_tokens": 96351,
+          "cache_write_input_tokens": 14806,
+          "output_tokens": 997,
+          "reasoning_output_tokens": 21
+        }
+      },
+      {
+        "condition": "automatic",
+        "threadId": "01a1068b-f33b-7e80-bac0-a1611d118f5a",
+        "exitCode": 0,
+        "durationSeconds": 45.19,
+        "result": {
+          "ok": true,
+          "source": "ctx-0168d982e5bd46b9"
+        },
+        "behaviorPassed": true,
+        "discovery": true,
+        "bodyLoaded": true,
+        "loadMechanism": "model selected native catalog entry; shell read of native export",
+        "statusFileSha256": "96c12b97570cf37544ff5f83b73ae417a86963ae52c2c33811e9e7df331cc3df",
+        "usage": {
+          "input_tokens": 111103,
+          "cached_input_tokens": 95847,
+          "cache_write_input_tokens": 14712,
+          "output_tokens": 913,
+          "reasoning_output_tokens": 51
+        }
+      }
+    ],
+    "usageTotal": {
+      "input_tokens": 328464,
+      "cached_input_tokens": 283322,
+      "output_tokens": 2710
+    },
+    "costUsd": null,
+    "limitations": [
+      "One run per condition; not a reliability or cost benchmark.",
+      "Fixture uses skill.yaml routing metadata; manifestless automatic routing not established.",
+      "CLI warned that gpt-6-astra metadata was unavailable and used fallback metadata. Requested model was not substituted.",
+      "User config ignored; existing Codex home retained for configured elevated Windows sandbox. System/user skill catalogs remained discoverable; apps/plugins/memories/multi-agent disabled for all three runs.",
+      "Original blocked attempt retained separately; CLI used read-only when the isolated home lacked configured Windows sandbox. Retry explicitly configured windows.sandbox=elevated and recorded workspace-write."
+    ],
+    "notRun": [
+      "unrelated task",
+      "updated skill",
+      "Codex desktop UI",
+      "Cursor",
+      "Gemini",
+      "external pilot"
+    ],
+    "localEvidenceDirectory": "C:\\Users\\esenb\\Desktop\\contextos-live-cli-20261004\\evidence\\retry",
+    "evidenceFiles": [
+      {
+        "file": "negative.native.jsonl",
+        "sha256": "eaa91fff8128df6a8825fd53f748681d8873d61c88b7ad0cd9186c4f7493c768",
+        "bytes": 91066
+      },
+      {
+        "file": "negative.jsonl",
+        "sha256": "6be227708738bb5b86d3cc2b00a732a0ed6d48f774d166d0374d2ac1f36894e0",
+        "bytes": 13931
+      },
+      {
+        "file": "negative.stderr.log",
+        "sha256": "50dfa94715c26127a2e2d60ccf8091e33b9e92b14bd814b37f39dbed45df8754",
+        "bytes": 751
+      },
+      {
+        "file": "explicit.native.jsonl",
+        "sha256": "61675de4e6572ebd7188d4f5c7e2f7411f3f4053157ea49faa41ab7c35c39715",
+        "bytes": 101104
+      },
+      {
+        "file": "explicit.jsonl",
+        "sha256": "500c5d009e438a982cdb822a01b5572fdb27d5b34af5cf3933d4c2f05c97e0bc",
+        "bytes": 16866
+      },
+      {
+        "file": "explicit.stderr.log",
+        "sha256": "d23a9af78747b993e467c10f9dd3a491c827908def6e117d62237df66b7e98b2",
+        "bytes": 751
+      },
+      {
+        "file": "automatic.native.jsonl",
+        "sha256": "ad8f834c5799a85a2c2ec8eae3649c12e17694120614c3860b069175a26f46c4",
+        "bytes": 104316
+      },
+      {
+        "file": "automatic.jsonl",
+        "sha256": "11d26c92ba3c821e04cfdb367f68e9b92cf134124c76b642a3797ff867046d3a",
+        "bytes": 16717
+      },
+      {
+        "file": "automatic.stderr.log",
+        "sha256": "3f92b139eaafc8f661bb8f4909eac5423c1699a9d1939e2e8209a8900665e707",
+        "bytes": 751
+      }
+    ]
+  }
 }
