@@ -1,6 +1,6 @@
 # Maintenance release: core 2.3.2 / MCP 0.4.2
 
-Status: candidate preparation; publication has not yet been performed.
+Status: verified maintenance candidate; publication is pending.
 Previous published pair: core 2.3.1 / MCP 0.4.1. Its
 [archive evidence](evidence/release-2.3.1.json) remains unchanged.
 This candidate has its own [manifest](evidence/release-2.3.2.json).
@@ -35,9 +35,19 @@ contains two causes repeated across jobs:
 - Three MCP jobs stop at Biome because the new integration test is unformatted.
   Formatting fixes this without changing its assertions.
 
-Targeted local core checks pass 47/47 and MCP lint exits successfully. Full
-candidate and remote checks are recorded in the manifest only after completion.
-Prior successful runs are not acceptance for this new candidate.
+Targeted local core checks pass 47/47 and MCP lint exits successfully. The full
+local suites pass 542 core and 635 MCP tests, with zero failures or skips, plus
+10 publication-recovery tests.
+
+The [candidate CI run](https://github.com/kok-o/contextos-agents/actions/runs/37221385766)
+passes all 19 jobs on `0c634f4`: core Node 22/24 on Windows/Linux/macOS, MCP on
+all three platforms, OCI and production-only installed consumers. Each platform
+passed upgrade/checkpoint rollback from 2.3.1 / 0.4.1 and legacy 2.2.0 / 0.3.1.
+All retained candidate archives match the manifest SHA-256 values. Implementation
+source is `051af18`; later evidence-only changes preserve those package bytes.
+
+MCP archive comparison with 0.4.1 finds 223 files in both versions; only README
+and package metadata differ. Executable payload bytes match the previous release.
 
 ## Acceptance
 

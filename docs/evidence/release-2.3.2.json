@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-04",
-  "status": "locally-verified-candidate",
+  "status": "verified-maintenance-candidate",
   "sourceRevision": "051af188d7abf0e03a0c58c0f3bf48a8f463073a",
   "versions": {
     "core": "2.3.2",
@@ -20,7 +20,120 @@
       "bytes": 1923061
     }
   ],
-  "ci": null,
+  "ci": {
+    "runId": 37221385766,
+    "url": "https://github.com/kok-o/contextos-agents/actions/runs/37221385766",
+    "headSha": "0c634f49f6e70e0fc11d4f266e539f101c4092e5",
+    "conclusion": "success",
+    "successfulJobs": 19,
+    "coreNodeVersions": [
+      22,
+      24
+    ],
+    "tests": [
+      {
+        "name": "core-evidence-macos-latest-node-22",
+        "passed": 542,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "core-evidence-macos-latest-node-24",
+        "passed": 542,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "core-evidence-ubuntu-latest-node-22",
+        "passed": 542,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "core-evidence-ubuntu-latest-node-24",
+        "passed": 542,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "core-evidence-windows-latest-node-22",
+        "passed": 542,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "core-evidence-windows-latest-node-24",
+        "passed": 542,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "mcp-evidence-macos-latest",
+        "passed": 635,
+        "failed": 0,
+        "skipped": 0,
+        "files": 50,
+        "success": true
+      },
+      {
+        "name": "mcp-evidence-ubuntu-latest",
+        "passed": 635,
+        "failed": 0,
+        "skipped": 0,
+        "files": 50,
+        "success": true
+      },
+      {
+        "name": "mcp-evidence-windows-latest",
+        "passed": 635,
+        "failed": 0,
+        "skipped": 0,
+        "files": 50,
+        "success": true
+      }
+    ],
+    "platforms": [
+      {
+        "platform": "ubuntu",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH"
+      },
+      {
+        "platform": "macos",
+        "node": "v22.23.2",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH"
+      },
+      {
+        "platform": "windows",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH"
+      }
+    ]
+  },
   "scope": {
     "core": "manifestless metadata, YAML export, Zed compatibility, destructive routing, core instructions and example validation",
     "mcp": "companion documentation and deterministic regression coverage; runtime implementation unchanged"
@@ -65,5 +178,16 @@
     "markdown": "PASS",
     "secretScan": "PASS",
     "releaseSurface": "PASS"
+  },
+  "mcpArchiveComparison": {
+    "previousVersion": "0.4.1",
+    "candidateVersion": "0.4.2",
+    "filesBefore": 223,
+    "filesAfter": 223,
+    "changed": [
+      "package/README.md",
+      "package/package.json"
+    ],
+    "runtimePayloadUnchanged": true
   }
 }
