@@ -277,14 +277,14 @@ class ManifestCompiler {
     if (!fs.existsSync(filePath)) return null;
     const content = fs.readFileSync(filePath, 'utf8');
     if (!content.startsWith('---')) return null;
-    const endIdx = content.indexOf('---', 3);
-    if (endIdx === -1) return { malformed: true };
-    const rawYaml = content.slice(3, endIdx).trim();
+    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)/);
+    if (!match) return { malformed: true };
+    const rawYaml = match[1].trim();
     const parsed = parseYaml(rawYaml);
     return {
       raw: rawYaml,
       parsed,
-      contentWithoutFrontmatter: content.slice(endIdx + 3).trim(),
+      contentWithoutFrontmatter: match[2].trim(),
     };
   }
 
@@ -299,7 +299,7 @@ class ManifestCompiler {
 
     const entrypoint = parsed.entrypoint || 'SKILL.md';
     const version = parsed.version ? String(parsed.version) : '1.0.0';
-    const description = parsed.description || `ContextOS skill for ${displayName}`;
+    let description = parsed.description || `ContextOS skill for ${displayName}`;
     const type = parsed.type || 'instruction-only';
     const category = parsed.category || 'general';
 
@@ -319,6 +319,9 @@ class ManifestCompiler {
     const entrypointFile = path.join(skillDir, entrypoint);
     if (fs.existsSync(entrypointFile)) {
       const fm = this.readFrontmatter(entrypointFile);
+      if (!parsed.description && typeof fm?.parsed?.description === 'string' && fm.parsed.description.trim()) {
+        description = fm.parsed.description.trim();
+      }
       if (fm && fm.parsed && fm.parsed.name) {
         const fmSlug = String(fm.parsed.name).trim().toLowerCase().replace(/\s+/g, '-');
         discoveredAliases.push(fmSlug);

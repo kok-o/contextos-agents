@@ -198,11 +198,21 @@ const mockServer = {
 
 // ── Import + register ───────────────────────────────────────────────────────
 
-import { getSession, inspectSession } from "../../src/mcp/session.js";
+import { cleanupSession, getSession, inspectSession, recordAsyncJob, spawnThread } from "../../src/mcp/session.js";
 import { registerContextosTools } from "../../src/mcp/tools/contextos.js";
+import { isEligibleForMerge, mergeThreadBranch } from "../../src/worktree/merge.js";
 
 vi.mock("../../src/worktree/manager.js", () => ({
 	readWorktreeDiff: vi.fn(async () => "diff --git a/hello.ts b/hello.ts\n+console.log('hello');"),
+}));
+
+// Handler contracts use a controlled context dependency. Real source loading
+// is exercised by loader and installed-consumer tests.
+vi.mock("../../src/contextos/loader.js", () => ({
+	assembleContextPrompt: vi.fn(() => ({
+		prompt: "Fixture engineering instructions",
+		report: { sources: [], warnings: [] },
+	})),
 }));
 
 beforeEach(() => {
@@ -254,12 +264,16 @@ describe("registerContextosTools", () => {
 	});
 
 	describe("contextos_delegate", () => {
-		it.skip("delegates synchronously and returns completed results", async () => {
+		beforeEach(() => {
+			registeredTools.clear();
+			registerContextosTools(mockServer as any, process.cwd(), true);
+		});
+		it("delegates synchronously and forwards the bounded write scope", async () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({
 				dir: process.cwd(),
 				task: "Build authentication modal with React",
-				writeScope: ["."],
+				write_scope: { allow: ["src"], deny: [] },
 				agents: [
 					{ provider: "openai", model: "gpt-4o" },
 					{ provider: "anthropic", model: "claude-sonnet-4-6" },
@@ -267,42 +281,62 @@ describe("registerContextosTools", () => {
 				wait: true,
 			});
 
-			expect(res.isError).toBeFalsy();
+			expect(res.isError, res.content[0].text).toBeFalsy();
 			const parsed = JSON.parse(res.content[0].text);
 			expect(parsed.status).toBe("completed");
 			expect(parsed.agents.length).toBe(2);
 			expect(parsed.agents[0].status).toBe("completed");
+			expect(spawnThread).toHaveBeenCalledTimes(2);
+			expect(spawnThread).toHaveBeenCalledWith(mockSession, expect.objectContaining({ writeScope: ["src"] }));
 		});
 
-		it.skip("blocks file paths that escape repository boundary", async () => {
+		it("blocks file paths that escape repository before session creation or execution", async () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({
 				dir: process.cwd(),
 				task: "Test task",
-				writeScope: ["."],
+				write_scope: { allow: ["src"], deny: [] },
 				agents: [{ provider: "openai", model: "gpt-4o" }],
 				files: ["../../../../etc/passwd"],
 			});
 
 			expect(res.isError).toBe(true);
-			expect(res.content[0].text).toContain("escapes repository");
+			expect(res.content[0].text).toContain("File path security violation");
+			expect(getSession).not.toHaveBeenCalled();
+			expect(spawnThread).not.toHaveBeenCalled();
 		});
 
-		it.skip("delegates asynchronously (wait: false) and returns immediately", async () => {
+		it("delegates asynchronously and records completion after the response", async () => {
 			const handler = registeredTools.get("contextos_delegate")!;
 			const res = await handler({
 				dir: process.cwd(),
 				task: "Refactor backend database models",
-				writeScope: ["."],
+				write_scope: { allow: ["src"], deny: [] },
 				agents: [{ provider: "gemini", model: "gemini-2.5-pro" }],
 				wait: false,
 			});
 
-			expect(res.isError).toBeFalsy();
+			expect(res.isError, res.content[0].text).toBeFalsy();
 			const parsed = JSON.parse(res.content[0].text);
 			expect(parsed.status).toBe("running");
 			expect(parsed.message).toContain("Poll status with contextos_status");
 			expect(parsed.agents[0].status).toBe("running");
+			expect(recordAsyncJob).toHaveBeenCalledWith(mockSession, parsed.task_id, 1, "running");
+			await vi.waitFor(() =>
+				expect(recordAsyncJob).toHaveBeenLastCalledWith(mockSession, parsed.task_id, 1, "completed"),
+			);
+		});
+
+		it("denies execution without a write scope even when focus files are supplied", async () => {
+			const res = await registeredTools.get("contextos_delegate")!({
+				dir: process.cwd(),
+				task: "Change source",
+				files: ["src/index.ts"],
+				agents: [{ provider: "openai" }],
+			});
+			expect(res.isError).toBe(true);
+			expect(res.content[0].text).toContain("write_scope is required");
+			expect(spawnThread).not.toHaveBeenCalled();
 		});
 	});
 
@@ -360,7 +394,11 @@ describe("registerContextosTools", () => {
 	});
 
 	describe("contextos_merge", () => {
-		it.skip("merges the selected thread branch", async () => {
+		beforeEach(() => {
+			registeredTools.clear();
+			registerContextosTools(mockServer as any, process.cwd(), true);
+		});
+		it("merges the selected thread branch through the eligibility gate", async () => {
 			const handler = registeredTools.get("contextos_merge")!;
 			const res = await handler({
 				dir: process.cwd(),
@@ -371,17 +409,40 @@ describe("registerContextosTools", () => {
 			const parsed = JSON.parse(res.content[0].text);
 			expect(parsed.merged).toBe(true);
 			expect(parsed.branch).toBe("swarm/ctx_task1_openai");
+			expect(mergeThreadBranch).toHaveBeenCalledWith(
+				mockSession.dir,
+				mockThreads[0].branchName,
+				mockThreads[0].id,
+				mockThreads[0],
+			);
+		});
+		it("refuses a stale verification result before calling Git merge", async () => {
+			vi.mocked(isEligibleForMerge).mockReturnValueOnce({ eligible: false, reason: "verification is STALE" });
+			const res = await registeredTools.get("contextos_merge")!({ dir: process.cwd(), thread_id: "ctx_task1_openai" });
+			expect(res.isError).toBe(true);
+			expect(res.content[0].text).toContain("STALE");
+			expect(mergeThreadBranch).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("contextos_cleanup", () => {
-		it.skip("cleans up session resources", async () => {
+		beforeEach(() => {
+			registeredTools.clear();
+			registerContextosTools(mockServer as any, process.cwd(), true);
+		});
+		it("cleans up session resources", async () => {
 			const handler = registeredTools.get("contextos_cleanup")!;
 			const res = await handler({ dir: process.cwd() });
 
 			expect(res.isError).toBeFalsy();
 			const parsed = JSON.parse(res.content[0].text);
 			expect(parsed.cleaned_up).toBe(true);
+			expect(cleanupSession).toHaveBeenCalledTimes(1);
+		});
+		it("preserves dry-run semantics", async () => {
+			const res = await registeredTools.get("contextos_cleanup")!({ dir: process.cwd(), dry_run: true });
+			expect(JSON.parse(res.content[0].text)).toMatchObject({ cleaned_up: false, dry_run: true });
+			expect(cleanupSession).toHaveBeenCalledWith(mockSession.dir, undefined, true);
 		});
 	});
 });

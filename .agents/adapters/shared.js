@@ -126,6 +126,18 @@ function getSkillEntrypointPath(skillDir) {
   return require('../filesystem/index.js').resolveManagedPath(skillDir, manifest?.entrypoint || 'SKILL.md').resolvedPath;
 }
 
+/** Routing metadata follows the declared manifest, then the real entrypoint. */
+function readSkillMetadata(skillDir) {
+  const manifest = readSkillManifest(skillDir);
+  const entrypoint = getSkillEntrypointPath(skillDir);
+  const raw = fs.existsSync(entrypoint) ? fs.readFileSync(entrypoint, 'utf8') : '';
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  const frontmatter = match ? require('../compiler/vendor/yaml.js').parse(match[1]) : {};
+  const name = manifest?.displayName || manifest?.name || frontmatter?.name || path.basename(skillDir);
+  const description = manifest?.description || frontmatter?.description || `ContextOS skill for ${name}`;
+  return { name, description: typeof description === 'string' ? description.trim() : description };
+}
+
 /** Copy declared resources beside exported entrypoints without inlining them. */
 function renderSkillResources(skillDir, destinations, metadata) {
   const manifest = readSkillManifest(skillDir);
@@ -158,5 +170,6 @@ module.exports = {
   stripFrontmatter,
   renderSkillResources,
   readSkillManifest,
+  readSkillMetadata,
   getSkillEntrypointPath,
 };

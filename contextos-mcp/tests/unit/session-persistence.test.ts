@@ -2,6 +2,8 @@
  * Unit tests for session persistence and orphan management in contextos-mcp.
  */
 
+import { fork } from "node:child_process";
+import { once } from "node:events";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -9,9 +11,11 @@ import type { ThreadState } from "../../src/core/types.js";
 import {
 	acquireStateLock,
 	clearPersistedState,
+	getPersistedAsyncTasks,
 	getPersistedThreads,
 	loadPersistedState,
 	purgeOrphans,
+	reconcileSessionStateWithGit,
 	recordThreadState,
 	savePersistedState,
 	scanOrphanWorktrees,
@@ -138,7 +142,41 @@ describe("MCP Session Persistence & Orphan Management", () => {
 		expect(fs.existsSync(wtDir)).toBe(false);
 	});
 
-	it.skip("recovers running thread to interrupted after process crash and preserves cost", () => {
+	it("reconciles durable state after a writer process is killed and preserves cost", async () => {
+		const child = fork(path.join(__dirname, "../fixtures/persist-and-wait.mjs"), [TEST_DIR], {
+			execArgv: ["--import", import.meta.resolve("tsx")],
+			stdio: ["ignore", "ignore", "pipe", "ipc"],
+		});
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const timer = setTimeout(() => reject(new Error("Persistence worker did not become ready")), 10000);
+				child.once("message", (message) => {
+					clearTimeout(timer);
+					if (message === "durable-state-ready") resolve();
+					else reject(new Error("Unexpected persistence worker message"));
+				});
+				child.once("error", (err) => {
+					clearTimeout(timer);
+					reject(err);
+				});
+				child.once("exit", () => {
+					clearTimeout(timer);
+					reject(new Error("Persistence worker exited before ready"));
+				});
+			});
+			const exited = once(child, "exit");
+			child.kill("SIGKILL");
+			await exited;
+			await reconcileSessionStateWithGit(TEST_DIR);
+			const recovered = getPersistedThreads(TEST_DIR).find((thread) => thread.id === "crashed-thread-1");
+			expect(recovered).toMatchObject({ status: "interrupted", phase: "interrupted", estimatedCostUsd: 0.125 });
+			expect(getPersistedAsyncTasks(TEST_DIR)["task-1"].status).toBe("unknown_after_restart");
+		} finally {
+			if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+		}
+	}, 15000);
+
+	it("legacy snapshots remain read-only data until explicitly migrated", () => {
 		const thread: ThreadState = {
 			id: "crashed-thread-1",
 			config: {
@@ -176,11 +214,10 @@ describe("MCP Session Persistence & Orphan Management", () => {
 		const loaded = loadPersistedState(TEST_DIR);
 		expect(loaded).not.toBeNull();
 		const recoveredThread = loaded?.threads["crashed-thread-1"];
-		expect(recoveredThread?.status).toBe("interrupted");
-		expect(recoveredThread?.phase).toBe("interrupted");
-		expect(recoveredThread?.error).toContain("interrupted by process restart or crash");
+		expect(recoveredThread?.status).toBe("running");
+		expect(recoveredThread?.phase).toBe("agent_running");
 		expect(recoveredThread?.estimatedCostUsd).toBe(0.125);
-		expect(loaded?.asyncTasks?.["task-1"].status).toBe("unknown_after_restart");
+		expect(loaded?.asyncTasks?.["task-1"].status).toBe("running");
 	});
 
 	it("acquires state lock, rejects concurrent holder, and recovers stale lock", () => {
@@ -207,7 +244,7 @@ describe("MCP Session Persistence & Orphan Management", () => {
 		expect(fs.existsSync(lockPath)).toBe(false);
 	});
 
-	it.skip("preserves five rapid thread updates with a monotonic sequence", async () => {
+	it("preserves five distinct threads written in one process", async () => {
 		const threads = Array.from(
 			{ length: 5 },
 			(_, index): ThreadState => ({
@@ -230,7 +267,8 @@ describe("MCP Session Persistence & Orphan Management", () => {
 		await Promise.all(threads.map(async (thread) => recordThreadState(TEST_DIR, thread)));
 		const state = loadPersistedState(TEST_DIR);
 		expect(Object.keys(state?.threads || {})).toHaveLength(5);
-		expect(state?.sequence).toBe(5);
+		// This legacy projection is a count, not a durable update sequence.
+		expect(state?.sequence).toBe(threads.length);
 	});
 
 	it("skips orphan worktree if .contextos-session belongs to a different repository", async () => {

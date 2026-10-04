@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, AGENTS_MD_PATH, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'cursor@2';
@@ -74,25 +74,9 @@ function getSkillGlobsAndFlags(skillName, skillDir = null) {
 function buildSkillSection(skillDir) {
   const skillName = path.basename(skillDir);
   const skillMdPath = getSkillEntrypointPath(skillDir);
-  const yamlPath = path.join(skillDir, 'skill.yaml');
-
-  let title = skillName;
-  let description = '';
-  if (fs.existsSync(yamlPath)) {
-    const yaml = fs.readFileSync(yamlPath, 'utf8');
-    title = extractYamlField(yaml, 'name') || skillName;
-    description = extractYamlField(yaml, 'description') || '';
-  }
 
   if (!fs.existsSync(skillMdPath)) return null;
-
-  const raw = fs.readFileSync(skillMdPath, 'utf8');
-  const body = stripFrontmatter(raw).trimEnd();
-
-  if (!description) {
-    const firstLine = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
-    description = firstLine || '';
-  }
+  const { name: title, description } = readSkillMetadata(skillDir);
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
   return `\n## Skill: ${title}\n${descLine}*Rule file: \`.cursor/rules/${skillName}.mdc\` (load on demand)*\n`;
@@ -101,18 +85,10 @@ function buildSkillSection(skillDir) {
 function generateCursorMdc(skillDir, context) {
   const skillName = path.basename(skillDir);
   const skillMdPath = getSkillEntrypointPath(skillDir);
-  const yamlPath = path.join(skillDir, 'skill.yaml');
 
   if (!fs.existsSync(skillMdPath)) return null;
 
-  let title = skillName;
-  let description = `ContextOS rules for ${skillName}`;
-  if (fs.existsSync(yamlPath)) {
-    const yaml = fs.readFileSync(yamlPath, 'utf8');
-    title = extractYamlField(yaml, 'name') || skillName;
-    const desc = extractYamlField(yaml, 'description');
-    if (desc) description = desc;
-  }
+  const { name: title, description } = readSkillMetadata(skillDir);
 
   let raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw).trimEnd();

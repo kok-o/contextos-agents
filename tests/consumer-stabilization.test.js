@@ -119,19 +119,20 @@ test('Native and Cursor exports preserve manifestless routing descriptions and t
   const directory = path.join(root, '.agents/project/skills/team-bare');
   fs.mkdirSync(directory, { recursive: true });
   const source = path.join(directory, 'SKILL.md');
-  const description = 'Use for auth: session handling, "cookies", and authorization.';
+  const description = 'Use for auth: session handling, "cookies" --- and authorization.';
   fs.writeFileSync(source, `---\nname: team-bare\ndescription: ${JSON.stringify(description)}\n---\n# Team\nNever log credentials.\n`);
   const yaml = require('../.agents/compiler/vendor/yaml.js');
-  const metadata = file => yaml.parse(fs.readFileSync(path.join(root, file), 'utf8').split('---')[1]);
+  const metadata = file => yaml.parse(fs.readFileSync(path.join(root, file), 'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)[1]);
   apply(root, 'all');
-  assert.equal(metadata('.agents/skills/team-bare/SKILL.md').description, description);
+  assert.equal(new ManifestCompiler({ rootDir: root }).compile().registry.skills['team-bare'].description, description);
+  assert.equal(metadata('.agents/skills/team-bare/SKILL.md').description?.trim(), description);
   assert.ok(metadata('.cursor/rules/team-bare.mdc').description.includes('Use for auth: session handling'));
   assert.ok(fs.readFileSync(path.join(root, '.zed/prompts/team-bare.md'), 'utf8').includes(description));
   const changed = 'Use for password reset and account recovery.';
   fs.writeFileSync(source, `---\nname: team-bare\ndescription: >\n  ${changed}\n---\n# Team\nNever log credentials.\n`);
   assert.equal(detectDrift(root, 'all').hasDrift, true);
   apply(root, 'all');
-  assert.equal(metadata('.agents/skills/team-bare/SKILL.md').description, changed);
+  assert.equal(metadata('.agents/skills/team-bare/SKILL.md').description?.trim(), changed);
   assert.equal(detectDrift(root, 'all').hasDrift, false);
 });
 

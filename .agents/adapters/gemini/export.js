@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillManifest, collectSkillDirectories, renderSkillResources } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, collectSkillDirectories, renderSkillResources } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'gemini@2';
@@ -14,14 +14,13 @@ function describe() {
   return {
     name: 'gemini',
     version: '2.0.0',
-    description: 'Compiles modular skills for Gemini 3.8 and Google Antigravity IDE',
+    description: 'Compiles shared native skills and supporting resources for documented client discovery paths',
     targetPattern: '.agents/generated/gemini/skills/**/SKILL.md',
   };
 }
 
 function renderGeminiSkill(skillDir, context) {
   const skillName = path.basename(skillDir);
-  const manifest = readSkillManifest(skillDir);
   const existingSkillMdPath = getSkillEntrypointPath(skillDir);
 
   if (!fs.existsSync(existingSkillMdPath)) {
@@ -29,7 +28,7 @@ function renderGeminiSkill(skillDir, context) {
   }
 
   const name = skillName;
-  const description = manifest?.description || `ContextOS skill for ${name}`;
+  const { description } = readSkillMetadata(skillDir);
   const mergedContent = fs.readFileSync(existingSkillMdPath, 'utf8').replace(/^---[\s\S]*?---\r?\n/, '');
 
   const outputContent = `---

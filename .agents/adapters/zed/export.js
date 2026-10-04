@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, AGENTS_MD_PATH, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'zed@2';
@@ -22,25 +22,12 @@ function describe() {
 function buildSkillSection(skillDir) {
   const skillName = path.basename(skillDir);
   const skillMdPath = getSkillEntrypointPath(skillDir);
-  const yamlPath = path.join(skillDir, 'skill.yaml');
-
-  let title = skillName;
-  let description = '';
-  if (fs.existsSync(yamlPath)) {
-    const yaml = fs.readFileSync(yamlPath, 'utf8');
-    title = extractYamlField(yaml, 'name') || skillName;
-    description = extractYamlField(yaml, 'description') || '';
-  }
 
   if (!fs.existsSync(skillMdPath)) return null;
+  const { name: title, description } = readSkillMetadata(skillDir);
 
   const raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw);
-
-  if (!description) {
-    const firstLine = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
-    description = firstLine || '';
-  }
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
   const promptRef = `*Prompt template: \`.zed/prompts/${skillName}.md\` (Use via /${skillName})*\n`;

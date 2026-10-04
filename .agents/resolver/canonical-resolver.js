@@ -399,13 +399,21 @@ function matchesTaskPhrase(text, pattern) {
 
 const SECURITY_TASK_PATTERN = String.raw`secur\w*|auth\w*|jwt|passwords?|tokens?|secrets?|permissions?|idor|bola|ssrf|csrf|xss|login|access\s*control|rate\s*limit|безопасн[\p{L}]*|авториз[\p{L}]*|аутентифик[\p{L}]*|парол[\p{L}]*|токен[\p{L}]*|доступ(?:а|у|ом|е|ы|ов)?|прав[\p{L}]*\s+доступ[\p{L}]*`;
 
+// Bounded noun phrases allow common articles/adjectives without interpreting
+// "remove unused imports from files" as deletion of the files themselves.
+const DESTRUCTIVE_TASK_PATTERN = [
+  String.raw`(?:delete|remove|erase|purge|drop)\s+(?:(?:all|the|a|an|these|those|selected|old|stale|temporary|generated|unused|existing)\s+){0,4}(?:files?|folders?|directory|directories|tables?|databases?|rows?|records?)`,
+  String.raw`(?:удал[\p{L}]*|сотри|стереть|стирай|очист[\p{L}]*|уничтож[\p{L}]*)\s+(?:(?:все|всю|весь|всех|эти|эту|этот|стар[\p{L}]*|временн[\p{L}]*|выбранн[\p{L}]*|неиспользуем[\p{L}]*|сгенерированн[\p{L}]*)\s+){0,4}(?:баз[\p{L}]*|таблиц[\p{L}]*|диск[\p{L}]*|файл[\p{L}]*|папк[\p{L}]*)`,
+  String.raw`rm\s+-(?:rf|fr)|truncate|destroy|delete\s*from|format\s*disk|git\s+reset\s+--hard|git\s+push\s+(?:--force|-f)|git\s+clean\s+-[a-z]*f[a-z]*`,
+].join('|');
+
 function evaluateRisk(taskText, files = []) {
   const reasons = [];
   const text = (taskText || '').toLowerCase();
   let value = 'standard';
 
   // Destructive operations
-  if (matchesTaskPhrase(text, String.raw`drop\s*(?:database|table)|rm\s*-rf|truncate|destroy|delete\s*from|format\s*disk|(?:delete|remove)\s+(?:files?|folders?|directories|tables?|databases?)|git\s+reset\s+--hard|git\s+push\s+--force|удал[\p{L}]*\s*(?:баз[\p{L}]*|таблиц[\p{L}]*|диск[\p{L}]*|файл[\p{L}]*|папк[\p{L}]*)|очист[\p{L}]*\s*баз[\p{L}]*|уничтож[\p{L}]*`)) {
+  if (matchesTaskPhrase(text, DESTRUCTIVE_TASK_PATTERN)) {
     reasons.push({ kind: 'risk_keyword', weight: 100, reason: 'Mentions destructive database or filesystem operation' });
     value = 'destructive';
   } else if (matchesTaskPhrase(text, SECURITY_TASK_PATTERN) ||
