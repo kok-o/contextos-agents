@@ -1,14 +1,25 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-04",
-  "status": "preparation-in-progress",
-  "sourceRevision": null,
+  "status": "candidate-archives-prepared",
+  "sourceRevision": "eb39867568c448bb1c394e9470c99287897b1295",
   "versions": {
     "core": "2.3.1",
     "mcp": "0.4.1"
   },
   "publication": "not-published",
-  "archives": [],
+  "archives": [
+    {
+      "file": "contextos-agents-2.3.1.tgz",
+      "sha256": "c11d5d4d36f2703f7733a8e2d1d9d9fb311635db6b71d2fcc6b09a37967c7ad0",
+      "bytes": 383848
+    },
+    {
+      "file": "contextos-mcp-0.4.1.tgz",
+      "sha256": "7c3f49fea182e4243f986114cb89a3d5385fef74e44bca0efa4f8987488ba8b1",
+      "bytes": 1923025
+    }
+  ],
   "ci": null,
   "support": {
     "stableMcp": "Default read-only inspection",
