@@ -33,8 +33,9 @@ function npmCli() {
 }
 
 fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
-const consumer = fs.mkdtempSync(path.join(root, 'scratch/release-consumer-space '));
-const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache'), NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=4096' };
+const consumer = fs.mkdtempSync(path.join(os.tmpdir(), 'contextos-release-consumer-space '));
+const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache'), NODE_OPTIONS: '--max-old-space-size=4096 --no-global-search-paths' };
+delete env.NODE_PATH;
 function run(executable, args, options = {}) {
   return execFileSync(executable, args, { cwd: consumer, env, encoding: 'utf8', timeout: 180000, windowsHide: true, ...options });
 }
@@ -58,7 +59,7 @@ try {
   write('AGENTS.md', userAgents);
   write('CLAUDE.md', userClaude);
   write('.cursor/rules/team.mdc', userCursor);
-  run(process.execPath, [npmCli(), 'install', '--no-audit', '--no-fund', '--ignore-scripts', '--no-package-lock', ...archives]);
+  run(process.execPath, [npmCli(), 'install', '--save-prod', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts', '--no-package-lock', ...archives]);
   run('git', ['init', '-q']);
   // Invoke npm's real .bin wrapper, with explicit quoting on Windows.
   function wrapper(name, ...args) {
@@ -97,6 +98,15 @@ try {
   assert.ok(read('.agents/skills/engineering-workflow/SKILL.md').includes('USER OVERRIDE MARKER'));
   assert.equal(skillBody(read('.agents/skills/team-bare/SKILL.md')), skillBody(bareRule));
   const mcpPkgDir = ['contextos-mcp', '@contextos/mcp'].find(dir => fs.existsSync(path.join(consumer, 'node_modules', dir))) || 'contextos-mcp';
+  const mcpMetadata = JSON.parse(read(`node_modules/${mcpPkgDir}/package.json`));
+  assert.equal(mcpMetadata.dependencies?.typescript, undefined, 'The supported MCP entrypoint must not require the TypeScript compiler');
+  const typescriptResolution = JSON.parse(run(process.execPath, ['--eval', `
+    const { createRequire } = require('node:module');
+    const resolve = createRequire(${JSON.stringify(path.join(consumer, 'node_modules', mcpPkgDir, 'package.json'))});
+    try { console.log(JSON.stringify(resolve.resolve('typescript'))); }
+    catch (error) { if (error.code !== 'MODULE_NOT_FOUND') throw error; console.log('null'); }
+  `]));
+  assert.equal(typescriptResolution, null, 'Consumer must exercise MCP without an ambient TypeScript compiler');
   const loaderUrl = pathToFileURL(path.join(consumer, 'node_modules', mcpPkgDir, 'dist/contextos/loader.js')).href;
   run(process.execPath, ['--input-type=module', '--eval', `
     import assert from 'node:assert/strict';
@@ -111,6 +121,7 @@ try {
   assert.ok(read('CLAUDE.md').startsWith(userClaude));
   assert.equal(read('.cursor/rules/team.mdc'), userCursor);
   console.log(run(process.execPath, [path.join(__dirname, 'check-installed-mcp.cjs'), consumer]).trim());
+  fs.copyFileSync(path.join(consumer, 'mcp-handshake.json'), path.join(root, 'scratch/installed-mcp-handshake.json'));
   assert.equal(JSON.parse(read('mcp-handshake.json')).installedVersion, mcpVersion);
   cli('uninstall', '--yes');
   assert.equal(read('AGENTS.md'), userAgents);
@@ -127,6 +138,7 @@ try {
     lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', 'MCP handshake', 'uninstall'],
     userInstructionsPreserved: true, userOverridePreserved: true, quickstartFixture: 'PASS',
     manifestlessAndCustomEntrypoint: 'PASS', consumerPath: consumer,
+    productionOnlyInstall: true, typescriptResolution, outsideSourceTree: !consumer.startsWith(root + path.sep),
   };
   fs.writeFileSync(path.join(root, 'scratch/release-install-result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(`Release consumer acceptance: PASS (${consumer})`);

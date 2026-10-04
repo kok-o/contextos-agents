@@ -14,7 +14,7 @@ These components form the versioned `contextos-agents` root package. Their contr
 
 ## Beta (MCP Bridge)
 
-These components are feature-complete but their APIs (specifically MCP schemas) may undergo minor changes. They are distributed via the separate `@contextos/mcp` package.
+These components are feature-complete but their APIs (specifically MCP schemas) may undergo minor changes. They are distributed via the separate `contextos-mcp` package.
 
 * **Read-Only MCP Server:** `contextos_status`, `contextos_compare`, and `contextos_diff` inspect existing session/thread state without initializing runtime worktrees. The bridge does not expose `contextos_resolve` or `contextos_explain`.
 * **Interactive CLI Framework:** Foundations for interactive shells, though not recommended for automated CI use.

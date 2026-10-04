@@ -1,6 +1,7 @@
-# Compact context migration: 2.3.0 / MCP 0.4.0 candidates
+# Compact context migration: 2.3.0 / MCP 0.4.0
 
-These versions are local release candidates. They have not been published.
+These versions are published. The [release manifest](evidence/release-2.3.json)
+records the verified registry archives and source revision.
 
 ## Behavioral changes
 
@@ -27,7 +28,7 @@ instructions and chat history are outside this skill-body budget.
 
 ## Upgrade from core 2.2.0 / MCP 0.3.1
 
-Use a disposable checkout first. Pin both candidate archives; do not use `latest`.
+Use a disposable checkout first. Pin both versioned archives; do not use `latest`.
 Stop MCP processes while changing their installed package. The default MCP
 surface is read-only; remove `--enable-runtime` for the stable inspection scope.
 

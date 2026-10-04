@@ -59,17 +59,16 @@ npx contextos-agents init --all               # Install all 36 catalog skills at
 
 ### Options
 
-Try the [small local demo](examples/quickstart/README.md) to install the current
-candidate in a new folder, select a TypeScript skill, and add a team rule without
+Try the [small local demo](examples/quickstart/README.md) to install the package in a new folder, select a TypeScript skill, and add a team rule without
 calling a model API. The [five-minute guide](docs/product/onboarding.md) explains
 the same workflow for an existing project.
 
-For the current R2 candidates, see the [release preparation status](docs/R2_RELEASE_PREPARATION.md)
+Core 2.3.0 and MCP 0.4.0 are published. See the [release status](docs/R2_RELEASE_PREPARATION.md)
 and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). The
-[release manifest](docs/evidence/release-2.3.json) records the verified source,
-cross-platform CI and candidate archive identities. The client pilot and
-publication decision remain pending. Internal plans, local API probes
-and raw logs are excluded from the public release surface.
+[release manifest](docs/evidence/release-2.3.json) records the released source,
+cross-platform CI and archive identities. Automatic client routing and the external
+pilot remain unverified. Internal plans, local API probes and raw logs are excluded
+from the public release surface.
 
 ```bash
 npx contextos-agents --help             # Show all options
@@ -88,13 +87,13 @@ npx contextos-agents --skip-compile     # Skip auto-compilation step
 
 Modern development teams face fragmented AI tooling: engineers use Cursor, Claude Code, GitHub Copilot, Gemini, Zed, and Aider. Each tool requires its own proprietary rules format, leading to configuration drift, contradictory standards, and unvetted AI slop (`// TODO`, leaked secrets).
 
-Artificially truncating skills to save tokens degrades model reasoning and induces hallucinations. Instead, ContextOS ensures that agents receive complete, high-fidelity engineering context from a single version-controlled source.
+ContextOS preserves selected skill bodies and reports budget overflow instead of silently truncating required instructions. Whether a client loads and follows those rules requires separate verification. The current [calibration](docs/BENCHMARK_RESULTS.md) found no quality advantage over vanilla on its test corpus.
 
 **ContextOS is not another coding agent.** It is the deterministic context compiler and policy engine for the agents your team already uses.
 
 ### The Three Pillars
 
-1. **Portable (Multi-Agent):** Define your engineering skills once in standard Markdown. ContextOS compiles native configurations for all supported agents (Gemini, Claude Code, Cursor, Copilot, Aider, and Zed).
+1. **Portable (Multi-Agent):** Define your engineering skills once in standard Markdown. ContextOS generates agent-specific exports (Gemini, Claude Code, Cursor, Copilot, Aider, and Zed); native loading and manual templates are distinguished in the compatibility matrix.
 2. **High-Fidelity & Focused:** The resolver maps domain skills to relevant tasks without lossy truncation, delivering rich, complete context to the model.
 3. **Verifiable in CI:** Lockfile v2 provenance, dual-hash verification, and CI quality gates detect configuration drift and enforce quality guardrails before merge.
 
@@ -111,15 +110,16 @@ contextos resolve "review authentication changes" \
   --explain
 ```
 
-Selected:
-  security              explicit task match
-  engineering-workflow  required dependency
+Example excerpt from the repository configuration (selection and scores depend on installed skills, files and profile):
 
-Excluded:
-  context-manager       domain relevance filter
+```text
+Selected Skills:
+  ✓ engineering-workflow   score: 100  tokens: ~418  (foundation: Core skill)
+  ✓ security               score: 185  tokens: ~2237  (safety_required: Touched file "src/auth/session.ts" matches glob "**/*auth*" (+25); safety_required: Touched file "src/auth/session.ts" matches pattern (+60); safety_required: Required safety guidance for high risk task)
+  ✓ typescript             score:  60  tokens: ~1000  (file_glob: Touched file "src/auth/session.ts" matches pattern (+60))
+```
 
-Risk: high
-Context status: complete and verified
+Selection does not imply installation or activation. If TypeScript is not installed, the CLI also reports `CTX_SELECTED_SKILL_UNAVAILABLE`; install it with `contextos skill add typescript` before runtime assembly.
 
 ## Dynamic Skill Resolution & Unified CLI (`contextos` / `ctx.js`)
 
@@ -132,8 +132,9 @@ ContextOS provides a unified CLI (`contextos` or `npx contextos-agents`) and loc
 contextos resolve "Build an accessible modal component with React and Tailwind"
 
 # Output:
-# [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer]
-# Skills loaded: ponytail-mindset, engineering-workflow, gemini-precision
+# [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer] [MODE: CHANGE] [LENSES: accessibility] [RISK: standard]
+# Skills loaded: ponytail-mindset, engineering-workflow, react, web-accessibility, ui-ux-pro
+# Selection declaration only; skill bodies are read by the consuming client or prompt assembler.
 
 # Resolve with full evidence scoring explanation:
 contextos resolve "security review" --files apps/web/app/login/page.tsx --explain
@@ -227,12 +228,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.2.0
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.0
         with:
-          version: '2.2.0'       # Pinned version of contextos-agents runner
+          version: '2.3.0'       # Pinned version of contextos-agents runner
           adapters: 'all'        # Adapters to verify (or specific: 'cursor', 'claude')
           working-directory: '.' # Project root directory
 ```
+
+Keep the explicit `version` above: the existing `v2.3.0` action tag defaults to CLI 2.2.0. Updating the action source does not change that tag; users must set `version` or move to a future fixed tag.
 
 The action executes the verified ContextOS quality gate in-process from the pinned package version, verifying generated AI adapter configs against source skills without executing untrusted scripts from pull requests, and without requiring a Node.js project or running `npm test`.
 
@@ -243,9 +246,11 @@ The MCP server is a separate beta package. It is not part of the stable `context
 Install it separately if you want to try the beta integration:
 
 ```bash
-npm install --save-dev @contextos/mcp
+npm install --save-dev contextos-mcp
 npx contextos-mcp --dir .
 ```
+
+The former `@contextos/mcp` 0.3.x package is historical; use `contextos-mcp` for current releases.
 
 The MCP server is read-only by default. Runtime execution remains experimental and is outside the stable core scope.
 

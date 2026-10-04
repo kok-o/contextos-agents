@@ -43,11 +43,51 @@ function checkLinks(files) {
   }
   return missing;
 }
+function checkTestInventory(projectRoot = root) {
+  const read = file => fs.readFileSync(path.join(projectRoot, file), 'utf8');
+  const listed = new Set(JSON.parse(read('package.json')).scripts.test.split(/\s+/).filter(token => token.startsWith('tests/')));
+  const separate = 'tests/release-publish.test.js';
+  const files = fs.readdirSync(path.join(projectRoot, 'tests')).filter(file => file.endsWith('.test.js')).map(file => `tests/${file}`);
+  const violations = files.filter(file => !listed.has(file) && file !== separate).map(file => `Test not scheduled: ${file}`);
+  for (const file of listed) if (!files.includes(file)) violations.push(`Scheduled test missing: ${file}`);
+  const { parse } = require('yaml');
+  for (const file of ['.github/workflows/validate-skills.yml', '.github/workflows/publish.yml']) {
+    const jobs = Object.values(parse(read(file)).jobs);
+    const runs = jobs.flatMap(job => job.steps || []).map(step => step.run || '');
+    if (!runs.some(run => /^\s*node --test tests\/release-publish\.test\.js\s*$/m.test(run))) {
+      violations.push(`${file}: separately scheduled ${separate} is missing`);
+    }
+  }
+  return violations;
+}
+function checkPublicInstructions(projectRoot = root) {
+  const read = file => fs.readFileSync(path.join(projectRoot, file), 'utf8');
+  const { version } = JSON.parse(read('package.json'));
+  const violations = [];
+  for (const file of ['README.md', 'GUIDE.md', 'docs/PRODUCT_BOUNDARIES.md', 'docs/MIGRATION.md', 'contextos-mcp/README.md']) {
+    if (/\bnpm(?:\.cmd)?\s+(?:install|i|add)\b[^\n]*@contextos\/mcp\b/.test(read(file))) {
+      violations.push(`${file}: installs the historical @contextos/mcp package`);
+    }
+  }
+  const { parse } = require('yaml');
+  const action = parse(read('.github/actions/contextos-gate/action.yml'));
+  if (action.inputs?.version?.default !== version) violations.push('Action inputs.version.default differs from the core package version');
+  for (const file of ['README.md', 'docs/MIGRATION.md']) {
+    const snippets = [...read(file).matchAll(/```ya?ml\r?\n([\s\S]*?)```/g)].map(match => parse(match[1]));
+    const steps = snippets.flatMap(doc => Array.isArray(doc) ? doc : Object.values(doc?.jobs || {}).flatMap(job => job.steps || []));
+    const gates = steps.filter(step => step.uses?.startsWith('kok-o/contextos-agents/.github/actions/contextos-gate@'));
+    if (!gates.length || gates.some(step => step.uses !== `kok-o/contextos-agents/.github/actions/contextos-gate@v${version}` || step.with?.version !== version)) {
+      violations.push(`${file}: gate example must pin the current tag and explicit CLI version`);
+    }
+  }
+  return violations;
+}
 function main() {
   const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
   const files = [...new Set(git(['ls-files', '-z']).concat(git(['ls-files', '--others', '--exclude-standard', '-z'])))];
   const ignoredTracked = git(['ls-files', '-ci', '--exclude-standard', '-z']);
-  const violations = [...validateGitPaths(files), ...ignoredTracked.map(file => `Ignored but still tracked: ${file}`), ...checkLinks(files)];
+  const violations = [...validateGitPaths(files), ...ignoredTracked.map(file => `Ignored but still tracked: ${file}`), ...checkLinks(files),
+    ...checkTestInventory(), ...checkPublicInstructions()];
   const core = require('../package.json'), mcp = require('../contextos-mcp/package.json');
   for (const [folder, pkg] of [['.', core], ['contextos-mcp', mcp]]) {
     const lock = JSON.parse(fs.readFileSync(path.join(root, folder, 'package-lock.json')));
@@ -76,4 +116,4 @@ function main() {
   if (violations.length) process.exitCode = 1;
 }
 if (require.main === module) main();
-module.exports = { privateFile, validateGitPaths, validatePackagePaths, checkLinks };
+module.exports = { privateFile, validateGitPaths, validatePackagePaths, checkLinks, checkTestInventory, checkPublicInstructions };

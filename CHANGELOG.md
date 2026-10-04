@@ -7,10 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Correct current MCP install commands, release status, resolver examples and the
+  default CLI version in the Action source; retain an explicit version for v2.3.0.
+- Move the unused-at-runtime TypeScript compiler to MCP development dependencies.
+- Check production-only installed consumers outside the source tree and verify
+  checkpoint migration for both legacy and current MCP package names.
+- Guard public install/version instructions and ensure every core test is run
+  either by the root suite or its documented separate CI step.
+
 ## [2.3.0] - 2026-10-03
 
-Prepared release candidate; npm publication and the release tag remain pending.
-The companion MCP candidate is `@contextos/mcp@0.4.0`.
+Published as `contextos-agents@2.3.0` with companion `contextos-mcp@0.4.0`.
+The v2.3.0 tag and registry acceptance refer to source `97ea455`; see the
+[release manifest](docs/evidence/release-2.3.json) for archive hashes and CI evidence.
 
 ### Added
 

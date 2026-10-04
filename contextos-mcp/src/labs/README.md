@@ -1,6 +1,6 @@
 # Labs — Experimental & Deprecated Features
 
-> ⚠️ **These modules are NOT part of the stable `@contextos/mcp` API surface.**
+> ⚠️ **These modules are NOT part of the supported `contextos-mcp` API surface.**
 > They are under active research or scheduled for removal.
 > Do not import from this directory in production code.
 
@@ -19,4 +19,5 @@
 
 - No Labs module may be imported by stable/beta production code.
 - Labs modules may reference each other.
-- Labs modules are excluded from `npm pack` via `.npmignore`.
+- Source files are excluded from `npm pack`; compiled Labs files can remain in `dist/`. Their presence does not make them supported entrypoints.
+- The deprecated TypeScript analyzer requires the development-only `typescript` dependency and is not available through the supported MCP executable.

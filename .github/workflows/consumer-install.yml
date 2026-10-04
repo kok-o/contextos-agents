@@ -46,8 +46,23 @@ jobs:
         working-directory: ./contextos-mcp
       - name: Verify Git and npm release surfaces
         run: npm run check:release-surface
-      - name: Pack both local candidates
+      - name: Pack release archives against reviewed hashes
+        if: inputs.ref != ''
         run: node scripts/publish-release-pair.cjs prepare
+      - name: Pack development archives for consumer regression
+        if: inputs.ref == ''
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force scratch/release-candidate | Out-Null
+          npm pack --ignore-scripts --pack-destination scratch/release-candidate
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Push-Location contextos-mcp
+          try {
+            npm pack --ignore-scripts --pack-destination ../scratch/release-candidate
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } finally {
+            Pop-Location
+          }
       - name: Check installed archives and checkpoint rollback
         shell: pwsh
         run: |
@@ -59,6 +74,15 @@ jobs:
           npm pack @contextos/mcp@0.3.1 --ignore-scripts --pack-destination scratch/r2-previous 2>&1 | Tee-Object -FilePath scratch/previous-mcp-pack.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run check:migration 2>&1 | Tee-Object -FilePath scratch/migration.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item scratch/release-migration-result.json scratch/release-migration-legacy-result.json
+          New-Item -ItemType Directory -Force scratch/current-previous | Out-Null
+          npm pack contextos-agents@2.3.0 --ignore-scripts --pack-destination scratch/current-previous 2>&1 | Tee-Object -FilePath scratch/current-core-pack.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm pack contextos-mcp@0.4.0 --ignore-scripts --pack-destination scratch/current-previous 2>&1 | Tee-Object -FilePath scratch/current-mcp-pack.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $candidateVersion = node -p "require('./package.json').version"
+          npm run check:migration -- scratch/current-previous/contextos-agents-2.3.0.tgz "scratch/release-candidate/contextos-agents-$candidateVersion.tgz" scratch/current-previous/contextos-mcp-0.4.0.tgz 2>&1 | Tee-Object -FilePath scratch/current-migration.log
           exit $LASTEXITCODE
       - name: Retain package verification evidence
         if: always()
@@ -68,9 +92,11 @@ jobs:
           path: |
             scratch/release-install-result.json
             scratch/release-migration-result.json
+            scratch/release-migration-legacy-result.json
             scratch/release-surface.json
             scratch/*.log
             scratch/release-candidate/*.tgz
             scratch/r2-previous/*.tgz
-            scratch/release-consumer-*/mcp-handshake.json
+            scratch/current-previous/*.tgz
+            scratch/installed-mcp-handshake.json
           if-no-files-found: warn

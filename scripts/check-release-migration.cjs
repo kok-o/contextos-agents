@@ -3,6 +3,7 @@
 // Exercise the documented checkpoint rollback against a real previous npm archive.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
@@ -14,11 +15,21 @@ const candidateMcp = path.join(path.dirname(candidate), `contextos-mcp-${require
 const npm = process.env.npm_execpath || path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
 assert.ok(fs.existsSync(npm), 'Run through npm run check:migration');
 for (const archive of [previous, candidate, previousMcp, candidateMcp]) assert.ok(fs.existsSync(archive), `Missing archive: ${archive}`);
+function archiveIdentity(archive, names) {
+  const pkg = JSON.parse(execFileSync('tar', ['-xOf', archive, 'package/package.json'], { encoding: 'utf8', windowsHide: true }));
+  assert.ok(names.includes(pkg.name), `Unexpected package in ${archive}: ${pkg.name}`);
+  assert.match(pkg.version, /^\d+\.\d+\.\d+(?:[-+][\w.+-]+)?$/);
+  return { name: pkg.name, version: pkg.version };
+}
+const previousCoreIdentity = archiveIdentity(previous, ['contextos-agents']);
+const previousMcpIdentity = archiveIdentity(previousMcp, ['@contextos/mcp', 'contextos-mcp']);
+const candidateMcpIdentity = archiveIdentity(candidateMcp, ['contextos-mcp']);
 fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
-const consumer = fs.mkdtempSync(path.join(root, 'scratch/migration-consumer-space '));
+const consumer = fs.mkdtempSync(path.join(os.tmpdir(), 'contextos-migration-consumer-space '));
 const checkpoint = path.join(consumer, 'checkpoint');
 const configPaths = ['.agents', '.cursor', 'AGENTS.md', 'CLAUDE.md', '.github', '.aider.conf.yml', 'CONVENTIONS.md', '.zed', 'GEMINI.md'];
 const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache') };
+delete env.NODE_PATH;
 const steps = [];
 function run(exe, args) {
   const command = [exe, ...args];
@@ -33,6 +44,11 @@ function run(exe, args) {
 }
 function install(archive) { run(process.execPath, [npm, 'install', '--save-dev', '--no-audit', '--no-fund', '--ignore-scripts', archive]); }
 function cli(...args) { return run(process.execPath, [path.join(consumer, 'node_modules/contextos-agents/bin/index.js'), ...args]); }
+function verifyInstalled(identity) {
+  const installed = JSON.parse(fs.readFileSync(path.join(consumer, 'node_modules', identity.name, 'package.json')));
+  assert.equal(installed.name, identity.name);
+  assert.equal(installed.version, identity.version);
+}
 function write(file, body) {
   fs.mkdirSync(path.dirname(path.join(consumer, file)), { recursive: true });
   fs.writeFileSync(path.join(consumer, file), body);
@@ -67,9 +83,9 @@ try {
   run('git', ['init', '-q']);
   install(previous);
   install(previousMcp);
-  assert.equal(require(path.join(consumer, 'node_modules/@contextos/mcp/package.json')).version, '0.3.1');
+  verifyInstalled(previousMcpIdentity);
   const previousVersion = JSON.parse(cli('--version', '--json')).version;
-  assert.equal(previousVersion, '2.2.0');
+  assert.equal(previousVersion, previousCoreIdentity.version);
   cli('init', '--minimal');
   cli('skill', 'override', 'engineering-workflow');
   fs.appendFileSync(path.join(consumer, '.agents/project/skills/engineering-workflow/SKILL.md'), '\nUSER_OVERRIDE_KEEP\n');
@@ -87,6 +103,7 @@ try {
   }
   install(candidate);
   install(candidateMcp);
+  verifyInstalled(candidateMcpIdentity);
   cli('update');
   cli('compile');
   cli('export', 'all');
@@ -109,10 +126,11 @@ try {
   for (const rel of ['package.json', 'package-lock.json']) fs.copyFileSync(path.join(checkpoint, rel), path.join(consumer, rel));
   run(process.execPath, [npm, 'ci', '--ignore-scripts', '--no-audit', '--no-fund']);
   assert.equal(JSON.parse(cli('--version', '--json')).version, previousVersion);
-  assert.equal(JSON.parse(fs.readFileSync(path.join(consumer, 'node_modules/@contextos/mcp/package.json'))).version, '0.3.1');
+  verifyInstalled(previousMcpIdentity);
   assert.deepEqual(configHashes(), before, 'Rollback must restore every configuration byte');
   assert.equal(JSON.parse(cli('export', 'all', '--check', '--json')).hasDrift, false);
-  result = { result: 'PASS', previousVersion, candidateVersion, platform: process.platform, node: process.version,
+  result = { result: 'PASS', previousVersion, candidateVersion, previousMcp: previousMcpIdentity, candidateMcp: candidateMcpIdentity,
+    platform: process.platform, node: process.version,
     sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     rollback: 'checkpoint + previous package-lock + npm ci', configurationFilesRestored: Object.keys(before).length,
     userRulesPreserved: true, consumerPath: consumer };

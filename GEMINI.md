@@ -24,7 +24,7 @@ You are Google Gemini operating as a Staff Principal Engineer inside this worksp
 - Always run:
   1. Unit and integration tests (`npm test`).
   2. Skill and consistency validation (`node .agents/ctx.js validate`).
-  3. Linter checks (`npm run lint:md`, `npm run lint`).
+  3. Linter checks (`npm run lint:md` for root Markdown, `npm --prefix contextos-mcp run lint` for MCP source and tests).
 - If any test or validation fails, examine the exact error output, fix the root cause, and re-verify until green.
 
 ## 4. Surgical Blast Radius Containment

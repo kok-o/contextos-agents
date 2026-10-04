@@ -151,7 +151,7 @@ contextos gate
 ### MCP Server (Beta, Separate Package)
 
 ```bash
-npm install --save-dev @contextos/mcp
+npm install --save-dev contextos-mcp
 npx contextos-mcp --dir .
 ```
 

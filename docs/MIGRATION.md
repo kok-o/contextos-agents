@@ -2,7 +2,7 @@
 
 This document outlines how to upgrade to major versions of ContextOS and adapt to structural breaking changes.
 
-For the current core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 candidates,
+For the current core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 releases,
 use the [concrete upgrade and checkpoint rollback guide](COMPACT_CONTEXT_MIGRATION.md).
 The sections below describe older migrations.
 
@@ -15,14 +15,14 @@ In v1.x, the ContextOS MCP server and execution runtime were bundled inside the 
 
 **What changed:**
 * The core package (`contextos-agents`) is now purely a deterministic compiler and rule resolver.
-* The MCP server, sub-agent execution, and worktree logic have been moved to a separate Beta package (`@contextos/mcp`).
+* The MCP server, sub-agent execution, and worktree logic have been moved to a separate Beta package (`contextos-mcp`, formerly `@contextos/mcp`).
 * The `--with-mcp` CLI flag on `contextos init` is **deprecated** and will only print instructions to install the new package.
 
 **Migration:**
 If you rely on ContextOS MCP for parallel worktrees or execution:
 ```bash
 # Install the runtime separately
-npm install @contextos/mcp --save-dev
+npm install contextos-mcp --save-dev
 
 # Use the new explicit runtime flag in your IDE's MCP config
 # (Instead of pointing to .agents/mcp/server.mjs)
@@ -57,9 +57,9 @@ In v1.x, the composite action ran `npm ci --ignore-scripts`, executed the incomi
 **Migration:**
 Update your `.github/workflows/` workflow step:
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.2.0
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.0
   with:
-    version: '2.2.0'
+    version: '2.3.0'
     adapters: 'all'
     working-directory: '.'
 ```

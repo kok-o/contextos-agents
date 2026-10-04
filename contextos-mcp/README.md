@@ -1,7 +1,7 @@
 # ContextOS MCP Server
 
 MCP integration for [ContextOS](https://github.com/kok-o/contextos-agents).
-The 0.4.0 candidate exposes read-only status, comparison and diff inspection by
+The published 0.4.0 release exposes read-only status, comparison and diff inspection by
 default. Inspection does not create agents, worktrees or runtime sessions.
 
 The supported package entrypoint is the `contextos-mcp` executable; a root
@@ -54,7 +54,8 @@ npx contextos-mcp
 npx contextos-mcp --dir ./my-project
 ```
 
-**Tools exposed (`contextos_*`):**
+**Tools (`contextos_*`):** Status, compare and diff are registered by default.
+Delegate, merge and cleanup require experimental `--enable-runtime` opt-in.
 
 | Tool | Description |
 |------|-------------|
@@ -84,7 +85,9 @@ Add to your project's `.mcp.json` or MCP settings:
 }
 ```
 
-Once configured, your host orchestrator can invoke `contextos_delegate` to spawn subagents, inspect progress with `contextos_status` and `contextos_diff`, and safely integrate changes with `contextos_merge`.
+With the default configuration, the host can inspect existing state through
+`contextos_status`, `contextos_compare` and `contextos_diff`. Execution and mutation
+tools require adding `--enable-runtime` explicitly and remain experimental.
 
 ### Supported Providers
 
