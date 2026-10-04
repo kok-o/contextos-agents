@@ -247,11 +247,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Copy-Item scratch/release-migration-result.json scratch/release-migration-legacy-result.json
           New-Item -ItemType Directory -Force scratch/current-previous | Out-Null
-          npm pack contextos-agents@2.3.0 --ignore-scripts --pack-destination scratch/current-previous
+          npm pack contextos-agents@2.3.1 --ignore-scripts --pack-destination scratch/current-previous
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm pack contextos-mcp@0.4.0 --ignore-scripts --pack-destination scratch/current-previous
+          npm pack contextos-mcp@0.4.1 --ignore-scripts --pack-destination scratch/current-previous
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm run check:migration -- scratch/current-previous/contextos-agents-2.3.0.tgz "scratch/registry-release-candidate/contextos-agents-$candidateVersion.tgz" scratch/current-previous/contextos-mcp-0.4.0.tgz 2>&1 | Tee-Object -FilePath scratch/registry-migration.log
+          npm run check:migration -- scratch/current-previous/contextos-agents-2.3.1.tgz "scratch/registry-release-candidate/contextos-agents-$candidateVersion.tgz" scratch/current-previous/contextos-mcp-0.4.1.tgz 2>&1 | Tee-Object -FilePath scratch/registry-migration.log
           exit $LASTEXITCODE
       - name: Retain registry acceptance evidence
         if: always()

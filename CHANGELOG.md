@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.2] - 2026-10-04
+
+Maintenance pair: `contextos-agents@2.3.2` and `contextos-mcp@0.4.2`.
+Publication and archive acceptance are recorded in the
+[release checklist](docs/PATCH_RELEASE_2.3.2.md).
+
+### Fixed
+
+- Preserve manifestless routing descriptions through compilation and native,
+  Cursor and Zed exports, including quoted/folded YAML and description-only drift.
+  Keep v2 manifests and declared entrypoints authoritative.
+- Preserve Zed's body preview when a skill has no routing description, restoring
+  plugin export compatibility and fixing the failing root/OCI CI checks.
+- Parse only complete frontmatter delimiters and quote generated Gemini YAML
+  descriptions, preserving punctuation, inline delimiters and multiline values.
+- Recognize Russian and English destructive requests with intervening words;
+  retain required safety guidance under profile exclusions and budget pressure.
+- Validate all required fields in the original TypeScript catalog example.
+- Replace overlapping mandatory skill instructions with a proportional lifecycle,
+  canonical aliases and structured evidence that supports partial/unrun outcomes.
+
+### Verification and documentation
+
+- Restore unconditional MCP handler and persistence coverage; exercise child
+  process interruption and a real Git failure/repair/stale-evidence/merge cycle
+  with a deterministic executor. Runtime remains experimental.
+- Format the MCP integration test to satisfy Biome on all CI platforms and limit
+  default Vitest workers to two. MCP runtime implementation is unchanged.
+- Separate syntax, behavioral, structural and simulated skill-example results;
+  execute the original TypeScript source with negative mutation controls.
+- Extend fresh installed-consumer checks for routing metadata and destructive
+  selection, and test upgrade/checkpoint rollback from the previous maintenance pair.
+- Synchronize support boundaries, current versions and next acceptance work.
+
 ## [2.3.1] - 2026-10-04
 
 Release pair: `contextos-agents@2.3.1` and `contextos-mcp@0.4.1`.

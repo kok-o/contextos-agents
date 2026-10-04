@@ -1,90 +1,66 @@
-# ContextOS Catalog Quality: Skill Examples Verification and Quality Gate
+# ContextOS skill verification scope
 
-This document records the verification framework, classification inventory, and execution results for code examples embedded across ContextOS skills.
+Updated 4 October 2026. This gate verifies declared local scenarios; it does not
+certify the entire catalog or guarantee that an AI client follows instructions.
 
----
+## Coverage
 
-## 1. Principles of Catalog Quality
+All seven core skills are included: `engineering-workflow`, `ponytail-mindset`,
+`security`, `gemini-precision`, `context-os`, `context-manager`, and `gstack-roles`.
+Executable core blocks must have a registered scenario that loads their original
+Markdown source. Unregistered executable blocks fail the gate.
 
-Under Phase 4 of [docs/ROADMAP.md](../ROADMAP.md), ContextOS enforces that every claim of skill correctness must be backed by an automated verification check:
+Catalog coverage includes four of the 36 skills: `fastapi`, `web-accessibility`,
+`adapters`, and `typescript`. The other 32 have manifest/structural validation,
+without equivalent example verification. Passing `validate --catalog` does not
+change that boundary.
 
-1. **No Phantom Code**: Code examples presented in `SKILL.md` files must be parsed or executed against declared language parsers and test runners.
-2. **Deterministic Classification**: Every code block has an assigned ID, language, and category:
-   - `runnable`: Executable code validated through AST syntax parsers, runtime type checks, or unit fixtures.
-   - `illustrative`: Pseudo-code, directory trees, templates with placeholders (`{{...}}`), or HTTP headers with documented reasons.
-   - `expected-failure`: Negative anti-patterns that must trigger specific errors.
-   - `unverified`: Temporary backlog status; prohibited in certified skills.
-3. **Negative Proof**: Automated tests must prove that introducing a defect or syntax error into an example makes the test suite fail (no false greens).
-4. **Consumer Isolation**: All compilers, Playwright fixtures, and language runtimes (Python/Node) reside strictly within Author CI (`scripts/verify-skill-examples.js`, `tests/fixtures/skill-examples/`) and are never imposed as dependencies on consumer repositories.
+The current inventory contains 21 blocks: 14 runnable and seven illustrative.
+Two core aliases contain no code blocks; their canonical routing and report
+contracts are checked instead.
 
----
+| Check category | Count | What passing establishes |
+| --- | ---: | --- |
+| Syntax parsing | 13 | Original JS/TS/TSX/Python blocks parse; no TypeScript type checking |
+| Behavioral tests | 40 | Declared resolver and original-source example scenarios pass |
+| Structural contracts | 12 | Seven report schemas, three CSS assertions and two CLI registry assertions pass |
+| Fixture simulations | 3 | Mock dialog transitions pass; no browser focus or accessibility certification |
+| Total | 68 | All declared checks pass, with zero unregistered core executable blocks |
 
-## 2. First Coverage Inventory (Tasks 4.1 - 4.8)
+## Scenario boundaries
 
-The initial certification covers four foundational skills across backend, frontend, adapters, and security:
+- Core scenarios cover proportional task routing, safety under a small budget,
+  aliases, prompt assembly and executable security/minimalism/Gemini examples.
+  Schema validation proves report structure, not that reported commands ran.
+- Security HMAC and SSRF examples execute from their original blocks. Controlled
+  transport checks URL restrictions; production DNS and network egress isolation
+  require separate acceptance.
+- TypeScript's original `isUser` guard checks every required field. Ten cases
+  include missing fields, wrong types, invalid roles and arrays. A mutation
+  restoring the previous `id`-only implementation fails five cases. Data shape
+  validation does not authorize a caller's role.
+- FastAPI blocks receive original-source Python AST parsing. The legacy runner's
+  copied snippets no longer inflate behavioral totals. Framework imports,
+  database dependencies and HTTP endpoint execution remain unverified.
+- Accessibility checks inspect the original CSS and simulate a dialog. Real
+  keyboard focus, assistive technology and React component behavior remain
+  unverified. The adapter example checks the CLI command registry; broader
+  adapter behavior is tested in the main consumer suites.
 
-| Skill ID | File Path | Total Blocks | Runnable | Illustrative | Expected-Failure | Unverified | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **fastapi** | `catalog/skills/fastapi/SKILL.md` | 5 | 4 | 1 | 0 | 0 | PASSED |
-| **web-accessibility** | `catalog/skills/web-accessibility/SKILL.md` | 3 | 3 | 0 | 0 | 0 | PASSED |
-| **adapters** | `catalog/skills/adapters/SKILL.md` | 1 | 0 | 1 | 0 | 0 | PASSED |
-| **security** | `.agents/core/skills/security/SKILL.md` | 3 | 2 | 1 | 0 | 0 | PASSED |
-| **TOTAL** | - | **12** | **9** | **3** | **0** | **0** | **100% VERIFIED** |
+The reviewed-block loader is a test harness, not an OS security sandbox. Parser
+and fixture dependencies belong to development checks and are not required by
+installed consumers.
 
----
-
-## 3. Verified Code Blocks Breakdown
-
-### 3.1 Backend: FastAPI (`fastapi`)
-- `fastapi:pydantic-models`: Validates Pydantic v2 `BaseModel`, `EmailStr`, `Field`, and `ConfigDict(from_attributes=True)`.
-- `fastapi:dependency-injection`: Validates `OAuth2PasswordBearer`, `AsyncSession` generator, and PyJWT error handling.
-- `fastapi:error-handling`: Validates custom `AppException` subclassing `HTTPException`.
-- `fastapi:testing`: Validates `@pytest.mark.asyncio` endpoint test signature with `httpx.AsyncClient`.
-- `fastapi:project-structure`: Illustrative ASCII directory tree.
-
-### 3.2 Frontend: Web Accessibility (`web-accessibility`)
-- `web-accessibility:css:focus-visible`: Validates high-contrast focus rings (`outline: 2px solid #6366f1; outline-offset: 2px;`) and preservation of keyboard focus.
-- `web-accessibility:modal:accessible-modal`: Validates HTMLDialogElement `.showModal()` contract, native keyboard focus trap, and Escape key cancellation.
-- `web-accessibility:forms:accessible-forms`: Validates `aria-invalid`, `aria-describedby`, and mandatory `<label htmlFor>` association.
-
-### 3.3 Security: Application Security (`security`)
-- `security:timing-safe`: Validates `crypto.timingSafeEqual` HMAC webhook verification, length mismatch safety, and rejection of tampered payloads.
-- `security:ssrf:allowlist`: Validates OWASP SSRF prevention client (`fetchFromAllowlist`), enforcing HTTPS, blocking embedded URL credentials, enforcing strict host allowlists, and rejecting automatic HTTP redirects.
-- `security:headers`: Illustrative list of production HTTP security headers (CSP, HSTS, X-Frame-Options).
-
-### 3.4 Adapters: Cross-Agent CLI (`adapters`)
-- `adapters:cli:commands`: Validates that `contextos export` and supported target list (`gemini`, `claude`, `cursor`, `copilot`, `aider`, `zed`) map to verified commands in `bin/commands.js`.
-- `adapters:aider:yaml`: Illustrative Aider configuration template.
-
----
-
-## 4. Backlog Registry for Subsequent Catalog Skills
-
-The remaining 29 skills in `catalog/skills/` are cataloged in the Phase 4 backlog and will be certified in prioritized groups:
-
-| Priority Group | Skills Included | Planned Verification Fixtures |
-| --- | --- | --- |
-| **Group 2 (Frontend Core)** | `react`, `react-best-practices`, `nextjs`, `typescript`, `state-management` | React 19 hooks, server actions, TS generic constraints |
-| **Group 3 (Design Systems)** | `ui-ux-pro`, `impeccable-design`, `ui-design`, `ux-design`, `minimalist-design`, `brutalist-design`, `soft-design`, `redesign-audit` | Design tokens, color contrast, CSS scale compliance |
-| **Group 4 (Backend Services)** | `node`, `nestjs`, `system-design`, `microservices`, `ddd`, `database` | Node stream timeouts, NestJS decorators, parameterized SQL |
-| **Group 5 (DevOps & Cross-Cutting)** | `testing`, `docker`, `decisions`, `architecture-diagrams`, `generators`, `graphify`, `performance`, `vercel-optimize` | Dockerfile multistage syntax, Vitest mocks, Edge cache headers |
-
----
-
-## 5. Verification Commands
-
-To run skill example verification:
+## Reproduce
 
 ```sh
-# Full human-readable CLI report
 node scripts/verify-skill-examples.js
-
-# Machine-readable JSON summary for CI pipelines
 node scripts/verify-skill-examples.js --json
-
-# Dedicated npm script
-npm run test:skills
-
-# Integrated test suite including negative proof
-node --test tests/skill-examples.test.js
+node --test tests/skill-examples.test.js tests/core-skill-standard.test.js
+node .agents/ctx.js validate --catalog
 ```
+
+JSON is the authority for counts after source changes. Every additional catalog
+skill needs an explicit scope and meaningful scenarios before its behavior can
+be described as verified. Type checking, live clients, browser accessibility and
+application execution require their own evidence.

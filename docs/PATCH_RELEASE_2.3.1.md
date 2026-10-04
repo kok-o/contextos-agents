@@ -32,9 +32,14 @@ remain experimental with seven documented skips. The dependency move does not
 turn internal labs into a supported library API. See the
 [skip inventory](MCP_SKIPPED_TESTS.md) and [client check](LIVE_CLIENT_CHECK_RU.md).
 
-The live-check fixture uses an explicit `skill.yaml` description. Current exporters
+The live-check fixture uses an explicit `skill.yaml` description. Released exporters
 fall back to a generic routing description for manifestless skills; body export
 coverage does not establish useful automatic routing for that variant.
+
+The unreleased working tree fixes this metadata fallback and restores the seven
+skipped handler/persistence cases. See [local improvements](RELIABILITY_IMPROVEMENTS.md).
+These changes do not modify the published archive identities or expand the
+historical release's acceptance evidence.
 
 The [live CLI check](evidence/release-2.3.1.json) passed three scenarios on
 2026-10-04 with Codex CLI 0.149.1, API authentication and `gpt-6-astra` at low

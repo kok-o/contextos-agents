@@ -586,26 +586,35 @@ describe("Full Pipeline — End-to-End", () => {
 	it("rejects a false completion, accepts a repair, and refuses stale evidence before merging", async () => {
 		// Real Git, subprocess verification, persistence and merge. Only the
 		// implementer/reviewer responses are deterministic fixtures, with no API calls.
-		fs.writeFileSync(path.join(repoDir, "verify.cjs"), [
-			"const { test } = require('node:test');",
-			"const assert = require('node:assert/strict');",
-			"test('result satisfies the independent contract', () => assert.equal(require('./result.cjs')(), 5));",
-		].join("\n"));
+		fs.writeFileSync(
+			path.join(repoDir, "verify.cjs"),
+			[
+				"const { test } = require('node:test');",
+				"const assert = require('node:assert/strict');",
+				"test('result satisfies the independent contract', () => assert.equal(require('./result.cjs')(), 5));",
+			].join("\n"),
+		);
 		execFileSync("git", ["add", "verify.cjs"], { cwd: repoDir });
 		execFileSync("git", ["commit", "-m", "record behavioral acceptance before execution"], { cwd: repoDir });
 		let attempts = 0;
 		registerAgent({
-			name: "repair-fixture", isAvailable: async () => true,
+			name: "repair-fixture",
+			isAvailable: async () => true,
 			run: async ({ workDir }) => {
 				attempts += 1;
 				fs.writeFileSync(path.join(workDir, "result.cjs"), `module.exports = () => ${attempts === 1 ? 4 : 5};\n`);
 				return { success: true, output: "Everything is done", filesChanged: ["result.cjs"], durationMs: 1 };
 			},
 		});
-		const execute = (id: string) => tm.spawnThread({
-			id, task: `Implement the result contract, attempt ${id}`, writeScope: ["result.cjs"], context: "",
-			agent: { backend: "repair-fixture", model: "fixture" }, testCommand: "node --test verify.cjs",
-		});
+		const execute = (id: string) =>
+			tm.spawnThread({
+				id,
+				task: `Implement the result contract, attempt ${id}`,
+				writeScope: ["result.cjs"],
+				context: "",
+				agent: { backend: "repair-fixture", model: "fixture" },
+				testCommand: "node --test verify.cjs",
+			});
 		const failed = await execute("repair-bad");
 		expect(failed.success).toBe(false);
 		expect(tm.getThread("repair-bad")!.verificationStatus).toBe("FAIL");
@@ -629,7 +638,9 @@ describe("Full Pipeline — End-to-End", () => {
 		const accepted = tm.getThread("repair-reverified")!;
 		const merged = await mergeThreadBranch(repoDir, accepted.branchName!, accepted.id, accepted);
 		expect(merged.success).toBe(true);
-		expect(execFileSync(process.execPath, ["--test", "verify.cjs"], { cwd: repoDir, encoding: "utf8" })).toContain("# pass 1");
+		expect(execFileSync(process.execPath, ["--test", "verify.cjs"], { cwd: repoDir, encoding: "utf8" })).toContain(
+			"# pass 1",
+		);
 	});
 
 	it("should complete full pipeline: spawn → execute → diff → compress → merge", async () => {

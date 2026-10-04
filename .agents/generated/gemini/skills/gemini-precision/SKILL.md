@@ -1,7 +1,6 @@
 ---
 name: gemini-precision
-description: >
-  Execution guidance for Gemini: inspect code, preserve scope, and report relevant verification evidence.
+description: "Execution guidance for Gemini: inspect code, preserve scope, and report relevant verification evidence."
 ---
 # gemini-precision
 

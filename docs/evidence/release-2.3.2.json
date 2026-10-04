@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-04",
+  "status": "candidate-preparation",
+  "sourceRevision": null,
+  "versions": { "core": "2.3.2", "mcp": "0.4.2" },
+  "publication": "not-published",
+  "archives": [],
+  "ci": null,
+  "scope": {
+    "core": "manifestless metadata, YAML export, Zed compatibility, destructive routing, core instructions and example validation",
+    "mcp": "companion documentation and deterministic regression coverage; runtime implementation unchanged"
+  },
+  "limitations": [
+    "No new live model/client or paid benchmark runs",
+    "Runtime execution/recovery remains experimental"
+  ]
+}

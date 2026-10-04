@@ -1,7 +1,6 @@
 ---
 name: engineering-workflow
-description: >
-  Scope implementation work, verify behavior, and report evidence using a proportional lifecycle.
+description: "Scope implementation work, verify behavior, and report evidence using a proportional lifecycle."
 ---
 # engineering-workflow
 

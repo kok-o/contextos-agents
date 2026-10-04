@@ -1,7 +1,6 @@
 ---
 name: context-manager
-description: >
-  Compatibility alias for context-os context selection and budgeting.
+description: "Compatibility alias for context-os context selection and budgeting."
 ---
 # context-manager
 

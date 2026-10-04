@@ -123,9 +123,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.1
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.2
         with:
-          version: '2.3.1'
+          version: '2.3.2'
           adapters: 'all'
           working-directory: '.'
 ```
@@ -186,7 +186,7 @@ you trust: their instructions are not sandboxed.
 | Check agent-specific behavior | [Compatibility matrix](docs/ADAPTER_COMPATIBILITY.md) |
 | Understand the compiler and support boundaries | [Architecture](docs/ARCHITECTURE.md) · [Product boundaries](docs/PRODUCT_BOUNDARIES.md) |
 | Upgrade or recover a previous configuration | [Migration and rollback](docs/COMPACT_CONTEXT_MIGRATION.md) |
-| Review release evidence | [2.3.1 maintenance release](docs/PATCH_RELEASE_2.3.1.md) · [Changelog](CHANGELOG.md) |
+| Review release evidence | [2.3.2 maintenance release](docs/PATCH_RELEASE_2.3.2.md) · [Changelog](CHANGELOG.md) |
 | Reproduce the animated example | [Demo commands and renderer](scripts/readme-gif/STORY.md) |
 
 ## Contributing

@@ -24,10 +24,11 @@ function buildSkillSection(skillDir) {
   const skillMdPath = getSkillEntrypointPath(skillDir);
 
   if (!fs.existsSync(skillMdPath)) return null;
-  const { name: title, description } = readSkillMetadata(skillDir);
-
   const raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw);
+  // Preserve the existing body preview for skills without routing metadata.
+  const fallbackDescription = body.split(/\r?\n/).map(line => line.trim()).find(line => line && !line.startsWith('#'));
+  const { name: title, description } = readSkillMetadata(skillDir, { fallbackDescription });
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
   const promptRef = `*Prompt template: \`.zed/prompts/${skillName}.md\` (Use via /${skillName})*\n`;

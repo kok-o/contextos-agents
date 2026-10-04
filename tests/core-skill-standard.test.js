@@ -93,7 +93,12 @@ test('example CLI exposes seven-core coverage and separates structural from beha
   const report = JSON.parse(result.stdout);
   assert.equal(report.ok, true);
   assert.deepEqual(report.coverage.coreSkills, CORE_SKILLS);
-  assert.equal(report.stats.structuralChecksRun, 7);
+  const structural = report.behavioralResults.filter(r => r.kind === 'structural-contract');
+  assert.equal(structural.filter(r => r.id.startsWith('core:')).length, 7);
+  assert.equal(report.stats.structuralChecksRun, structural.length);
+  assert.equal(structural.filter(r => r.id.startsWith('web-accessibility:')).length, 3);
+  assert.equal(structural.filter(r => r.id.startsWith('adapters:')).length, 2);
+  assert.equal(report.stats.fixtureChecksRun, 3);
   assert.ok(report.stats.behavioralChecksRun > 0);
   assert.ok(report.coverage.limitations.length);
 });

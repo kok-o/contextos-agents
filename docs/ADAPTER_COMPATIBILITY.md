@@ -16,6 +16,10 @@ Codex CLI 0.149.1 API check with GPT-6 Astra/low: negative control, explicit bod
 injection and automatic selection/read of the native skill passed once each.
 The fixture uses `skill.yaml` routing metadata. This does not establish
 manifestless automatic routing, other clients or long-session reliability.
+The unreleased working tree now preserves manifestless routing descriptions
+from entrypoint frontmatter, including quoted text and folded YAML. Regression
+tests cover metadata precedence and description-only drift; a new live client
+run is still required to establish automatic activation for this variant.
 MCP supports default read-only inspection within this release scope. Execution,
 Python, crash recovery and concurrent runtime persistence are experimental;
 the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.
@@ -87,8 +91,9 @@ app-server `skills/list` check found all seven core skills without inference
 requests. A later controlled `codex exec` probe confirmed full selected bodies in
 the CLI payload without paid inference. These establish discovery and explicit
 injection. A subsequent Sol/high probe verified marker adherence for explicit
-activation in CLI 0.159.2; automatic routing and Cursor activation remain
-unverified. See the [recorded results](BENCHMARK_RESULTS.md).
+activation in CLI 0.159.2. The later maintenance record at the top of this
+document adds one manifest-backed automatic scenario; Cursor activation and
+manifestless live routing remain unverified. See [recorded results](BENCHMARK_RESULTS.md).
 
 ### 2.4 GitHub Copilot (.github/copilot-instructions.md)
 

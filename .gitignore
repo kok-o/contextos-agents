@@ -101,6 +101,7 @@ CONTEXTOS_FEEDBACK.md
 !/docs/evidence/ci-r2-accepted-2026-10-02.json
 !/docs/evidence/release-2.3.json
 !/docs/evidence/release-2.3.1.json
+!/docs/evidence/release-2.3.2.json
 
 # Machine-specific API probes and one-off evidence collectors
 /benchmarks/analyze-sol.js

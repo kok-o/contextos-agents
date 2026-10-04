@@ -53,7 +53,7 @@ function resetDirectory(directory) {
 }
 
 function stripFrontmatter(content) {
-  return content.replace(/^---[\s\S]*?---\r?\n/, '').trimStart();
+  return content.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, '').trimStart();
 }
 
 function extractYamlField(yamlText, field) {
@@ -127,14 +127,14 @@ function getSkillEntrypointPath(skillDir) {
 }
 
 /** Routing metadata follows the declared manifest, then the real entrypoint. */
-function readSkillMetadata(skillDir) {
+function readSkillMetadata(skillDir, { fallbackDescription } = {}) {
   const manifest = readSkillManifest(skillDir);
   const entrypoint = getSkillEntrypointPath(skillDir);
   const raw = fs.existsSync(entrypoint) ? fs.readFileSync(entrypoint, 'utf8') : '';
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
   const frontmatter = match ? require('../compiler/vendor/yaml.js').parse(match[1]) : {};
   const name = manifest?.displayName || manifest?.name || frontmatter?.name || path.basename(skillDir);
-  const description = manifest?.description || frontmatter?.description || `ContextOS skill for ${name}`;
+  const description = manifest?.description || frontmatter?.description || fallbackDescription || `ContextOS skill for ${name}`;
   return { name, description: typeof description === 'string' ? description.trim() : description };
 }
 

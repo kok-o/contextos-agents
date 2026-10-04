@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, collectSkillDirectories, renderSkillResources } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, stripFrontmatter, collectSkillDirectories, renderSkillResources } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'gemini@2';
@@ -29,12 +29,11 @@ function renderGeminiSkill(skillDir, context) {
 
   const name = skillName;
   const { description } = readSkillMetadata(skillDir);
-  const mergedContent = fs.readFileSync(existingSkillMdPath, 'utf8').replace(/^---[\s\S]*?---\r?\n/, '');
+  const mergedContent = stripFrontmatter(fs.readFileSync(existingSkillMdPath, 'utf8'));
 
   const outputContent = `---
 name: ${name}
-description: >
-  ${description}
+description: ${JSON.stringify(description)}
 ---
 ${mergedContent.trim()}
 `.replace(/\r\n/g, '\n');

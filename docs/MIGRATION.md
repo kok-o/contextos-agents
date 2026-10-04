@@ -6,8 +6,9 @@ For the current core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 releases,
 use the [concrete upgrade and checkpoint rollback guide](COMPACT_CONTEXT_MIGRATION.md).
 The sections below describe older migrations.
 
-The published core 2.3.1 / MCP 0.4.1 maintenance update is described in the
-[patch checklist](PATCH_RELEASE_2.3.1.md).
+The core 2.3.2 / MCP 0.4.2 maintenance update is described in the
+[patch checklist](PATCH_RELEASE_2.3.2.md). The previous published pair is recorded
+in [the 2.3.1 checklist](PATCH_RELEASE_2.3.1.md).
 
 ## Upgrading to v2.0 (The Context Governance Release)
 
@@ -60,14 +61,14 @@ In v1.x, the composite action ran `npm ci --ignore-scripts`, executed the incomi
 **Migration:**
 Update your `.github/workflows/` workflow step:
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.1
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.2
   with:
-    version: '2.3.1'
+    version: '2.3.2'
     adapters: 'all'
     working-directory: '.'
 ```
 
-The example pins the published v2.3.1 tag and CLI package. The older `v2.3.0`
+The example pins the v2.3.2 tag and CLI package. The older `v2.3.0`
 action tag defaults to CLI 2.2.0, so retain an explicit `version` when using it.
 
 If you previously relied on ContextOS Gate for secret scanning, add a dedicated scanner action to your workflow:

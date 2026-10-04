@@ -1,33 +1,51 @@
 # MCP skipped-test inventory
 
-The 1 October Windows run recorded 599 passed and 25 skipped. Counts below refer
-to that baseline; the final JSON report is the authority for each new run.
+Updated 4 October 2026. The 1 October Windows baseline recorded 599 passed and
+25 skipped. The published maintenance run recorded 623 passed and seven skipped.
+Those release records remain historical evidence, not counts for the working tree.
 
-| File / baseline count | Reason | Coverage gap and release disposition |
+## Restored local coverage
+
+| Original gap | Current check | Remaining boundary |
 | --- | --- | --- |
-| `tests/integration/repl-protocol.test.ts` / 13 | Probe used `python3`; runtime uses `python` on Windows. Python was unavailable under that probe. | Startup, persistent variables, FINAL strings/numbers/reset, stdout, context, callbacks, division/name errors and recovery, shutdown, multiline execution and abort. Probe now matches runtime and validates Python 3. Python execution remains experimental; skips remain visible in CI JSON. |
-| `tests/unit/contextos-tools.test.ts` / 10 | Legacy expectations: six default tools, old delegation parameters/session APIs. Default is now three read-only tools. | Registration, sync/async delegation, path rejection, status, compare, diff success/missing thread, merge and cleanup. Registration and four read-only cases restored with current inspection/diff mocks. Added runtime opt-in, no session creation and missing repository checks. Five execution handler tests remain skipped; delegation, mutation boundaries, merge and cleanup are not certified by them. |
-| `tests/unit/session-persistence.test.ts` / 2 | Legacy snapshot expectations after migration to ThreadStore. Crash test writes a snapshot but loader reads ThreadStore; `sequence` is thread count, not a durable update counter. | Crash interruption/cost retention and monotonic multi-update sequencing are not certified. Integration tests cover ThreadStore roundtrip, async jobs, lock/reconciliation and orphan fingerprints, without establishing crash recovery or multiprocess atomicity. Runtime recovery remains experimental. |
+| Python protocol / 13 baseline skips | Probe matches the runtime's `python` executable and requires Python 3. | Conditional skips remain when Python is absent; runtime isolation is experimental. |
+| Five execution handler skips | Current runtime opt-in and explicit `write_scope` contract; synchronous/async delegation, path rejection, merge eligibility and cleanup. Additional checks reject missing scope and stale merge evidence. | Unit handlers use controlled dependencies; these checks do not exercise paid providers. |
+| Two persistence skips | Legacy snapshots stay read-only until migration; five distinct same-process writes preserve threads. A separate child records running state, is killed, and real reconciliation retains cost while marking interrupted/unknown work. | No claim about arbitrary mid-write termination, power loss or multiprocess atomicity. `sequence` is a thread count, not a durable update counter. |
 
-## Supported release boundary
+No unconditional skipped tests remain in these suites. The JSON from each full
+run records actual executed and skipped cases; a filtered run's excluded tests
+must not be reported as project skips.
 
-Stable R2 scope: core compilation/selection/export and default read-only MCP
-inspection. Installed archive acceptance exercises real initialize, tools/list
-and status calls. Handler tests check compare/diff without creating runtime
-sessions; this is not end-to-end execution evidence.
+## Execution cycle
 
-`--enable-runtime` opts into experimental delegation, merge and cleanup. No stable
-support is claimed for paid provider execution, Python sandbox isolation, crash
-recovery, concurrent runtime persistence, automatic merges or cleanup durability.
-An AST restriction test does not certify an isolation boundary for untrusted code.
+`tests/integration.test.ts` exercises real temporary Git worktrees, persisted
+state, independent Node verification and merge checks with a deterministic
+executor fixture. Its first patch claims completion but fails behavior checks.
+A repair passes; editing the accepted worktree invalidates the evidence and
+blocks merge. A fresh verified candidate merges and passes the base-repository
+test. The executor fixture does not invoke an LLM API.
 
-## Repeat and inspect
+## Supported boundary
+
+Stable scope remains compilation/selection/export and default read-only MCP
+inspection. Installed archive acceptance exercises initialize, tools/list and
+status calls. `--enable-runtime` opts into experimental delegation, merge and
+cleanup. These tests improve regression coverage without certifying paid
+provider execution, OS sandbox isolation, power-loss durability or unrestricted
+concurrent persistence. An AST restriction is not an isolation boundary.
+
+Vitest defaults to at most two workers to keep local memory use bounded.
+Worker concurrency can be explicitly overridden for a measured CI environment.
+
+## Reproduce
+
+From `contextos-mcp`:
 
 ```sh
-npm --prefix contextos-mcp run build
-npm --prefix contextos-mcp test -- --reporter=default --reporter=json --outputFile=../scratch/mcp-tests.json
+npm run build
+node node_modules/vitest/vitest.mjs run --reporter=default --reporter=json --outputFile=../scratch/mcp-tests.json
 ```
 
-CI retains logs and JSON assertions, including skipped names. Python absence
-reduces experimental coverage; stable handler or installed archive failures block
-R2. The preparation report records actual counts and environment failures.
+Direct invocation forwards reporter flags consistently on Windows. Python
+absence reduces experimental coverage and remains visible in the JSON report.
+See [the local improvement record](RELIABILITY_IMPROVEMENTS.md) for current results.

@@ -8,6 +8,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
+const fs = require('node:fs');
 const { execFileSync } = require('child_process');
 
 const {
@@ -24,7 +25,8 @@ const NODE = process.execPath;
 
 test('Phase 4: Skill Code Examples Quality and Negative Proof', async (t) => {
   await t.test('Task 4.1: First coverage inventory extracts and classifies all code blocks', () => {
-    assert.strictEqual(FIRST_COVERAGE_SKILLS.length, 4, 'Must evaluate 4 target skills in first coverage');
+    assert.deepStrictEqual(FIRST_COVERAGE_SKILLS.map(s => s.id),
+      ['fastapi', 'web-accessibility', 'adapters', 'typescript', 'security']);
 
     for (const skill of FIRST_COVERAGE_SKILLS) {
       const examples = extractSkillExamples(skill);
@@ -97,5 +99,23 @@ test('Phase 4: Skill Code Examples Quality and Negative Proof', async (t) => {
     assert.strictEqual(parsed.stats.verificationsFailed, 0, 'Zero failed verifications');
     assert.strictEqual(parsed.stats.byType.unverified, 0, 'Zero unverified blocks in first coverage');
     assert.ok(parsed.stats.verificationsRun >= 15, 'Must run all declared verifications');
+    assert.ok(parsed.coverage.catalogSkills.includes('typescript'));
+    assert.strictEqual(parsed.stats.fixtureChecksRun, 3);
+    assert.ok(parsed.behavioralResults.filter(r => r.id.startsWith('web-accessibility:modal:'))
+      .every(r => r.kind === 'fixture-simulation'));
+    assert.ok(!parsed.behavioralResults.some(r => r.id.startsWith('fastapi:')),
+      'AST-only copied FastAPI snippets must not count as behavioral proof');
+  });
+
+  await t.test('TypeScript guard verifies the original block and rejects the previous unsafe implementation', () => {
+    const { verifyTypescriptExample } = require('../scripts/verify-typescript-example.cjs');
+    assert.ok(verifyTypescriptExample().every(r => r.passed));
+    const source = fs.readFileSync(path.resolve(__dirname, '../catalog/skills/typescript/SKILL.md'), 'utf8');
+    const broken = source.replace(/export function isUser[\s\S]*?\n}/,
+      "export function isUser(value: unknown): value is User {\n  return typeof value === 'object' && value !== null && 'id' in value;\n}");
+    assert.notStrictEqual(broken, source, 'Mutation must replace the original example');
+    const failed = verifyTypescriptExample({ source: broken }).filter(r => !r.passed).map(r => r.id);
+    assert.deepStrictEqual(failed, ['array', 'missing-fields', 'numeric-id', 'numeric-name', 'invalid-role']
+      .map(name => `typescript:user-guard:${name}`));
   });
 });

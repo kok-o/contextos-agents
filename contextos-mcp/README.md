@@ -1,8 +1,9 @@
 # ContextOS MCP Server
 
 MCP integration for [ContextOS](https://github.com/kok-o/contextos-agents).
-Version 0.4.1 is the published maintenance update: TypeScript moves to development
-dependencies, with production-only installed-consumer coverage.
+Version 0.4.2 accompanies core 2.3.2 with restored execution/recovery regression
+coverage and bounded test workers. Runtime implementation is unchanged from
+0.4.1; TypeScript remains a development dependency.
 The release exposes read-only status, comparison and diff inspection by
 default. Inspection does not create agents, worktrees or runtime sessions.
 
@@ -17,8 +18,9 @@ JavaScript library import is not a supported interface.
   budget-overflow reporting. Soft limits do not truncate safety instructions.
 - Agent execution, asynchronous delegation, worktree merging/cleanup, Python REPL
   and runtime persistence/recovery require explicit `--enable-runtime` opt-in.
-  They remain experimental; seven skipped execution/recovery/concurrency cases
-  prevent a stable support claim for those scenarios.
+  They remain experimental. Former unconditional execution/recovery skips now
+  have deterministic regression scenarios; these do not certify real providers,
+  arbitrary crashes or concurrent durable writes.
 - Worktrees provide Git isolation. Processes still have host-user privileges;
   this is not an operating-system sandbox or proof of production security.
 

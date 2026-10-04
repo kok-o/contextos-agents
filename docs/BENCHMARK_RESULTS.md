@@ -25,6 +25,11 @@ adherence. Automatic routing and Cursor activation remain unverified. A syntheti
 12-turn smoke passed 36/36 responses across the variants, but echoed the record
 each turn; it does not test distant fact recall or production long-session quality.
 
+The separate 4 October [maintenance record](PATCH_RELEASE_2.3.1.md) adds one
+manifest-backed automatic-routing scenario in Codex CLI. It does not extend this
+calibration corpus or measure the revised core instructions. Paid benchmark runs
+remain paused until explicitly requested.
+
 The generic controller and hidden-oracle fixtures live under `benchmarks/`.
 API keys, machine-specific launchers, raw responses, spending ledgers and local
 reports are excluded from Git and npm packages. Paid runs are opt-in.

@@ -1,7 +1,6 @@
 ---
 name: gstack-roles
-description: >
-  Compatibility alias for engineering-workflow with optional specialist review perspectives.
+description: "Compatibility alias for engineering-workflow with optional specialist review perspectives."
 ---
 # gstack-roles
 

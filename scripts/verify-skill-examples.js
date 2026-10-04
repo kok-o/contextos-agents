@@ -35,6 +35,11 @@ const FIRST_COVERAGE_SKILLS = [
     domain: 'adapters',
   },
   {
+    id: 'typescript',
+    file: path.join(PROJECT_ROOT, 'catalog', 'skills', 'typescript', 'SKILL.md'),
+    domain: 'language',
+  },
+  {
     id: 'security',
     file: path.join(PROJECT_ROOT, '.agents', 'core', 'skills', 'security', 'SKILL.md'),
     domain: 'security',
@@ -256,34 +261,20 @@ async function verifyCoverageExamples() {
 
   // 2. Verify Web Accessibility Examples
   const a11yModalResults = a11yRunner.verifyAccessibleModalBehavior();
-  a11yModalResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
+  a11yModalResults.forEach(r => verificationResults.push({ ...r, kind: 'fixture-simulation' }));
 
   const a11ySkillFile = path.join(PROJECT_ROOT, 'catalog', 'skills', 'web-accessibility', 'SKILL.md');
   const a11yContent = fs.readFileSync(a11ySkillFile, 'utf8');
   const a11yCssResults = a11yRunner.verifyFocusVisibleCss(a11yContent);
-  a11yCssResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
+  a11yCssResults.forEach(r => verificationResults.push({ ...r, kind: 'structural-contract' }));
 
   // 3. Verify Adapters CLI Examples
   const adapterResults = adaptersRunner.verifyAdaptersSkillCommands();
-  adapterResults.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
+  adapterResults.forEach(r => verificationResults.push({ ...r, kind: 'structural-contract' }));
 
-  // 4. Verify FastAPI Python Examples
-  const pyRunnerPath = path.join(PROJECT_ROOT, 'tests', 'fixtures', 'skill-examples', 'fastapi-runner.py');
-  try {
-    const pyOutput = execFileSync('python', [pyRunnerPath], { encoding: 'utf8' });
-    const pyParsed = JSON.parse(pyOutput);
-    if (pyParsed.results) {
-      pyParsed.results.forEach(r => verificationResults.push({ ...r, kind: 'behavioral-test' }));
-    }
-  } catch (err) {
-    verificationResults.push({
-      id: 'fastapi:python-environment',
-      kind: 'behavioral-test',
-      passed: false,
-      error: `Python runner failed: ${err.message}`,
-    });
-  }
-
+  // Original FastAPI blocks are parsed in verifyBlockSyntax, without claiming
+  // application behavior from the legacy runner's copied AST-only snippets.
+  verificationResults.push(...require('./verify-typescript-example.cjs').verifyTypescriptExample());
   return verificationResults;
 }
 
@@ -326,6 +317,7 @@ async function run() {
     behavioralChecksRun: behavioralResults.filter(r => r.kind === 'behavioral-test').length,
     behavioralChecksPassed: behavioralResults.filter(r => r.kind === 'behavioral-test' && r.passed).length,
     structuralChecksRun: behavioralResults.filter(r => r.kind === 'structural-contract').length,
+    fixtureChecksRun: behavioralResults.filter(r => r.kind === 'fixture-simulation').length,
     verificationsRun: allVerifications.length,
     verificationsPassed: allVerifications.filter(v => v.passed).length,
     verificationsFailed: failedVerifications.length,
@@ -334,7 +326,7 @@ async function run() {
   const ok = failedVerifications.length === 0 && stats.byType.unverified === 0;
 
   if (isJson) {
-    console.log(JSON.stringify({ ok, coverage: { coreSkills: CORE_SKILLS, catalogSkills: FIRST_COVERAGE_SKILLS.filter(s => s.id !== 'security').map(s => s.id), limitations: ['No live AI client behavior, production egress policy, or TypeScript type checking is established by this gate.'] }, stats, inventory, syntaxResults, behavioralResults }, null, 2));
+    console.log(JSON.stringify({ ok, coverage: { coreSkills: CORE_SKILLS, catalogSkills: FIRST_COVERAGE_SKILLS.filter(s => s.id !== 'security').map(s => s.id), limitations: ['No live AI client behavior, production egress policy, TypeScript type checking, FastAPI application execution, or real browser accessibility is established by this gate.'] }, stats, inventory, syntaxResults, behavioralResults }, null, 2));
     process.exit(ok ? 0 : 1);
   }
 
@@ -363,7 +355,7 @@ async function run() {
 
   console.log('\n------------------------------------------------------');
   if (ok) {
-    console.log(`  RESULT: PASSED (${stats.verificationsPassed}/${stats.verificationsRun} checks: ${stats.syntaxChecksPassed} syntax, ${stats.behavioralChecksPassed} behavioral, ${stats.structuralChecksRun} structural, 0 unverified)`);
+    console.log(`  RESULT: PASSED (${stats.verificationsPassed}/${stats.verificationsRun} checks: ${stats.syntaxChecksPassed} syntax, ${stats.behavioralChecksPassed} behavioral, ${stats.structuralChecksRun} structural, ${stats.fixtureChecksRun} simulated, 0 unverified in declared scope)`);
   } else {
     console.log(`  RESULT: FAILED (${failedVerifications.length} checks failed)`);
   }

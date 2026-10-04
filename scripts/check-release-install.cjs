@@ -97,6 +97,20 @@ try {
   assert.equal(skillBody(projectedRule), skillBody(read('.agents/project/skills/team-order/SKILL.md')));
   assert.ok(read('.agents/skills/engineering-workflow/SKILL.md').includes('USER OVERRIDE MARKER'));
   assert.equal(skillBody(read('.agents/skills/team-bare/SKILL.md')), skillBody(bareRule));
+  const installedYaml = require(path.join(consumer, 'node_modules/contextos-agents/.agents/compiler/vendor/yaml.js'));
+  function routingMetadata(relative) {
+    const header = read(relative).match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+    assert.ok(header, `Missing routing metadata: ${relative}`);
+    return installedYaml.parse(header[1]);
+  }
+  assert.equal(routingMetadata('.agents/skills/team-bare/SKILL.md').description, 'Manifestless team instructions');
+  assert.ok(routingMetadata('.cursor/rules/team-bare.mdc').description.includes('Manifestless team instructions'));
+  assert.equal(JSON.parse(read('.agents/compiled/registry.v2.json')).skills['team-bare'].description, 'Manifestless team instructions');
+  const destructive = JSON.parse(cli('resolve', 'Удалить все файлы проекта', '--budget', '100', '--json'));
+  assert.equal(destructive.risk.value, 'destructive');
+  assert.ok(destructive.selected.some(skill => skill.id === 'security'));
+  assert.ok(destructive.warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED'));
+  assert.equal(JSON.parse(cli('resolve', 'Remove unused imports from files', '--json')).risk.value, 'standard');
   const mcpPkgDir = ['contextos-mcp', '@contextos/mcp'].find(dir => fs.existsSync(path.join(consumer, 'node_modules', dir))) || 'contextos-mcp';
   const mcpMetadata = JSON.parse(read(`node_modules/${mcpPkgDir}/package.json`));
   assert.equal(mcpMetadata.dependencies?.typescript, undefined, 'The supported MCP entrypoint must not require the TypeScript compiler');
@@ -134,10 +148,11 @@ try {
   const result = {
     result: 'PASS', node: process.version, platform: os.platform(), coreVersion, mcpVersion,
     sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+    sourceWorktreeDirty: !!execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim(),
     archives: archives.map(file => ({ file: path.basename(file), sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') })),
     lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', 'MCP handshake', 'uninstall'],
     userInstructionsPreserved: true, userOverridePreserved: true, quickstartFixture: 'PASS',
-    manifestlessAndCustomEntrypoint: 'PASS', consumerPath: consumer,
+    manifestlessAndCustomEntrypoint: 'PASS', manifestlessRoutingMetadata: 'PASS', destructiveTaskRouting: 'PASS', consumerPath: consumer,
     productionOnlyInstall: true, typescriptResolution, outsideSourceTree: !consumer.startsWith(root + path.sep),
   };
   fs.writeFileSync(path.join(root, 'scratch/release-install-result.json'), JSON.stringify(result, null, 2) + '\n');

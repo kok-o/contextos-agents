@@ -6,7 +6,7 @@ inputs:
   version:
     description: 'Version of contextos-agents package to run (e.g. 2.0.0, latest, or local)'
     required: false
-    default: '2.3.1'
+    default: '2.3.2'
   adapters:
     description: 'Target adapter(s) to verify (gemini, claude, cursor, copilot, aider, zed, all)'
     required: false

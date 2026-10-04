@@ -1,8 +1,8 @@
 # ContextOS Product Positioning & ICP Governance
 
 Status: CORE STABLE / MCP BETA / RUNTIME EXPERIMENTAL
-Version: 2.0.0
-Last Updated: 2026-09-13
+Release record: core 2.3.1 / MCP 0.4.1
+Last Updated: 2026-10-04
 
 ---
 
@@ -16,11 +16,13 @@ Last Updated: 2026-09-13
 ## 2. Ideal Customer Profiles (ICP)
 
 ### Primary ICP: Engineering Teams (5-100 Developers)
+
 - **Profile**: Multi-engineer teams where developers use varied AI assistants (e.g., some on Cursor, some using Claude Code in terminal, some pairing with Antigravity / Gemini).
 - **Core Pain**: Prompt drift, contradictory instructions, repetitive prompt pasting, accidental commits of unvetted AI slop or unreviewed changes.
-- **Value**: Single source of truth in `.agents/`, deterministic compilation to all IDE-native formats, fail-closed automated verification.
+- **Value**: Single source of truth in `.agents/`, deterministic adapter exports and configuration drift checks. Native client loading is verified separately for each client/version.
 
 ### Secondary ICP: Platform / DX Teams & Solo Maintainers
+
 - **Profile**: Platform engineers managing shared development standards across monorepos and microservices, or maintainers of high-integrity open-source projects.
 - **Core Pain**: Enforcing architectural guidelines and test requirements across dozens of packages without manual synchronization overhead or rule drift across divergent agent formats.
 - **Value**: Workspace-aware dependency graphs, atomic transaction rollback, and verifiable provenance.
@@ -49,6 +51,7 @@ Last Updated: 2026-09-13
 ## 5. Non-Promises (Claim Governance)
 
 To maintain absolute engineering integrity, ContextOS explicitly **does not promise**:
+
 1. That Markdown prompts guarantee flawless code without runtime execution verification.
 2. That Git worktrees alone represent an OS-level security boundary without container sandboxing.
 3. That regex pattern matching proves semantic implementation completeness.

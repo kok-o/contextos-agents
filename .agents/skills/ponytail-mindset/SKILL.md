@@ -1,7 +1,6 @@
 ---
 name: ponytail-mindset
-description: >
-  Choose a minimal maintainable implementation for substantive Build tasks while preserving safety and verification.
+description: "Choose a minimal maintainable implementation for substantive Build tasks while preserving safety and verification."
 ---
 # ponytail-mindset
 

@@ -1,7 +1,6 @@
 ---
 name: context-os
-description: >
-  Deterministic context compiler and policy engine for AI coding agents.
+description: "Deterministic context compiler and policy engine for AI coding agents."
 ---
 # context-os
 

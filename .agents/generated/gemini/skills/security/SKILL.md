@@ -1,7 +1,6 @@
 ---
 name: security
-description: >
-  Protect authentication, authorization, sensitive data, untrusted input, external integrations, and agent tool execution.
+description: "Protect authentication, authorization, sensitive data, untrusted input, external integrations, and agent tool execution."
 ---
 # security
 

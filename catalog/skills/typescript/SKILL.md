@@ -68,9 +68,23 @@ type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
 ## Type Guards
 
+A type guard must validate every required property before narrowing. This checks
+the data shape; a supplied `role` does not establish authorization.
+
+<!-- example: typescript-user-guard -->
+
 ```typescript
-function isUser(value: unknown): value is User {
-  return typeof value === 'object' && value !== null && 'id' in value;
+export interface User {
+  id: string;
+  name: string;
+  role: 'admin' | 'user';
+}
+
+export function isUser(value: unknown): value is User {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    && 'id' in value && typeof value.id === 'string'
+    && 'name' in value && typeof value.name === 'string'
+    && 'role' in value && (value.role === 'admin' || value.role === 'user');
 }
 ```
 

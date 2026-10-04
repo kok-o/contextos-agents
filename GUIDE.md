@@ -52,7 +52,7 @@ existing `.agents` installation and is not needed for the quickstart.
 For a reproducible project setup:
 
 ```sh
-npm install --save-dev --save-exact contextos-agents@2.3.1
+npm install --save-dev --save-exact contextos-agents@2.3.2
 npx --no-install contextos init --skip-compile
 npx --no-install contextos compile
 npx --no-install contextos export gemini
@@ -215,9 +215,9 @@ The [README](README.md#check-rule-changes-in-ci) contains a complete workflow.
 Pin both the action and its CLI input to the version your repository uses:
 
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.1
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.2
   with:
-    version: '2.3.1'
+    version: '2.3.2'
     adapters: 'all'
     working-directory: '.'
 ```
@@ -230,7 +230,7 @@ the exports you committed. Commit source rules, generated files, and
 The older `v2.3.0` action tag defaults to CLI 2.2.0; retain an explicit `version`
 when using that tag. Updating the action source does not update existing tags.
 Maintenance release details and validation records are linked from
-[the 2.3.1 checklist](docs/PATCH_RELEASE_2.3.1.md).
+[the 2.3.2 checklist](docs/PATCH_RELEASE_2.3.2.md).
 
 ### MCP Server (Beta, Separate Package)
 
