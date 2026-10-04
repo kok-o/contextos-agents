@@ -31,18 +31,22 @@ const configPaths = ['.agents', '.cursor', 'AGENTS.md', 'CLAUDE.md', '.github', 
 const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache') };
 delete env.NODE_PATH;
 const steps = [];
-function run(exe, args) {
+// Windows npm ci removes/reinstalls hundreds of dependency files during rollback.
+// Keep CLI checks strict while allowing bounded filesystem/network time for npm.
+const npmTimeoutMs = process.platform === 'win32' ? 600000 : 180000;
+function run(exe, args, timeoutMs = 180000) {
   const command = [exe, ...args];
+  const started = Date.now();
   try {
-    const output = execFileSync(exe, args, { cwd: consumer, env, encoding: 'utf8', timeout: 180000, windowsHide: true });
-    steps.push({ command, exitCode: 0, output });
+    const output = execFileSync(exe, args, { cwd: consumer, env, encoding: 'utf8', timeout: timeoutMs, windowsHide: true });
+    steps.push({ command, exitCode: 0, durationMs: Date.now() - started, timeoutMs, output });
     return output;
   } catch (error) {
-    steps.push({ command, exitCode: error.status, output: `${error.stdout || ''}${error.stderr || ''}` });
+    steps.push({ command, exitCode: error.status, durationMs: Date.now() - started, timeoutMs, output: `${error.stdout || ''}${error.stderr || ''}` });
     throw error;
   }
 }
-function install(archive) { run(process.execPath, [npm, 'install', '--save-dev', '--no-audit', '--no-fund', '--ignore-scripts', archive]); }
+function install(archive) { run(process.execPath, [npm, 'install', '--save-dev', '--no-audit', '--no-fund', '--ignore-scripts', archive], npmTimeoutMs); }
 function cli(...args) { return run(process.execPath, [path.join(consumer, 'node_modules/contextos-agents/bin/index.js'), ...args]); }
 function verifyInstalled(identity) {
   const installed = JSON.parse(fs.readFileSync(path.join(consumer, 'node_modules', identity.name, 'package.json')));
@@ -124,7 +128,7 @@ try {
     if (fs.existsSync(path.join(checkpoint, rel))) fs.cpSync(path.join(checkpoint, rel), file, { recursive: true });
   }
   for (const rel of ['package.json', 'package-lock.json']) fs.copyFileSync(path.join(checkpoint, rel), path.join(consumer, rel));
-  run(process.execPath, [npm, 'ci', '--ignore-scripts', '--no-audit', '--no-fund']);
+  run(process.execPath, [npm, 'ci', '--ignore-scripts', '--no-audit', '--no-fund'], npmTimeoutMs);
   assert.equal(JSON.parse(cli('--version', '--json')).version, previousVersion);
   verifyInstalled(previousMcpIdentity);
   assert.deepEqual(configHashes(), before, 'Rollback must restore every configuration byte');
