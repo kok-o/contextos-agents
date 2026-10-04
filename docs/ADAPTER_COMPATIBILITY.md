@@ -1,14 +1,21 @@
 # ContextOS Adapter Compatibility Matrix & Technical Contracts
 
-This document records the export contracts for the ContextOS v2.3.0 release. Passing structural or consumer tests does not establish that every client version loads an artifact. Native loader acceptance must be recorded separately.
+This document records the export contracts for the ContextOS v2.3 release series. Passing structural or consumer tests does not establish that every client version loads an artifact. Native loader acceptance must be recorded separately.
 
 Release pair: core 2.3.0 / MCP 0.4.0. The [release manifest](evidence/release-2.3.json)
 binds the released source and registry archives to Windows/Linux/macOS core Node 22/24,
 MCP and installed lifecycle/migration acceptance. The earlier `4d633da` run is
 historical evidence. Explicit Codex CLI 0.159.2 native activation
 with GPT-6.1 Sol/high passed on 2 October; automatic routing, other live clients
-and the external pilot remain unverified. See [calibration evidence](BENCHMARK_RESULTS.md)
+and the external pilot were unverified in that record. See [calibration evidence](BENCHMARK_RESULTS.md)
 and [R2 preparation](R2_RELEASE_PREPARATION.md).
+
+The published maintenance pair is core 2.3.1 / MCP 0.4.1. Its
+[release manifest](evidence/release-2.3.1.json) records a separate 4 October
+Codex CLI 0.149.1 API check with GPT-6 Astra/low: negative control, explicit body
+injection and automatic selection/read of the native skill passed once each.
+The fixture uses `skill.yaml` routing metadata. This does not establish
+manifestless automatic routing, other clients or long-session reliability.
 MCP supports default read-only inspection within this release scope. Execution,
 Python, crash recovery and concurrent runtime persistence are experimental;
 the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.
@@ -25,7 +32,7 @@ the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.
 | **GitHub Copilot** | Copilot | `.github/copilot-instructions.md` | Root instruction file | Shared instruction block and skill source index | Managed block preserves user text | Structural/consumer preservation tests |
 | **Aider** | Aider | `.aider.conf.yml` | Config and CONVENTIONS.md | `read: CONVENTIONS.md` | YAML values merged; generated conventions protected | Structural/consumer idempotence tests |
 | **Zed** | Manual templates | `.zed/rules.md` | Rules and prompt templates | Manual import; this rules path is not a documented native instruction entrypoint | Generated files protected | Structural tests; native loading unverified |
-| **Codex** | Native skill discovery | `.agents/skills/*/SKILL.md` | Shared native skill projection from Gemini export | Metadata discovery; bodies read on activation | Existing root AGENTS.md untouched | Discovery 7/7; explicit body load and marker adherence PASS in CLI 0.159.2 with Sol/high; automatic routing unverified |
+| **Codex** | Native skill discovery | `.agents/skills/*/SKILL.md` | Shared native skill projection from Gemini export | Metadata discovery; bodies read on activation | Existing root AGENTS.md untouched | Explicit activation verified; 2.3.1 negative/explicit/automatic fixture PASS in CLI 0.149.1 with Astra/low and `skill.yaml`; one run per condition |
 
 Default init exports Gemini skills. Ordinary export applies profile filtering to the installed skill set; it does not run task-specific resolution. Antigravity compatibility has not been independently verified.
 

@@ -1,8 +1,8 @@
-# Maintenance candidate: core 2.3.1 / MCP 0.4.1
+# Maintenance release: core 2.3.1 / MCP 0.4.1
 
-Status: verified release candidate; neither package nor tag has been published.
+Status: published and verified maintenance release.
 The previous published pair remains core 2.3.0 / MCP 0.4.0. The
-[historical manifest](evidence/release-2.3.json) is unchanged. Candidate identities
+[historical manifest](evidence/release-2.3.json) is unchanged. Released identities
 and acceptance belong in [release-2.3.1.json](evidence/release-2.3.1.json).
 
 [CI 37194510641](https://github.com/kok-o/contextos-agents/actions/runs/37194510641)
@@ -88,10 +88,10 @@ before publication, not by requesting nonexistent registry versions.
 The Action example requires the new v2.3.1 tag and explicit `version: '2.3.1'`.
 Existing v2.3.0 pins do not change automatically.
 
-## Release decision
+## Release publication and verification
 
-Tag creation, GitHub Release publication and npm uploads are separate from this
-preparation. Publishing a GitHub Release starts the paired publish workflow.
-Use the reviewed immutable commit and archives; if one upload fails, retry the
-same identities as described in the [recovery procedure](R2_RELEASE_PREPARATION.md).
-Registry acceptance can only be recorded after actual publication.
+The pair was published via GitHub Release `v2.3.1` and the release workflow
+[37197508427](https://github.com/kok-o/contextos-agents/actions/runs/37197508427),
+which passed all 21 jobs including npm registry installation, upgrade and checkpoint
+rollback across Windows, Linux and macOS. Both packages are published to npm and
+verified against reviewed archive identities.

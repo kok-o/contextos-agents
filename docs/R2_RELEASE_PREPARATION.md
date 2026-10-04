@@ -4,8 +4,9 @@ Updated 4 October 2026. Both packages are published and recorded as verified in
 the release manifest. This document also describes the preparation and recovery
 procedure for subsequent releases; new changes require their own acceptance.
 
-Core 2.3.1 / MCP 0.4.1 preparation is tracked separately in the
-[patch checklist](PATCH_RELEASE_2.3.1.md). The published 2.3.0 manifest remains historical evidence.
+The published core 2.3.1 / MCP 0.4.1 maintenance update is tracked separately in
+the [patch checklist](PATCH_RELEASE_2.3.1.md). This document and the published
+2.3.0 manifest remain historical evidence for that release.
 
 ## Package and source identity
 

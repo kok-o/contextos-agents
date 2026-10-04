@@ -6,8 +6,8 @@ For the current core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 releases,
 use the [concrete upgrade and checkpoint rollback guide](COMPACT_CONTEXT_MIGRATION.md).
 The sections below describe older migrations.
 
-The forthcoming core 2.3.1 / MCP 0.4.1 patch is described in the
-[candidate checklist](PATCH_RELEASE_2.3.1.md); it has not been published yet.
+The published core 2.3.1 / MCP 0.4.1 maintenance update is described in the
+[patch checklist](PATCH_RELEASE_2.3.1.md).
 
 ## Upgrading to v2.0 (The Context Governance Release)
 
@@ -67,8 +67,8 @@ Update your `.github/workflows/` workflow step:
     working-directory: '.'
 ```
 
-This example is for use after v2.3.1 is published. Until then, use the existing
-v2.3.0 tag with explicit `version: '2.3.0'`.
+The example pins the published v2.3.1 tag and CLI package. The older `v2.3.0`
+action tag defaults to CLI 2.2.0, so retain an explicit `version` when using it.
 
 If you previously relied on ContextOS Gate for secret scanning, add a dedicated scanner action to your workflow:
 ```yaml

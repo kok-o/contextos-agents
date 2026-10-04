@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-04",
-  "status": "verified-release-candidate",
+  "status": "verified-maintenance-release",
   "sourceRevision": "eb39867568c448bb1c394e9470c99287897b1295",
   "versions": {
     "core": "2.3.1",
     "mcp": "0.4.1"
   },
-  "publication": "not-published",
+  "publication": "published-and-verified",
   "archives": [
     {
       "file": "contextos-agents-2.3.1.tgz",

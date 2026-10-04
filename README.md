@@ -63,15 +63,15 @@ Try the [small local demo](examples/quickstart/README.md) to install the package
 calling a model API. The [five-minute guide](docs/product/onboarding.md) explains
 the same workflow for an existing project.
 
-Core 2.3.1 / MCP 0.4.1 are being prepared as a maintenance release; they are not yet published.
-See the [candidate checklist](docs/PATCH_RELEASE_2.3.1.md) and
-[live client check](docs/LIVE_CLIENT_CHECK_RU.md).
-Core 2.3.0 and MCP 0.4.0 remain the published pair. See the [release status](docs/R2_RELEASE_PREPARATION.md)
-and [upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). The
-[release manifest](docs/evidence/release-2.3.json) records the released source,
-cross-platform CI and archive identities. Automatic client routing and the external
-pilot remain unverified. Internal plans, local API probes and raw logs are excluded
-from the public release surface.
+Core 2.3.1 / MCP 0.4.1 are the published maintenance release. See the
+[release checklist](docs/PATCH_RELEASE_2.3.1.md),
+[live client check](docs/LIVE_CLIENT_CHECK_RU.md) and
+[upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). The
+[release manifest](docs/evidence/release-2.3.1.json) records the released source,
+cross-platform CI and archive identities. Three Codex CLI scenarios passed,
+including explicit and automatic selection of a skill with `skill.yaml` metadata.
+Other live clients and the external pilot remain unverified. Internal plans,
+local API probes and raw logs are excluded from the public release surface.
 
 ```bash
 npx contextos-agents --help             # Show all options
@@ -79,7 +79,7 @@ npx contextos-agents --version          # Show version
 npx contextos-agents --minimal          # Install only the core bootstrap skills
 npx contextos-agents --all              # Install all 36 catalog domain skills during init
 npx contextos-agents --preset <name>    # Install stack preset: frontend, backend, devops, full
-npx contextos-agents --profile init     # Install with specific profile
+npx contextos-agents --profile <name>   # Install with specific profile (e.g. enterprise, startup)
 npx contextos-agents --auto             # Auto-detect tech stack and apply recommended profile
 npx contextos-agents --dry-run          # Preview what will be installed
 npx contextos-agents --force            # Overwrite an existing .agents/ folder
@@ -167,6 +167,39 @@ contextos skill diff gemini-precision
 contextos skill eject gemini-precision
 ```
 
+### Profile Management (`contextos profile`)
+
+Switch or inspect engineering profiles across your workspace or specific monorepo packages:
+
+```bash
+# List available profiles and inspect the active one:
+contextos profile list
+
+# Switch to enterprise or startup profile:
+contextos profile apply enterprise
+contextos profile apply frontend --scope apps/web
+```
+
+### Stack Detection & Monorepo Inspection (`contextos detect`)
+
+Analyze workspace dependencies, frameworks, and tools to identify the optimal configuration:
+
+```bash
+# Auto-detect tech stack for the current project:
+contextos detect
+
+# Inspect a specific monorepo package with evidence breakdown:
+contextos detect --scope apps/web --explain
+```
+
+### Continuous Synchronization Daemon (`contextos watch`)
+
+Run a background file watcher that automatically compiles adapter rules on changes with event coalescing:
+
+```bash
+contextos watch
+```
+
 ### Diagnostic Health Check (`contextos doctor`)
 
 Run a comprehensive pre-flight verification across your repository to ensure valid skills, profile alignment, and compiler synchronization:
@@ -238,9 +271,9 @@ jobs:
           working-directory: '.' # Project root directory
 ```
 
-The example targets the forthcoming v2.3.1 release; use it after that tag and package are published.
-Until then, keep both pins at v2.3.0 / 2.3.0. The existing `v2.3.0` action tag defaults to CLI 2.2.0,
-so retain the explicit `version`. Updating the action source does not change an existing tag.
+The example pins the published v2.3.1 tag and CLI package. The older `v2.3.0`
+action tag defaults to CLI 2.2.0, so retain an explicit `version` when using it.
+Updating the action source does not change an existing tag.
 
 The action executes the verified ContextOS quality gate in-process from the pinned package version, verifying generated AI adapter configs against source skills without executing untrusted scripts from pull requests, and without requiring a Node.js project or running `npm test`.
 
