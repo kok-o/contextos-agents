@@ -1,0 +1,127 @@
+[
+  {
+    "id": "init",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "init",
+      "--minimal",
+      "--skip-compile"
+    ],
+    "displayCommand": "contextos init --minimal --skip-compile",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 1323,
+    "stdout": "\n \u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n \u2502   ContextOS  v2.3.1                                         \u2502\n \u2502   Deterministic Context & Policy Engine for Coding Agents   \u2502\n \u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\n  [1/4]  Analyzing project environment & tech stack\n         \u2713 Detected stack: Generic JavaScript environment\n\n  [2/4]  Deploying Lean Core engine (.agents/)\n         \u2713 Installed 7 foundational core skills in .agents/core/skills/\n           Why 7? ContextOS uses a Lean Core to keep your AI context small, fast, and token-efficient.\n           To add domain skills (React, FastAPI, Docker, etc.): npx contextos skill add <name> (or --all)\n\n  [3/4]  Generating lockfile & security governance\n         \u2713 contextos.lock.json synchronized\n\n  [4/4]  Configuring AI assistants & compiling rules\n         \u2713 Skipped auto-compilation (--skip-compile)\n           Tip: Run `contextos export gemini` to compile skills when ready.\n\n\n \u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n \u2502  \u2713 Project ready for AI coding agents!                         \u2502\n \u2502                                                                \u2502\n \u2502  Next steps:                                                   \u2502\n \u2502  1. Default init exports Gemini workspace skills.              \u2502\n \u2502     Other clients: contextos export <agent>                    \u2502\n \u2502                                                                \u2502\n \u2502  2. Explore and install domain skills:                         \u2502\n \u2502     contextos skill list --available                           \u2502\n \u2502     contextos skill add <name>    (or --all)                   \u2502\n \u2502                                                                \u2502\n \u2502  3. Inspect project health anytime:                            \u2502\n \u2502     contextos doctor                                           \u2502\n \u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\n",
+    "stderr": ""
+  },
+  {
+    "id": "compile-before",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "compile"
+    ],
+    "displayCommand": "contextos compile",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 351,
+    "stdout": "\n\u2713 Successfully compiled 8 skills into Registry v2!\n  Source Graph Hash: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\n  Registry: .agents/compiled/registry.v2.json\n  Checksum: .agents/compiled/registry.v2.sha256\n\n",
+    "stderr": ""
+  },
+  {
+    "id": "export-before",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "export",
+      "all"
+    ],
+    "displayCommand": "contextos export all",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 887,
+    "stdout": "Starting pure compiler export for all adapters...\n\u2713 All exports complete: 137 artifacts applied in a single transaction (tx: tx-1791128864842-a44e39a9).\n  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed\n",
+    "stderr": ""
+  },
+  {
+    "id": "check-before",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "export",
+      "all",
+      "--check",
+      "--json"
+    ],
+    "displayCommand": "contextos export all --check --json",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 789,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 137\n}\n",
+    "stderr": ""
+  },
+  {
+    "id": "compile-after",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "compile"
+    ],
+    "displayCommand": "contextos compile",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 345,
+    "stdout": "\n\u2713 Successfully compiled 8 skills into Registry v2!\n  Source Graph Hash: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\n  Registry: .agents/compiled/registry.v2.json\n  Checksum: .agents/compiled/registry.v2.sha256\n\n",
+    "stderr": ""
+  },
+  {
+    "id": "check-stale",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "export",
+      "all",
+      "--check",
+      "--json"
+    ],
+    "displayCommand": "contextos export all --check --json",
+    "cwd": "<temporary-project>",
+    "exitCode": 1,
+    "durationMs": 762,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"drift\",\n  \"hasDrift\": true,\n  \"hasError\": false,\n  \"code\": 1,\n  \"totalFindings\": 19,\n  \"findings\": {\n    \"STALE_INPUT\": [\n      {\n        \"expected\": \"sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\",\n        \"actual\": \"sha256:d409fc9d9489426f8c6eae11ab6ec47a4525b612e4ab6e3d6ef95bc4790d0cd3\"\n      },\n      {\n        \"path\": \".agents/generated/gemini/skills/team-auth/SKILL.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".agents/skills/team-auth/SKILL.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".agents/generated/claude/skills/team-auth/SKILL.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".cursor/rules/00-project-rules.mdc\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".cursor/rules/team-auth.mdc\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".github/copilot-instructions.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".aider.conf.yml\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \"CONVENTIONS.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/contextos.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/context-manager.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/context-os.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/engineering-workflow.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/gemini-precision.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/gstack-roles.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/ponytail-mindset.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/security.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/team-auth.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/rules.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      }\n    ],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [\n    {\n      \"path\": \".agents/generated/gemini/skills/team-auth/SKILL.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- \\n+ - Never log session tokens.\\n+ \"\n    },\n    {\n      \"path\": \".agents/skills/team-auth/SKILL.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- \\n+ - Never log session tokens.\\n+ \"\n    },\n    {\n      \"path\": \".agents/generated/claude/skills/team-auth/SKILL.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- \\n+ - Never log session tokens.\\n+ \"\n    },\n    {\n      \"path\": \".cursor/rules/00-project-rules.mdc\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".cursor/rules/team-auth.mdc\",\n      \"type\": \"modified\",\n      \"diff\": \"- \\n+ - Never log session tokens.\\n+ \"\n    },\n    {\n      \"path\": \".github/copilot-instructions.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".aider.conf.yml\",\n      \"type\": \"modified\",\n      \"diff\": \"- # Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ # Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \"CONVENTIONS.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/contextos.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/context-manager.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/context-os.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/engineering-workflow.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/gemini-precision.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/gstack-roles.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/ponytail-mindset.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/security.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    },\n    {\n      \"path\": \".zed/prompts/team-auth.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\\n- \\n+ - Never log session tokens.\\n+ \"\n    },\n    {\n      \"path\": \".zed/rules.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:8a62a360b07902fd69804aa418887dab71fd25bc936b197264a4db0d7dbdcd0c\\n+ Source graph: sha256:9d68709e42b0b82f7ac7b9249d82cae26e9808a47e2d24ca19285cfe015403f2\"\n    }\n  ],\n  \"projectedCount\": 137\n}\n",
+    "stderr": ""
+  },
+  {
+    "id": "export-after",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "export",
+      "all"
+    ],
+    "displayCommand": "contextos export all",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 970,
+    "stdout": "Starting pure compiler export for all adapters...\n\u2713 All exports complete: 137 artifacts applied in a single transaction (tx: tx-1791128867674-5b9f825b).\n  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed\n",
+    "stderr": ""
+  },
+  {
+    "id": "check-fresh",
+    "argv": [
+      "node",
+      "<repository>/bin/index.js",
+      "export",
+      "all",
+      "--check",
+      "--json"
+    ],
+    "displayCommand": "contextos export all --check --json",
+    "cwd": "<temporary-project>",
+    "exitCode": 0,
+    "durationMs": 741,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 137\n}\n",
+    "stderr": ""
+  }
+]

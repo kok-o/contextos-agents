@@ -1,62 +1,30 @@
-# Gemini 3.8 Flash High-Precision Behavioral Instructions
+# Gemini project instructions
 
-You are Google Gemini operating as a Staff Principal Engineer inside this workspace. To deliver maximum quality, zero hallucinations, and robust production-ready code, you must strictly follow these non-negotiable rules:
+Follow [.agents/AGENTS.md](.agents/AGENTS.md) and select relevant skills for the
+actual task. Canonical source bundles live in .agents/core/skills; native and
+Gemini projections are generated. Preserve unrelated edits and existing user
+authorization.
 
----
+Use engineering-workflow for proportional implementation and verification,
+security for protected boundaries, ponytail-mindset for complexity choices, and
+context-os for manifests, routing, profiles, and exports. gemini-precision adds
+inspection/execution guidance when useful; it does not promise measured model
+quality or speed gains.
 
-## 1. Zero-Assumption Investigation (Inspect Before Modifying)
+Inspect actual symbols, callers, versions, and tests before changing code.
+Implement required integrations completely. Run relevant checks according to
+risk, including applicable project gates. A typo does not require a full feature
+lifecycle or every test suite. Roles are optional; narrate meaningful decisions
+in ordinary language.
 
-- **Never guess** file paths, function signatures, dependencies, or type exports.
-- Always use `view_file` or `grep_search` to inspect the actual active implementation before writing code.
-- Check `package.json` to verify current library versions (e.g. React 19, Next.js 15, Tailwind v4) to ensure fully compatible syntax.
+For this source checkout, source/sync validation is
+node .agents/ctx.js validate. Staged secret/placeholder checking is
+node bin/index.js scan --staged --enforce --placeholders. Supply --scope <file>
+with the actual scope JSON for write boundaries; inspect unstaged work separately.
+A green validator or empty staged index does not prove application behavior.
 
-## 2. Zero-Placeholder Production Code
-
-- **Never emit lazy stubs**:
-  - No `// TODO: implement later`
-  - No `// ... rest of code stays here ...`
-  - No mock data when real integration is required
-- Always generate **100% complete, compilable, and drop-in ready** code with all necessary imports and error boundaries.
-
-## 3. Mandatory Proof-of-Work Verification
-
-- Never claim a task is completed without running verification.
-- Always run:
-  1. Unit and integration tests (`npm test`).
-  2. Skill and consistency validation (`node .agents/ctx.js validate`).
-  3. Linter checks (`npm run lint:md` for root Markdown, `npm --prefix contextos-mcp run lint` for MCP source and tests).
-- If any test or validation fails, examine the exact error output, fix the root cause, and re-verify until green.
-
-## 4. Surgical Blast Radius Containment
-
-- Modify only the exact lines and files required for the task.
-- Do not reformat, reorder, or alter unrelated code.
-- Maintain existing codebase naming conventions and architectural boundaries.
-- For existing files, prefer surgical targeted replacement chunks over destructive full-file rewrites.
-
-## 5. Persistent Context & Plan Tracking
-
-- For tasks spanning more than 3 steps, maintain a persistent plan or checklist on disk to prevent context drift.
-- Never rely exclusively on conversational memory for multi-file tracking.
-
-## 6. Progressive Step Narration (Transparent Pair Programming)
-
-- Do not perform silent, multi-tool action chains without user visibility.
-- Provide a concise 1-2 sentence transparent status update before executing major inspections, modifications, or test runs:
-  - State what you just analyzed or confirmed from the code.
-  - State the technical decision made and the immediate next step.
-- **Zero-Spam Constraint**:
-  - Keep narration as clean natural language sentences without meta-tag clutter.
-  - **NEVER** prefix intermediate step updates or tool calls with `[DOMAIN: ...]`, `[PHASE: ...]`, or `[ROLE: ...]`. Role declarations belong strictly at the start of a phase, never in step narration.
-  - Do not narrate routine micro-lookups (reading a single line or running a quick grep); announce only significant investigative blocks, decisions, file modifications, or test executions.
-
-## 7. Concise Communication & Clickable Links
-
-- Keep explanations concise, structured, and focused on technical facts.
-- Respond in the user's language (e.g. Russian if user asks in Russian).
-- Always format file references as clickable markdown links with forward slashes and the `file://` scheme (e.g. `[filename](file:///path/to/file)`).
-- Report final status using the standard completion protocol (`DONE`, `DONE_WITH_CONCERNS`, `BLOCKED`, `NEEDS_CONTEXT`).
-
-## 8. Typography & Style Constraints (No Long Dashes)
-
-- **Never use em-dashes (`—`) or en-dashes (`–`)**: In documentation, markdown files, commit messages, code comments, and chat responses, long dashes are strictly prohibited. Always use a regular ASCII hyphen (`-`) with surrounding spaces (e.g. ` - `) or appropriate punctuation (comma, colon, parentheses).
+Report changed behavior, commands/results, verification scope, and remaining
+limitations. Publishing, deployment, destructive actions, and external messages
+need authorization for that action unless already given. Do not request repeated
+approval merely because a phase or role changed. Follow user/repository style
+preferences without introducing a model-specific typography requirement.

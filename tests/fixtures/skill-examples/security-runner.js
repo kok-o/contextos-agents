@@ -8,41 +8,14 @@
 const assert = require('node:assert');
 const crypto = require('node:crypto');
 
-// 1. Implementation extracted from .agents/core/skills/security/SKILL.md
-function verifyWebhookSignature(payload, signature, secret) {
-  const hmac = crypto.createHmac('sha256', secret);
-  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');
-  const sigBuffer = Buffer.from(signature, 'utf8');
+const path = require('node:path');
+const { loadNamedExample } = require('../../../scripts/skill-example-loader.cjs');
+const skillFile = path.resolve(__dirname, '../../../.agents/core/skills/security/SKILL.md');
+const { verifyWebhookSignature } = loadNamedExample(skillFile, 'security-hmac');
+const ssrf = loadNamedExample(skillFile, 'security-ssrf');
 
-  if (digest.length !== sigBuffer.length) return false;
-  return crypto.timingSafeEqual(digest, sigBuffer);
-}
-
-// 2. Implementation extracted from .agents/core/skills/security/SKILL.md (TS types stripped)
-async function fetchFromAllowlist(urlString, allowedHostnames, options = {}, customFetch = fetch) {
-  const parsed = new URL(urlString);
-
-  // 1. Enforce HTTPS only
-  if (parsed.protocol !== 'https:') {
-    throw new Error(`SSRF blocked: protocol "${parsed.protocol}" is not permitted; HTTPS required`);
-  }
-
-  // 2. Reject credentials in URL
-  if (parsed.username || parsed.password) {
-    throw new Error('SSRF blocked: URL credentials (user:password@host) are prohibited');
-  }
-
-  // 3. Strict positive destination allowlist (prevents internal network probing)
-  const normalizedHost = parsed.hostname.toLowerCase();
-  if (!allowedHostnames.has(normalizedHost)) {
-    throw new Error(`SSRF blocked: destination host "${normalizedHost}" is not in the approved allowlist`);
-  }
-
-  // 4. Disable automatic redirects to prevent redirection to private IPs or metadata endpoints
-  return customFetch(urlString, {
-    ...options,
-    redirect: 'error',
-  });
+function fetchFromAllowlist(urlString, allowedHostnames, options = {}, customFetch) {
+  return ssrf.fetchFromAllowlist(urlString, allowedHostnames, options, customFetch);
 }
 
 function runSecurityExamples() {

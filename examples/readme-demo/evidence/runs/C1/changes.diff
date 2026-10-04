@@ -1,0 +1,48 @@
+diff --git a/src/order.ts b/src/order.ts
+index 01434ca..6e48810 100755
+--- a/src/order.ts
++++ b/src/order.ts
+@@ -2,7 +2,7 @@ export function createOrder(
+   item: string,
+   quantity: number,
+ ): { item: string; quantity: number } {
+-  const normalizedItem = item.trim();
++  const normalizedItem = item.trim().replace(/ +/g, " ");
+ 
+   if (!normalizedItem) {
+     throw new Error("Item is required");
+diff --git a/test/order.test.mjs b/test/order.test.mjs
+index 5013ff5..2fecbc9 100755
+--- a/test/order.test.mjs
++++ b/test/order.test.mjs
+@@ -10,8 +10,29 @@ test("trims item names at the edges", () => {
+   assert.deepEqual(createOrder("  Tea  ", 1), { item: "Tea", quantity: 1 });
+ });
+ 
++test("collapses runs of ordinary spaces while preserving letter case", () => {
++  assert.deepEqual(createOrder("  Green   TEA    Blend  ", 3), {
++    item: "Green TEA Blend",
++    quantity: 3,
++  });
++});
++
++test("preserves interior whitespace other than ordinary spaces", () => {
++  for (const whitespace of ["\t", "\n", "\r", "\u00a0", "\u2003"]) {
++    const item = "Green" + whitespace + whitespace + "Tea";
++    assert.deepEqual(createOrder(item, 1), { item, quantity: 1 });
++  }
++});
++
++test("normalizes ordinary spaces alongside meaningful interior whitespace", () => {
++  assert.deepEqual(createOrder("\t Green  \t  TEA  \u00a0  Blend \n", 2), {
++    item: "Green \t TEA \u00a0 Blend",
++    quantity: 2,
++  });
++});
++
+ test("rejects empty item names", () => {
+-  for (const item of ["", "   ", "\t\n"]) {
++  for (const item of ["", "   ", "\t\n", "\u00a0\u2003"]) {
+     assert.throws(() => createOrder(item, 1), {
+       name: "Error",
+       message: "Item is required",

@@ -1,0 +1,7 @@
+{
+  "authorizedUtc": "2026-10-04T15:25:27.795509+00:00",
+  "limitUsd": 5,
+  "scope": "Nine fresh demo runs with gpt-6.1-sol / medium",
+  "source": "Direct user approval in this chat",
+  "automaticPaidRetries": false
+}

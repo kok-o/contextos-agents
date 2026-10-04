@@ -1,0 +1,12 @@
+{
+  "frozenUtc": "2026-10-04T15:24:41.888098+00:00",
+  "modelRunsStarted": false,
+  "files": {
+    "PROTOCOL.md": "9e78bcd5f3ae7f6030c37125c8a576d177a2c67cc6a963b7662083d7a0d2bc69",
+    "task.txt": "d8d4c2ee6bf6037bd4923e620cab27ac8ee271fb07bf40bc2fcbc4919faedf72",
+    "team-order/SKILL.md": "a13ee650c40ba4a2804de427ff56ac644b556f9fd122235f78303dd6a8503da8",
+    "team-order/skill.yaml": "190edabfc60c6268d507094a7c3f01ed9637deacfca102a2f1f84e0480b6a27d",
+    "evaluator/frozen-inputs.json": "ad0bf865c8c4b40154c5a1195683fb9156bbd0623fa4eea9f7d6e0e776d96f9b",
+    "runner/run-series.cjs": "6803448c5920c22c56ef9b8a0da452c6c3eb3d7260aab192507c3caebd0eb1c6"
+  }
+}

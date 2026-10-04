@@ -1,0 +1,1 @@
+Improve item name normalization in createOrder in src/order.ts. Preserve the public API, add regression tests, and run the tests. Do not install new dependencies.

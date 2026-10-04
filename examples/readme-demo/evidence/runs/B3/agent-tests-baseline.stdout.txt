@@ -1,0 +1,110 @@
+TAP version 13
+# (node:52) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: creates an order with the existing public result shape
+ok 1 - creates an order with the existing public result shape
+  ---
+  duration_ms: 2.956796
+  ...
+# Subtest: trims item names at the edges
+ok 2 - trims item names at the edges
+  ---
+  duration_ms: 0.168562
+  ...
+# Subtest: collapses ordinary spaces throughout item names
+not ok 3 - collapses ordinary spaces throughout item names
+  ---
+  duration_ms: 1.365301
+  location: '/out/variant-baseline/test/order.test.mjs:13:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   item: 'Green   Tea    Blend',
+    -   item: 'Green Tea Blend',
+        quantity: 3
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    item: 'Green Tea Blend'
+    quantity: 3
+  actual:
+    item: 'Green   Tea    Blend'
+    quantity: 3
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///out/variant-baseline/test/order.test.mjs:14:10)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:979:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:677:18)
+    Test.postRun (node:internal/test_runner/test:1090:19)
+    Test.run (node:internal/test_runner/test:1018:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:677:7)
+  ...
+# Subtest: preserves case and non-space interior characters
+ok 4 - preserves case and non-space interior characters
+  ---
+  duration_ms: 0.242245
+  ...
+# Subtest: trims edge whitespace while preserving mixed interior whitespace
+not ok 5 - trims edge whitespace while preserving mixed interior whitespace
+  ---
+  duration_ms: 0.669889
+  location: '/out/variant-baseline/test/order.test.mjs:26:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   item: 'Green   \t  Tea    Blend',
+    -   item: 'Green \t Tea   Blend',
+        quantity: 1
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    item: 'Green \t Tea   Blend'
+    quantity: 1
+  actual:
+    item: 'Green   \t  Tea    Blend'
+    quantity: 1
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///out/variant-baseline/test/order.test.mjs:27:10)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:979:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:677:18)
+    Test.postRun (node:internal/test_runner/test:1090:19)
+    Test.run (node:internal/test_runner/test:1018:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:677:7)
+  ...
+# Subtest: accepts positive integer quantities
+ok 6 - accepts positive integer quantities
+  ---
+  duration_ms: 0.322483
+  ...
+# Subtest: rejects empty item names
+ok 7 - rejects empty item names
+  ---
+  duration_ms: 0.586785
+  ...
+# Subtest: rejects quantities that are not positive integers
+ok 8 - rejects quantities that are not positive integers
+  ---
+  duration_ms: 0.442464
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 6
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 187.471814

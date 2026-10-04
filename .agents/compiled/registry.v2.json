@@ -1,19 +1,19 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:efcac8692b9208232aa09a065009438cd7b151e7f4d19366d75b699645cddf94",
+  "sourceGraphHash": "sha256:1b5d0e2b86f8dc023ed48da798410c82c6d2855db15d6af500b575cb60234bd6",
   "skills": {
     "context-manager": {
       "id": "context-manager",
       "displayName": "context-manager",
       "version": "1.0.0",
-      "description": "Smart context selection engine. Analyzes the current task, consults the Project Graph, and returns only the documents and skills needed to prevent token overflow.\n",
+      "description": "Compatibility alias for context-os context selection and budgeting.",
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:dba3a018c55b687bf5256592664266affe322ed71b042a4ceed3f07bc30363d7",
-      "resourceTreeHash": "sha256:8743abc29abf19fa93481f09a836d48ec4279030991f3cf6bc2082738c48c54a",
-      "estimatedTokens": 858,
+      "entrypointHash": "sha256:68da81d3dc530bd37260f61923c6dd4a3bc862a96500129fefd61cfa2021323b",
+      "resourceTreeHash": "sha256:c3a338efabd770e57bcaec7a127bc281cb718626f6a84a904f850164984aa5fe",
+      "estimatedTokens": 304,
       "source": ".agents/core/skills/context-manager/skill.yaml",
       "signals": {
         "aliases": [
@@ -30,7 +30,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 858
+        "estimatedTokens": 304
       },
       "resources": [
         {
@@ -66,9 +66,9 @@
       "category": "general",
       "type": "compiler",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:ab14bcd603573c975a69cb95b5ef8a305de8eb888c81c20c994121313f017239",
-      "resourceTreeHash": "sha256:1f9422adff6b9e69772dfeff2e1c9c9f8615b5fae56f8b60d2d7bef4a5c1c7fb",
-      "estimatedTokens": 1365,
+      "entrypointHash": "sha256:3d333bd492b24f62f4a5314bbbddd4a08014a8867645bedebbe9329a8d76e2d5",
+      "resourceTreeHash": "sha256:75f2c5ef977ad763b1bd84f5b2934fb317c9cc853760fa76a38f713aa422fddd",
+      "estimatedTokens": 562,
       "source": ".agents/core/skills/context-os/skill.yaml",
       "signals": {
         "aliases": [
@@ -85,7 +85,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 1365
+        "estimatedTokens": 562
       },
       "resources": [
         {
@@ -137,9 +137,9 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:e729b3bc21cecef2a39b64f0b301715974697600524629fa05609fd2d9175b48",
-      "resourceTreeHash": "sha256:6371d58615c6b5ba47c1523f6f99c106dcd9d99c5abc30338b4a3504271a23f1",
-      "estimatedTokens": 418,
+      "entrypointHash": "sha256:a36e56bf2b8ad3711e1209f9d7ee68de1a1e3d6fbf864eed423bdf4527474a5e",
+      "resourceTreeHash": "sha256:db770f6c0fe81ab7a4952ebf6391e36f4e0b53571ff09c9a3d36af770185ea77",
+      "estimatedTokens": 430,
       "source": ".agents/core/skills/engineering-workflow/skill.yaml",
       "signals": {
         "aliases": [
@@ -156,7 +156,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 418
+        "estimatedTokens": 430
       },
       "resources": [
         {
@@ -188,13 +188,13 @@
       "id": "gemini-precision",
       "displayName": "gemini-precision",
       "version": "1.0.0",
-      "description": "High-precision engineering and execution guardrails optimized for Google Gemini models. Enforces zero-assumption file inspection, complete non-lazy implementations, surgical blast-radius containment, and mandatory proof-of-work execution.",
+      "description": "Execution guidance for Gemini: inspect code, preserve scope, and report relevant verification evidence.",
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:bd091c13a5c15c2ac55a8c27b309ffdd8e0a5a8b8260198808b70e45e685b9fd",
-      "resourceTreeHash": "sha256:8ae82b8dd89128820c8b28c7e9e8aac878f363381dd2a11043b8aff9d03ae35e",
-      "estimatedTokens": 1890,
+      "entrypointHash": "sha256:d0e1c8331b25d663c153a88ed7e88d349f2e8662f919a6d390f5e94cfee81093",
+      "resourceTreeHash": "sha256:343b58798199f697e8c547963e41f3160793e69a43ffa9feb5109450368d55e0",
+      "estimatedTokens": 444,
       "source": ".agents/core/skills/gemini-precision/skill.yaml",
       "signals": {
         "aliases": [
@@ -211,7 +211,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 1890
+        "estimatedTokens": 444
       },
       "resources": [
         {
@@ -243,9 +243,9 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:baeb5f187b8ea491f4854e6287c29d5c58b436c327e8df46c04651e6deb43513",
-      "resourceTreeHash": "sha256:d720b3727681e63f5212e97687b9ad32326685f22493214edc8750a3f504347a",
-      "estimatedTokens": 343,
+      "entrypointHash": "sha256:60eb7b902ae8faf4c4205cf99abad4401ee2ec528b9c8490f909aa7db95fb5f2",
+      "resourceTreeHash": "sha256:4afcb9bffe3b4d6912d3d6c35b1a197b6471c9789f277295a2de6c56727eae34",
+      "estimatedTokens": 310,
       "source": ".agents/core/skills/gstack-roles/skill.yaml",
       "signals": {
         "aliases": [
@@ -262,7 +262,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 343
+        "estimatedTokens": 310
       },
       "resources": [
         {
@@ -298,9 +298,9 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:837795e41d09af94040fb9ae318126c6ff3a24bf35b43bbf4cb2888a5067a950",
-      "resourceTreeHash": "sha256:3a4d757373ad00ae321c25d0774d35d0f8c9f25b1e95d58303ffb68d0128fd59",
-      "estimatedTokens": 413,
+      "entrypointHash": "sha256:d1d70efd4fec48ff5209c93bb18ce52039abc92c83f04d9aa691d0d147ed1b44",
+      "resourceTreeHash": "sha256:b760eceafd9d0e88df852029a262078b3089040edbf947d71a32fad6845be32b",
+      "estimatedTokens": 402,
       "source": ".agents/core/skills/ponytail-mindset/skill.yaml",
       "signals": {
         "aliases": [
@@ -317,7 +317,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 413
+        "estimatedTokens": 402
       },
       "resources": [
         {
@@ -353,9 +353,9 @@
       "category": "backend",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:5daec60e9bb1c49a2b66e43d73e897397507e3604ef4bf02588d35cfd59b1903",
-      "resourceTreeHash": "sha256:b4302851046e1faffc18bc600c79d92d1da7f31bed03781eee89e84ddedc4956",
-      "estimatedTokens": 2237,
+      "entrypointHash": "sha256:7d73d176ef08f6ae6210db12ecf0088e0177d12d4e365a626cfbb3d7236ccdad",
+      "resourceTreeHash": "sha256:a4e2b342b27a7c4532977f4788d8a406273ab1008c1a06bb4941da5a96752aa3",
+      "estimatedTokens": 1351,
       "source": ".agents/core/skills/security/skill.yaml",
       "signals": {
         "aliases": [
@@ -423,7 +423,7 @@
       },
       "context": {
         "priority": 90,
-        "estimatedTokens": 2237
+        "estimatedTokens": 1351
       },
       "resources": [
         {
@@ -457,7 +457,7 @@
           "level": "must",
           "enforcement": "runtime",
           "checker": "secret-scanner",
-          "summary": "Zero plaintext credentials, private keys, or API tokens committed to repository"
+          "summary": "Scan configured inputs for supported credential patterns; report input scope, exclusions, and scanner results"
         },
         {
           "id": "SEC-003",
@@ -506,7 +506,7 @@
       "level": "must",
       "enforcement": "runtime",
       "checker": "secret-scanner",
-      "summary": "Zero plaintext credentials, private keys, or API tokens committed to repository",
+      "summary": "Scan configured inputs for supported credential patterns; report input scope, exclusions, and scanner results",
       "sourceSkill": "security"
     },
     "SEC-003": {

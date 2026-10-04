@@ -6,28 +6,28 @@ Define the outcome, plan substantial changes, implement, verify, review, and rep
 
 ## When to Use
 
-Implementation, debugging, reviews, and release preparation. Routine maintenance and diagnostics can proceed directly with relevant checks.
+Implementation, debugging, reviews, and release preparation. Routine maintenance and diagnostics use targeted checks.
 
 ## Rules & Patterns
 
-Establish acceptance criteria for substantial or ambiguous features. Ask only for missing decisions that affect scope or safety. An explicit implementation request authorizes ordinary reversible work. Preserve unrelated changes. Verify behavior before reporting completion. Publishing and external messages need authorization for that action.
+Establish acceptance criteria for substantial or ambiguous work. Ask only for missing decisions affecting scope, safety, or external actions. An implementation request authorizes ordinary reversible work. Inspect affected code and callers, preserve unrelated changes, and verify behavior before reporting completion. Roles are optional.
 
-Read [references/workflow.md](references/workflow.md) for detailed procedures and examples only when needed.
+Read [references/workflow.md](references/workflow.md) for procedures when needed.
 
 ## Code Examples
 
-A README typo needs an edit and relevant formatting check. An authentication feature needs access boundaries, failure cases, implementation, and behavioral verification.
+A README typo needs a small edit and formatting check. An authorization fix needs an allowed-user case and a denied-user regression.
 
 ## Validation Checklist
 
-- [ ] The requested outcome is handled.
-- [ ] Relevant verification and safety boundaries are preserved.
-- [ ] Limitations are stated.
+- [ ] The requested outcome and applicable failure cases are checked.
+- [ ] Evidence names commands, results, scope, and limitations.
+- [ ] Unrelated changes and existing authorization are preserved.
 
 ## Common Mistakes
 
-Repeated approval after authorization; unnecessary ceremonies for routine edits; treating role labels or string checks as behavioral proof.
+Repeated approval after authorization; full ceremonies for routine edits; treating headings, role labels, or schema checks as behavioral proof.
 
 ## Integration Notes
 
-Load relevant domain skills and supporting resources on demand. Compatibility identifiers remain available.
+Use security for sensitive boundaries, ponytail-mindset for implementation complexity, and context-os for compiler/configuration work. gstack-roles is a compatibility alias.

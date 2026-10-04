@@ -158,7 +158,7 @@ describe('Milestone 9: Prompt & Skill System Quality Guardrails', () => {
       assert.ok(res.workflow.steps.some(s => s.includes('TESTS')));
     });
 
-    test('high-risk tasks mandate spec, approved plan, and independent review', () => {
+    test('high-risk tasks preserve authorization and require scoped verification and explicit review coverage', () => {
       const res = resolver.resolve({
         task: 'Update authentication password hashing and session tokens',
         files: ['services/auth.ts'],
@@ -167,8 +167,10 @@ describe('Milestone 9: Prompt & Skill System Quality Guardrails', () => {
       assert.equal(res.risk.value, 'high');
       assert.equal(res.workflow.name, 'HIGH');
       assert.ok(res.workflow.steps.some(s => s.includes('SPEC')));
-      assert.ok(res.workflow.steps.some(s => s.includes('APPROVED_PLAN')));
-      assert.ok(res.workflow.steps.some(s => s.includes('INDEPENDENT_REVIEW')));
+      assert.ok(res.workflow.steps.some(s => s.includes('PLAN:') && s.includes('existing authorization')));
+      assert.ok(res.workflow.steps.some(s => s.includes('VERIFICATION:') && s.includes('Behavioral regression')));
+      assert.ok(res.workflow.steps.some(s => s.includes('REVIEW:') && s.includes('distinguish self-review from peer review')));
+      assert.ok(res.skills.includes('security'));
     });
 
     test('destructive tasks enforce explicit authority and rollback rehearsal', () => {

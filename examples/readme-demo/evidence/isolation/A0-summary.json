@@ -1,0 +1,17 @@
+{
+  "id": "A0",
+  "condition": "A",
+  "calls": [
+    {
+      "index": 1,
+      "startedUtc": "2026-10-04T15:23:56.458Z",
+      "forwarded": false
+    }
+  ],
+  "proxyErrors": [],
+  "startedUtc": "2026-10-04T15:23:54.756Z",
+  "exitCode": 1,
+  "timedOut": false,
+  "elapsedMs": 1905,
+  "remainingConservativeBudgetUsd": null
+}

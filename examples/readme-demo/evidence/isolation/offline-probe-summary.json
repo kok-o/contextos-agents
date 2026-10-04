@@ -1,0 +1,121 @@
+{
+  "interpretation": "Native instruction discovery and request construction only. This does not demonstrate model activation or compliance.",
+  "same_built_in_instructions": true,
+  "same_tools": true,
+  "rows": [
+    {
+      "condition": "A",
+      "inference": false,
+      "isolation": "fresh container; --network none; no credentials; fresh HOME and CODEX_HOME; no host config or history",
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "low",
+        "summary": "auto"
+      },
+      "built_in_instructions_sha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+      "tools_sha256": "9cc35d62a8920a1701dcdbb4493ade8de1e936cb7f0c82adad2b7711e5800259",
+      "tool_names": [
+        "exec_command",
+        "write_stdin",
+        "update_plan",
+        "request_user_input",
+        "view_image",
+        "get_goal",
+        "create_goal",
+        "update_goal"
+      ],
+      "skills_in_initial_catalog": [
+        "imagegen",
+        "openai-docs",
+        "plugin-creator",
+        "skill-creator",
+        "skill-installer"
+      ],
+      "contextos_mentioned": false,
+      "team_rule_full_body_in_initial_input": false,
+      "prompt_input_exit_code": 0,
+      "local_capture_exit_code": 1,
+      "local_capture_exit_explanation": "Deliberate local HTTP 418; no model response generated.",
+      "request_count": 1
+    },
+    {
+      "condition": "B",
+      "inference": false,
+      "isolation": "fresh container; --network none; no credentials; fresh HOME and CODEX_HOME; no host config or history",
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "low",
+        "summary": "auto"
+      },
+      "built_in_instructions_sha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+      "tools_sha256": "9cc35d62a8920a1701dcdbb4493ade8de1e936cb7f0c82adad2b7711e5800259",
+      "tool_names": [
+        "exec_command",
+        "write_stdin",
+        "update_plan",
+        "request_user_input",
+        "view_image",
+        "get_goal",
+        "create_goal",
+        "update_goal"
+      ],
+      "skills_in_initial_catalog": [
+        "imagegen",
+        "openai-docs",
+        "plugin-creator",
+        "skill-creator",
+        "skill-installer"
+      ],
+      "contextos_mentioned": true,
+      "team_rule_full_body_in_initial_input": true,
+      "prompt_input_exit_code": 0,
+      "local_capture_exit_code": 1,
+      "local_capture_exit_explanation": "Deliberate local HTTP 418; no model response generated.",
+      "request_count": 1
+    },
+    {
+      "condition": "C",
+      "inference": false,
+      "isolation": "fresh container; --network none; no credentials; fresh HOME and CODEX_HOME; no host config or history",
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "low",
+        "summary": "auto"
+      },
+      "built_in_instructions_sha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+      "tools_sha256": "9cc35d62a8920a1701dcdbb4493ade8de1e936cb7f0c82adad2b7711e5800259",
+      "tool_names": [
+        "exec_command",
+        "write_stdin",
+        "update_plan",
+        "request_user_input",
+        "view_image",
+        "get_goal",
+        "create_goal",
+        "update_goal"
+      ],
+      "skills_in_initial_catalog": [
+        "imagegen",
+        "openai-docs",
+        "plugin-creator",
+        "skill-creator",
+        "skill-installer",
+        "context-manager",
+        "context-os",
+        "engineering-workflow",
+        "gemini-precision",
+        "gstack-roles",
+        "ponytail-mindset",
+        "security",
+        "team-order",
+        "typescript"
+      ],
+      "contextos_mentioned": true,
+      "team_rule_full_body_in_initial_input": false,
+      "prompt_input_exit_code": 0,
+      "local_capture_exit_code": 1,
+      "local_capture_exit_explanation": "Deliberate local HTTP 418; no model response generated.",
+      "request_count": 1
+    }
+  ]
+}

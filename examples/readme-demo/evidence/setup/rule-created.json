@@ -1,0 +1,9 @@
+{
+  "action": "copy prepared project skill",
+  "from": "team-order",
+  "to": ".agents/project/skills/team-order",
+  "files": {
+    "SKILL.md": "a13ee650c40ba4a2804de427ff56ac644b556f9fd122235f78303dd6a8503da8",
+    "skill.yaml": "190edabfc60c6268d507094a7c3f01ed9637deacfca102a2f1f84e0480b6a27d"
+  }
+}

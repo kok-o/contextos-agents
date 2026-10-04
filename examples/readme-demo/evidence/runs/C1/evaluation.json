@@ -1,0 +1,478 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-10-04T15:33:32.895Z",
+  "runtime": {
+    "node": "v22.14.0",
+    "platform": "linux",
+    "architecture": "x64"
+  },
+  "paths": {
+    "project": "/candidate",
+    "baseline": "/baseline",
+    "initial": "/initial",
+    "out": "/out"
+  },
+  "provenance": {
+    "initialInventory": {
+      ".aider.conf.yml": "546681bbf2cd3bfc83d27af116ef1512fb0ca3da60a7f23a645a09b7e1cc8f48",
+      ".cursor/rules/00-project-rules.mdc": "5d13f8dd88e6f761157302f4a8db11ffb8d3f81b116c41e9edea597405d1d430",
+      ".cursor/rules/context-manager.mdc": "afb34251d49954be93576eac9712d5d80352d2028b98064e05034bb092ef766d",
+      ".cursor/rules/context-os.mdc": "fdab3f247bc95736ace15ba1279dbfc7b2342a411f6fa23c648a3b534fd9298d",
+      ".cursor/rules/engineering-workflow.mdc": "a76d27eff5cd22cc7a70a7eb67449f71f444eacb2dde9f81a5e8eb8b7e2e2bce",
+      ".cursor/rules/gemini-precision.mdc": "76171653858fe9ed5d5f544a668d2be9cbbdfaa5889098589a26d73988c45597",
+      ".cursor/rules/gstack-roles.mdc": "ff03394a23ef9708decd62c0494cdce7fb164b2bc19328afca766f1f81d7d327",
+      ".cursor/rules/ponytail-mindset.mdc": "ce7551cc35d8c21256eda207a533b969196bab4594090528ae72441e4d2446a0",
+      ".cursor/rules/security.mdc": "a056fb545e7c1f73ab8e5dc8060f89685d33cb57b6e3937a098119c4d525b3e4",
+      ".cursor/rules/team-order.mdc": "5a1048f3b1e0c30a9d97f6805554c839a8f26325c576b7ebf267af230c3d23de",
+      ".cursor/rules/typescript.mdc": "9568512ae74fabfc108a263fd8abe0667f60250a17c3dea4f36a1363b19868d9",
+      ".github/copilot-instructions.md": "238ba75b50c478d28d434d848d3277dec20f0b5b12c31a20f126b2cbd18771a8",
+      ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      ".zed/prompts/context-manager.md": "84dda09e207d82ae49ae49a198328910f04a5be9b12d6714de9bdb5b32b02baf",
+      ".zed/prompts/context-os.md": "687fbed712ebddf4cff87339f39203a26283bdabf54d37c063aa20fa930f7390",
+      ".zed/prompts/contextos.md": "4b5bfef23f99ef1d064eefa20e951ac8178536a3afc55c9871a6b89d1e328034",
+      ".zed/prompts/engineering-workflow.md": "39bb2cb2aee55c7d5736669b40fc94e6c014009c69535d3cb4ae2f247ca21ec7",
+      ".zed/prompts/gemini-precision.md": "4d38c854489038fbcb4a021164a8d0f244b7191709dd9d0a8cc5beea6b521283",
+      ".zed/prompts/gstack-roles.md": "68f51db3175564b62c1cb5e242e2fe8b2b029f6efaabb270bf701a68595ba5ae",
+      ".zed/prompts/ponytail-mindset.md": "b663f6aecbf1cbec1d062e5a779e4d305e014c0c10b22b3f66a86f097fca57f9",
+      ".zed/prompts/security.md": "e1632a1f074084ea4d67ef9752bd12b4f943eb596276e63bf9b0925344a75092",
+      ".zed/prompts/team-order.md": "5749e82c5a5ecc48201ff175bc805abcf33ae6c91f571cda23a0f432a6cbf95d",
+      ".zed/prompts/typescript.md": "bee6d1a1a7ee017228d6a91585ce39ebabc466e283ad01b4af0e4cda6bfdaac2",
+      ".zed/rules.md": "a48dda9281c09ee70bed01dfb5ce774679df745eb54473f3a92bd4a36dfeb94e",
+      "CLAUDE.md": "0779731f77b70bab006c8ed50db01b08cc25d95f6f4f1b5825c169a5f43ca5cc",
+      "CONVENTIONS.md": "2d2f3bff119403766eee26b27ff311897e4ecb987869e42a6bc8c395e17d4885",
+      "README.md": "b8b1cd7257baedac2df3831df58d470e9a051d6b2991dddb827a35149e279ccf",
+      "package-lock.json": "96c3f8347b71fca0e77936abc1330b2d92cf3949407fcf1a7837635f51e12630",
+      "package.json": "1b7f12e859780c6bb42404a9ebe8e331e22fdde7007266471ccbbe61c250a072",
+      "src/order.ts": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+      "test/order.test.mjs": "4ce6614a546d38e12534a62a688ffe8b6be1b050182cb6460d967def6ccae70f"
+    },
+    "finalInventory": {
+      ".aider.conf.yml": "546681bbf2cd3bfc83d27af116ef1512fb0ca3da60a7f23a645a09b7e1cc8f48",
+      ".cursor/rules/00-project-rules.mdc": "5d13f8dd88e6f761157302f4a8db11ffb8d3f81b116c41e9edea597405d1d430",
+      ".cursor/rules/context-manager.mdc": "afb34251d49954be93576eac9712d5d80352d2028b98064e05034bb092ef766d",
+      ".cursor/rules/context-os.mdc": "fdab3f247bc95736ace15ba1279dbfc7b2342a411f6fa23c648a3b534fd9298d",
+      ".cursor/rules/engineering-workflow.mdc": "a76d27eff5cd22cc7a70a7eb67449f71f444eacb2dde9f81a5e8eb8b7e2e2bce",
+      ".cursor/rules/gemini-precision.mdc": "76171653858fe9ed5d5f544a668d2be9cbbdfaa5889098589a26d73988c45597",
+      ".cursor/rules/gstack-roles.mdc": "ff03394a23ef9708decd62c0494cdce7fb164b2bc19328afca766f1f81d7d327",
+      ".cursor/rules/ponytail-mindset.mdc": "ce7551cc35d8c21256eda207a533b969196bab4594090528ae72441e4d2446a0",
+      ".cursor/rules/security.mdc": "a056fb545e7c1f73ab8e5dc8060f89685d33cb57b6e3937a098119c4d525b3e4",
+      ".cursor/rules/team-order.mdc": "5a1048f3b1e0c30a9d97f6805554c839a8f26325c576b7ebf267af230c3d23de",
+      ".cursor/rules/typescript.mdc": "9568512ae74fabfc108a263fd8abe0667f60250a17c3dea4f36a1363b19868d9",
+      ".github/copilot-instructions.md": "238ba75b50c478d28d434d848d3277dec20f0b5b12c31a20f126b2cbd18771a8",
+      ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      ".zed/prompts/context-manager.md": "84dda09e207d82ae49ae49a198328910f04a5be9b12d6714de9bdb5b32b02baf",
+      ".zed/prompts/context-os.md": "687fbed712ebddf4cff87339f39203a26283bdabf54d37c063aa20fa930f7390",
+      ".zed/prompts/contextos.md": "4b5bfef23f99ef1d064eefa20e951ac8178536a3afc55c9871a6b89d1e328034",
+      ".zed/prompts/engineering-workflow.md": "39bb2cb2aee55c7d5736669b40fc94e6c014009c69535d3cb4ae2f247ca21ec7",
+      ".zed/prompts/gemini-precision.md": "4d38c854489038fbcb4a021164a8d0f244b7191709dd9d0a8cc5beea6b521283",
+      ".zed/prompts/gstack-roles.md": "68f51db3175564b62c1cb5e242e2fe8b2b029f6efaabb270bf701a68595ba5ae",
+      ".zed/prompts/ponytail-mindset.md": "b663f6aecbf1cbec1d062e5a779e4d305e014c0c10b22b3f66a86f097fca57f9",
+      ".zed/prompts/security.md": "e1632a1f074084ea4d67ef9752bd12b4f943eb596276e63bf9b0925344a75092",
+      ".zed/prompts/team-order.md": "5749e82c5a5ecc48201ff175bc805abcf33ae6c91f571cda23a0f432a6cbf95d",
+      ".zed/prompts/typescript.md": "bee6d1a1a7ee017228d6a91585ce39ebabc466e283ad01b4af0e4cda6bfdaac2",
+      ".zed/rules.md": "a48dda9281c09ee70bed01dfb5ce774679df745eb54473f3a92bd4a36dfeb94e",
+      "CLAUDE.md": "0779731f77b70bab006c8ed50db01b08cc25d95f6f4f1b5825c169a5f43ca5cc",
+      "CONVENTIONS.md": "2d2f3bff119403766eee26b27ff311897e4ecb987869e42a6bc8c395e17d4885",
+      "README.md": "b8b1cd7257baedac2df3831df58d470e9a051d6b2991dddb827a35149e279ccf",
+      "package-lock.json": "96c3f8347b71fca0e77936abc1330b2d92cf3949407fcf1a7837635f51e12630",
+      "package.json": "1b7f12e859780c6bb42404a9ebe8e331e22fdde7007266471ccbbe61c250a072",
+      "src/order.ts": "367e4722c064cf3f0d1689f943de00d97c20b046705c2518c9d03f97815c4274",
+      "test/order.test.mjs": "b4f9cac78913fbb694134df2c6a482a7f7302d9afaf9f6ca9de573cacae717a0"
+    },
+    "baselineSourceSha256": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+    "evaluatorInventory": {
+      "README.md": "026b88aab5bd05908053c82266fd7525e5408734728a26621e4c611557827a9f",
+      "cases.mjs": "5c12a4f87ff849e4792f6db83a0b04e73ab112e9704ea1597614165406f9848d",
+      "evaluate.mjs": "8adc88f2fb0748fcfa157365f042f2ddd86bbcaa110663a1cd93da053ae57cdc",
+      "frozen-inputs.json": "ad0bf865c8c4b40154c5a1195683fb9156bbd0623fa4eea9f7d6e0e776d96f9b",
+      "run-cases.mjs": "4f91274012870fe0a29cda431fda7965c80a69f280c5da218feeb43515e08b5c",
+      "selfcheck.mjs": "d16ace900002917bb41e64e7f36b6cd45afba8756999970e478a917dfa199ea8"
+    }
+  },
+  "independent": {
+    "loadError": null,
+    "summary": {
+      "task": {
+        "passed": 3,
+        "total": 3
+      },
+      "preservation": {
+        "passed": 7,
+        "total": 7
+      },
+      "team": {
+        "passed": 5,
+        "total": 5
+      }
+    },
+    "cases": [
+      {
+        "category": "task",
+        "id": "source_changed",
+        "description": "Implementation differs from the initial source",
+        "passed": true
+      },
+      {
+        "category": "task",
+        "id": "internal_spaces",
+        "description": "Normalizes a repeated ordinary-space group",
+        "passed": true
+      },
+      {
+        "category": "task",
+        "id": "multiple_groups",
+        "description": "Normalizes multiple ordinary-space groups",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "named_export",
+        "description": "Keeps the named createOrder export callable",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "public_shape",
+        "description": "Keeps existing values and exactly the two public properties",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "edge_trim",
+        "description": "Keeps existing String.trim edge behavior",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "positive_integer",
+        "description": "Retains valid positive integer quantities",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "blank_name",
+        "description": "Keeps the empty-name validation and message",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "nonpositive_quantity",
+        "description": "Keeps nonpositive-quantity validation and message",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "noninteger_quantity",
+        "description": "Keeps fractional and nonfinite quantity validation",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "ordinary_spaces",
+        "description": "Collapses internal U+0020 runs only as specified",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "trim_edges",
+        "description": "Trims both edges without losing existing Unicode trim",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "letter_case",
+        "description": "Preserves item-name letter case",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "internal_tabs",
+        "description": "Preserves meaningful interior tab characters",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "internal_nbsp",
+        "description": "Preserves meaningful interior nonbreaking spaces",
+        "passed": true
+      }
+    ]
+  },
+  "agentTests": {
+    "changedFiles": [
+      "test/order.test.mjs"
+    ],
+    "discoveredFiles": [
+      "test/order.test.mjs"
+    ],
+    "final": {
+      "label": "agent-tests-final",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:29.349Z",
+      "finishedAt": "2026-10-04T15:33:29.598Z",
+      "elapsedMs": 243.683791,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-final.stdout.txt",
+      "stderr": "agent-tests-final.stderr.txt",
+      "assertionsFailed": false,
+      "tests": 7,
+      "failures": 0
+    },
+    "variants": [
+      {
+        "id": "baseline",
+        "description": "Original implementation; tests should detect the requested change",
+        "label": "agent-tests-baseline",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-baseline",
+        "startedAt": "2026-10-04T15:33:30.181Z",
+        "finishedAt": "2026-10-04T15:33:30.427Z",
+        "elapsedMs": 240.145328,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-baseline.stdout.txt",
+        "stderr": "agent-tests-baseline.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 2,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "broad-whitespace",
+        "description": "Wrongly collapses interior tabs and nonbreaking spaces",
+        "label": "agent-tests-broad-whitespace",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-broad-whitespace",
+        "startedAt": "2026-10-04T15:33:30.996Z",
+        "finishedAt": "2026-10-04T15:33:31.244Z",
+        "elapsedMs": 243.216026,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-broad-whitespace.stdout.txt",
+        "stderr": "agent-tests-broad-whitespace.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 2,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "lowercase",
+        "description": "Wrongly lowercases names",
+        "label": "agent-tests-lowercase",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-lowercase",
+        "startedAt": "2026-10-04T15:33:31.826Z",
+        "finishedAt": "2026-10-04T15:33:32.085Z",
+        "elapsedMs": 253.558669,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-lowercase.stdout.txt",
+        "stderr": "agent-tests-lowercase.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 5,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "quantity-validation-removed",
+        "description": "Wrongly accepts invalid quantities",
+        "label": "agent-tests-quantity-validation-removed",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-quantity-validation-removed",
+        "startedAt": "2026-10-04T15:33:32.652Z",
+        "finishedAt": "2026-10-04T15:33:32.891Z",
+        "elapsedMs": 233.097238,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-quantity-validation-removed.stdout.txt",
+        "stderr": "agent-tests-quantity-validation-removed.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 1,
+        "detectedByAssertion": true
+      }
+    ],
+    "usefulRegression": true
+  },
+  "scope": {
+    "changedFiles": [
+      "src/order.ts",
+      "test/order.test.mjs"
+    ],
+    "outsideRequestedSourceAndTests": [],
+    "dependencyChanges": [],
+    "packageError": null,
+    "addedDependencies": [],
+    "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+    "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+    "manualReviewRequired": [
+      "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+      "Client instruction loading and client test execution require separate event evidence"
+    ]
+  },
+  "commands": [
+    {
+      "label": "independent-cases",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "/evaluator/run-cases.mjs",
+        "/out/final-project",
+        "/baseline",
+        "/out/independent-cases.json"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:29.179Z",
+      "finishedAt": "2026-10-04T15:33:29.346Z",
+      "elapsedMs": 160.234604,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "independent-cases.stdout.txt",
+      "stderr": "independent-cases.stderr.txt"
+    },
+    {
+      "label": "agent-tests-final",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:29.349Z",
+      "finishedAt": "2026-10-04T15:33:29.598Z",
+      "elapsedMs": 243.683791,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-final.stdout.txt",
+      "stderr": "agent-tests-final.stderr.txt"
+    },
+    {
+      "label": "agent-tests-baseline",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-baseline",
+      "startedAt": "2026-10-04T15:33:30.181Z",
+      "finishedAt": "2026-10-04T15:33:30.427Z",
+      "elapsedMs": 240.145328,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-baseline.stdout.txt",
+      "stderr": "agent-tests-baseline.stderr.txt"
+    },
+    {
+      "label": "agent-tests-broad-whitespace",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-broad-whitespace",
+      "startedAt": "2026-10-04T15:33:30.996Z",
+      "finishedAt": "2026-10-04T15:33:31.244Z",
+      "elapsedMs": 243.216026,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-broad-whitespace.stdout.txt",
+      "stderr": "agent-tests-broad-whitespace.stderr.txt"
+    },
+    {
+      "label": "agent-tests-lowercase",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-lowercase",
+      "startedAt": "2026-10-04T15:33:31.826Z",
+      "finishedAt": "2026-10-04T15:33:32.085Z",
+      "elapsedMs": 253.558669,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-lowercase.stdout.txt",
+      "stderr": "agent-tests-lowercase.stderr.txt"
+    },
+    {
+      "label": "agent-tests-quantity-validation-removed",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-quantity-validation-removed",
+      "startedAt": "2026-10-04T15:33:32.652Z",
+      "finishedAt": "2026-10-04T15:33:32.891Z",
+      "elapsedMs": 233.097238,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-quantity-validation-removed.stdout.txt",
+      "stderr": "agent-tests-quantity-validation-removed.stderr.txt"
+    }
+  ]
+}

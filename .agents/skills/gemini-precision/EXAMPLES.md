@@ -1,72 +1,52 @@
-# gemini-precision Examples - Anti-patterns vs ContextOS Standard
+# Gemini execution examples
 
-## Example 1: Read-Before-Write Invariant (Zero Assumptions)
+## Inspect before integration
 
-### Anti-pattern: Hallucinated Import and Signature
+Before calling a password helper, read its export and signature. Do not infer a
+package, import path, or return type from an example. Name the checked files and
+run the relevant authentication regression.
 
-```typescript
-// BAD: Assuming the module exists and export is a default function
-import hashPassword from 'src/utils/crypto';
-const hash = hashPassword(password);
-```
+## Complete pure calculation with an explicit boundary
 
-### Best practice: ContextOS Standard (Inspected Active Codebase First)
+This block validates integer minor-unit amounts and computes a proposed balance.
+It does not execute or persist a transfer. A real payment operation also needs
+trusted authorization, concurrency control, idempotency, and a transactional
+persistence boundary. Do not report this function as a completed integration.
 
-```typescript
-// GOOD: Inspected src/lib/auth.ts via view_file before writing code
-import { hashSecret, ARGON2_CONFIG } from '../lib/auth.js';
-const hash = await hashSecret(password, ARGON2_CONFIG);
-```
-
----
-
-## Example 2: Zero-Placeholder Invariant (Complete Code Only)
-
-### Anti-pattern: Lazy Stubs and Ellipsis Comments
-
-```typescript
-// BAD: Emitting incomplete code with TODOs and ellipsis
-export function processTransaction(tx: Transaction) {
-  // TODO: validate transaction balance
-  // ... rest of implementation stays here ...
-  return { status: 'ok' };
-}
-```
-
-### Best practice: ContextOS Standard (100% Drop-in Compilable)
-
-```typescript
-// GOOD: Fully implemented logic with complete error handling
-export function processTransaction(tx: Transaction): TransactionResult {
-  if (!tx.amount || tx.amount <= 0) {
-    throw new ValidationError('Transaction amount must be positive');
+<!-- example: gemini-transfer -->
+```javascript
+export function processTransaction(tx) {
+  if (!tx || typeof tx !== 'object' ||
+      typeof tx.id !== 'string' || !tx.id ||
+      typeof tx.senderId !== 'string' || !tx.senderId) {
+    throw new TypeError('Transaction identity required');
   }
-  if (tx.senderBalance < tx.amount) {
-    throw new InsufficientFundsError(tx.senderId, tx.amount);
+  if (!Number.isSafeInteger(tx.amount) || tx.amount <= 0 ||
+      !Number.isSafeInteger(tx.senderBalance) || tx.senderBalance < 0) {
+    throw new TypeError('Amounts must be safe integer minor units');
   }
+  if (tx.senderBalance < tx.amount) throw new RangeError('Insufficient funds');
   return {
-    status: 'ok',
+    status: 'validated',
     transactionId: tx.id,
     newBalance: tx.senderBalance - tx.amount,
   };
 }
 ```
 
----
+The example verifier rejects NaN, Infinity, fractional/unsafe amounts, and
+insufficient balances. These cases establish the calculation's stated contract.
 
-## Example 3: Mandatory Proof-of-Work Invariant
+## Relevant proof of work
 
-### Anti-pattern: Claiming Task Complete Without Evidence
+For an authorization fix, run an allowed-user case, a denied-user case, and the
+affected integration checks. In this source checkout, skill consistency and
+staged placeholder checks are separate commands:
 
-```text
-BAD: "I have updated the authentication handler. The code looks correct and is ready to merge."
-```
-
-### Best practice: ContextOS Standard (Verified with Automated Gates)
-
-```bash
-# GOOD: Run test suite, staged scanner, and consistency checks
-npm test
-contextos scan --staged --enforce
+```powershell
 node .agents/ctx.js validate
+node bin/index.js scan --staged --enforce --placeholders
 ```
+
+An empty staged index says nothing about unstaged changes. Supply --scope <file>
+when an actual scope JSON file is part of the task.

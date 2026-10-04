@@ -1,45 +1,12 @@
-# ponytail-mindset Examples — Anti-patterns vs ContextOS Standard
+# Minimalism examples
 
-## Example 1: Data Formatting and Manipulation
-
-### Anti-pattern: Over-engineered Custom Utility Class
-
-```typescript
-// BAD: 40 lines of boilerplate for relative date formatting
-export class DateFormatterService {
-  private static instance: DateFormatterService;
-  public static getInstance() { /* singleton boilerplate */ }
-  public formatRelative(date: Date): string {
-    const diff = Date.now() - date.getTime();
-    // 30 lines of manual math, plurals, and string building
-  }
-}
-```
-
-### Best practice: ContextOS Standard (Standard Library Native API)
-
-```typescript
-// GOOD: Native Intl API, zero bundle cost, handles all locales
-export const formatRelativeTime = (date: Date, locale = 'en'): string => {
-  const diffDays = Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(diffDays, 'day');
-};
-```
-
----
-
-## Example 2: Component Library Reuse
-
-### Anti-pattern: Hand-rolled Modal from Scratch
-
-```text
-BAD: Writing custom overlay DOM, manual scroll locking, manual focus trapping,
-and custom keydown listeners. Burns 300+ lines of fragile code.
-```
-
-### Best practice: ContextOS Standard (Leverage Established Primitives)
-
-```bash
-# GOOD: Install battle-tested primitive that handles ARIA, portals, and keyboard navigation
-npx shadcn@latest add dialog
-```
+- Formatting: use Intl.DateTimeFormat, Intl.RelativeTimeFormat, or the existing
+  formatter after verifying locale, timezone, invalid-date, and rounding needs.
+  A snippet's length is not a measured bundle or accuracy guarantee.
+- UI: reuse the installed component library when it meets accessibility and
+  interaction requirements. Use a native control when it meets those requirements.
+- Protected writes: see the executable updater in
+  [references/minimalism.md](references/minimalism.md). Copying arbitrary payload
+  fields into persistence does not satisfy minimalism or security.
+- Refactoring: a small named function can be clearer than repeated inline logic,
+  even before its third use.

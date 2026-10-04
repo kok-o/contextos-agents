@@ -1,0 +1,67 @@
+diff --git a/README.md b/README.md
+index 2617f77..39a38a2 100755
+--- a/README.md
++++ b/README.md
+@@ -2,6 +2,10 @@
+ 
+ A small TypeScript module exposing `createOrder(item, quantity)`.
+ 
++Item names are trimmed and internal whitespace is collapsed to single spaces,
++including tabs, line breaks, and Unicode whitespace. Case and punctuation are
++preserved. Empty names and quantities that are not positive integers are rejected.
++
+ Run the tests with Node.js 22.14.0 or later:
+ 
+ ```sh
+diff --git a/src/order.ts b/src/order.ts
+index 01434ca..3e00ee3 100755
+--- a/src/order.ts
++++ b/src/order.ts
+@@ -2,7 +2,7 @@ export function createOrder(
+   item: string,
+   quantity: number,
+ ): { item: string; quantity: number } {
+-  const normalizedItem = item.trim();
++  const normalizedItem = item.trim().replace(/\s+/gu, " ");
+ 
+   if (!normalizedItem) {
+     throw new Error("Item is required");
+diff --git a/test/order.test.mjs b/test/order.test.mjs
+index 5013ff5..1f23901 100755
+--- a/test/order.test.mjs
++++ b/test/order.test.mjs
+@@ -10,8 +10,33 @@ test("trims item names at the edges", () => {
+   assert.deepEqual(createOrder("  Tea  ", 1), { item: "Tea", quantity: 1 });
+ });
+ 
++test("collapses internal whitespace to single spaces", () => {
++  for (const item of [
++    "  Earl   Grey  Tea  ",
++    "\tEarl\t\tGrey\r\nTea\n",
++    "\u00a0Earl\u00a0\u2003Grey\u202fTea\u3000",
++  ]) {
++    assert.deepEqual(createOrder(item, 3), {
++      item: "Earl Grey Tea",
++      quantity: 3,
++    });
++  }
++});
++
++test("preserves item name case, punctuation, and non-whitespace characters", () => {
++  assert.deepEqual(createOrder("  Café-style   TEA (50g)  ", 2), {
++    item: "Café-style TEA (50g)",
++    quantity: 2,
++  });
++});
++
++test("normalizing an already normalized item does not change it", () => {
++  const order = createOrder("  Earl\tGrey  Tea  ", 2);
++  assert.deepEqual(createOrder(order.item, order.quantity), order);
++});
++
+ test("rejects empty item names", () => {
+-  for (const item of ["", "   ", "\t\n"]) {
++  for (const item of ["", "   ", "\t\n", "\u00a0\u2003\u202f\u3000"]) {
+     assert.throws(() => createOrder(item, 1), {
+       name: "Error",
+       message: "Item is required",

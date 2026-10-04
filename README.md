@@ -7,7 +7,8 @@
 <h1 align="center">contextos-agents</h1>
 
 <p align="center">
-  <strong>One version-controlled source of engineering rules for supported coding agents.</strong>
+  <strong>Maintain your coding-agent rules in one place.</strong><br />
+  Export them to supported tools and catch outdated configs in CI.
 </p>
 
 <p align="center">
@@ -19,290 +20,181 @@
 </p>
 
 <p align="center">
-  <a href="#installation">Installation</a> •
-  <a href="./GUIDE.md">Guide</a> •
-  <a href="./docs/product/onboarding.md">Onboarding</a> •
-  <a href="./docs/ADAPTER_COMPATIBILITY.md">Adapters</a> •
-  <a href="#supported-agents--compilation">Supported Agents</a> •
-  <a href="./CONTRIBUTING.md">Contributing</a> •
-  <a href="https://www.npmjs.com/package/contextos-agents">npm</a>
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="#supported-agents">Supported agents</a> ·
+  <a href="./GUIDE.md">Guide</a> ·
+  <a href="./CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
 
-ContextOS is a deterministic context and policy compiler for AI coding agents. It exports version-controlled engineering rules and detects configuration drift in CI. See the [adapter compatibility matrix](docs/ADAPTER_COMPATIBILITY.md) for native paths, instruction indexes and manual templates; client loader verification is separate from export tests.
+Using several coding agents in the same project? A rule updated for one tool can
+leave another tool's configuration behind. ContextOS keeps your rules in
+version-controlled Markdown, exports them to supported agent formats, and checks
+whether those exports still match their sources.
 
-## Installation
+It is useful when you or your team maintain instructions across multiple tools
+or need a configuration check before merging changes. If a small, stable
+instruction file already covers your workflow, you may not need an extra tool.
 
-You do not need to clone anything manually. Just open your terminal in the root of your project and run:
+<p align="center">
+  <img src="./assets/contextos-story.gif" alt="One rule changed. Three agent configs fell behind. ContextOS detects stale exports, then refreshes and verifies them." width="960" />
+</p>
 
-```bash
-npx contextos-agents init
+<p align="center"><sub>Change a rule. Catch stale exports. Bring them back in sync.</sub></p>
+
+<a id="installation"></a>
+
+## Quickstart
+
+Requires **Node.js 22+** and npm. Run these commands in your project's root.
+This workflow does not call a model API.
+
+**1. Initialize the rule sources.**
+
+```sh
+npx contextos-agents init --skip-compile
 ```
 
-By default, ContextOS installs seven core skills: `engineering-workflow`, `ponytail-mindset`, `gemini-precision`, `security`, `context-os`, `context-manager`, and `gstack-roles`, then exports Gemini workspace skills. Supporting examples and references remain separate files. The actual context loaded and session cost depend on your client and task; ContextOS does not control an external client's chat history.
+This installs the seven core skills. We generate the agent files after adding
+your own rule below. See the [guide](GUIDE.md#initialization-options) for presets,
+installation previews, and using a pinned project dependency.
 
-Codex also discovers the shared `.agents/skills` directory. The default Cursor
-export always applies only the compact project bootstrap; skill bodies load by
-file patterns or agent request. Resolver token budgets are soft: mandatory safety
-guidance survives with an overflow warning. The experimental MCP prompt assembler
-keeps selected bodies whole and can reject an explicit hard character limit.
+**2. Add a rule your team wants to maintain.**
 
-Want more skills right away? Install pre-packaged presets or the entire catalog:
+Create the folders and save this as
+`.agents/project/skills/team-auth/SKILL.md`:
 
-```bash
-npx contextos-agents init --preset frontend   # React, Next.js, TypeScript, UI/UX, a11y
-npx contextos-agents init --preset backend    # System design, API design, Node.js, databases
-npx contextos-agents init --preset devops     # Docker, CI/CD, Terraform
-npx contextos-agents init --all               # Install all 36 catalog skills at once
+```markdown
+---
+name: team-auth
+description: Team rules for authentication code.
+---
+# Team security
+
+- Never log authorization headers.
 ```
 
-### Options
+**3. Compile, export, and check.**
 
-Try the [small local demo](examples/quickstart/README.md) to install the package in a new folder, select a TypeScript skill, and add a team rule without
-calling a model API. The [five-minute guide](docs/product/onboarding.md) explains
-the same workflow for an existing project.
-
-Core 2.3.1 / MCP 0.4.1 are the published maintenance release. See the
-[release checklist](docs/PATCH_RELEASE_2.3.1.md),
-[live client check](docs/LIVE_CLIENT_CHECK_RU.md) and
-[upgrade/checkpoint rollback](docs/COMPACT_CONTEXT_MIGRATION.md). The
-[release manifest](docs/evidence/release-2.3.1.json) records the released source,
-cross-platform CI and archive identities. Three Codex CLI scenarios passed,
-including explicit and automatic selection of a skill with `skill.yaml` metadata.
-Other live clients and the external pilot remain unverified. Internal plans,
-local API probes and raw logs are excluded from the public release surface.
-
-```bash
-npx contextos-agents --help             # Show all options
-npx contextos-agents --version          # Show version
-npx contextos-agents --minimal          # Install only the core bootstrap skills
-npx contextos-agents --all              # Install all 36 catalog domain skills during init
-npx contextos-agents --preset <name>    # Install stack preset: frontend, backend, devops, full
-npx contextos-agents --profile <name>   # Install with specific profile (e.g. enterprise, startup)
-npx contextos-agents --auto             # Auto-detect tech stack and apply recommended profile
-npx contextos-agents --dry-run          # Preview what will be installed
-npx contextos-agents --force            # Overwrite an existing .agents/ folder
-npx contextos-agents --skip-compile     # Skip auto-compilation step
+```sh
+npx contextos-agents compile
+npx contextos-agents export all
+npx contextos-agents export all --check --json
 ```
 
-## Why ContextOS?
+The check should report `"status": "pass"`, `"hasDrift": false`, and exit code
+`0`. The rule is now present in generated files such as
+`.cursor/rules/team-auth.mdc` and `.agents/skills/team-auth/SKILL.md`.
 
-Modern development teams face fragmented AI tooling: engineers use Cursor, Claude Code, GitHub Copilot, Gemini, Zed, and Aider. Each tool requires its own proprietary rules format, leading to configuration drift, contradictory standards, and unvetted AI slop (`// TODO`, leaked secrets).
+**See drift detection:** add `- Never log session tokens.` to the same source
+file, then run:
 
-ContextOS preserves selected skill bodies and reports budget overflow instead of silently truncating required instructions. Whether a client loads and follows those rules requires separate verification. The current [calibration](docs/BENCHMARK_RESULTS.md) found no quality advantage over vanilla on its test corpus.
-
-**ContextOS is not another coding agent.** It is the deterministic context compiler and policy engine for the agents your team already uses.
-
-### The Three Pillars
-
-1. **Portable (Multi-Agent):** Define your engineering skills once in standard Markdown. ContextOS generates agent-specific exports (Gemini, Claude Code, Cursor, Copilot, Aider, and Zed); native loading and manual templates are distinguished in the compatibility matrix.
-2. **High-Fidelity & Focused:** The resolver maps domain skills to relevant tasks without lossy truncation, delivering rich, complete context to the model.
-3. **Verifiable in CI:** Lockfile v2 provenance, dual-hash verification, and CI quality gates detect configuration drift and enforce quality guardrails before merge.
-
-## How it works
-
-1. Define version-controlled engineering policies once.
-2. Resolve the complete, relevant skill policies for the current task.
-3. Compile native configuration for each coding agent.
-4. Detect configuration drift and policy violations in CI.
-
-```bash
-contextos resolve "review authentication changes" \
-  --files src/auth/session.ts \
-  --explain
+```sh
+npx contextos-agents compile
+npx contextos-agents export all --check --json
 ```
 
-Example excerpt from the repository configuration (selection and scores depend on installed skills, files and profile):
+The check now reports `"status": "drift"` and exits with code `1`: the exports
+are out of date. Run `npx contextos-agents export all` and check again to return
+to `pass`. Commit the source rules, generated files, and lockfile together.
 
-```text
-Selected Skills:
-  ✓ engineering-workflow   score: 100  tokens: ~418  (foundation: Core skill)
-  ✓ security               score: 185  tokens: ~2237  (safety_required: Touched file "src/auth/session.ts" matches glob "**/*auth*" (+25); safety_required: Touched file "src/auth/session.ts" matches pattern (+60); safety_required: Required safety guidance for high risk task)
-  ✓ typescript             score:  60  tokens: ~1000  (file_glob: Touched file "src/auth/session.ts" matches pattern (+60))
-```
+Edit your rules under `.agents/project/skills/`; generated files are managed
+outputs. To use a single adapter, replace `all` with its name, for example
+`cursor`. See the [step-by-step onboarding guide](docs/product/onboarding.md)
+for task selection, client activation, updates, and removal.
 
-Selection does not imply installation or activation. If TypeScript is not installed, the CLI also reports `CTX_SELECTED_SKILL_UNAVAILABLE`; install it with `contextos skill add typescript` before runtime assembly.
+## Check rule changes in CI
 
-## Dynamic Skill Resolution & Unified CLI (`contextos` / `ctx.js`)
+After committing a fresh export, run the same consistency check on pull requests.
+It checks agent configuration; your application's tests and security checks
+remain separate.
 
-ContextOS provides a unified CLI (`contextos` or `npx contextos-agents`) and local engine (`.agents/ctx.js`) to resolve minimal skills on the fly, run health diagnostics, and compile exports for AI assistants.
+<details>
+<summary>GitHub Actions example</summary>
 
-### Dynamic Skill Resolution (`resolve`)
-
-```bash
-# Resolve skills for a task description:
-contextos resolve "Build an accessible modal component with React and Tailwind"
-
-# Output:
-# [DOMAIN: Frontend] [PHASE: Build] [ROLE: Senior Developer] [MODE: CHANGE] [LENSES: accessibility] [RISK: standard]
-# Skills loaded: ponytail-mindset, engineering-workflow, react, web-accessibility, ui-ux-pro
-# Selection declaration only; skill bodies are read by the consuming client or prompt assembler.
-
-# Resolve with full evidence scoring explanation:
-contextos resolve "security review" --files apps/web/app/login/page.tsx --explain
-```
-
-### Skill & Catalog Management (`contextos skill`)
-
-Discover, install, and customize skills:
-
-```bash
-# Explore all available catalog skills (36 domain skills):
-contextos skill list --available
-
-# Install a specific skill from the catalog (with typo suggestions):
-contextos skill add fastapi
-
-# Install all 36 catalog skills at once:
-contextos skill add --all
-
-# Fork a built-in skill into your project for team customizations:
-contextos skill override gemini-precision
-
-# Diff your local customizations against upstream updates:
-contextos skill diff gemini-precision
-
-# Eject a skill to decouple it from upstream updates:
-contextos skill eject gemini-precision
-```
-
-### Profile Management (`contextos profile`)
-
-Switch or inspect engineering profiles across your workspace or specific monorepo packages:
-
-```bash
-# List available profiles and inspect the active one:
-contextos profile list
-
-# Switch to enterprise or startup profile:
-contextos profile apply enterprise
-contextos profile apply frontend --scope apps/web
-```
-
-### Stack Detection & Monorepo Inspection (`contextos detect`)
-
-Analyze workspace dependencies, frameworks, and tools to identify the optimal configuration:
-
-```bash
-# Auto-detect tech stack for the current project:
-contextos detect
-
-# Inspect a specific monorepo package with evidence breakdown:
-contextos detect --scope apps/web --explain
-```
-
-### Continuous Synchronization Daemon (`contextos watch`)
-
-Run a background file watcher that automatically compiles adapter rules on changes with event coalescing:
-
-```bash
-contextos watch
-```
-
-### Diagnostic Health Check (`contextos doctor`)
-
-Run a comprehensive pre-flight verification across your repository to ensure valid skills, profile alignment, and compiler synchronization:
-
-```bash
-contextos doctor
-```
-
-### Supported Agents & Compilation
-
-| Agent | Command | Output Format |
-|-------|---------|---------------|
-| **Gemini / Antigravity** | `contextos export gemini` | `.agents/generated/gemini/skills/` |
-| **Claude Code** | `contextos export claude` | `.agents/generated/claude/skills/` |
-| **Cursor IDE** | `contextos export cursor` | `.cursor/rules/*.mdc` (modular globs) + `.cursorrules` |
-| **GitHub Copilot** | `contextos export copilot` | `.github/copilot-instructions.md` |
-| **Aider** | `contextos export aider` | `.aider.conf.yml` + `CONVENTIONS.md` |
-| **Zed IDE** | `contextos export zed` | `.zed/rules.md` + `.zed/prompts/*.md` |
-
-```bash
-contextos export all       # Compile for all agents
-```
-
-### Staged Index Security Scanner (`contextos scan`)
-
-Scan staged changes directly from the Git index for secret leaks, blocked credential files, unfinished lazy stubs, and write-scope containment:
-
-```bash
-contextos scan --staged --enforce
-contextos scan --staged --placeholders --scope .agents/task-scope.json --json
-```
-
-### Safe Git Pre-Commit Hooks (`contextos hook`)
-
-Install or remove isolated pre-commit hooks that run fast security checks without clobbering existing developer hooks:
-
-```bash
-contextos hook install
-contextos hook uninstall
-```
-
-### CI Quality Gate (`contextos gate`)
-
-Check that generated adapter files match source skills and the active profile:
-
-```bash
-contextos gate
-```
-
-This is a configuration drift gate. Run your application's tests, typecheck and security checks separately. `resolve` recommends skills for a task; ordinary exports use all installed skills allowed by the profile. Resolver budgets are soft estimates of selected skill bodies and exclude client instructions, chat history and tool output.
-
-### CI Quality Gate Action (contextos-gate)
-
-Guard your repository against skill drift, missing outputs, and rule regressions using the official GitHub Composite Action:
+Save as `.github/workflows/contextos.yml`:
 
 ```yaml
-# .github/workflows/pr-gate.yml
-name: ContextOS Quality Gate
+name: Agent rule consistency
 on: [pull_request, push]
 jobs:
-  gate:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.1
         with:
-          version: '2.3.1'       # Pinned version of contextos-agents runner
-          adapters: 'all'        # Adapters to verify (or specific: 'cursor', 'claude')
-          working-directory: '.' # Project root directory
+          version: '2.3.1'
+          adapters: 'all'
+          working-directory: '.'
 ```
 
-The example pins the published v2.3.1 tag and CLI package. The older `v2.3.0`
-action tag defaults to CLI 2.2.0, so retain an explicit `version` when using it.
-Updating the action source does not change an existing tag.
+Set `adapters` to the adapter or adapters you actually exported.
+See [CI configuration](GUIDE.md#ci-configuration-check) for version pinning.
 
-The action executes the verified ContextOS quality gate in-process from the pinned package version, verifying generated AI adapter configs against source skills without executing untrusted scripts from pull requests, and without requiring a Node.js project or running `npm test`.
+</details>
 
-## Optional MCP integration (Beta)
+<a id="supported-agents--compilation"></a>
 
-The MCP server is a separate beta package. It is not part of the stable `contextos-agents` core.
+## Supported agents
 
-Install it separately if you want to try the beta integration:
+| Agent | How ContextOS provides the rules |
+| --- | --- |
+| Codex | Shared native skills in `.agents/skills/*/SKILL.md`. |
+| Gemini CLI | Shared workspace skills plus Gemini exports. |
+| Claude Code | `CLAUDE.md` index linking to generated instructions. |
+| Cursor | Modular `.cursor/rules/*.mdc` files. |
+| GitHub Copilot | Repository instructions and a skill source index. |
+| Aider | `CONVENTIONS.md` referenced by `.aider.conf.yml`. |
+| Zed | Templates for manual import. |
 
-```bash
-npm install --save-dev contextos-mcp
-npx contextos-mcp --dir .
-```
+Export tests and live client loading are separate checks. See the
+[compatibility matrix](docs/ADAPTER_COMPATIBILITY.md) for exact paths, tested
+client versions, and limitations, including unverified Antigravity loading.
 
-The former `@contextos/mcp` 0.3.x package is historical; use `contextos-mcp` for current releases.
+## Beyond the first rule
 
-The MCP server is read-only by default. Runtime execution remains experimental and is outside the stable core scope.
+- **Reuse skills:** install catalog skills and stack presets, or keep team
+  overrides. See [skill management](GUIDE.md#skill--catalog-management-skill).
+- **Inspect task relevance:** `resolve` recommends skills for a task and explains
+  the selection. It does not install or activate them. Ordinary exports use the
+  installed skills allowed by the profile, independently of a task's selection.
+  See [resolution](GUIDE.md#dynamic-skill-resolution-resolve).
+- **Inspect staged changes:** the separate `scan` command and optional hooks
+  check supported secret, placeholder, and write-scope patterns. See
+  [scanning and hooks](GUIDE.md#security-scanning--governance-hooks).
 
-## Security - Third-Party Skills
+## Scope and evidence
 
-ContextOS skills are **executable context** - they become part of the system prompt that controls your AI agent's behavior. A malicious skill could instruct the AI agent to exfiltrate environment variables, modify files, or ignore your project's security policies.
+The core CLI manages rule sources, selection, exports, and configuration checks.
+The optional [MCP package](contextos-mcp/README.md) is separate and in beta
+(`npm install --save-dev contextos-mcp`); agent execution and runtime orchestration
+remain experimental.
 
-> [!CAUTION]
-> **Install skills only from repositories you trust as you would trust executable code.** Skills installed via `ctx.js skill add` from npm or GitHub are not sandboxed.
+Consistent configuration does not guarantee that a model follows every rule.
+The [recorded calibration](docs/BENCHMARK_RESULTS.md) found no quality advantage
+over vanilla on its test corpus. Install third-party skills only from sources
+you trust: their instructions are not sandboxed.
+
+## Documentation
+
+| I want to… | Read |
+| --- | --- |
+| Look up commands, presets, profiles, and diagnostics | [Guide and cheat sheet](GUIDE.md) |
+| Try a task with a custom team rule | [Onboarding](docs/product/onboarding.md) |
+| Check agent-specific behavior | [Compatibility matrix](docs/ADAPTER_COMPATIBILITY.md) |
+| Understand the compiler and support boundaries | [Architecture](docs/ARCHITECTURE.md) · [Product boundaries](docs/PRODUCT_BOUNDARIES.md) |
+| Upgrade or recover a previous configuration | [Migration and rollback](docs/COMPACT_CONTEXT_MIGRATION.md) |
+| Review release evidence | [2.3.1 maintenance release](docs/PATCH_RELEASE_2.3.1.md) · [Changelog](CHANGELOG.md) |
+| Reproduce the animated example | [Demo commands and renderer](scripts/readme-gif/STORY.md) |
 
 ## Contributing
 
-We are open to pull requests! See [CONTRIBUTING.md](./CONTRIBUTING.md) for a step-by-step guide.
+Bug reports, documentation fixes, and examples from real projects are welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md) or
+[open an issue](https://github.com/kok-o/contextos-agents/issues).
 
 ## License
 
-Distributed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE) for details.
+[Apache-2.0](LICENSE). See [NOTICE](NOTICE) for attribution.

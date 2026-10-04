@@ -1,0 +1,505 @@
+{
+  "title": "ContextOS: From team rules to agent changes",
+  "candidate": "Published contextos-agents 2.3.1 | Codex 0.149.1 | gpt-6.1-sol / medium",
+  "scenes": [
+    {
+      "id": "opening",
+      "title": "One task. Three ways to supply the rules.",
+      "duration": 15,
+      "body": [
+        "9 fresh Codex sessions. Same model and task.",
+        "All nine solved the task. The exact team policy separated the outcomes."
+      ],
+      "captions": [
+        "One task, three runs per condition. This is a recorded scenario, not a\ngeneral benchmark.",
+        "All nine solved the task; exact team-policy compliance differed."
+      ],
+      "narration": "narration/opening.wav",
+      "kicker": "RECORDED RESULTS / 4 OCTOBER 2026"
+    },
+    {
+      "id": "rule",
+      "title": "A small, practical team convention",
+      "duration": 15,
+      "body": [
+        "Trim edges. Collapse ordinary spaces. Preserve case.",
+        "Keep interior tabs and nonbreaking spaces: imported labels may use them."
+      ],
+      "captions": [
+        "The source already trims edges, but does not collapse internal spaces.",
+        "The exact interior-whitespace policy is extra team information."
+      ],
+      "narration": "narration/rule.wav",
+      "code": {
+        "title": "Demonstration data / required behavior",
+        "text": "Input:    \"  gReEn   Tea  \"\nExpected: \"gReEn Tea\"\n\nInterior \\t and \\u00a0 stay intact.\n\nPublic API:\ncreateOrder(item, quantity)\n  -> { item, quantity }",
+        "font_size": 28,
+        "diff_lines": []
+      }
+    },
+    {
+      "id": "install",
+      "title": "Install the published package",
+      "duration": 18,
+      "body": [
+        "Pinned npm release: 2.3.1. No local ContextOS build.",
+        "ESM bootstrap issue found and retained. Use the verified skip-compile workaround."
+      ],
+      "captions": [
+        "These recorded commands install the published package, not the modified\nworking checkout.",
+        "The failed ESM bootstrap is retained. --skip-compile followed by the\ninstalled CLI works."
+      ],
+      "narration": "narration/install.wav",
+      "code": {
+        "title": "Recorded commands + version check / wrapped",
+        "text": "npm.cmd install --save-dev --save-exact `\n  --ignore-scripts contextos-agents@2.3.1\n\nnpx.cmd --no-install contextos init `\n  --minimal --skip-compile\n\nnpx.cmd --no-install contextos skill add `\n  typescript\n\ncontextos-agents v2.3.1",
+        "font_size": 28,
+        "diff_lines": []
+      },
+      "kicker": "INSTALLATION / WAITING SPED UP"
+    },
+    {
+      "id": "skill",
+      "title": "Put the team rule beside the code",
+      "duration": 14,
+      "body": [
+        "Source: .agents/project/skills/team-order/",
+        "The body contains the same requirements used in the manual control."
+      ],
+      "captions": [
+        "The project skill is versioned source. Its description helps native\ndiscovery.",
+        "B receives the same team body and byte-identical native guidance\ndocuments."
+      ],
+      "narration": "narration/skill.wav",
+      "code": {
+        "title": "Manifest excerpt / visually wrapped",
+        "text": "schemaVersion: 2\nname: team-order\ntype: instruction-only\ndescription: Team conventions for createOrder\n  and item name normalization in src/order.ts.\nresources:\n  - SKILL.md",
+        "font_size": 28,
+        "diff_lines": []
+      }
+    },
+    {
+      "id": "exports",
+      "title": "Compile and export the configuration",
+      "duration": 15,
+      "body": [
+        "9 skills compiled. 151 managed artifacts exported.",
+        "Codex discovers the shared .agents/skills directory. Other adapters have their own files."
+      ],
+      "captions": [
+        "Compile built the registry; export generated 151 managed artifacts.",
+        "Exported files do not prove that a client loaded or followed their\ninstructions."
+      ],
+      "narration": "narration/exports.wav",
+      "code": {
+        "title": "Recorded commands + selected JSON fields",
+        "text": "npx.cmd --no-install contextos compile\nnpx.cmd --no-install contextos export all\nnpx.cmd --no-install contextos export all `\n  --check --json\n\n\"status\": \"pass\"\n\"hasDrift\": false\n\"totalFindings\": 0\n\"projectedCount\": 151",
+        "font_size": 28,
+        "diff_lines": []
+      },
+      "kicker": "COMPILE / EXPORT / WAITING SPED UP"
+    },
+    {
+      "id": "resolver",
+      "title": "Inspect task selection separately",
+      "duration": 14,
+      "body": [
+        "Explicit request: @team-order, TypeScript, src/order.ts.",
+        "The resolver selected four skills. Ordinary export still projects the installed profile."
+      ],
+      "captions": [
+        "The recorded resolver command explicitly requests @team-order.",
+        "Selection, exported artifacts, client loading and final code are four\nseparate checks."
+      ],
+      "narration": "narration/resolver.wav",
+      "code": {
+        "title": "Resolver summary from recorded evidence",
+        "text": "ponytail-mindset\n  foundation: Core skill\nengineering-workflow\n  foundation: Core skill\nteam-order\n  Explicitly requested skill \"team-order\"\ntypescript\n  TypeScript + src/order.ts evidence\n\nSelection != client activation",
+        "font_size": 28,
+        "diff_lines": []
+      }
+    },
+    {
+      "id": "isolation",
+      "title": "Fresh sessions. No inherited team rules.",
+      "duration": 14,
+      "body": [],
+      "captions": [
+        "Fresh containers isolate host skills, memory, other runs and hidden\ntests.",
+        "Same Codex 0.149.1, gpt-6.1-sol, medium reasoning and model-visible\ntools."
+      ],
+      "narration": "narration/isolation.wav",
+      "table": {
+        "columns": [
+          {
+            "label": "Condition",
+            "width": 2
+          },
+          {
+            "label": "Initial team context",
+            "width": 4
+          },
+          {
+            "label": "Native session",
+            "width": 3
+          }
+        ],
+        "rows": [
+          [
+            "A / no rules",
+            "No team instructions",
+            "Fresh home + repository"
+          ],
+          [
+            "B / manual",
+            "Full body in AGENTS.md",
+            "Same model and tools"
+          ],
+          [
+            "C / ContextOS",
+            "Skill metadata initially",
+            "Body must be read later"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "a1",
+      "title": "A: a reasonable broad interpretation",
+      "duration": 16,
+      "body": [
+        "Task: 3/3. Existing behavior: 7/7.",
+        "Team contract: 3/5. A was never given the tab/NBSP convention."
+      ],
+      "captions": [
+        "A1 changed the source and passed all task and preservation checks.",
+        "Its broad whitespace policy differs from the undisclosed team\nconvention."
+      ],
+      "narration": "narration/a1.wav",
+      "code": {
+        "title": "A1 / recorded evidence",
+        "text": "Recorded source diff excerpt:\n\n-  const normalizedItem = item.trim();\n+  const normalizedItem = item.trim().replace(/\\s+/g, \" \");\n\nIndependent checks:\nTask:          3/3\nPreservation:  7/7\nTeam contract: 3/5\nUseful regression tests: yes",
+        "font_size": 28,
+        "diff_lines": [
+          3,
+          4
+        ]
+      },
+      "kicker": "A / NO TEAM RULES / 43.3S ACTUAL / SPED UP"
+    },
+    {
+      "id": "b1",
+      "title": "B: the same requirements, supplied manually",
+      "duration": 14,
+      "body": [
+        "The full rule body is present in the first native request.",
+        "Task 3/3. Existing behavior 7/7. Team contract 5/5."
+      ],
+      "captions": [
+        "B1 receives the full body through native AGENTS.md injection.",
+        "Its patch passes all five exact team-policy checks."
+      ],
+      "narration": "narration/b1.wav",
+      "code": {
+        "title": "B1 / recorded evidence",
+        "text": "Recorded source diff excerpt:\n\n-  const normalizedItem = item.trim();\n+  const normalizedItem = item.trim().replace(/ +/g, \" \");\n\nIndependent checks:\nTask:          3/3\nPreservation:  7/7\nTeam contract: 5/5\nUseful regression tests: yes",
+        "font_size": 28,
+        "diff_lines": [
+          3,
+          4
+        ]
+      },
+      "kicker": "B / MANUAL RULES / 40.1S ACTUAL / SPED UP"
+    },
+    {
+      "id": "c1",
+      "title": "C: native body loading is visible",
+      "duration": 18,
+      "body": [
+        "Successful tool output contains the complete native team-order body.",
+        "All C runs loaded it. C1 also read generated CONVENTIONS.md."
+      ],
+      "captions": [
+        "C1 successfully reads the full native skill body, not just its metadata.",
+        "All three C runs pass the exact policy checks. Additional guidance reads\nare reported."
+      ],
+      "narration": "narration/c1.wav",
+      "code": {
+        "title": "C1 / recorded evidence",
+        "text": "Recorded native file read:\n/workspace/.agents/skills/team-order/SKILL.md\n\n# Order item names\n- Keep existing edge trimming with `String.trim()`.\n\nRecorded source diff excerpt:\n-  const normalizedItem = item.trim();\n+  const normalizedItem = item.trim().replace(/ +/g, \" \");\n\nIndependent team checks: 5/5",
+        "font_size": 28,
+        "diff_lines": [
+          8,
+          9
+        ]
+      },
+      "kicker": "C / CONTEXTOS / 47.9S ACTUAL / SPED UP"
+    },
+    {
+      "id": "all-runs",
+      "title": "Every attempt, independently checked",
+      "duration": 22,
+      "body": [],
+      "captions": [
+        "Every attempt is included, in preregistered order. All finished without\ntimeouts.",
+        "Agent tests were rerun independently and detected the original\nimplementation.",
+        "A lacks additional team information. Its policy mismatch is not an\nexplicit-task failure."
+      ],
+      "narration": "narration/all-runs.wav",
+      "table": {
+        "font_size": 29,
+        "columns": [
+          {
+            "label": "Run",
+            "width": 0.8
+          },
+          {
+            "label": "Task",
+            "width": 1
+          },
+          {
+            "label": "Existing",
+            "width": 1.3
+          },
+          {
+            "label": "Team",
+            "width": 1
+          },
+          {
+            "label": "Useful tests",
+            "width": 1.8
+          },
+          {
+            "label": "Loading",
+            "width": 1.7
+          },
+          {
+            "label": "Seconds",
+            "width": 1.3
+          }
+        ],
+        "rows": [
+          [
+            "A1",
+            "3/3",
+            "7/7",
+            "3/5",
+            "Yes",
+            "N/A",
+            "43.3"
+          ],
+          [
+            "B1",
+            "3/3",
+            "7/7",
+            "5/5",
+            "Yes",
+            "AGENTS",
+            "40.1"
+          ],
+          [
+            "C1",
+            "3/3",
+            "7/7",
+            "5/5",
+            "Yes",
+            "Skill read",
+            "47.9"
+          ],
+          [
+            "B2",
+            "3/3",
+            "7/7",
+            "5/5",
+            "Yes",
+            "AGENTS",
+            "64.8"
+          ],
+          [
+            "C2",
+            "3/3",
+            "7/7",
+            "5/5",
+            "Yes",
+            "Skill read",
+            "41.6"
+          ],
+          [
+            "A2",
+            "3/3",
+            "7/7",
+            "3/5",
+            "Yes",
+            "N/A",
+            "41.6"
+          ],
+          [
+            "C3",
+            "3/3",
+            "7/7",
+            "5/5",
+            "Yes",
+            "Skill read",
+            "46.3"
+          ],
+          [
+            "A3",
+            "3/3",
+            "7/7",
+            "3/5",
+            "Yes",
+            "N/A",
+            "39.1"
+          ],
+          [
+            "B3",
+            "3/3",
+            "7/7",
+            "5/5",
+            "Yes",
+            "AGENTS",
+            "37.6"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "meaning",
+      "title": "Rules helped. Manual delivery worked too.",
+      "duration": 15,
+      "body": [],
+      "captions": [
+        "No code-quality advantage over the manual condition was measured.",
+        "The demonstrated product value is versioned rules, export tooling and\ndrift checks."
+      ],
+      "narration": "narration/meaning.wav",
+      "table": {
+        "columns": [
+          {
+            "label": "Condition",
+            "width": 3
+          },
+          {
+            "label": "Task solved",
+            "width": 2
+          },
+          {
+            "label": "Full team policy",
+            "width": 3
+          }
+        ],
+        "rows": [
+          [
+            "A / no rules",
+            "3/3 runs",
+            "0/3 runs"
+          ],
+          [
+            "B / manual",
+            "3/3 runs",
+            "3/3 runs"
+          ],
+          [
+            "C / ContextOS",
+            "3/3 runs",
+            "3/3 runs"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "drift",
+      "title": "Change the source. Detect stale exports.",
+      "duration": 18,
+      "body": [
+        "Separate follow-up: add an 80-character name limit.",
+        "The recorded check reports drift, not an infrastructure failure."
+      ],
+      "captions": [
+        "The new 80-character rule is a separate configuration demonstration.",
+        "After compilation, export check reports drift with exit 1 and hasError\nfalse."
+      ],
+      "narration": "narration/drift.wav",
+      "code": {
+        "title": "Source addition + recorded JSON fields",
+        "text": "Reject normalized item names longer\nthan 80 characters.\n\nnpx.cmd --no-install contextos compile\nnpx.cmd --no-install contextos export all `\n  --check --json\n\n\"status\": \"drift\"\n\"hasDrift\": true\n\"hasError\": false\n\"totalFindings\": 20\n\"code\": 1",
+        "font_size": 28,
+        "diff_lines": []
+      },
+      "kicker": "DRIFT / SEPARATE COPY / WAITING SPED UP"
+    },
+    {
+      "id": "refresh",
+      "title": "Refresh exports. Check again.",
+      "duration": 15,
+      "body": [
+        "Fresh export: zero findings across 151 projections.",
+        "This checks instruction files. The new length rule is not implemented in application code."
+      ],
+      "captions": [
+        "Export refresh removes the recorded drift: zero findings, exit 0.",
+        "Configuration consistency does not guarantee model behavior or implement\nthe new rule in code."
+      ],
+      "narration": "narration/refresh.wav",
+      "code": {
+        "title": "Recorded commands + selected JSON fields",
+        "text": "npx.cmd --no-install contextos export all\nnpx.cmd --no-install contextos export all `\n  --check --json\n\n\"status\": \"pass\"\n\"hasDrift\": false\n\"totalFindings\": 0\n\"projectedCount\": 151\n\"code\": 0",
+        "font_size": 28,
+        "diff_lines": []
+      }
+    },
+    {
+      "id": "reproduce",
+      "title": "Inspect the evidence. Repeat the example.",
+      "duration": 13,
+      "body": [
+        "Starting code, rules, hidden evaluator, commands and every diff are included.",
+        "Local artifacts are ready for review and later placement in README."
+      ],
+      "captions": [
+        "The local demo folder contains reproduction instructions and every\nrecorded result. Nothing was uploaded."
+      ],
+      "narration": "narration/reproduce.wav",
+      "code": {
+        "title": "Existing local artifacts",
+        "text": "examples/readme-demo/README.md\nexamples/readme-demo/REPORT.md\nexamples/readme-demo/results.json\n\nassets/contextos-demo.mp4\nassets/contextos-demo.gif\nassets/contextos-demo.srt",
+        "font_size": 28,
+        "diff_lines": []
+      }
+    }
+  ],
+  "gif": {
+    "width": 1280,
+    "fps": 12,
+    "segments": [
+      {
+        "scene": "rule",
+        "duration": 4
+      },
+      {
+        "scene": "install",
+        "duration": 4
+      },
+      {
+        "scene": "exports",
+        "duration": 3
+      },
+      {
+        "scene": "c1",
+        "duration": 5
+      },
+      {
+        "scene": "meaning",
+        "duration": 5
+      },
+      {
+        "scene": "drift",
+        "duration": 4
+      },
+      {
+        "scene": "refresh",
+        "duration": 3
+      }
+    ]
+  }
+}

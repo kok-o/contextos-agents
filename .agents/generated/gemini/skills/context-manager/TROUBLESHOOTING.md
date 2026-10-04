@@ -1,7 +1,7 @@
-# context-manager Troubleshooting & Common Mistakes
+# context-manager compatibility troubleshooting
 
-## 1. Token Budget Blowout
-
-- **Symptom**: Model performance drops significantly, losing earlier conversational context.
-- **Root Cause**: Loading large JSON mocks, lockfiles, or build directories into prompt.
-- **Fix**: Never read package-lock.json, dist/, or build artifacts unless explicitly debugging bundle outputs.
+- Duplicate process: load the canonical context-os instructions once.
+- Repeated approval or banners: preserve existing authorization and optional roles.
+- Conflicting legacy guidance: use the canonical skill and update the stale link.
+- Claimed automation: inspect actual CLI results and distinguish instructions
+  from runtime enforcement.

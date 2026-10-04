@@ -73,6 +73,8 @@ scratch/
 .external-skills/
 
 *.tgz
+*.zip
+*.mp4
 
 # Internal planning, roadmaps, and scratch scenarios
 CONTEXTOS_IMPLEMENTATION_PLAN.md

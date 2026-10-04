@@ -1,0 +1,67 @@
+diff --git a/src/order.ts b/src/order.ts
+index 01434ca..7ac0db0 100755
+--- a/src/order.ts
++++ b/src/order.ts
+@@ -2,7 +2,7 @@ export function createOrder(
+   item: string,
+   quantity: number,
+ ): { item: string; quantity: number } {
+-  const normalizedItem = item.trim();
++  const normalizedItem = item.trim().replace(/ {2,}/g, " ");
+ 
+   if (!normalizedItem) {
+     throw new Error("Item is required");
+diff --git a/test/order.test.mjs b/test/order.test.mjs
+index 5013ff5..d8ab0ca 100755
+--- a/test/order.test.mjs
++++ b/test/order.test.mjs
+@@ -10,8 +10,39 @@ test("trims item names at the edges", () => {
+   assert.deepEqual(createOrder("  Tea  ", 1), { item: "Tea", quantity: 1 });
+ });
+ 
++test("collapses runs of ordinary spaces in item names", () => {
++  for (const [item, expectedItem] of [
++    ["Green  Tea", "Green Tea"],
++    ["  Green   Tea  Leaves  ", "Green Tea Leaves"],
++  ]) {
++    assert.deepEqual(createOrder(item, 2), { item: expectedItem, quantity: 2 });
++  }
++});
++
++test("preserves case and non-space interior characters", () => {
++  for (const item of [
++    "gReEn-Tea!",
++    "Green\t\tTea",
++    "Green\u00a0\u00a0Tea",
++    "Green\n\rTea",
++    "Green\u2003\u2003Tea",
++  ]) {
++    assert.deepEqual(createOrder(`\t ${item} \u00a0`, 1), { item, quantity: 1 });
++  }
++  assert.deepEqual(createOrder("  Green  \t  Tea  \u00a0  Leaves  ", 1), {
++    item: "Green \t Tea \u00a0 Leaves",
++    quantity: 1,
++  });
++});
++
++test("accepts positive integer quantities", () => {
++  for (const quantity of [1, 2, 100, Number.MAX_SAFE_INTEGER]) {
++    assert.deepEqual(createOrder("Tea", quantity), { item: "Tea", quantity });
++  }
++});
++
+ test("rejects empty item names", () => {
+-  for (const item of ["", "   ", "\t\n"]) {
++  for (const item of ["", "   ", "\t\n", "\u00a0\u2003"]) {
+     assert.throws(() => createOrder(item, 1), {
+       name: "Error",
+       message: "Item is required",
+@@ -20,7 +51,7 @@ test("rejects empty item names", () => {
+ });
+ 
+ test("rejects quantities that are not positive integers", () => {
+-  for (const quantity of [0, -1, 1.5, NaN, Infinity]) {
++  for (const quantity of [0, -1, 1.5, NaN, Infinity, -Infinity]) {
+     assert.throws(() => createOrder("Tea", quantity), {
+       name: "Error",
+       message: "Quantity must be a positive integer",

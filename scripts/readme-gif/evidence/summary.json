@@ -1,0 +1,48 @@
+{
+  "recordedUtc": "2026-10-04T15:47:48.675338+00:00",
+  "candidate": "Local source checkout; not a published-package or client-loader test",
+  "repositoryRevision": "9796456b04228dad63eb21fef4a5ac1663f40b04",
+  "packageVersion": "2.3.1",
+  "nodeVersion": "v22.14.0",
+  "cliSha256": "f07ece471fbdae918ee5c7bb0e9523c2462d09d0f8985e4ed6cf479cbf56fc81",
+  "compilerEntrySha256": "a4d98b9211eac4fddf586ca5365b69969b389e231c67af66bcd597782c9d9e82",
+  "sourceBeforeSha256": "0ec26624228b62125fd96ecdbb15c3685c1cd1a58e49ff71ec7da78b22a81d5c",
+  "sourceAfterSha256": "f48745d382dbd945db9b1fa13beca613cc950110af27ca2561b2982df3e3388c",
+  "baseline": {
+    "status": "pass",
+    "totalFindings": 0
+  },
+  "stale": {
+    "status": "drift",
+    "totalFindings": 19,
+    "exitCode": 1
+  },
+  "fresh": {
+    "status": "pass",
+    "totalFindings": 0,
+    "exitCode": 0
+  },
+  "projectedCount": 137,
+  "artifacts": [
+    {
+      "agent": "Cursor",
+      "path": ".cursor/rules/team-auth.mdc",
+      "beforeSha256": "7948afaae8b9982b4c347f98005a41b57586db88d378ccc9cf5423338911cd02",
+      "afterSha256": "9ce5a92536b2284f80f6eb954bbb4721bd1f7756fbd37086f717dc46ac9800b7"
+    },
+    {
+      "agent": "Claude",
+      "path": ".agents/generated/claude/skills/team-auth/SKILL.md",
+      "beforeSha256": "5bc9bd13b44497311e452b79c9ef058d2d32eb849d80699993a946a5e5332cae",
+      "afterSha256": "439e04406cbc9c10b07fd6cee3b00690e100b78ea5314d3823dd9f7e92b7e684"
+    },
+    {
+      "agent": "Codex",
+      "path": ".agents/skills/team-auth/SKILL.md",
+      "beforeSha256": "66b3f3e56de9b11853ff5899dea23bbe03e87b2797336d212d894b9775f28d33",
+      "afterSha256": "d45b3c39cfe1877e4ed32fa5ce5e1589c8e4604a0e9a963b782a62ef437270e5"
+    }
+  ],
+  "scope": "Export consistency only. No client opened, model run, API call, or application-code claim.",
+  "presentation": "Reconstructed demo. CLI executable is displayed as contextos; JSON output is excerpted. Animation timing is editorial."
+}

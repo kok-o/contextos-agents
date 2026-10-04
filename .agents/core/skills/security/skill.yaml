@@ -22,7 +22,7 @@ rules:
     level: must
     enforcement: runtime
     checker: secret-scanner
-    summary: Zero plaintext credentials, private keys, or API tokens committed to repository
+    summary: Scan configured inputs for supported credential patterns; report input scope, exclusions, and scanner results
   - id: SEC-003
     level: must
     enforcement: prompt-guidance

@@ -1,0 +1,68 @@
+diff --git a/README.md b/README.md
+index 2617f77..7b01a3c 100755
+--- a/README.md
++++ b/README.md
+@@ -2,6 +2,9 @@
+ 
+ A small TypeScript module exposing `createOrder(item, quantity)`.
+ 
++Item names are trimmed and internal whitespace is collapsed to single spaces.
++Casing and non-whitespace characters are preserved.
++
+ Run the tests with Node.js 22.14.0 or later:
+ 
+ ```sh
+diff --git a/src/order.ts b/src/order.ts
+index 01434ca..3141e20 100755
+--- a/src/order.ts
++++ b/src/order.ts
+@@ -2,7 +2,7 @@ export function createOrder(
+   item: string,
+   quantity: number,
+ ): { item: string; quantity: number } {
+-  const normalizedItem = item.trim();
++  const normalizedItem = item.trim().replace(/\s+/g, " ");
+ 
+   if (!normalizedItem) {
+     throw new Error("Item is required");
+diff --git a/test/order.test.mjs b/test/order.test.mjs
+index 5013ff5..d4ca895 100755
+--- a/test/order.test.mjs
++++ b/test/order.test.mjs
+@@ -10,8 +10,35 @@ test("trims item names at the edges", () => {
+   assert.deepEqual(createOrder("  Tea  ", 1), { item: "Tea", quantity: 1 });
+ });
+ 
++test("collapses internal whitespace to a single space", () => {
++  for (const item of [
++    "  Earl   Grey  Tea  ",
++    "\tEarl\tGrey\nTea\r\n",
++    "\u00a0Earl\u00a0\u00a0Grey\u2003Tea\u3000",
++  ]) {
++    assert.deepEqual(createOrder(item, 3), {
++      item: "Earl Grey Tea",
++      quantity: 3,
++    });
++  }
++});
++
++test("preserves item name casing, punctuation, and Unicode characters", () => {
++  assert.deepEqual(createOrder("  Café-style   TEA!  ", 2), {
++    item: "Café-style TEA!",
++    quantity: 2,
++  });
++});
++
++test("leaves already normalized item names unchanged", () => {
++  assert.deepEqual(createOrder("Earl Grey Tea", 1), {
++    item: "Earl Grey Tea",
++    quantity: 1,
++  });
++});
++
+ test("rejects empty item names", () => {
+-  for (const item of ["", "   ", "\t\n"]) {
++  for (const item of ["", "   ", "\t\n", "\u00a0\u2003\u3000"]) {
+     assert.throws(() => createOrder(item, 1), {
+       name: "Error",
+       message: "Item is required",

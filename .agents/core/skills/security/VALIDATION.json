@@ -1,12 +1,123 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "x-contextos-evidence-contract": 1,
+  "title": "Scoped verification evidence",
+  "description": "Report shape and outcome consistency only; command execution and agent behavior require separate evidence.",
   "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "checks",
+    "limitations"
+  ],
   "properties": {
-    "rules_followed": {
-      "type": "boolean"
+    "status": {
+      "enum": [
+        "verified",
+        "partial",
+        "not_run"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "command",
+          "exitCode",
+          "scope"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "exitCode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   },
-  "required": [
-    "rules_followed"
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "verified"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "exitCode": {
+                  "const": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "partial",
+              "not_run"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "limitations": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "not_run"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "items": {
+              "properties": {
+                "exitCode": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   ]
 }

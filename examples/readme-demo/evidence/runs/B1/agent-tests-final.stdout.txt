@@ -1,0 +1,47 @@
+TAP version 13
+# (node:35) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: creates an order with the existing public result shape
+ok 1 - creates an order with the existing public result shape
+  ---
+  duration_ms: 3.500752
+  ...
+# Subtest: trims item names at the edges
+ok 2 - trims item names at the edges
+  ---
+  duration_ms: 0.411345
+  ...
+# Subtest: collapses ordinary spaces while preserving letter case and punctuation
+ok 3 - collapses ordinary spaces while preserving letter case and punctuation
+  ---
+  duration_ms: 0.454917
+  ...
+# Subtest: preserves other interior whitespace while collapsing ordinary spaces
+ok 4 - preserves other interior whitespace while collapsing ordinary spaces
+  ---
+  duration_ms: 0.819794
+  ...
+# Subtest: leaves already normalized names unchanged
+ok 5 - leaves already normalized names unchanged
+  ---
+  duration_ms: 0.299841
+  ...
+# Subtest: rejects empty item names
+ok 6 - rejects empty item names
+  ---
+  duration_ms: 0.5422
+  ...
+# Subtest: rejects quantities that are not positive integers
+ok 7 - rejects quantities that are not positive integers
+  ---
+  duration_ms: 0.51394
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 203.070999

@@ -1,68 +1,36 @@
-# Context Loading Rules
+# Context selection and budgeting
 
-## Task Type → Document Mapping
+## Inspect actual evidence
 
-| Task Type | Level 1 (Always) | Level 2 (If exists) | Level 3 (Per task) |
-| --- | --- | --- | --- |
-| **New project** | PRD, ROADMAP | ARCHITECTURE, DATABASE, API | UI, TASKS, all relevant skills |
-| **New feature** | PRD | ARCHITECTURE, API | PROJECT_GRAPH, relevant skills |
-| **Frontend** | — | ARCHITECTURE, API | UI, frontend skills |
-| **Backend** | — | ARCHITECTURE, DATABASE, API | backend skills |
-| **Database** | — | ARCHITECTURE, DATABASE | — |
-| **Bugfix** | — | — | PROJECT_GRAPH (affected module only) |
-| **Refactor** | — | ARCHITECTURE | PROJECT_GRAPH, affected skills |
-| **Review** | PRD | ARCHITECTURE | TASKS, all loaded skills |
-| **Deploy** | — | ARCHITECTURE | DEPLOYMENT, infrastructure skills |
+Supply a concrete task and affected paths to resolve. Inspect selected skills,
+reasons, risk, excluded candidates, and warnings. Select source files, callers,
+tests, relevant contracts, and active decisions manually as the task requires.
+Do not require a PRD, API document, database document, or module graph to exist.
+An absent schema change does not make database semantics irrelevant.
 
-## Skill Category → Document Mapping
+## Budget contract
 
-| Skill Category | Required Documents | Optional Documents |
-| --- | --- | --- |
-| `frontend` | UI.md, API.md | ARCHITECTURE.md |
-| `backend` | API.md, DATABASE.md | ARCHITECTURE.md |
-| `design` | UI.md | PRD.md |
-| `architecture` | ARCHITECTURE.md, DATABASE.md | PRD.md, API.md |
-| `infrastructure` | ARCHITECTURE.md | — |
-| `security` | ARCHITECTURE.md, API.md | DATABASE.md |
-| `testing` | API.md | ARCHITECTURE.md |
+The resolver estimates skill entrypoint length divided by 3.8, rounded up. It
+uses the requested positive --budget value or its current risk-tier default.
+References, tool output, system instructions, documents, and chat history are
+outside that estimate. Required safety guidance can exceed a soft budget and
+must produce an explicit overflow warning. No fixed 8000-token total or measured
+model token saving is promised.
 
-## Context Budget
+Trim irrelevant documents and select relevant sections first. Preserve user
+constraints and safety guidance. Inspect code dependencies and callers rather
+than limiting all investigations to exactly one import hop.
 
-To prevent context window overflow, apply these limits:
+## Aliases and unavailable skills
 
-| Priority | Max tokens | Content |
-| --- | --- | --- |
-| 1 (Critical) | 2000 | Current task description + relevant skill instructions |
-| 2 (Important) | 3000 | Architecture + API contracts for affected modules |
-| 3 (Context) | 2000 | Decision records + project graph (affected branch) |
-| 4 (Background) | 1000 | PRD summary + coding rules |
+context-manager resolves to context-os; gstack-roles resolves to
+engineering-workflow. The resolver avoids duplicate bodies and reports alias
+warnings. Installation and export still retain compatibility identifiers.
+Catalog skills are installed on demand; inspect unavailable-skill warnings.
 
-**Total budget: ~8000 tokens of context per task.**
+## Verification boundaries
 
-If context exceeds budget:
-
-1. Trim Level 1 docs to summaries only
-2. Load only affected sections of Level 2 docs
-3. Keep Level 3 (skills) at full detail — they contain the actual instructions
-
-## Module-Based Filtering
-
-When the Project Graph is available, use it to filter context:
-
-```
-Task: "Fix appointment reminder bug"
-  ↓
-Project Graph lookup: "reminder" → module: appointments
-  ↓
-Appointments depends_on: [patients, auth]
-  ↓
-Load only:
-  - appointments module docs
-  - auth module docs (dependency)
-  - API.md (appointments section only)
-  ↓
-Skip:
-  - patients module docs (not a dependency for this task)
-  - DATABASE.md (no schema change expected)
-  - UI.md (backend task)
-```
+compile validates manifests and builds the registry. validate checks source
+structure and sync. export --check inspects generated drift. Example tests run
+specific scenarios. None of these by itself proves live client instruction
+loading or improved model decisions.

@@ -1,0 +1,14 @@
+---
+description: "Agent-requested: invoke when working on team-auth. ContextOS rules for team-auth"
+globs: ""
+alwaysApply: false
+---
+
+# Skill: team-auth
+
+Resolve supporting resource paths relative to `.agents/project/skills/team-auth`. Read examples and references only when needed.
+
+# Team security
+
+- Never log authorization headers.
+- Never log session tokens.

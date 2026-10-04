@@ -1,0 +1,109 @@
+{
+  "loadError": null,
+  "summary": {
+    "task": {
+      "passed": 3,
+      "total": 3
+    },
+    "preservation": {
+      "passed": 7,
+      "total": 7
+    },
+    "team": {
+      "passed": 5,
+      "total": 5
+    }
+  },
+  "cases": [
+    {
+      "category": "task",
+      "id": "source_changed",
+      "description": "Implementation differs from the initial source",
+      "passed": true
+    },
+    {
+      "category": "task",
+      "id": "internal_spaces",
+      "description": "Normalizes a repeated ordinary-space group",
+      "passed": true
+    },
+    {
+      "category": "task",
+      "id": "multiple_groups",
+      "description": "Normalizes multiple ordinary-space groups",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "named_export",
+      "description": "Keeps the named createOrder export callable",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "public_shape",
+      "description": "Keeps existing values and exactly the two public properties",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "edge_trim",
+      "description": "Keeps existing String.trim edge behavior",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "positive_integer",
+      "description": "Retains valid positive integer quantities",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "blank_name",
+      "description": "Keeps the empty-name validation and message",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "nonpositive_quantity",
+      "description": "Keeps nonpositive-quantity validation and message",
+      "passed": true
+    },
+    {
+      "category": "preservation",
+      "id": "noninteger_quantity",
+      "description": "Keeps fractional and nonfinite quantity validation",
+      "passed": true
+    },
+    {
+      "category": "team",
+      "id": "ordinary_spaces",
+      "description": "Collapses internal U+0020 runs only as specified",
+      "passed": true
+    },
+    {
+      "category": "team",
+      "id": "trim_edges",
+      "description": "Trims both edges without losing existing Unicode trim",
+      "passed": true
+    },
+    {
+      "category": "team",
+      "id": "letter_case",
+      "description": "Preserves item-name letter case",
+      "passed": true
+    },
+    {
+      "category": "team",
+      "id": "internal_tabs",
+      "description": "Preserves meaningful interior tab characters",
+      "passed": true
+    },
+    {
+      "category": "team",
+      "id": "internal_nbsp",
+      "description": "Preserves meaningful interior nonbreaking spaces",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+1
+00:00:00,000 --> 00:00:07,500
+One task, three runs per condition. This is a recorded scenario, not a
+general benchmark.
+
+2
+00:00:07,500 --> 00:00:15,000
+All nine solved the task; exact team-policy compliance differed.
+
+3
+00:00:15,000 --> 00:00:22,500
+The source already trims edges, but does not collapse internal spaces.
+
+4
+00:00:22,500 --> 00:00:30,000
+The exact interior-whitespace policy is extra team information.
+
+5
+00:00:30,000 --> 00:00:39,000
+These recorded commands install the published package, not the modified
+working checkout.
+
+6
+00:00:39,000 --> 00:00:48,000
+The failed ESM bootstrap is retained. --skip-compile followed by the
+installed CLI works.
+
+7
+00:00:48,000 --> 00:00:55,000
+The project skill is versioned source. Its description helps native
+discovery.
+
+8
+00:00:55,000 --> 00:01:02,000
+B receives the same team body and byte-identical native guidance
+documents.
+
+9
+00:01:02,000 --> 00:01:09,500
+Compile built the registry; export generated 151 managed artifacts.
+
+10
+00:01:09,500 --> 00:01:17,000
+Exported files do not prove that a client loaded or followed their
+instructions.
+
+11
+00:01:17,000 --> 00:01:24,000
+The recorded resolver command explicitly requests @team-order.
+
+12
+00:01:24,000 --> 00:01:31,000
+Selection, exported artifacts, client loading and final code are four
+separate checks.
+
+13
+00:01:31,000 --> 00:01:38,000
+Fresh containers isolate host skills, memory, other runs and hidden
+tests.
+
+14
+00:01:38,000 --> 00:01:45,000
+Same Codex 0.149.1, gpt-6.1-sol, medium reasoning and model-visible
+tools.
+
+15
+00:01:45,000 --> 00:01:53,000
+A1 changed the source and passed all task and preservation checks.
+
+16
+00:01:53,000 --> 00:02:01,000
+Its broad whitespace policy differs from the undisclosed team
+convention.
+
+17
+00:02:01,000 --> 00:02:08,000
+B1 receives the full body through native AGENTS.md injection.
+
+18
+00:02:08,000 --> 00:02:15,000
+Its patch passes all five exact team-policy checks.
+
+19
+00:02:15,000 --> 00:02:24,000
+C1 successfully reads the full native skill body, not just its metadata.
+
+20
+00:02:24,000 --> 00:02:33,000
+All three C runs pass the exact policy checks. Additional guidance reads
+are reported.
+
+21
+00:02:33,000 --> 00:02:40,333
+Every attempt is included, in preregistered order. All finished without
+timeouts.
+
+22
+00:02:40,333 --> 00:02:47,667
+Agent tests were rerun independently and detected the original
+implementation.
+
+23
+00:02:47,667 --> 00:02:55,000
+A lacks additional team information. Its policy mismatch is not an
+explicit-task failure.
+
+24
+00:02:55,000 --> 00:03:02,500
+No code-quality advantage over the manual condition was measured.
+
+25
+00:03:02,500 --> 00:03:10,000
+The demonstrated product value is versioned rules, export tooling and
+drift checks.
+
+26
+00:03:10,000 --> 00:03:19,000
+The new 80-character rule is a separate configuration demonstration.
+
+27
+00:03:19,000 --> 00:03:28,000
+After compilation, export check reports drift with exit 1 and hasError
+false.
+
+28
+00:03:28,000 --> 00:03:35,500
+Export refresh removes the recorded drift: zero findings, exit 0.
+
+29
+00:03:35,500 --> 00:03:43,000
+Configuration consistency does not guarantee model behavior or implement
+the new rule in code.
+
+30
+00:03:43,000 --> 00:03:56,000
+The local demo folder contains reproduction instructions and every
+recorded result. Nothing was uploaded.

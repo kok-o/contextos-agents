@@ -413,14 +413,21 @@ function checkValidationJson(sourceSkills) {
     }
 
     try {
-      JSON.parse(fs.readFileSync(valPath, 'utf8'));
+      const metadata = JSON.parse(fs.readFileSync(valPath, 'utf8'));
+      if (metadata['x-contextos-evidence-contract'] !== undefined) {
+        const issues = require('./validation-evidence.js').validateEvidenceSchema(metadata);
+        if (issues.length) {
+          error(`[validation] ${name}/VALIDATION.json: ${issues.join('; ')}`);
+          continue;
+        }
+      }
       pass++;
     } catch (e) {
       error(`[validation] ${name}/VALIDATION.json is invalid JSON: ${e.message}`);
     }
   }
 
-  info(`[validation] ${pass} VALIDATION.json files are valid`);
+  info(`[validation] ${pass} metadata files structurally valid (not proof of command execution or agent behavior)`);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

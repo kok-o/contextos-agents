@@ -1,0 +1,6 @@
+schemaVersion: 2
+name: team-order
+type: instruction-only
+description: Team conventions for createOrder and item name normalization in src/order.ts.
+resources:
+  - SKILL.md

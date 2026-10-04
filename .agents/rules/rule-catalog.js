@@ -139,7 +139,7 @@ const BUILTIN_RULES = [
     level: 'must',
     enforcement: 'runtime',
     checker: 'secret-scanner',
-    summary: 'Zero plaintext credentials, private keys, or API tokens committed to repository',
+    summary: 'Scan configured inputs for supported credential patterns; report input scope, exclusions, and scanner results',
     applicability: ['all'],
     priority: 100,
     tokenCost: 35,
@@ -276,9 +276,8 @@ const BUILTIN_RULES = [
     id: 'TEST-001',
     sourceSkill: 'testing',
     level: 'must',
-    enforcement: 'runtime',
-    checker: 'skill-frontmatter-validator',
-    summary: 'Zero unverified claims: mandatory proof-of-work with automated test suite and validator execution',
+    enforcement: 'prompt-guidance',
+    summary: 'Report completion only with relevant behavioral evidence; document failed and unrun checks and their scope',
     applicability: ['all'],
     priority: 100,
     tokenCost: 45,
@@ -290,7 +289,7 @@ const BUILTIN_RULES = [
     sourceSkill: 'ponytail-mindset',
     level: 'must',
     enforcement: 'prompt-guidance',
-    summary: 'Surgical blast radius: modify only files planned for the task; zero unnecessary boilerplate',
+    summary: 'Keep changes within the authorized outcome, update the plan for necessary callers, and preserve unrelated edits',
     applicability: ['all'],
     priority: 90,
     tokenCost: 35,
@@ -420,6 +419,7 @@ class RuleCatalog {
         lines.push(`  Checker Module   : ${checker.module}`);
         lines.push(`  Checker Purpose  : ${checker.description}`);
       }
+      lines.push('  Coverage Note    : Registered checker; applies only when invoked on its configured inputs, not proof of the whole workflow.');
     } else {
       lines.push(`  Enforcement Note : Governed via agent prompt guidelines (No runtime checker)`);
     }

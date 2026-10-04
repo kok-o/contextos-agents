@@ -1,0 +1,228 @@
+{
+  "sourceSha256Before": "a13ee650c40ba4a2804de427ff56ac644b556f9fd122235f78303dd6a8503da8",
+  "sourceSha256After": "0bf022385b33c026313975a70ebd9ee60eb682409821255904989e585c1f3b76",
+  "stale": {
+    "schemaVersion": "2.0.0",
+    "status": "drift",
+    "hasDrift": true,
+    "hasError": false,
+    "code": 1,
+    "totalFindings": 20,
+    "findings": {
+      "STALE_INPUT": [
+        {
+          "expected": "sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698",
+          "actual": "sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288"
+        },
+        {
+          "path": ".agents/generated/gemini/skills/team-order/SKILL.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".agents/skills/team-order/SKILL.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".agents/generated/claude/skills/team-order/SKILL.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".cursor/rules/00-project-rules.mdc",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".cursor/rules/team-order.mdc",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".github/copilot-instructions.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".aider.conf.yml",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": "CONVENTIONS.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/contextos.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/context-manager.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/context-os.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/engineering-workflow.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/gemini-precision.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/gstack-roles.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/ponytail-mindset.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/security.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/team-order.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/prompts/typescript.md",
+          "reason": "Generated artifact differs from source skills projection"
+        },
+        {
+          "path": ".zed/rules.md",
+          "reason": "Generated artifact differs from source skills projection"
+        }
+      ],
+      "MISSING_OUTPUT": [],
+      "MODIFIED_MANAGED_OUTPUT": [],
+      "ORPHAN_MANAGED_OUTPUT": [],
+      "ADAPTER_VERSION_MISMATCH": [],
+      "PROFILE_MISMATCH": [],
+      "CORRUPT_LOCKFILE": [],
+      "EMPTY_PROJECTION": [],
+      "CONFIG_ERROR": []
+    },
+    "collisions": [],
+    "diffs": [
+      {
+        "path": ".agents/generated/gemini/skills/team-order/SKILL.md",
+        "type": "modified",
+        "diff": "+ - Reject normalized item names longer than 80 characters.\n+ "
+      },
+      {
+        "path": ".agents/skills/team-order/SKILL.md",
+        "type": "modified",
+        "diff": "+ - Reject normalized item names longer than 80 characters.\n+ "
+      },
+      {
+        "path": ".agents/generated/claude/skills/team-order/SKILL.md",
+        "type": "modified",
+        "diff": "+ - Reject normalized item names longer than 80 characters.\n+ "
+      },
+      {
+        "path": ".cursor/rules/00-project-rules.mdc",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".cursor/rules/team-order.mdc",
+        "type": "modified",
+        "diff": "+ - Reject normalized item names longer than 80 characters.\n+ "
+      },
+      {
+        "path": ".github/copilot-instructions.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".aider.conf.yml",
+        "type": "modified",
+        "diff": "- # Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ # Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": "CONVENTIONS.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/contextos.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/context-manager.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/context-os.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/engineering-workflow.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/gemini-precision.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/gstack-roles.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/ponytail-mindset.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/security.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/prompts/team-order.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\n- \n+ - Reject normalized item names longer than 80 characters.\n+ \n+ "
+      },
+      {
+        "path": ".zed/prompts/typescript.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      },
+      {
+        "path": ".zed/rules.md",
+        "type": "modified",
+        "diff": "- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698"
+      }
+    ],
+    "projectedCount": 151
+  },
+  "fresh": {
+    "schemaVersion": "2.0.0",
+    "status": "pass",
+    "hasDrift": false,
+    "hasError": false,
+    "code": 0,
+    "totalFindings": 0,
+    "findings": {
+      "STALE_INPUT": [],
+      "MISSING_OUTPUT": [],
+      "MODIFIED_MANAGED_OUTPUT": [],
+      "ORPHAN_MANAGED_OUTPUT": [],
+      "ADAPTER_VERSION_MISMATCH": [],
+      "PROFILE_MISMATCH": [],
+      "CORRUPT_LOCKFILE": [],
+      "EMPTY_PROJECTION": [],
+      "CONFIG_ERROR": []
+    },
+    "collisions": [],
+    "diffs": [],
+    "projectedCount": 151
+  },
+  "codeChanged": false,
+  "newClientRun": false,
+  "scope": "Export consistency only. The new 80-character rule is not implemented in application code."
+}

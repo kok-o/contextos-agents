@@ -7,178 +7,104 @@ description: >
 
 ## Overview
 
-Enforces zero-trust defense-in-depth, OWASP API Top 10 mitigation, cryptographic hardening, sensitive data leakage protection, and AI/LLM safety across all services, endpoints, and agent integrations.
+Protect application and agent trust boundaries. These instructions guide work;
+automated checkers enforce only their explicitly tested scope.
 
 ## When to Use
 
-Activate whenever writing authentication, authorization, session management, database queries, cryptography, external API integrations, user input handling, or agent tool calling.
+Authentication, authorization, protected data, inputs, cryptography, external
+requests, payments, destructive actions, and tool execution.
 
 ## Rules & Patterns
 
-### Negative Constraints (What NOT to Do)
-
-1. **NEVER use standard string comparison (`===`) for secrets/hashes**: Always use `crypto.timingSafeEqual` to prevent timing attacks.
-2. **NEVER store sensitive JWT access/refresh tokens in `localStorage`**: Store tokens in `httpOnly`, `Secure`, `SameSite=Strict` cookies.
-3. **NEVER return raw database/internal error messages or stack traces to the client**: Return standardized generic error codes (`INTERNAL_SERVER_ERROR`) and log details internally.
-4. **NEVER trust client-provided IDs for authorization without tenant/ownership checks**: Always verify `where: { id, userId: session.userId }` to prevent Broken Object Level Authorization (BOLA/IDOR).
-5. **NEVER disable CSRF protection, CORS allow-all (`*`), or TLS verification (`NODE_TLS_REJECT_UNAUTHORIZED=0`) in production**: Always enforce strict origin whitelists and HTTPS.
-6. **NEVER pass un-sanitized third-party content directly into system prompts or shell execution**: Treat all external data as potentially adversarial.
-
----
-
-### OWASP Top 10 for Modern APIs & Full-Stack
-
-#### 1. Injection (SQL, NoSQL, Command)
-
-- Always use parameterized queries - never concatenate user input into SQL or shell commands.
-- Use ORMs (Prisma, Drizzle, SQLAlchemy) with strict schema validation.
-- Validate and sanitize all user input before processing.
-
-#### 2. Broken Object Level Authorization (BOLA / IDOR)
-
-- Validate user ownership on EVERY database read, update, or delete:
-
-  ```typescript
-  // [GOOD] Scoped to authenticated user
-  const doc = await db.document.findFirst({
-    where: { id: documentId, tenantId: session.tenantId }
-  });
-  ```
-
-#### 3. Broken Authentication & Session Management
-
-- Use Argon2id or bcrypt (cost factor ≥ 12) for password hashing.
-- Short-lived access tokens (15 min) + secure HTTP-only refresh tokens.
-- Enforce rate limiting and brute-force lockouts on auth endpoints.
-
-#### 4. SSRF (Server-Side Request Forgery)
-
-- Restrict server-side URL fetching: validate URL scheme (`https:` only), resolve IP, and block private CIDR blocks (`10.0.0.0/8`, `127.0.0.0/8`, `169.254.0.0/16`, `192.168.0.0/16`).
-
-#### 5. Security Misconfiguration & Headers
-
-Enforce modern production security headers:
-
-```http
-Content-Security-Policy: default-src 'self'
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: camera=(), microphone=(), geolocation=()
-```
-
----
-
-### AI Agent & LLM Security Invariants
-
-When building AI workflows, tools, or MCP servers:
-
-1. **Prompt Injection Defense**:
-   - Clearly delineate untrusted user/web content using boundary markers (e.g. `<untrusted_content>` tags).
-   - Never allow untrusted content to override system instructions or tool execution permissions.
-2. **Tool Execution Boundaries**:
-   - Destructive operations (database drops, file deletions, payment triggers) MUST require explicit user confirmation.
-   - Restrict file system tools to the workspace root - block directory traversal (`../`).
-3. **Secret Masking & Output Sanitization**:
-   - Scrub API keys (`sk-...`, `Bearer ...`), tokens, and credentials before writing to agent logs or step summaries.
-4. **Sandbox Execution & Write Isolation (Supply-Chain Defense)**:
-   - Target code is inspected strictly read-only; never execute target-controlled builds or tests with write access to the repository root.
-   - Restrict process write boundaries strictly to an isolated temporary `scratch/` directory.
-   - Enforce zero outbound external network access during security audits to prevent secret exfiltration via malicious scripts or dependencies.
-   - Promote verified non-secret results to retained `artifacts/` only via trusted parent-side inspection code.
-
----
+- Obtain identity from trusted authentication. Enforce ownership/tenant policy
+  before protected reads or mutations; client IDs are not authorization.
+- Validate boundary inputs and reject unknown privilege fields. Parameterize
+  queries and encode output for its context; avoid shell interpolation. An ORM
+  does not secure interpolated raw SQL.
+- Keep credentials out of source, logs, arguments, and client bundles. Use
+  established password/session libraries and cookie, CSRF, origin, and TLS
+  policies appropriate to the threat model.
+- Use constant-time primitives for secret comparisons. Surrounding code and
+  length handling matter; the whole flow is not necessarily constant-time.
+- External content remains untrusted data. Delimit it and preserve instruction
+  and tool authority; markers alone do not prevent prompt injection.
+- Existing authorization carries forward. For destructive actions verify it
+  covers the actual target and effect; ask only for missing authority.
+- For untrusted repositories/dependency scripts, inspect before execution,
+  isolate writes, withhold credentials, and restrict network access. Ordinary
+  authorized development uses relevant project checks. State actual sandbox
+  capabilities instead of claiming isolation the tools do not provide.
 
 ## Code Examples
 
+### Timing-safe webhook signature comparison
 
-### Timing-Safe Secret Verification
+This runnable block verifies SHA-256 hexadecimal HMAC signatures. Timestamp,
+replay protection, raw-body capture, and provider formats are separate requirements.
 
+<!-- example: security-hmac -->
 ```javascript
 import crypto from 'node:crypto';
 
 export function verifyWebhookSignature(payload, signature, secret) {
-  const hmac = crypto.createHmac('sha256', secret);
-  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');
-  const sigBuffer = Buffer.from(signature, 'utf8');
-
-  if (digest.length !== sigBuffer.length) return false;
-  return crypto.timingSafeEqual(digest, sigBuffer);
+  if (typeof signature !== 'string' || !/^[a-f0-9]{64}$/i.test(signature)) return false;
+  const digest = crypto.createHmac('sha256', secret).update(payload).digest();
+  const received = Buffer.from(signature, 'hex');
+  return digest.length === received.length && crypto.timingSafeEqual(digest, received);
 }
 ```
 
-### SSRF Prevention Requirements (OWASP Compliant)
+### Restricted partner URL fetch
 
-Per [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html), naive application-level DNS pre-checks followed by standard `fetch(url)` are fundamentally flawed due to DNS rebinding (TOCTOU) and unvalidated HTTP 3xx redirects.
+Follow the [OWASP SSRF guidance](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html).
+A hostname check followed by ordinary DNS resolution is not a complete SSRF
+boundary. Use a trusted egress transport/proxy that validates IPv4/IPv6 addresses
+at connection time and blocks private, loopback, link-local, and metadata targets,
+including DNS changes. Arbitrary URL fetchers need a separate network policy;
+this sample covers known partner hostnames.
 
-#### Mandatory Architectural Controls
+Supply that trusted transport explicitly. This block checks URL syntax, HTTPS,
+credentials, port 443, a trusted hostname allowlist, and redirect policy. There
+is no ambient fetch fallback. Local tests inject a controlled transport; they
+do not verify production egress or DNS behavior.
 
-1. **Network-Layer Defense (Primary)**: For user-supplied arbitrary webhooks or URLs, route all outbound traffic through an isolated egress forward proxy (e.g., Smokescreen, Envoy, Squid) configured with firewall-level IP filters blocking RFC 1918, RFC 6598, link-local (`169.254.169.254`), loopback, and IPv6 local addresses at the socket handshake level.
-2. **Positive Destination Allowlist**: If fetching from known external partners, validate destination hostname against a strict positive allowlist.
-3. **Disable Automatic Redirects**: Always set `redirect: 'error'` or `'manual'`. Never follow HTTP redirects automatically without re-validating the target URL against allowlist rules.
-4. **Protocol & Credential Restrictions**: Enforce `https:` exclusively; reject embedded credentials (`user:pass@host`) and non-standard ports.
-
-```typescript
-/**
- * Verified Allowlist-based HTTP Client (OWASP SSRF Prevention)
- * Enforces HTTPS, strict destination allowlist, and rejects HTTP redirects.
- */
-export async function fetchFromAllowlist(
-  urlString: string,
-  allowedHostnames: ReadonlySet<string>,
-  options: RequestInit = {}
-): Promise<Response> {
+<!-- example: security-ssrf -->
+```javascript
+export async function fetchFromAllowlist(urlString, allowedHostnames, options, transport) {
   const parsed = new URL(urlString);
-
-  // 1. Enforce HTTPS only
   if (parsed.protocol !== 'https:') {
-    throw new Error(`SSRF blocked: protocol "${parsed.protocol}" is not permitted; HTTPS required`);
+    throw new Error('SSRF blocked: protocol "' + parsed.protocol + '" is not permitted; HTTPS required');
   }
-
-  // 2. Reject credentials in URL
   if (parsed.username || parsed.password) {
     throw new Error('SSRF blocked: URL credentials (user:password@host) are prohibited');
   }
-
-  // 3. Strict positive destination allowlist (prevents internal network probing)
+  if (parsed.port && parsed.port !== '443') throw new Error('SSRF blocked: non-standard port');
   const normalizedHost = parsed.hostname.toLowerCase();
   if (!allowedHostnames.has(normalizedHost)) {
-    throw new Error(`SSRF blocked: destination host "${normalizedHost}" is not in the approved allowlist`);
+    throw new Error('SSRF blocked: destination host "' + normalizedHost + '" is not in the approved allowlist');
   }
-
-  // 4. Disable automatic redirects to prevent redirection to private IPs or metadata endpoints
-  return fetch(urlString, {
-    ...options,
-    redirect: 'error'
-  });
+  if (typeof transport !== 'function') throw new TypeError('Trusted egress transport required');
+  return transport(parsed.href, { ...options, redirect: 'error' });
 }
 ```
 
----
-
 ## Validation Checklist
 
-- [ ] All database queries parameterized or managed by type-safe ORM.
-- [ ] BOLA/IDOR prevented: all entity queries scoped by tenant/user id.
-- [ ] Cookies set with `HttpOnly`, `Secure`, and `SameSite=Strict` or `Lax`.
-- [ ] Passwords hashed with Argon2id / bcrypt.
-- [ ] Security headers active in middleware/reverse proxy.
-- [ ] No secrets or tokens checked into source control or exposed in logs.
-
----
+- [ ] Allowed and denied identity/tenant cases are checked before data access.
+- [ ] Invalid and unknown inputs never reach protected persistence.
+- [ ] Secrets and production errors preserve their boundaries.
+- [ ] External requests and tool policies are checked at the stated scope.
+- [ ] Commands, results, unrun checks, and limitations are reported.
 
 ## Common Mistakes
 
-- **Trusting client-side claims**: Checking role or permissions only on the frontend without server-side validation.
-- **Timing attacks on tokens**: Comparing tokens with `token === expectedToken` instead of `timingSafeEqual`.
-- **Exposing internal stack traces**: Returning full error objects to client in production.
-- **Unvalidated redirects / URLs**: Allowing arbitrary URLs in redirect or fetch parameters.
-
----
+Treating an allowlist as network isolation; comparing role labels instead of
+permissions; passing client payloads into persistence; interpreting a secret scan
+or document validator as a complete application security audit.
 
 ## Integration Notes
 
-- Runs in the REVIEW phase for every backend route, auth flow, and database mutation.
-- Integrates with `engineering-workflow` during Phase 5 (5-axis quality gate).
-- Pairs with `system-design` to mandate secure network boundaries and authorization layers.
+Use engineering-workflow's proportional verification and existing authority.
+The staged scanner needs --placeholders for stubs and --scope with a real scope
+JSON file for write boundaries. Validate does not replace either check.

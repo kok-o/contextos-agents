@@ -1,0 +1,38 @@
+{
+  "width": 1120,
+  "height": 630,
+  "durationMs": 19000,
+  "nominalFps": 20,
+  "uniqueFrames": 127,
+  "bytes": 1089635,
+  "sha256": "54e7b007c2d2ded33859179dc9aa6374b36f64bc7d4499d0d603eb46eabc892f",
+  "background": "#0d1117",
+  "decodedReferenceChecks": [
+    {
+      "seconds": 1.3,
+      "exactQuantizedSourceMatch": true
+    },
+    {
+      "seconds": 4.1,
+      "exactQuantizedSourceMatch": true
+    },
+    {
+      "seconds": 8.1,
+      "exactQuantizedSourceMatch": true
+    },
+    {
+      "seconds": 10.6,
+      "exactQuantizedSourceMatch": true
+    },
+    {
+      "seconds": 13.3,
+      "exactQuantizedSourceMatch": true
+    },
+    {
+      "seconds": 16.7,
+      "exactQuantizedSourceMatch": true
+    }
+  ],
+  "evidence": "scripts/readme-gif/evidence/commands.json",
+  "scope": "Reconstructed local CLI workflow. Output excerpts and editorial timing; no client/model claims."
+}

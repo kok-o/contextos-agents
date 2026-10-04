@@ -1,0 +1,59 @@
+diff --git a/README.md b/README.md
+index 2617f77..8bb9122 100755
+--- a/README.md
++++ b/README.md
+@@ -2,6 +2,9 @@
+ 
+ A small TypeScript module exposing `createOrder(item, quantity)`.
+ 
++Item names are trimmed and internal whitespace is collapsed to single spaces.
++Casing and punctuation are preserved.
++
+ Run the tests with Node.js 22.14.0 or later:
+ 
+ ```sh
+diff --git a/src/order.ts b/src/order.ts
+index 01434ca..3141e20 100755
+--- a/src/order.ts
++++ b/src/order.ts
+@@ -2,7 +2,7 @@ export function createOrder(
+   item: string,
+   quantity: number,
+ ): { item: string; quantity: number } {
+-  const normalizedItem = item.trim();
++  const normalizedItem = item.trim().replace(/\s+/g, " ");
+ 
+   if (!normalizedItem) {
+     throw new Error("Item is required");
+diff --git a/test/order.test.mjs b/test/order.test.mjs
+index 5013ff5..e19804f 100755
+--- a/test/order.test.mjs
++++ b/test/order.test.mjs
+@@ -10,8 +10,26 @@ test("trims item names at the edges", () => {
+   assert.deepEqual(createOrder("  Tea  ", 1), { item: "Tea", quantity: 1 });
+ });
+ 
++test("collapses internal whitespace to single spaces", () => {
++  for (const item of [
++    "  Earl   Grey  Tea  ",
++    "\tEarl\tGrey\nTea\r\n",
++    "\u00a0Earl\u00a0\u00a0Grey\u2003Tea\u3000",
++  ]) {
++    assert.deepEqual(createOrder(item, 2), {
++      item: "Earl Grey Tea",
++      quantity: 2,
++    });
++  }
++});
++
++test("preserves item casing, punctuation, and non-whitespace characters", () => {
++  const item = "Thé Earl-Grey (50g)";
++  assert.deepEqual(createOrder(item, 3), { item, quantity: 3 });
++});
++
+ test("rejects empty item names", () => {
+-  for (const item of ["", "   ", "\t\n"]) {
++  for (const item of ["", "   ", "\t\n", "\u00a0\u2003\u3000"]) {
+     assert.throws(() => createOrder(item, 1), {
+       name: "Error",
+       message: "Item is required",

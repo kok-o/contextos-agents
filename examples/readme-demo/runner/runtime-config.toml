@@ -1,0 +1,26 @@
+# Shared settings for isolated runs. No auth, plugins, MCP servers, or history.
+model = "gpt-6.1-sol"
+model_reasoning_effort = "low"
+web_search = "disabled"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+check_for_update_on_startup = false
+
+[features]
+memories = false
+external_agent_memory_import = false
+plugins = false
+apps = false
+multi_agent = false
+multi_agent_v2 = false
+browser_use = false
+browser_use_external = false
+browser_use_full_cdp_access = false
+in_app_browser = false
+standalone_web_search = false
+
+[analytics]
+enabled = false
+
+[feedback]
+enabled = false

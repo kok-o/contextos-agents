@@ -5,7 +5,7 @@
  *
  * Extracts code blocks from skill definitions, classifies them into
  * runnable / illustrative / expected-failure, and verifies their syntax,
- * types, and execution behavior.
+ * parsing and scoped execution behavior. Type checking is outside this gate.
  */
 
 'use strict';
@@ -15,6 +15,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+const { CORE_SKILLS, EXECUTABLE_EXAMPLES, coreSkillFiles, verifyCoreSkills } = require('./verify-core-skills.cjs');
 
 // First Coverage Scope Definitions (Task 4.1)
 const FIRST_COVERAGE_SKILLS = [
@@ -57,9 +58,12 @@ function extractSkillExamples(skillDef) {
   let blockLines = [];
   let blockStartLine = 0;
   let currentHeading = 'Overview';
+  let exampleId = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    const marker = line.match(/^<!-- example: ([a-z0-9-]+) -->$/);
+    if (marker && !inBlock) exampleId = marker[1];
 
     // Track active heading
     const headingMatch = line.match(/^#{1,4}\s+(.+)$/);
@@ -79,7 +83,16 @@ function extractSkillExamples(skillDef) {
         inBlock = false;
         const code = blockLines.join('\n');
         const exampleMeta = classifyBlock(skillDef.id, currentHeading, blockLang, code, blockStartLine);
+        if (exampleId) exampleMeta.exampleId = exampleId;
+        const registered = EXECUTABLE_EXAMPLES[exampleId];
+        const originalFile = registered && path.join(PROJECT_ROOT, '.agents/core/skills', ...registered);
+        if (skillDef.isCore && exampleMeta.type === 'runnable' &&
+            (!registered || registered[0] !== skillDef.id || path.resolve(skillDef.file) !== path.resolve(originalFile))) {
+          exampleMeta.type = 'unverified';
+          exampleMeta.reason = 'Core executable block has no registered original-source behavioral scenario';
+        }
         examples.push(exampleMeta);
+        exampleId = null;
       }
     } else if (inBlock) {
       blockLines.push(line);
@@ -133,7 +146,7 @@ function classifyBlock(skillId, heading, lang, code, startLine) {
   }
 
   // 3. Runnable: Python, JS, TS, TSX, CSS
-  if (['python', 'javascript', 'typescript', 'tsx', 'jsx', 'css'].includes(normLang)) {
+  if (['python', 'javascript', 'js', 'typescript', 'ts', 'tsx', 'jsx', 'css'].includes(normLang)) {
     return {
       id,
       skillId,
@@ -232,6 +245,7 @@ async function verifyCoverageExamples() {
   const adaptersRunner = require('../tests/fixtures/skill-examples/adapters-runner.js');
 
   const verificationResults = [];
+  verificationResults.push(...await verifyCoreSkills());
 
   // 1. Verify Security Examples
   const secTimingResults = securityRunner.runSecurityExamples();
@@ -281,7 +295,8 @@ async function run() {
   const isJson = args.includes('--json');
 
   const inventory = [];
-  for (const skill of FIRST_COVERAGE_SKILLS) {
+  const coverage = [...FIRST_COVERAGE_SKILLS.filter(s => s.id !== 'security'), ...coreSkillFiles(PROJECT_ROOT)];
+  for (const skill of coverage) {
     const blocks = extractSkillExamples(skill);
     inventory.push(...blocks);
   }
@@ -308,8 +323,9 @@ async function run() {
     },
     syntaxChecksRun: syntaxResults.length,
     syntaxChecksPassed: syntaxResults.filter(r => r.passed).length,
-    behavioralChecksRun: behavioralResults.length,
-    behavioralChecksPassed: behavioralResults.filter(r => r.passed).length,
+    behavioralChecksRun: behavioralResults.filter(r => r.kind === 'behavioral-test').length,
+    behavioralChecksPassed: behavioralResults.filter(r => r.kind === 'behavioral-test' && r.passed).length,
+    structuralChecksRun: behavioralResults.filter(r => r.kind === 'structural-contract').length,
     verificationsRun: allVerifications.length,
     verificationsPassed: allVerifications.filter(v => v.passed).length,
     verificationsFailed: failedVerifications.length,
@@ -318,14 +334,15 @@ async function run() {
   const ok = failedVerifications.length === 0 && stats.byType.unverified === 0;
 
   if (isJson) {
-    console.log(JSON.stringify({ ok, stats, inventory, syntaxResults, behavioralResults }, null, 2));
+    console.log(JSON.stringify({ ok, coverage: { coreSkills: CORE_SKILLS, catalogSkills: FIRST_COVERAGE_SKILLS.filter(s => s.id !== 'security').map(s => s.id), limitations: ['No live AI client behavior, production egress policy, or TypeScript type checking is established by this gate.'] }, stats, inventory, syntaxResults, behavioralResults }, null, 2));
     process.exit(ok ? 0 : 1);
   }
 
   console.log('\n======================================================');
   console.log('  ContextOS Phase 4: Skill Examples Quality Gate');
   console.log('======================================================\n');
-  console.log(`  Skills in Scope      : ${FIRST_COVERAGE_SKILLS.map(s => s.id).join(', ')}`);
+  console.log(`  Core Skills in Scope : ${CORE_SKILLS.join(', ')}`);
+  console.log(`  Catalog Scope        : ${FIRST_COVERAGE_SKILLS.filter(s => s.id !== 'security').map(s => s.id).join(', ')}`);
   console.log(`  Total Code Blocks    : ${stats.totalBlocks}`);
   console.log(`    • Runnable         : ${stats.byType.runnable}`);
   console.log(`    • Illustrative     : ${stats.byType.illustrative}`);
@@ -338,15 +355,15 @@ async function run() {
     console.log(`    ${icon} ${v.id}${v.error ? ` [ERROR: ${v.error}]` : ''}`);
   }
 
-  console.log('\n  Behavioral Runtime Checks (Negative/Positive Execution):');
+  console.log('\n  Behavioral Runtime and Structural Contract Checks:');
   for (const v of behavioralResults) {
     const icon = v.passed ? '✓' : '✗';
-    console.log(`    ${icon} ${v.id}${v.error ? ` [ERROR: ${v.error}]` : ''}`);
+    console.log(`    ${icon} ${v.id} (${v.kind})${v.error ? ` [ERROR: ${v.error}]` : ''}`);
   }
 
   console.log('\n------------------------------------------------------');
   if (ok) {
-    console.log(`  RESULT: PASSED (${stats.verificationsPassed}/${stats.verificationsRun} checks green: ${stats.syntaxChecksPassed} syntax, ${stats.behavioralChecksPassed} behavioral, 0 unverified)`);
+    console.log(`  RESULT: PASSED (${stats.verificationsPassed}/${stats.verificationsRun} checks: ${stats.syntaxChecksPassed} syntax, ${stats.behavioralChecksPassed} behavioral, ${stats.structuralChecksRun} structural, 0 unverified)`);
   } else {
     console.log(`  RESULT: FAILED (${failedVerifications.length} checks failed)`);
   }

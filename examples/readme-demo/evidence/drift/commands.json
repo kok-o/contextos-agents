@@ -1,0 +1,77 @@
+[
+  {
+    "argv": [
+      "npx",
+      "--no-install",
+      "contextos",
+      "export",
+      "all",
+      "--check",
+      "--json"
+    ],
+    "startedUtc": "2026-10-04T15:23:52.336486+00:00",
+    "durationMs": 2943,
+    "exitCode": 0,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 151\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "npx",
+      "--no-install",
+      "contextos",
+      "compile"
+    ],
+    "startedUtc": "2026-10-04T15:23:55.283450+00:00",
+    "durationMs": 2454,
+    "exitCode": 0,
+    "stdout": "\n\u2713 Successfully compiled 9 skills into Registry v2!\n  Source Graph Hash: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\n  Registry: .agents/compiled/registry.v2.json\n  Checksum: .agents/compiled/registry.v2.sha256\n\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "npx",
+      "--no-install",
+      "contextos",
+      "export",
+      "all",
+      "--check",
+      "--json"
+    ],
+    "startedUtc": "2026-10-04T15:23:57.738567+00:00",
+    "durationMs": 3003,
+    "exitCode": 1,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"drift\",\n  \"hasDrift\": true,\n  \"hasError\": false,\n  \"code\": 1,\n  \"totalFindings\": 20,\n  \"findings\": {\n    \"STALE_INPUT\": [\n      {\n        \"expected\": \"sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\",\n        \"actual\": \"sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\"\n      },\n      {\n        \"path\": \".agents/generated/gemini/skills/team-order/SKILL.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".agents/skills/team-order/SKILL.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".agents/generated/claude/skills/team-order/SKILL.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".cursor/rules/00-project-rules.mdc\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".cursor/rules/team-order.mdc\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".github/copilot-instructions.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".aider.conf.yml\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \"CONVENTIONS.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/contextos.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/context-manager.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/context-os.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/engineering-workflow.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/gemini-precision.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/gstack-roles.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/ponytail-mindset.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/security.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/team-order.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/prompts/typescript.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".zed/rules.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      }\n    ],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [\n    {\n      \"path\": \".agents/generated/gemini/skills/team-order/SKILL.md\",\n      \"type\": \"modified\",\n      \"diff\": \"+ - Reject normalized item names longer than 80 characters.\\n+ \"\n    },\n    {\n      \"path\": \".agents/skills/team-order/SKILL.md\",\n      \"type\": \"modified\",\n      \"diff\": \"+ - Reject normalized item names longer than 80 characters.\\n+ \"\n    },\n    {\n      \"path\": \".agents/generated/claude/skills/team-order/SKILL.md\",\n      \"type\": \"modified\",\n      \"diff\": \"+ - Reject normalized item names longer than 80 characters.\\n+ \"\n    },\n    {\n      \"path\": \".cursor/rules/00-project-rules.mdc\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".cursor/rules/team-order.mdc\",\n      \"type\": \"modified\",\n      \"diff\": \"+ - Reject normalized item names longer than 80 characters.\\n+ \"\n    },\n    {\n      \"path\": \".github/copilot-instructions.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".aider.conf.yml\",\n      \"type\": \"modified\",\n      \"diff\": \"- # Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ # Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \"CONVENTIONS.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/contextos.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/context-manager.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/context-os.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/engineering-workflow.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/gemini-precision.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/gstack-roles.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/ponytail-mindset.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/security.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/prompts/team-order.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\\n- \\n+ - Reject normalized item names longer than 80 characters.\\n+ \\n+ \"\n    },\n    {\n      \"path\": \".zed/prompts/typescript.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    },\n    {\n      \"path\": \".zed/rules.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Source graph: sha256:3c0ca869c9025f771a4900c104b23398c1af921335e80503183a624f224ce288\\n+ Source graph: sha256:fcaecadf7665ca6f327e67ef78a87fd470a120a4c4dc56e7a2b221d2bb1e3698\"\n    }\n  ],\n  \"projectedCount\": 151\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "npx",
+      "--no-install",
+      "contextos",
+      "export",
+      "all"
+    ],
+    "startedUtc": "2026-10-04T15:24:00.742714+00:00",
+    "durationMs": 3376,
+    "exitCode": 0,
+    "stdout": "Starting pure compiler export for all adapters...\n\u2713 All exports complete: 151 artifacts applied in a single transaction (tx: tx-1791127443905-f48d3adc).\n  Active adapters: Gemini, Claude, Cursor, Copilot, Aider, Zed\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "npx",
+      "--no-install",
+      "contextos",
+      "export",
+      "all",
+      "--check",
+      "--json"
+    ],
+    "startedUtc": "2026-10-04T15:24:04.120317+00:00",
+    "durationMs": 3066,
+    "exitCode": 0,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 151\n}\n",
+    "stderr": ""
+  }
+]

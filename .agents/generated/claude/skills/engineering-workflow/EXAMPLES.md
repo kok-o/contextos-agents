@@ -1,57 +1,22 @@
-# engineering-workflow Examples — Anti-patterns vs ContextOS Standard
+# Workflow examples
 
-## Example 1: Handling a New Feature Request
+## Routine change
 
-### Anti-pattern: Jumping Straight to Code
+Correct a README typo, inspect the diff, and run the relevant Markdown check.
+A spec, role banner, synthetic unit test, or repeated approval adds no evidence.
 
-```text
-User: "Add a user referral system."
-Agent: Immediately creates src/referral.js, starts writing database queries, guesses schema,
-and misses requirements like rate limiting, expiry dates, and fraud prevention.
-```
+## Feature slices
 
-### Best practice: ContextOS Standard (DEFINE -> PLAN -> BUILD)
+1. Create a minimal referral claim path through storage, service, API, and UI.
+   Verify one valid claim and one rejected claim.
+2. Add expiry and repeated-claim handling through the same path. Verify both.
+3. Add the required abuse controls and relevant integration checks.
 
-```markdown
-[DOMAIN: Full-Stack] [PHASE: Define] [ROLE: Product Manager]
-Skills loaded: engineering-workflow, interview-me
+Do not split every feature into all storage first, all routes second, and all UI
+last unless the architecture or dependencies actually require that order.
 
-## Feature Spec: User Referral System
-### Why (Problem)
-Increase user acquisition through organic word-of-mouth incentives.
+## Review request
 
-### Scope
-In-Scope:
-- Unique referral code generation per registered user
-- Referral code attribution on signup
-- Credit reward trigger after first completed purchase
-Out-of-Scope:
-- Multi-tier MLM rewards
-- Cash payout integrations
-
-### Acceptance Criteria
-- [ ] Given a registered user, when visiting /referrals, then unique code is displayed.
-- [ ] Given a new user with code, when signing up, then referrer_id is stored with status 'pending'.
-```
-
----
-
-## Example 2: Atomic Task Execution in PLAN Phase
-
-### Anti-pattern: Monolithic Mega-Task
-
-```text
-Task: "Implement entire referral system end-to-end in one shot."
-Result: 15 files modified simultaneously, uncompilable intermediate state, untestable diff.
-```
-
-### Best practice: ContextOS Standard (Atomic Tasks with Test Gate)
-
-```markdown
-[DOMAIN: Full-Stack] [PHASE: Plan] [ROLE: Architect]
-Atomic Tasks:
-1. Database migration: referrals and referral_rewards tables + indexes. (Test: Migration rollback & apply)
-2. Domain service: ReferralService.createCode() and ReferralService.claimCode(). (Test: Unit tests)
-3. API route: POST /api/referrals/claim with Zod validation. (Test: Supertest integration)
-4. UI component: <ReferralCard /> with copy button. (Test: RTL component test)
-```
+Inspect the code and callers, reproduce a failure when feasible, report an
+exploit or incorrect-result scenario and its scope. A review request by itself
+is not a request to publish, message others, or rewrite the feature.

@@ -106,11 +106,33 @@ test('Manifestless project skills hash and resolve the real entrypoint', t => {
   assert.equal(first.success, true, JSON.stringify(first.diagnostics));
   const skill = first.registry.skills['team-bare'];
   assert.equal(skill.source, '.agents/project/skills/team-bare/SKILL.md');
+  assert.equal(skill.description, 'Team rules');
   assert.equal(skill.entrypointHash, 'sha256:' + createHash('sha256').update(body).digest('hex'));
   assert.equal(skill.estimatedTokens, Math.max(100, Math.ceil(body.length / 3.8)));
   assert.ok(new CanonicalResolver({ rootDir: root, registry: first.registry }).resolve({ task: 'Implement @team-bare' }).skills.includes('team-bare'));
   fs.appendFileSync(path.join(directory, 'SKILL.md'), '\nAdditional team rule.\n');
   assert.notEqual(new ManifestCompiler({ rootDir: root }).compile().registry.sourceGraphHash, first.registry.sourceGraphHash);
+});
+
+test('Native and Cursor exports preserve manifestless routing descriptions and track description changes', t => {
+  const root = fixture(t);
+  const directory = path.join(root, '.agents/project/skills/team-bare');
+  fs.mkdirSync(directory, { recursive: true });
+  const source = path.join(directory, 'SKILL.md');
+  const description = 'Use for auth: session handling, "cookies", and authorization.';
+  fs.writeFileSync(source, `---\nname: team-bare\ndescription: ${JSON.stringify(description)}\n---\n# Team\nNever log credentials.\n`);
+  const yaml = require('../.agents/compiler/vendor/yaml.js');
+  const metadata = file => yaml.parse(fs.readFileSync(path.join(root, file), 'utf8').split('---')[1]);
+  apply(root, 'all');
+  assert.equal(metadata('.agents/skills/team-bare/SKILL.md').description, description);
+  assert.ok(metadata('.cursor/rules/team-bare.mdc').description.includes('Use for auth: session handling'));
+  assert.ok(fs.readFileSync(path.join(root, '.zed/prompts/team-bare.md'), 'utf8').includes(description));
+  const changed = 'Use for password reset and account recovery.';
+  fs.writeFileSync(source, `---\nname: team-bare\ndescription: >\n  ${changed}\n---\n# Team\nNever log credentials.\n`);
+  assert.equal(detectDrift(root, 'all').hasDrift, true);
+  apply(root, 'all');
+  assert.equal(metadata('.agents/skills/team-bare/SKILL.md').description, changed);
+  assert.equal(detectDrift(root, 'all').hasDrift, false);
 });
 
 for (const manifestFile of ['skill.yaml', 'skill.v2.yaml']) {
@@ -123,12 +145,15 @@ for (const manifestFile of ['skill.yaml', 'skill.v2.yaml']) {
       fs.writeFileSync(path.join(directory, 'skill.yaml'), 'id: team-custom\nentrypoint: SKILL.md\n');
     }
     fs.writeFileSync(path.join(directory, 'SKILL.md'), '# Stale\nSTALE_BODY_MARKER\n');
-    const canonical = '---\nname: team-custom\n---\n# Team\nCANONICAL_BODY_MARKER\nRead [details](references/details.md).\n';
+    const canonical = '---\nname: team-custom\ndescription: Entrypoint fallback should not override manifest\n---\n# Team\nCANONICAL_BODY_MARKER\nRead [details](references/details.md).\n';
     fs.writeFileSync(path.join(directory, 'RULES.md'), canonical);
     fs.writeFileSync(path.join(directory, 'references/details.md'), 'SUPPORTING_DETAILS_MARKER\n');
     const compiled = new ManifestCompiler({ rootDir: root }).compileAndWrite();
     assert.equal(compiled.success, true, JSON.stringify(compiled.diagnostics));
+    assert.equal(compiled.registry.skills['team-custom'].description, 'Canonical team rules');
     apply(root, 'all');
+    assert.ok(fs.readFileSync(path.join(root, '.agents/skills/team-custom/SKILL.md'), 'utf8').includes('Canonical team rules'));
+    assert.ok(fs.readFileSync(path.join(root, '.cursor/rules/team-custom.mdc'), 'utf8').includes('Canonical team rules'));
     for (const file of ['.agents/skills/team-custom/SKILL.md', '.agents/generated/claude/skills/team-custom/SKILL.md', '.cursor/rules/team-custom.mdc', '.zed/prompts/team-custom.md']) {
       const content = fs.readFileSync(path.join(root, file), 'utf8');
       assert.ok(content.includes('CANONICAL_BODY_MARKER'), file);

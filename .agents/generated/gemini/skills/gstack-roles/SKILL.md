@@ -7,32 +7,30 @@ description: >
 
 ## Overview
 
-Use specialist perspectives when they reveal concrete issues. The canonical lifecycle skill is engineering-workflow.
+Deprecated compatibility identifier. Use [engineering-workflow](../engineering-workflow/SKILL.md) for the canonical instructions.
 
 ## When to Use
 
-Explicit role guidance or a specialist review request.
+An existing configuration or user explicitly names gstack-roles.
 
 ## Rules & Patterns
 
-Choose the useful perspective: product scope, architecture, implementation, QA, security, or release. Role declarations are optional. Repeated headers and mandatory role switches add no evidence. Existing authorization and routine fast tracks apply.
-
-Read [references/roles.md](references/roles.md) for detailed procedures and examples only when needed.
+Apply the canonical skill without loading a duplicate process. Existing authorization, proportional verification, and optional role declarations carry forward. The resolver redirects this identifier and reports an alias warning.
 
 ## Code Examples
 
-For access control, use the security perspective to examine authorization boundaries and negative cases.
+Explicit gstack-roles selection resolves to engineering-workflow; inspect the resolver result rather than assuming both bodies were loaded.
 
 ## Validation Checklist
 
-- [ ] The requested outcome is handled.
-- [ ] Relevant verification and safety boundaries are preserved.
-- [ ] Limitations are stated.
+- [ ] Canonical guidance is used.
+- [ ] Alias resolution adds no duplicate body.
+- [ ] Evidence scope and limitations are stated.
 
 ## Common Mistakes
 
-Repeated approval after authorization; unnecessary ceremonies for routine edits; treating role labels or string checks as behavioral proof.
+Treating this compatibility name as an independent engine or a mandatory ceremony.
 
 ## Integration Notes
 
-Load relevant domain skills and supporting resources on demand. Compatibility identifiers remain available.
+Keep legacy links available. Read [references/roles.md](references/roles.md) only for compatibility details.

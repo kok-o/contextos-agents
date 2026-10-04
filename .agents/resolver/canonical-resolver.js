@@ -59,10 +59,10 @@ const WORKFLOW_TEMPLATES = {
     summary: 'High-risk feature: auth, migration, public API, security, CI, concurrency',
     steps: [
       '1. SPEC: Document explicit in-scope/out-of-scope and acceptance criteria',
-      '2. APPROVED_PLAN: Atomic tasks (<2h), risk mitigation, and rollback strategy',
+      '2. PLAN: Scoped tasks, risk mitigation, and rollback strategy; carry existing authorization forward',
       '3. ISOLATED_CHANGE: Surgical implementation strictly within planned files',
-      '4. FULL_VERIFICATION: Global test suite + secret scanner + validator',
-      '5. INDEPENDENT_REVIEW: Review through security, database, and accessibility lenses',
+      '4. VERIFICATION: Behavioral regression checks and relevant integration, security, and project gates',
+      '5. REVIEW: Inspect correctness and applicable security, database, or accessibility boundaries; distinguish self-review from peer review',
     ],
   },
   destructive: {
@@ -71,7 +71,7 @@ const WORKFLOW_TEMPLATES = {
     steps: [
       '1. EXPLICIT_AUTHORITY: Confirm explicit user authorization and bounds',
       '2. ROLLBACK_REHEARSAL: Verify snapshot, backup, or rollback transaction log',
-      '3. GUARDED_CHANGE: Execute modification inside journaled transaction with project lock',
+      '3. GUARDED_CHANGE: Use supported transactional project tools or a verified backup and bounded operation',
       '4. POST_VERIFY: Confirm integrity, state consistency, and absence of data loss',
     ],
   },
@@ -391,24 +391,30 @@ function collectWorkspaceEvidence(projectRoot, registry) {
 /**
  * Evaluates task risk level according to Milestone 3 spec.
  */
+// JavaScript \\b/\\w do not delimit Cyrillic words. Use Unicode boundaries for
+// task phrases, including stem suffixes where the language requires them.
+function matchesTaskPhrase(text, pattern) {
+  return new RegExp(`(?:^|[^\\p{L}\\p{N}_])(?:${pattern})(?=$|[^\\p{L}\\p{N}_])`, 'iu').test(text);
+}
+
+const SECURITY_TASK_PATTERN = String.raw`secur\w*|auth\w*|jwt|passwords?|tokens?|secrets?|permissions?|idor|bola|ssrf|csrf|xss|login|access\s*control|rate\s*limit|безопасн[\p{L}]*|авториз[\p{L}]*|аутентифик[\p{L}]*|парол[\p{L}]*|токен[\p{L}]*|доступ(?:а|у|ом|е|ы|ов)?|прав[\p{L}]*\s+доступ[\p{L}]*`;
+
 function evaluateRisk(taskText, files = []) {
   const reasons = [];
   const text = (taskText || '').toLowerCase();
   let value = 'standard';
 
   // Destructive operations
-  if (/\b(drop\s*database|drop\s*table|rm\s*-rf|truncate|destroy|delete\s*from|format\s*disk)\b/i.test(text) ||
-      /\b(удали\w*\s*(?:базу|таблиц|диск|файл)|очист\w*\s*базу|уничтож\w*)\b/i.test(text)) {
+  if (matchesTaskPhrase(text, String.raw`drop\s*(?:database|table)|rm\s*-rf|truncate|destroy|delete\s*from|format\s*disk|(?:delete|remove)\s+(?:files?|folders?|directories|tables?|databases?)|git\s+reset\s+--hard|git\s+push\s+--force|удал[\p{L}]*\s*(?:баз[\p{L}]*|таблиц[\p{L}]*|диск[\p{L}]*|файл[\p{L}]*|папк[\p{L}]*)|очист[\p{L}]*\s*баз[\p{L}]*|уничтож[\p{L}]*`)) {
     reasons.push({ kind: 'risk_keyword', weight: 100, reason: 'Mentions destructive database or filesystem operation' });
     value = 'destructive';
-  } else if (/\b(secur\w*|auth\w*|jwt|password|token|secret|migration|schema|permission|billing|payment|credit\s*card|crypto)\b/i.test(text) ||
-      /\b(безопасн\w*|авториз\w*|аутентифик\w*|парол\w*|токен\w*|миграц\w*|платеж\w*|платёж\w*|доступ\w*)\b/i.test(text) ||
-      files.some(f => /\b(auth|security|migration|schema)\b/i.test(f))) {
+  } else if (matchesTaskPhrase(text, SECURITY_TASK_PATTERN) ||
+      matchesTaskPhrase(text, String.raw`migration|schema|billing|payments?|credit\s*card|crypto|concurr\w*|public\s*api|ci|миграц[\p{L}]*|плат[её]ж[\p{L}]*|конкурент[\p{L}]*|параллельн[\p{L}]*|публичн[\p{L}]*\s*api`) ||
+      files.some(f => /(?:auth|security|migrations?|schema|\.github\/workflows)(?:[^a-z]|$)/i.test(f))) {
     // High-risk operations
     reasons.push({ kind: 'risk_keyword', weight: 50, reason: 'Touches security, authentication, migration, or sensitive domain' });
     value = 'high';
-  } else if ((/\b(typo|readme|doc|comment|format|lint|prettier)\b/i.test(text) ||
-      /\b(опечатк\w*|документац\w*|комментар\w*|форматирован\w*)\b/i.test(text)) &&
+  } else if (matchesTaskPhrase(text, String.raw`typo|readme|docs?|comments?|format|lint|prettier|опечатк[\p{L}]*|документац[\p{L}]*|комментар[\p{L}]*|форматирован[\p{L}]*`) &&
       files.every(f => /\.(md|txt|json|ya?ml)$/i.test(f))) {
     // Routine operations
     reasons.push({ kind: 'risk_keyword', weight: 10, reason: 'Routine documentation or formatting change' });
@@ -437,19 +443,19 @@ function resolvePhaseAndRole(phaseArg, taskText, selectedSkills) {
     phaseSource = 'explicit';
   } else {
     const lower = (taskText || '').toLowerCase();
-    if (/\b(spec|requirements|user\s*story|критерии|требован)\b/i.test(lower)) {
+    if (matchesTaskPhrase(lower, String.raw`spec|requirements|user\s*story|критери[\p{L}]*|требован[\p{L}]*`)) {
       phaseValue = 'Define';
       phaseSource = 'prompt';
-    } else if (/\b(plan|architecture|design\s*the\s*system|спланируй|архитектур)\b/i.test(lower)) {
+    } else if (matchesTaskPhrase(lower, String.raw`plan|architecture|design\s*the\s*system|спланир[\p{L}]*|архитектур[\p{L}]*`)) {
       phaseValue = 'Plan';
       phaseSource = 'prompt';
-    } else if (/\b(review|audit|check\s*pr|ревью|проверь\s*код)\b/i.test(lower)) {
+    } else if (matchesTaskPhrase(lower, String.raw`review|audit|check\s*pr|ревью|провер[\p{L}]*\s*код[\p{L}]*`)) {
       phaseValue = 'Review';
       phaseSource = 'prompt';
-    } else if (/\b(test|vitest|jest|playwright|tdd|тест)\b/i.test(lower)) {
+    } else if (matchesTaskPhrase(lower, String.raw`tests?|vitest|jest|playwright|tdd|тест[\p{L}]*`)) {
       phaseValue = 'Verify';
       phaseSource = 'prompt';
-    } else if (/\b(deploy|release|ship|production|релиз|деплой)\b/i.test(lower)) {
+    } else if (matchesTaskPhrase(lower, String.raw`deploy|release|ship|production|релиз[\p{L}]*|деплой[\p{L}]*`)) {
       phaseValue = 'Ship';
       phaseSource = 'prompt';
     }
@@ -747,8 +753,7 @@ class CanonicalResolver {
       // Exact alias match
       for (const alias of signals.aliases || []) {
         const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const re = new RegExp(`\\b${escaped}\\b`, 'i');
-        if (re.test(taskLower)) {
+        if (matchesTaskPhrase(taskLower, escaped)) {
           addEvidence(id, 'alias', WEIGHTS.EXACT_ALIAS, `Exact alias match "${alias}" in task description`);
           break;
         }
@@ -757,8 +762,8 @@ class CanonicalResolver {
       // Keyword matches
       for (const kw of signals.keywords || []) {
         const escaped = kw.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const re = new RegExp(`\\b${escaped}\\b`, 'i');
-        if (re.test(taskLower)) {
+        const pattern = kw.locale === 'ru' ? `${escaped}[\\p{L}]*` : escaped;
+        if (matchesTaskPhrase(taskLower, pattern)) {
           const w = kw.weight || WEIGHTS.TASK_KEYWORD_STRONG;
           addEvidence(id, 'keyword', w, `Task keyword "${kw.value}" (+${w})`);
         }
@@ -788,7 +793,7 @@ class CanonicalResolver {
       { id: 'react', re: /\b(react|reactjs|useOptimistic)\b|компонент|хук|модал\w*/i, w: 40, kw: 'react' },
       { id: 'typescript', re: /\b(typescript|type-?safe|generics?|tsconfig)\b|тайпскрипт|типизац/i, w: 40, kw: 'typescript' },
       { id: 'ui-ux-pro', re: /\b(ui|ux|tailwind|styling)\b|дизайн|верстк|макет|интерфейс|модал\w*/i, w: 35, kw: 'ui/ux' },
-      { id: 'security', re: /\b(security|auth|jwt|login|csrf|xss|rate\s*limit)\b|авториз|аутентифик|парол|безопасност/i, w: 40, kw: 'security' },
+      { id: 'security', re: { test: text => matchesTaskPhrase(text, SECURITY_TASK_PATTERN) }, w: 40, kw: 'security' },
       { id: 'database', re: /\b(database|sql|postgres|prisma|drizzle|migration|orm)\b|баз.*данн|миграц|таблиц/i, w: 40, kw: 'database' },
       { id: 'testing', re: /\b(vitest|jest|playwright|tdd|bdd|e2e)\b|тестирован|покрыти|юнит|тест/i, w: 40, kw: 'testing' },
       { id: 'performance', re: /\b(performance|latency|lcp|cls|inp|core\s*web\s*vitals)\b|производительн|ускор|быстр|throughput/i, w: 40, kw: 'performance' },

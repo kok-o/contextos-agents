@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-10-04T15:33:18.516Z",
+  "runtime": {
+    "node": "v22.14.0",
+    "platform": "linux",
+    "architecture": "x64"
+  },
+  "paths": {
+    "project": "/candidate",
+    "baseline": "/baseline",
+    "initial": "/initial",
+    "out": "/out"
+  },
+  "provenance": {
+    "initialInventory": {
+      ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      "README.md": "b8b1cd7257baedac2df3831df58d470e9a051d6b2991dddb827a35149e279ccf",
+      "package.json": "a5e7d164de9d302d5e0cf1c607bde5caba6a8f49e501a4f9c7c9849b79f88d23",
+      "src/order.ts": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+      "test/order.test.mjs": "4ce6614a546d38e12534a62a688ffe8b6be1b050182cb6460d967def6ccae70f"
+    },
+    "finalInventory": {
+      ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      "README.md": "86de39ce0466bac2d14508c6216df4d8906fbe2906d4e2684ae6482397b44d32",
+      "package.json": "a5e7d164de9d302d5e0cf1c607bde5caba6a8f49e501a4f9c7c9849b79f88d23",
+      "src/order.ts": "5e5a696161ca99785c0f57e0810b7c50c386e1186e2183838d87c559febd51ee",
+      "test/order.test.mjs": "d6f663a6948b98a03bf487617ee4408e28382ea31be0e9ae591dde2c5989bd8c"
+    },
+    "baselineSourceSha256": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+    "evaluatorInventory": {
+      "README.md": "026b88aab5bd05908053c82266fd7525e5408734728a26621e4c611557827a9f",
+      "cases.mjs": "5c12a4f87ff849e4792f6db83a0b04e73ab112e9704ea1597614165406f9848d",
+      "evaluate.mjs": "8adc88f2fb0748fcfa157365f042f2ddd86bbcaa110663a1cd93da053ae57cdc",
+      "frozen-inputs.json": "ad0bf865c8c4b40154c5a1195683fb9156bbd0623fa4eea9f7d6e0e776d96f9b",
+      "run-cases.mjs": "4f91274012870fe0a29cda431fda7965c80a69f280c5da218feeb43515e08b5c",
+      "selfcheck.mjs": "d16ace900002917bb41e64e7f36b6cd45afba8756999970e478a917dfa199ea8"
+    }
+  },
+  "independent": {
+    "loadError": null,
+    "summary": {
+      "task": {
+        "passed": 3,
+        "total": 3
+      },
+      "preservation": {
+        "passed": 7,
+        "total": 7
+      },
+      "team": {
+        "passed": 3,
+        "total": 5
+      }
+    },
+    "cases": [
+      {
+        "category": "task",
+        "id": "source_changed",
+        "description": "Implementation differs from the initial source",
+        "passed": true
+      },
+      {
+        "category": "task",
+        "id": "internal_spaces",
+        "description": "Normalizes a repeated ordinary-space group",
+        "passed": true
+      },
+      {
+        "category": "task",
+        "id": "multiple_groups",
+        "description": "Normalizes multiple ordinary-space groups",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "named_export",
+        "description": "Keeps the named createOrder export callable",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "public_shape",
+        "description": "Keeps existing values and exactly the two public properties",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "edge_trim",
+        "description": "Keeps existing String.trim edge behavior",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "positive_integer",
+        "description": "Retains valid positive integer quantities",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "blank_name",
+        "description": "Keeps the empty-name validation and message",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "nonpositive_quantity",
+        "description": "Keeps nonpositive-quantity validation and message",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "noninteger_quantity",
+        "description": "Keeps fractional and nonfinite quantity validation",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "ordinary_spaces",
+        "description": "Collapses internal U+0020 runs only as specified",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "trim_edges",
+        "description": "Trims both edges without losing existing Unicode trim",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "letter_case",
+        "description": "Preserves item-name letter case",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "internal_tabs",
+        "description": "Preserves meaningful interior tab characters",
+        "passed": false,
+        "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'Green Tea Pack'\n- 'Green\\t\\tTea Pack'\n        ^\n\n    at cases.createOrder.createOrder (file:///evaluator/cases.mjs:54:12)\n    at file:///evaluator/run-cases.mjs:23:5\n    at Array.map (<anonymous>)\n    at file:///evaluator/run-cases.mjs:20:23"
+      },
+      {
+        "category": "team",
+        "id": "internal_nbsp",
+        "description": "Preserves meaningful interior nonbreaking spaces",
+        "passed": false,
+        "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'Green Tea Pack'\n- 'Green  Tea Pack'\n        ^\n\n    at cases (file:///evaluator/cases.mjs:57:12)\n    at file:///evaluator/run-cases.mjs:23:5\n    at Array.map (<anonymous>)\n    at file:///evaluator/run-cases.mjs:20:23"
+      }
+    ]
+  },
+  "agentTests": {
+    "changedFiles": [
+      "test/order.test.mjs"
+    ],
+    "discoveredFiles": [
+      "test/order.test.mjs"
+    ],
+    "final": {
+      "label": "agent-tests-final",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:16.858Z",
+      "finishedAt": "2026-10-04T15:33:17.107Z",
+      "elapsedMs": 243.664837,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-final.stdout.txt",
+      "stderr": "agent-tests-final.stderr.txt",
+      "assertionsFailed": false,
+      "tests": 7,
+      "failures": 0
+    },
+    "variants": [
+      {
+        "id": "baseline",
+        "description": "Original implementation; tests should detect the requested change",
+        "label": "agent-tests-baseline",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-baseline",
+        "startedAt": "2026-10-04T15:33:17.215Z",
+        "finishedAt": "2026-10-04T15:33:17.465Z",
+        "elapsedMs": 244.083537,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-baseline.stdout.txt",
+        "stderr": "agent-tests-baseline.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 2,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "broad-whitespace",
+        "description": "Wrongly collapses interior tabs and nonbreaking spaces",
+        "label": "agent-tests-broad-whitespace",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-broad-whitespace",
+        "startedAt": "2026-10-04T15:33:17.575Z",
+        "finishedAt": "2026-10-04T15:33:17.817Z",
+        "elapsedMs": 237.497495,
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-broad-whitespace.stdout.txt",
+        "stderr": "agent-tests-broad-whitespace.stderr.txt",
+        "assertionsFailed": false,
+        "tests": 7,
+        "failures": 0,
+        "detectedByAssertion": false
+      },
+      {
+        "id": "lowercase",
+        "description": "Wrongly lowercases names",
+        "label": "agent-tests-lowercase",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-lowercase",
+        "startedAt": "2026-10-04T15:33:17.916Z",
+        "finishedAt": "2026-10-04T15:33:18.162Z",
+        "elapsedMs": 240.96986,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-lowercase.stdout.txt",
+        "stderr": "agent-tests-lowercase.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 5,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "quantity-validation-removed",
+        "description": "Wrongly accepts invalid quantities",
+        "label": "agent-tests-quantity-validation-removed",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-quantity-validation-removed",
+        "startedAt": "2026-10-04T15:33:18.262Z",
+        "finishedAt": "2026-10-04T15:33:18.511Z",
+        "elapsedMs": 244.075199,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-quantity-validation-removed.stdout.txt",
+        "stderr": "agent-tests-quantity-validation-removed.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 2,
+        "detectedByAssertion": true
+      }
+    ],
+    "usefulRegression": true
+  },
+  "scope": {
+    "changedFiles": [
+      "README.md",
+      "src/order.ts",
+      "test/order.test.mjs"
+    ],
+    "outsideRequestedSourceAndTests": [
+      "README.md"
+    ],
+    "dependencyChanges": [],
+    "packageError": null,
+    "addedDependencies": [],
+    "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+    "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+    "manualReviewRequired": [
+      "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+      "Client instruction loading and client test execution require separate event evidence"
+    ]
+  },
+  "commands": [
+    {
+      "label": "independent-cases",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "/evaluator/run-cases.mjs",
+        "/out/final-project",
+        "/baseline",
+        "/out/independent-cases.json"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:16.681Z",
+      "finishedAt": "2026-10-04T15:33:16.855Z",
+      "elapsedMs": 167.22552,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "independent-cases.stdout.txt",
+      "stderr": "independent-cases.stderr.txt"
+    },
+    {
+      "label": "agent-tests-final",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:16.858Z",
+      "finishedAt": "2026-10-04T15:33:17.107Z",
+      "elapsedMs": 243.664837,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-final.stdout.txt",
+      "stderr": "agent-tests-final.stderr.txt"
+    },
+    {
+      "label": "agent-tests-baseline",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-baseline",
+      "startedAt": "2026-10-04T15:33:17.215Z",
+      "finishedAt": "2026-10-04T15:33:17.465Z",
+      "elapsedMs": 244.083537,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-baseline.stdout.txt",
+      "stderr": "agent-tests-baseline.stderr.txt"
+    },
+    {
+      "label": "agent-tests-broad-whitespace",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-broad-whitespace",
+      "startedAt": "2026-10-04T15:33:17.575Z",
+      "finishedAt": "2026-10-04T15:33:17.817Z",
+      "elapsedMs": 237.497495,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-broad-whitespace.stdout.txt",
+      "stderr": "agent-tests-broad-whitespace.stderr.txt"
+    },
+    {
+      "label": "agent-tests-lowercase",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-lowercase",
+      "startedAt": "2026-10-04T15:33:17.916Z",
+      "finishedAt": "2026-10-04T15:33:18.162Z",
+      "elapsedMs": 240.96986,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-lowercase.stdout.txt",
+      "stderr": "agent-tests-lowercase.stderr.txt"
+    },
+    {
+      "label": "agent-tests-quantity-validation-removed",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-quantity-validation-removed",
+      "startedAt": "2026-10-04T15:33:18.262Z",
+      "finishedAt": "2026-10-04T15:33:18.511Z",
+      "elapsedMs": 244.075199,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-quantity-validation-removed.stdout.txt",
+      "stderr": "agent-tests-quantity-validation-removed.stderr.txt"
+    }
+  ]
+}

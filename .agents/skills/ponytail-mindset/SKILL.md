@@ -11,31 +11,28 @@ Reduce unnecessary code and dependencies without weakening correctness or securi
 
 ## When to Use
 
-Substantive implementation and refactoring during Build.
+Substantive implementation, refactoring, and reviews of complexity.
 
 ## Rules & Patterns
 
-Before adding code, check whether the feature is needed and whether existing code, the standard library, the platform, or an installed dependency handles it. Then implement the smallest readable solution. Avoid premature abstractions. Preserve validation, authorization, parameterized queries, meaningful error handling, and required tests.
+Before adding code, consider YAGNI, project reuse, the standard library, native platform features, installed dependencies, a readable one-liner, then the minimum maintainable code. Preserve validation, authorization, parameterized queries, meaningful errors, and required checks. Single-use helpers are allowed when they clarify a concept or boundary.
 
-The 7-rung ladder: YAGNI; reuse project code; standard library; native platform;
-installed dependencies; a readable one-liner; the minimum maintainable code.
-
-Read [references/minimalism.md](references/minimalism.md) for detailed procedures and examples only when needed.
+Read [references/minimalism.md](references/minimalism.md) when a tradeoff needs detail.
 
 ## Code Examples
 
-Reuse the existing date formatter. A shorter database query still needs authorization and validated input.
+Reuse the installed date formatter. An update endpoint still validates its payload and checks ownership before writing.
 
 ## Validation Checklist
 
-- [ ] The requested outcome is handled.
-- [ ] Relevant verification and safety boundaries are preserved.
-- [ ] Limitations are stated.
+- [ ] The requested outcome and applicable failure cases are checked.
+- [ ] Evidence names commands, results, scope, and limitations.
+- [ ] Unrelated changes and existing authorization are preserved.
 
 ## Common Mistakes
 
-Repeated approval after authorization; unnecessary ceremonies for routine edits; treating role labels or string checks as behavioral proof.
+Code-golf; deleting safety checks; choosing a new component library by default; duplicating access-control logic solely to obey a reuse count.
 
 ## Integration Notes
 
-Load relevant domain skills and supporting resources on demand. Compatibility identifiers remain available.
+engineering-workflow chooses verification by risk; security defines protected boundaries. This skill chooses implementation size and readability.

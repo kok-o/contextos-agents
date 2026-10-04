@@ -40,6 +40,50 @@ test('authentication guidance survives a small soft budget with explicit overflo
   assert.ok(result.warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED'));
 });
 
+test('English and Russian safety tasks keep guidance despite exclusions and budget pressure', t => {
+  const { root, resolver } = fixture(t);
+  fs.writeFileSync(path.join(root, '.agents/profile.json'), JSON.stringify({ name: 'restricted', exclude_skills: ['security'] }));
+  const cases = [
+    ['Удали таблицу users', 'destructive'], ['Удалить файл cache.json', 'destructive'],
+    ['Очисти базу данных', 'destructive'], ['Drop table users', 'destructive'],
+    ['Delete files in cache', 'destructive'], ['Исправь авторизацию пользователей', 'high'],
+    ['Удалить все файлы проекта', 'destructive'], ['Удалить все старые файлы', 'destructive'],
+    ['Сотри выбранную папку build', 'destructive'], ['Очисти эту папку', 'destructive'],
+    ['Remove all files in build directory', 'destructive'], ['Delete the old files', 'destructive'],
+    ['Remove these folders', 'destructive'], ['Drop the database', 'destructive'],
+    ['Delete all tables', 'destructive'], ['git clean -fdx', 'destructive'],
+    ['git push -f origin main', 'destructive'], ['rm -fr build', 'destructive'],
+    ['Исправь проверку доступа к чужим документам', 'high'], ['Добавь платежи', 'high'],
+    ['Fix IDOR in document deletion', 'high'], ['Fix access control for documents', 'high'],
+    ['Implement a payment webhook', 'high'],
+  ];
+  for (const [task, expectedRisk] of cases) {
+    const result = resolver.resolve({ task, contextBudgetTokens: 100 });
+    assert.equal(result.risk.value, expectedRisk, task);
+    assert.ok(result.skills.includes('security'), task);
+    assert.ok(result.warnings.some(w => w.code === 'CTX_REQUIRED_SECURITY_PROFILE_CONFLICT'), task);
+    assert.ok(result.warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED'), task);
+  }
+});
+
+test('routine Russian edits and accessibility do not become destructive or authentication work', t => {
+  const { resolver } = fixture(t);
+  for (const task of ['Исправь опечатку в README', 'Поправь документацию']) {
+    const result = resolver.resolve({ task, contextBudgetTokens: 1000 });
+    assert.equal(result.risk.value, 'routine', task);
+    assert.deepEqual(result.skills, ['engineering-workflow']);
+  }
+  const result = resolver.resolve({ task: 'Улучши доступность кнопки' });
+  assert.equal(result.risk.value, 'standard');
+  assert.equal(result.skills.includes('security'), false);
+  for (const task of ['Remove unused imports from files', 'Delete the unused variable', 'Удали неиспользуемый импорт из файла']) {
+    assert.equal(resolver.resolve({ task }).risk.value, 'standard', task);
+  }
+  for (const [task, phase] of [['Спланируй новую функцию', 'Plan'], ['Проверь код модуля', 'Review'], ['Добавь тесты', 'Verify']]) {
+    assert.equal(resolver.resolve({ task }).phase.value, phase, task);
+  }
+});
+
 test('migration and destructive tasks preserve safety even when a profile excludes security', t => {
   const { root, resolver } = fixture(t);
   fs.writeFileSync(path.join(root, '.agents/profile.json'), JSON.stringify({ name: 'restricted', exclude_skills: ['security'] }));

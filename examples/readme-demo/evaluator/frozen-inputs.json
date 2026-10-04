@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-10-04T15:05:38.004Z",
+  "node": "v22.14.0",
+  "note": "Prepared and self-checked before any comparison model run. Hashes exclude this manifest.",
+  "files": {
+    "evaluator/README.md": "026b88aab5bd05908053c82266fd7525e5408734728a26621e4c611557827a9f",
+    "evaluator/cases.mjs": "5c12a4f87ff849e4792f6db83a0b04e73ab112e9704ea1597614165406f9848d",
+    "evaluator/evaluate.mjs": "8adc88f2fb0748fcfa157365f042f2ddd86bbcaa110663a1cd93da053ae57cdc",
+    "evaluator/run-cases.mjs": "4f91274012870fe0a29cda431fda7965c80a69f280c5da218feeb43515e08b5c",
+    "evaluator/selfcheck.mjs": "d16ace900002917bb41e64e7f36b6cd45afba8756999970e478a917dfa199ea8",
+    "fixture/.gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+    "fixture/README.md": "b8b1cd7257baedac2df3831df58d470e9a051d6b2991dddb827a35149e279ccf",
+    "fixture/package.json": "a5e7d164de9d302d5e0cf1c607bde5caba6a8f49e501a4f9c7c9849b79f88d23",
+    "fixture/src/order.ts": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+    "fixture/test/order.test.mjs": "4ce6614a546d38e12534a62a688ffe8b6be1b050182cb6460d967def6ccae70f"
+  }
+}

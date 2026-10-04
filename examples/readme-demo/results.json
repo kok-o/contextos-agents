@@ -1,0 +1,674 @@
+{
+  "schemaVersion": 1,
+  "candidate": "published contextos-agents@2.3.1",
+  "model": "gpt-6.1-sol",
+  "reasoning": "medium",
+  "order": [
+    "A1",
+    "B1",
+    "C1",
+    "B2",
+    "C2",
+    "A2",
+    "C3",
+    "A3",
+    "B3"
+  ],
+  "runs": [
+    {
+      "id": "A1",
+      "condition": "A",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 43.309,
+      "requests": 8,
+      "tokens": {
+        "input": 66452,
+        "cachedInput": 55027,
+        "output": 1644
+      },
+      "tokenRateEstimateUsd": 0.0504932,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": false,
+        "hasTeamMetadata": false,
+        "hasFullTeamBody": false,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "N/A",
+      "teamReadEvidence": [],
+      "loadedNativeBodies": {},
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 3,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "README.md",
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [
+          "README.md"
+        ],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "B1",
+      "condition": "B",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 40.052,
+      "requests": 9,
+      "tokens": {
+        "input": 114090,
+        "cachedInput": 96624,
+        "output": 1381
+      },
+      "tokenRateEstimateUsd": 0.0671239,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": true,
+        "hasTeamMetadata": true,
+        "hasFullTeamBody": true,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "native AGENTS body injected",
+      "teamReadEvidence": [
+        {
+          "eventIndex": 7,
+          "command": "/bin/bash -lc 'git status --short; cat team-guidance/project-instructions.md team-guidance/skills/context-manager/SKILL.md team-guidance/skills/context-os/SKILL.md team-guidance/skills/engineering-workflow/SKILL.md team-guidance/skills/ponytail-mindset/SKILL.md team-guidance/skills/team-order/SKILL.md team-guidance/skills/typescript/SKILL.md; cat package.json src/order.ts test/order.test.mjs'",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": false
+        }
+      ],
+      "loadedNativeBodies": {},
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 5,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "C1",
+      "condition": "C",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 47.89,
+      "requests": 8,
+      "tokens": {
+        "input": 90756,
+        "cachedInput": 75350,
+        "output": 1924
+      },
+      "tokenRateEstimateUsd": 0.065278,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": true,
+        "hasTeamMetadata": true,
+        "hasFullTeamBody": false,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "native skill body read",
+      "teamReadEvidence": [
+        {
+          "eventIndex": 5,
+          "command": "/bin/bash -lc \"pwd; rg --files -g 'AGENTS.md' -g 'package.json' -g '*order*' -g '*test*' -g '*spec*'; cat /workspace/.agents/skills/context-manager/SKILL.md /workspace/.agents/skills/engineering-workflow/SKILL.md /workspace/.agents/skills/team-order/SKILL.md\"",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": true
+        }
+      ],
+      "loadedNativeBodies": {
+        "context-manager": [
+          5
+        ],
+        "engineering-workflow": [
+          5
+        ],
+        "team-order": [
+          5
+        ],
+        "typescript": [
+          7
+        ]
+      },
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 5,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "B2",
+      "condition": "B",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 64.825,
+      "requests": 12,
+      "tokens": {
+        "input": 169676,
+        "cachedInput": 148788,
+        "output": 2951
+      },
+      "tokenRateEstimateUsd": 0.0965908,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": true,
+        "hasTeamMetadata": true,
+        "hasFullTeamBody": true,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "native AGENTS body injected",
+      "teamReadEvidence": [
+        {
+          "eventIndex": 7,
+          "command": "/bin/bash -lc \"git status --short; cat package.json src/order.ts test/order.test.mjs team-guidance/project-instructions.md; for skill in context-manager context-os engineering-workflow ponytail-mindset team-order typescript; do printf '\\\\n--- %s ---\\\\n' \\\"\"'$skill\"; cat \"team-guidance/skills/$skill/SKILL.md\"; done'",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": false
+        }
+      ],
+      "loadedNativeBodies": {},
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 5,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "C2",
+      "condition": "C",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 41.552,
+      "requests": 7,
+      "tokens": {
+        "input": 79502,
+        "cachedInput": 64624,
+        "output": 1582
+      },
+      "tokenRateEstimateUsd": 0.059466899999999996,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": true,
+        "hasTeamMetadata": true,
+        "hasFullTeamBody": false,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "native skill body read",
+      "teamReadEvidence": [
+        {
+          "eventIndex": 5,
+          "command": "/bin/bash -lc \"pwd; rg --files -g 'AGENTS.md' -g 'package.json' -g '*order*' -g '*test*' -g '*lock*'; ls -a; cat .agents/skills/context-manager/SKILL.md .agents/skills/engineering-workflow/SKILL.md .agents/skills/team-order/SKILL.md .agents/skills/typescript/SKILL.md\"",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": true
+        }
+      ],
+      "loadedNativeBodies": {
+        "context-manager": [
+          5
+        ],
+        "engineering-workflow": [
+          5
+        ],
+        "team-order": [
+          5
+        ],
+        "typescript": [
+          5
+        ]
+      },
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 5,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "A2",
+      "condition": "A",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 41.591,
+      "requests": 8,
+      "tokens": {
+        "input": 65378,
+        "cachedInput": 54624,
+        "output": 1606
+      },
+      "tokenRateEstimateUsd": 0.048395400000000005,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": false,
+        "hasTeamMetadata": false,
+        "hasFullTeamBody": false,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "N/A",
+      "teamReadEvidence": [],
+      "loadedNativeBodies": {},
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 3,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "README.md",
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [
+          "README.md"
+        ],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "C3",
+      "condition": "C",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 46.298,
+      "requests": 9,
+      "tokens": {
+        "input": 96492,
+        "cachedInput": 82309,
+        "output": 1907
+      },
+      "tokenRateEstimateUsd": 0.06274489999999999,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": true,
+        "hasTeamMetadata": true,
+        "hasFullTeamBody": false,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "native skill body read",
+      "teamReadEvidence": [
+        {
+          "eventIndex": 5,
+          "command": "/bin/bash -lc \"pwd; rg --files -g 'AGENTS.md' -g 'package.json' -g '*order*' -g '*test*' -g 'tsconfig*'; cat .agents/skills/team-order/SKILL.md; cat .agents/skills/engineering-workflow/SKILL.md; cat .agents/skills/typescript/SKILL.md\"",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": true
+        }
+      ],
+      "loadedNativeBodies": {
+        "engineering-workflow": [
+          5
+        ],
+        "team-order": [
+          5
+        ],
+        "typescript": [
+          5
+        ]
+      },
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 5,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 7,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "A3",
+      "condition": "A",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 39.087,
+      "requests": 8,
+      "tokens": {
+        "input": 64071,
+        "cachedInput": 53902,
+        "output": 1449
+      },
+      "tokenRateEstimateUsd": 0.0452907,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": false,
+        "hasTeamMetadata": false,
+        "hasFullTeamBody": false,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "N/A",
+      "teamReadEvidence": [],
+      "loadedNativeBodies": {},
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 3,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 6,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "README.md",
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [
+          "README.md"
+        ],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    },
+    {
+      "id": "B3",
+      "condition": "B",
+      "status": "COMPLETE",
+      "clientExitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 37.591,
+      "requests": 8,
+      "tokens": {
+        "input": 99709,
+        "cachedInput": 82836,
+        "output": 1264
+      },
+      "tokenRateEstimateUsd": 0.0630941,
+      "invoiceCost": "not measured",
+      "initialContext": {
+        "hasContextOS": true,
+        "hasTeamMetadata": true,
+        "hasFullTeamBody": true,
+        "builtInInstructionsSha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+        "toolDefinitionsSha256": "cdd48ab0b0a4d61f5f0acec18da99be1adcbd49c5457f86f5dccdfc9cf74afce"
+      },
+      "teamLoading": "native AGENTS body injected",
+      "teamReadEvidence": [
+        {
+          "eventIndex": 7,
+          "command": "/bin/bash -lc 'git status --short; cat team-guidance/project-instructions.md team-guidance/skills/context-manager/SKILL.md team-guidance/skills/context-os/SKILL.md team-guidance/skills/engineering-workflow/SKILL.md team-guidance/skills/ponytail-mindset/SKILL.md team-guidance/skills/team-order/SKILL.md team-guidance/skills/typescript/SKILL.md; cat package.json src/order.ts test/order.test.mjs'",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": false
+        },
+        {
+          "eventIndex": 9,
+          "command": "/bin/bash -lc \"cat team-guidance/skills/engineering-workflow/SKILL.md team-guidance/skills/ponytail-mindset/SKILL.md team-guidance/skills/team-order/SKILL.md team-guidance/skills/security/SKILL.md; rg --files --hidden -g 'AGENTS.md' -g '\"'!node_modules'\"' src test; rg -n 'createOrder' --glob '\"'!team-guidance/**'\"' --glob '\"'!.agents/**'\"'; cat team-guidance/skills/context-os/SKILL.md\"",
+          "exitCode": 0,
+          "fullBodyContained": true,
+          "nativePathInCommand": false
+        }
+      ],
+      "loadedNativeBodies": {},
+      "independent": {
+        "task": {
+          "passed": 3,
+          "total": 3
+        },
+        "preservation": {
+          "passed": 7,
+          "total": 7
+        },
+        "team": {
+          "passed": 5,
+          "total": 5
+        }
+      },
+      "usefulRegression": true,
+      "agentTests": {
+        "count": 8,
+        "exitCode": 0
+      },
+      "scope": {
+        "changedFiles": [
+          "src/order.ts",
+          "test/order.test.mjs"
+        ],
+        "outsideRequestedSourceAndTests": [],
+        "dependencyChanges": [],
+        "packageError": null,
+        "addedDependencies": [],
+        "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+        "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+        "manualReviewRequired": [
+          "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+          "Client instruction loading and client test execution require separate event evidence"
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "One task, three repetitions per arm; no general superiority claim.",
+    "A has less team information. B/C delivery differs; resolver is not isolated.",
+    "Token-rate estimates are not invoices. Initial metadata is not skill-body loading.",
+    "Drift checks validate exported configuration, not application behavior."
+  ]
+}

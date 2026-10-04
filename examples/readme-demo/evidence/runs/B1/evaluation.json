@@ -1,0 +1,514 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-10-04T15:33:27.509Z",
+  "runtime": {
+    "node": "v22.14.0",
+    "platform": "linux",
+    "architecture": "x64"
+  },
+  "paths": {
+    "project": "/candidate",
+    "baseline": "/baseline",
+    "initial": "/initial",
+    "out": "/out"
+  },
+  "provenance": {
+    "initialInventory": {
+      ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      "AGENTS.md": "47d14661a83d9b4b9b6ebdbd7eec415165cd5da7431347040e510035af237d0b",
+      "README.md": "b8b1cd7257baedac2df3831df58d470e9a051d6b2991dddb827a35149e279ccf",
+      "package.json": "a5e7d164de9d302d5e0cf1c607bde5caba6a8f49e501a4f9c7c9849b79f88d23",
+      "src/order.ts": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+      "team-guidance/project-instructions.md": "708c4082c1638b5e0cff3173261d3ebeec701965af74e624ca15bb0adf476474",
+      "team-guidance/skills/context-manager/EXAMPLES.md": "31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "team-guidance/skills/context-manager/SKILL.md": "91e393524d632f019b870b00a7b76fdf4ec0a37acb20f893e6e213cc70a3ec5b",
+      "team-guidance/skills/context-manager/TROUBLESHOOTING.md": "b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "team-guidance/skills/context-manager/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/context-manager/references/context-rules.md": "090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "team-guidance/skills/context-os/EXAMPLES.md": "ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "team-guidance/skills/context-os/SKILL.md": "e7eda3e2ce9d38e1dd4d787e45dbb0f254826c0b9b95233364a722963eb73d51",
+      "team-guidance/skills/context-os/TROUBLESHOOTING.md": "c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "team-guidance/skills/context-os/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/context-os/packs.yaml": "029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "team-guidance/skills/context-os/references/context-rules.md": "12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "team-guidance/skills/context-os/references/pipeline.md": "89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "team-guidance/skills/context-os/references/project-graph.md": "42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "team-guidance/skills/context-os/rules.yaml": "56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "team-guidance/skills/engineering-workflow/EXAMPLES.md": "d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "team-guidance/skills/engineering-workflow/SKILL.md": "e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
+      "team-guidance/skills/engineering-workflow/TROUBLESHOOTING.md": "a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "team-guidance/skills/engineering-workflow/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/engineering-workflow/references/workflow.md": "6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "team-guidance/skills/gemini-precision/EXAMPLES.md": "36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "team-guidance/skills/gemini-precision/SKILL.md": "6f42bd8c8d15e4285a461cde23f0c7170616590a9950d89fa8aa0088a1593552",
+      "team-guidance/skills/gemini-precision/TROUBLESHOOTING.md": "f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "team-guidance/skills/gemini-precision/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/gstack-roles/EXAMPLES.md": "c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "team-guidance/skills/gstack-roles/SKILL.md": "e773ea899de33a7b656af4a330c2e5b7e10874f8d34f9c82581de5d97f9afff7",
+      "team-guidance/skills/gstack-roles/TROUBLESHOOTING.md": "27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "team-guidance/skills/gstack-roles/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/gstack-roles/references/roles.md": "f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "team-guidance/skills/ponytail-mindset/EXAMPLES.md": "79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "team-guidance/skills/ponytail-mindset/SKILL.md": "d47e1789224c0dbe0527e0ab3abe647e5796aee65c7d230bbcb971b30e734107",
+      "team-guidance/skills/ponytail-mindset/TROUBLESHOOTING.md": "2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "team-guidance/skills/ponytail-mindset/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/ponytail-mindset/references/minimalism.md": "4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "team-guidance/skills/security/EXAMPLES.md": "0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "team-guidance/skills/security/SKILL.md": "d28ad519465e407d4614b02f6bf06ee2834af9e83c94463ba84733fafdb9bad4",
+      "team-guidance/skills/security/TROUBLESHOOTING.md": "4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "team-guidance/skills/security/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/team-order/SKILL.md": "6841ec8c66ed2bca627dc78c655e5fc4054aae4c62d5106e3f2fe3bbaf20cc35",
+      "team-guidance/skills/typescript/EXAMPLES.md": "76ce81d889ad8a0d1528bbcbe68f7e088cccb2583bb650a6111139d51125d8c5",
+      "team-guidance/skills/typescript/SKILL.md": "544cd6e2a2cf250835e59e594792d9e8cfb92348942b824daab86ff3d3bd22fb",
+      "team-guidance/skills/typescript/TROUBLESHOOTING.md": "b437bbbed98893023d93593fdad53ba1596392be056ea73719f2f436016a790c",
+      "team-guidance/skills/typescript/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "test/order.test.mjs": "4ce6614a546d38e12534a62a688ffe8b6be1b050182cb6460d967def6ccae70f"
+    },
+    "finalInventory": {
+      ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      "AGENTS.md": "47d14661a83d9b4b9b6ebdbd7eec415165cd5da7431347040e510035af237d0b",
+      "README.md": "b8b1cd7257baedac2df3831df58d470e9a051d6b2991dddb827a35149e279ccf",
+      "package.json": "a5e7d164de9d302d5e0cf1c607bde5caba6a8f49e501a4f9c7c9849b79f88d23",
+      "src/order.ts": "367e4722c064cf3f0d1689f943de00d97c20b046705c2518c9d03f97815c4274",
+      "team-guidance/project-instructions.md": "708c4082c1638b5e0cff3173261d3ebeec701965af74e624ca15bb0adf476474",
+      "team-guidance/skills/context-manager/EXAMPLES.md": "31880adc8b4c001ba2d18e869e965ee40ebf6516e43f7d8f15ffab8ade0b2f7d",
+      "team-guidance/skills/context-manager/SKILL.md": "91e393524d632f019b870b00a7b76fdf4ec0a37acb20f893e6e213cc70a3ec5b",
+      "team-guidance/skills/context-manager/TROUBLESHOOTING.md": "b65462139e24666c13e0e4c3bd55916db48cc78a5fb6e09d3c75a971ebf97273",
+      "team-guidance/skills/context-manager/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/context-manager/references/context-rules.md": "090962a3a26fb2a37d67c3d4fa5260029e41e2cfd4368ba83d15c65d91681839",
+      "team-guidance/skills/context-os/EXAMPLES.md": "ef2b31f2489664b3ddbf3a815a13ee863c95cfebed7e236c12e1394c6a0c0737",
+      "team-guidance/skills/context-os/SKILL.md": "e7eda3e2ce9d38e1dd4d787e45dbb0f254826c0b9b95233364a722963eb73d51",
+      "team-guidance/skills/context-os/TROUBLESHOOTING.md": "c3156d5d290cae112e1a7362f591059ec1f92fb75aacafa1f3ad0c25efaddd59",
+      "team-guidance/skills/context-os/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/context-os/packs.yaml": "029719550cae540407b5b72026ea5e8cd1c24e7914169549c4902e6a84e6999d",
+      "team-guidance/skills/context-os/references/context-rules.md": "12babf2b32e24b1c5ad7a2ebe2d3cfa5059db223951ea081989f234b600f0232",
+      "team-guidance/skills/context-os/references/pipeline.md": "89a77a6ee49256227f1bbd57eecfd0db35192c5f5d4ccf595c53af1f2834030b",
+      "team-guidance/skills/context-os/references/project-graph.md": "42d1eabfa4b6dabd872290ed80d62b3ad1f6afe6d7d29275e8cf4b4fed268dfc",
+      "team-guidance/skills/context-os/rules.yaml": "56181b148f4bd4fb1d1b5d79fb91cab065afaf413425ca795faa01de98b89c72",
+      "team-guidance/skills/engineering-workflow/EXAMPLES.md": "d9935f301c02758b499db8c7163516570e9f8c274bfe4de5a046eeadc0ba1352",
+      "team-guidance/skills/engineering-workflow/SKILL.md": "e99f4886b21d85b0b3f11c6419db8bc72ce9272134389cc8d7ce7c44ce75e4a2",
+      "team-guidance/skills/engineering-workflow/TROUBLESHOOTING.md": "a15c390c656ed95b4d6fb20c7aa5bbf2cec6f1a72e7a7fc80a120363a45569d1",
+      "team-guidance/skills/engineering-workflow/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/engineering-workflow/references/workflow.md": "6d830344e698c747b773c3fd20bd6636f05f0de2c3fee07a8ae6db756743446d",
+      "team-guidance/skills/gemini-precision/EXAMPLES.md": "36b53a4e73a1c86ce67718f6c5efa833e756fcc05ec3f80be23edd7287a5cb3a",
+      "team-guidance/skills/gemini-precision/SKILL.md": "6f42bd8c8d15e4285a461cde23f0c7170616590a9950d89fa8aa0088a1593552",
+      "team-guidance/skills/gemini-precision/TROUBLESHOOTING.md": "f4a3c039b0a8e384084897b14fd86240a517f9d72ebeaf95d18e749264a1dc6d",
+      "team-guidance/skills/gemini-precision/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/gstack-roles/EXAMPLES.md": "c56bc00f75f36f1c3b74c68f545fe48442f4776ba6ac3b08911f329656179932",
+      "team-guidance/skills/gstack-roles/SKILL.md": "e773ea899de33a7b656af4a330c2e5b7e10874f8d34f9c82581de5d97f9afff7",
+      "team-guidance/skills/gstack-roles/TROUBLESHOOTING.md": "27df949e1822c89b5927395d1a40a413a48f65758d961bb9955e3a3adaed80de",
+      "team-guidance/skills/gstack-roles/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/gstack-roles/references/roles.md": "f8620dfa81bfe7e0b3c1266775121dd6a1edbbe8bb1e4a550024ec9286ec5994",
+      "team-guidance/skills/ponytail-mindset/EXAMPLES.md": "79a027122c04430a85965d857c79436133df3c649c140f4d559f0c16b19c4471",
+      "team-guidance/skills/ponytail-mindset/SKILL.md": "d47e1789224c0dbe0527e0ab3abe647e5796aee65c7d230bbcb971b30e734107",
+      "team-guidance/skills/ponytail-mindset/TROUBLESHOOTING.md": "2e6356a3611c526a7fcb436cc62ee09b62bfd9e1316b4aef5b6c5158b961497c",
+      "team-guidance/skills/ponytail-mindset/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/ponytail-mindset/references/minimalism.md": "4f998262d481ce5aea486ae62983e17d3710349958823df026391aa96620cbb1",
+      "team-guidance/skills/security/EXAMPLES.md": "0fd2ce841f1f7cbd7b3b87a5fe9359334e14ce3110c37e59ac3a14d2faf92b75",
+      "team-guidance/skills/security/SKILL.md": "d28ad519465e407d4614b02f6bf06ee2834af9e83c94463ba84733fafdb9bad4",
+      "team-guidance/skills/security/TROUBLESHOOTING.md": "4e74996fcd82fc051ce6f007e661bcbee5b22c98c521ab1b1477ef2dece5c42e",
+      "team-guidance/skills/security/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "team-guidance/skills/team-order/SKILL.md": "6841ec8c66ed2bca627dc78c655e5fc4054aae4c62d5106e3f2fe3bbaf20cc35",
+      "team-guidance/skills/typescript/EXAMPLES.md": "76ce81d889ad8a0d1528bbcbe68f7e088cccb2583bb650a6111139d51125d8c5",
+      "team-guidance/skills/typescript/SKILL.md": "544cd6e2a2cf250835e59e594792d9e8cfb92348942b824daab86ff3d3bd22fb",
+      "team-guidance/skills/typescript/TROUBLESHOOTING.md": "b437bbbed98893023d93593fdad53ba1596392be056ea73719f2f436016a790c",
+      "team-guidance/skills/typescript/VALIDATION.json": "984562f64676b97da289c0d6ce9931029a27fdb036902e12b905499c892f1b1e",
+      "test/order.test.mjs": "e952588ea6bc550f62c82680159ae306bf867eec6c57cc075cdfc526875f3e37"
+    },
+    "baselineSourceSha256": "cdc97dbfabe26146c3471c9abef367e893d2ac8b842d42b4042a93bb729464c9",
+    "evaluatorInventory": {
+      "README.md": "026b88aab5bd05908053c82266fd7525e5408734728a26621e4c611557827a9f",
+      "cases.mjs": "5c12a4f87ff849e4792f6db83a0b04e73ab112e9704ea1597614165406f9848d",
+      "evaluate.mjs": "8adc88f2fb0748fcfa157365f042f2ddd86bbcaa110663a1cd93da053ae57cdc",
+      "frozen-inputs.json": "ad0bf865c8c4b40154c5a1195683fb9156bbd0623fa4eea9f7d6e0e776d96f9b",
+      "run-cases.mjs": "4f91274012870fe0a29cda431fda7965c80a69f280c5da218feeb43515e08b5c",
+      "selfcheck.mjs": "d16ace900002917bb41e64e7f36b6cd45afba8756999970e478a917dfa199ea8"
+    }
+  },
+  "independent": {
+    "loadError": null,
+    "summary": {
+      "task": {
+        "passed": 3,
+        "total": 3
+      },
+      "preservation": {
+        "passed": 7,
+        "total": 7
+      },
+      "team": {
+        "passed": 5,
+        "total": 5
+      }
+    },
+    "cases": [
+      {
+        "category": "task",
+        "id": "source_changed",
+        "description": "Implementation differs from the initial source",
+        "passed": true
+      },
+      {
+        "category": "task",
+        "id": "internal_spaces",
+        "description": "Normalizes a repeated ordinary-space group",
+        "passed": true
+      },
+      {
+        "category": "task",
+        "id": "multiple_groups",
+        "description": "Normalizes multiple ordinary-space groups",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "named_export",
+        "description": "Keeps the named createOrder export callable",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "public_shape",
+        "description": "Keeps existing values and exactly the two public properties",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "edge_trim",
+        "description": "Keeps existing String.trim edge behavior",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "positive_integer",
+        "description": "Retains valid positive integer quantities",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "blank_name",
+        "description": "Keeps the empty-name validation and message",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "nonpositive_quantity",
+        "description": "Keeps nonpositive-quantity validation and message",
+        "passed": true
+      },
+      {
+        "category": "preservation",
+        "id": "noninteger_quantity",
+        "description": "Keeps fractional and nonfinite quantity validation",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "ordinary_spaces",
+        "description": "Collapses internal U+0020 runs only as specified",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "trim_edges",
+        "description": "Trims both edges without losing existing Unicode trim",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "letter_case",
+        "description": "Preserves item-name letter case",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "internal_tabs",
+        "description": "Preserves meaningful interior tab characters",
+        "passed": true
+      },
+      {
+        "category": "team",
+        "id": "internal_nbsp",
+        "description": "Preserves meaningful interior nonbreaking spaces",
+        "passed": true
+      }
+    ]
+  },
+  "agentTests": {
+    "changedFiles": [
+      "test/order.test.mjs"
+    ],
+    "discoveredFiles": [
+      "test/order.test.mjs"
+    ],
+    "final": {
+      "label": "agent-tests-final",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:21.356Z",
+      "finishedAt": "2026-10-04T15:33:21.615Z",
+      "elapsedMs": 252.970258,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-final.stdout.txt",
+      "stderr": "agent-tests-final.stderr.txt",
+      "assertionsFailed": false,
+      "tests": 7,
+      "failures": 0
+    },
+    "variants": [
+      {
+        "id": "baseline",
+        "description": "Original implementation; tests should detect the requested change",
+        "label": "agent-tests-baseline",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-baseline",
+        "startedAt": "2026-10-04T15:33:22.828Z",
+        "finishedAt": "2026-10-04T15:33:23.077Z",
+        "elapsedMs": 243.963445,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-baseline.stdout.txt",
+        "stderr": "agent-tests-baseline.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 2,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "broad-whitespace",
+        "description": "Wrongly collapses interior tabs and nonbreaking spaces",
+        "label": "agent-tests-broad-whitespace",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-broad-whitespace",
+        "startedAt": "2026-10-04T15:33:24.280Z",
+        "finishedAt": "2026-10-04T15:33:24.542Z",
+        "elapsedMs": 256.366974,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-broad-whitespace.stdout.txt",
+        "stderr": "agent-tests-broad-whitespace.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 1,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "lowercase",
+        "description": "Wrongly lowercases names",
+        "label": "agent-tests-lowercase",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-lowercase",
+        "startedAt": "2026-10-04T15:33:25.776Z",
+        "finishedAt": "2026-10-04T15:33:26.039Z",
+        "elapsedMs": 257.978944,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-lowercase.stdout.txt",
+        "stderr": "agent-tests-lowercase.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 5,
+        "detectedByAssertion": true
+      },
+      {
+        "id": "quantity-validation-removed",
+        "description": "Wrongly accepts invalid quantities",
+        "label": "agent-tests-quantity-validation-removed",
+        "command": [
+          "/usr/local/bin/node",
+          "--experimental-strip-types",
+          "--test",
+          "--test-reporter=tap",
+          "test/order.test.mjs"
+        ],
+        "cwd": "/out/variant-quantity-validation-removed",
+        "startedAt": "2026-10-04T15:33:27.254Z",
+        "finishedAt": "2026-10-04T15:33:27.504Z",
+        "elapsedMs": 244.339791,
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "timedOut": false,
+        "stdout": "agent-tests-quantity-validation-removed.stdout.txt",
+        "stderr": "agent-tests-quantity-validation-removed.stderr.txt",
+        "assertionsFailed": true,
+        "tests": 7,
+        "failures": 1,
+        "detectedByAssertion": true
+      }
+    ],
+    "usefulRegression": true
+  },
+  "scope": {
+    "changedFiles": [
+      "src/order.ts",
+      "test/order.test.mjs"
+    ],
+    "outsideRequestedSourceAndTests": [],
+    "dependencyChanges": [],
+    "packageError": null,
+    "addedDependencies": [],
+    "packageTestScriptBefore": "node --experimental-strip-types --test test/*.test.mjs",
+    "packageTestScriptAfter": "node --experimental-strip-types --test test/*.test.mjs",
+    "manualReviewRequired": [
+      "Review the source diff for unrelated changes, network/database effects, and static TypeScript API preservation",
+      "Client instruction loading and client test execution require separate event evidence"
+    ]
+  },
+  "commands": [
+    {
+      "label": "independent-cases",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "/evaluator/run-cases.mjs",
+        "/out/final-project",
+        "/baseline",
+        "/out/independent-cases.json"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:21.183Z",
+      "finishedAt": "2026-10-04T15:33:21.353Z",
+      "elapsedMs": 163.66025,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "independent-cases.stdout.txt",
+      "stderr": "independent-cases.stderr.txt"
+    },
+    {
+      "label": "agent-tests-final",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/final-project",
+      "startedAt": "2026-10-04T15:33:21.356Z",
+      "finishedAt": "2026-10-04T15:33:21.615Z",
+      "elapsedMs": 252.970258,
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-final.stdout.txt",
+      "stderr": "agent-tests-final.stderr.txt"
+    },
+    {
+      "label": "agent-tests-baseline",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-baseline",
+      "startedAt": "2026-10-04T15:33:22.828Z",
+      "finishedAt": "2026-10-04T15:33:23.077Z",
+      "elapsedMs": 243.963445,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-baseline.stdout.txt",
+      "stderr": "agent-tests-baseline.stderr.txt"
+    },
+    {
+      "label": "agent-tests-broad-whitespace",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-broad-whitespace",
+      "startedAt": "2026-10-04T15:33:24.280Z",
+      "finishedAt": "2026-10-04T15:33:24.542Z",
+      "elapsedMs": 256.366974,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-broad-whitespace.stdout.txt",
+      "stderr": "agent-tests-broad-whitespace.stderr.txt"
+    },
+    {
+      "label": "agent-tests-lowercase",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-lowercase",
+      "startedAt": "2026-10-04T15:33:25.776Z",
+      "finishedAt": "2026-10-04T15:33:26.039Z",
+      "elapsedMs": 257.978944,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-lowercase.stdout.txt",
+      "stderr": "agent-tests-lowercase.stderr.txt"
+    },
+    {
+      "label": "agent-tests-quantity-validation-removed",
+      "command": [
+        "/usr/local/bin/node",
+        "--experimental-strip-types",
+        "--test",
+        "--test-reporter=tap",
+        "test/order.test.mjs"
+      ],
+      "cwd": "/out/variant-quantity-validation-removed",
+      "startedAt": "2026-10-04T15:33:27.254Z",
+      "finishedAt": "2026-10-04T15:33:27.504Z",
+      "elapsedMs": 244.339791,
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "timedOut": false,
+      "stdout": "agent-tests-quantity-validation-removed.stdout.txt",
+      "stderr": "agent-tests-quantity-validation-removed.stderr.txt"
+    }
+  ]
+}

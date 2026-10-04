@@ -1,0 +1,26 @@
+{
+  "width": 1120,
+  "height": 660,
+  "durationMs": 20000,
+  "frames": 156,
+  "nominalFps": 16,
+  "loop": 0,
+  "bytes": 930842,
+  "sha256": "8db02f44a83de47eae331893dce60317fbbcdb47b1d42e3032d17a03f65b8aba",
+  "decodedReferenceChecks": [
+    {
+      "timeSeconds": 4.7,
+      "matchesQuantizedSourceExactly": true
+    },
+    {
+      "timeSeconds": 11.7,
+      "matchesQuantizedSourceExactly": true
+    },
+    {
+      "timeSeconds": 18.0,
+      "matchesQuantizedSourceExactly": true
+    }
+  ],
+  "evidence": "scripts/readme-gif/evidence/commands.json",
+  "format": "Continuous reconstructed CLI demo; selected output excerpts, editorial timing"
+}
