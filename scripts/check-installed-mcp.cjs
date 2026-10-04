@@ -4,7 +4,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const readline = require('node:readline');
-const root = path.resolve(process.argv[2] || '.');
+const root = fs.realpathSync(path.resolve(process.argv[2] || '.'));
 const runtimePaths = ['.agents/.contextos', '.contextos-session', '.contextos-worktrees'];
 const before = runtimePaths.map(file => fs.existsSync(path.join(root, file)));
 const mcpFolder = ['contextos-mcp', '@contextos/mcp'].find(folder => fs.existsSync(path.join(root, 'node_modules', folder))) || 'contextos-mcp';
