@@ -1,9 +1,22 @@
 # Maintenance candidate: core 2.3.1 / MCP 0.4.1
 
-Status: preparation in progress; neither package nor tag has been published.
+Status: verified release candidate; neither package nor tag has been published.
 The previous published pair remains core 2.3.0 / MCP 0.4.0. The
 [historical manifest](evidence/release-2.3.json) is unchanged. Candidate identities
 and acceptance belong in [release-2.3.1.json](evidence/release-2.3.1.json).
+
+[CI 37194510641](https://github.com/kok-o/contextos-agents/actions/runs/37194510641)
+passed 19/19 jobs at `f0bcf7628b8c5874315785412da399c56bddcfa9` on Windows,
+Linux and macOS (core Node 22/24). All three platforms' installed-consumer and
+both migration/rollback reports passed; their actual archive hashes match the
+manifest. Core tests: 532 passed. MCP tests: 623 passed, seven existing skips.
+Later evidence-only commits do not change the reviewed package archives.
+
+The first run passed 18/19 but Windows rollback `npm ci` exceeded its 180-second
+bound. Windows dependency installation now has a bounded 600-second allowance;
+CLI checks retain 180 seconds and command durations are recorded. The successful
+rerun restored all 424 configuration files; that npm step took 104 seconds.
+The original failure remains recorded in the manifest and retained CI artifacts.
 
 ## Changes and compatibility
 

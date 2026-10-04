@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-04",
-  "status": "candidate-archives-prepared",
+  "status": "verified-release-candidate",
   "sourceRevision": "eb39867568c448bb1c394e9470c99287897b1295",
   "versions": {
     "core": "2.3.1",
@@ -20,10 +20,119 @@
       "bytes": 1923025
     }
   ],
-  "ci": null,
+  "ci": {
+    "runId": 37194510641,
+    "url": "https://github.com/kok-o/contextos-agents/actions/runs/37194510641",
+    "headSha": "f0bcf7628b8c5874315785412da399c56bddcfa9",
+    "conclusion": "success",
+    "successfulJobs": 19,
+    "coreNodeVersions": [
+      22,
+      24
+    ],
+    "platforms": [
+      {
+        "platform": "ubuntu",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH",
+        "rollbackNpmCi": [
+          {
+            "durationMs": 3249,
+            "timeoutMs": 180000,
+            "exitCode": 0
+          }
+        ]
+      },
+      {
+        "platform": "macos",
+        "node": "v22.23.2",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH",
+        "rollbackNpmCi": [
+          {
+            "durationMs": 3193,
+            "timeoutMs": 180000,
+            "exitCode": 0
+          }
+        ]
+      },
+      {
+        "platform": "windows",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH",
+        "rollbackNpmCi": [
+          {
+            "durationMs": 103646,
+            "timeoutMs": 600000,
+            "exitCode": 0
+          }
+        ]
+      }
+    ]
+  },
   "support": {
     "stableMcp": "Default read-only inspection",
     "experimentalMcp": "Execution, Python, crash recovery and concurrent persistence; seven existing skipped tests",
     "liveClientCheck": "Protocol prepared; current candidate not verified in a live client"
-  }
+  },
+  "verificationRevision": "f0bcf7628b8c5874315785412da399c56bddcfa9",
+  "local": {
+    "node": "v22.14.0",
+    "core": {
+      "passed": 532,
+      "failed": 0
+    },
+    "mcp": {
+      "passed": 623,
+      "skipped": 7,
+      "failed": 0
+    },
+    "publicationAndSurfaceTests": {
+      "passed": 14,
+      "failed": 0
+    },
+    "installedConsumer": "PASS",
+    "currentMigration": "PASS",
+    "legacyMigration": "PASS",
+    "lint": "PASS: MCP has five preexisting warnings and two infos",
+    "catalog": "PASS",
+    "drift": "PASS",
+    "secrets": "PASS: 793 files",
+    "commandNote": "PowerShell/npm consumed the requested Vitest worker/reporter options. The actual default vitest run passed; local evidence is its raw log, structured skip evidence comes from this CI revision."
+  },
+  "priorAttempt": {
+    "runId": 37193815388,
+    "conclusion": "failure",
+    "passedJobs": 18,
+    "reason": "Windows checkpoint rollback npm ci exceeded 180000 ms after candidate install and MCP handshake passed",
+    "correction": "Bound only Windows dependency install/ci at 600000 ms; retain 180000 ms CLI checks and record durations"
+  },
+  "evidenceUpdates": "Later evidence and live-fixture documentation commits do not change either package archive. CI identifies the exact tested revision; archive hashes are rechecked after evidence updates.",
+  "remaining": [
+    "Separate publication decision",
+    "Live client checks and external pilot"
+  ]
 }

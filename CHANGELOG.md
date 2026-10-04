@@ -24,6 +24,8 @@ The [candidate checklist](docs/PATCH_RELEASE_2.3.1.md) records the release gates
 - Canonicalize installed MCP paths when a temporary directory has an OS alias.
 - Select reviewed manifests by the core version and use the candidate version in
   registry migration checks, retaining historical release evidence.
+- Allow bounded Windows npm dependency-install time during migration checks and
+  record step durations; retain stricter CLI timeouts and all rollback assertions.
 
 ### Documentation
 
