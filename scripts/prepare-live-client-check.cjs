@@ -18,9 +18,10 @@ if (!npm) throw new Error('npm CLI not found');
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const marker = 'ctx-' + crypto.randomBytes(8).toString('hex');
 const seed = "'use strict';\nexports.getStatus = () => ({ ok: false });\n";
+const description = 'Project convention for implementing or changing getStatus in src/status.cjs. Do not activate for arithmetic helpers or documentation.';
 const body = `---
 name: ctx-live-probe
-description: Project convention for implementing or changing getStatus in src/status.cjs. Do not activate for arithmetic helpers or documentation.
+description: ${description}
 ---
 # Status contract
 
@@ -57,18 +58,28 @@ for (const name of ['negative', 'explicit', 'automatic', 'unrelated']) {
   run(process.execPath, [npm, 'install', '--save-prod', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', archive]);
   const cli = path.join(cwd, 'node_modules/contextos-agents/bin/index.js');
   run(process.execPath, [cli, 'init', '--minimal', '--agent', 'gemini']);
-  if (name !== 'negative') write(path.join(cwd, '.agents/project/skills/ctx-live-probe/SKILL.md'), body);
+  if (name !== 'negative') {
+    const source = path.join(cwd, '.agents/project/skills/ctx-live-probe');
+    write(path.join(source, 'SKILL.md'), body);
+    write(path.join(source, 'skill.yaml'), `schemaVersion: 2\nname: ctx-live-probe\ntype: instruction-only\ndescription: ${description}\nversion: 1.0.0\nentrypoint: SKILL.md\nresources:\n  - SKILL.md\n`);
+  }
   for (const adapter of ['gemini', 'cursor']) run(process.execPath, [cli, 'export', adapter]);
   const native = path.join(cwd, '.agents/skills/ctx-live-probe/SKILL.md');
   const cursor = path.join(cwd, '.cursor/rules/ctx-live-probe.mdc');
   for (const file of [native, cursor]) {
     if (name === 'negative') {
       if (fs.existsSync(file)) throw new Error(`Negative control unexpectedly contains ${file}`);
-    } else if (!fs.readFileSync(file, 'utf8').includes(marker)) throw new Error(`Marker missing from ${file}`);
+    } else {
+      const content = fs.readFileSync(file, 'utf8');
+      if (!content.includes(marker)) throw new Error(`Marker missing from ${file}`);
+      const metadata = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)[1];
+      if (!metadata.includes(description) || metadata.includes(marker)) throw new Error(`Invalid routing metadata in ${file}`);
+    }
   }
   const pkg = JSON.parse(fs.readFileSync(path.join(cwd, 'node_modules/contextos-agents/package.json')));
   report.fixtures.push({ name, cwd, version: pkg.version,
     sourceHash: name === 'negative' ? null : hash(path.join(cwd, '.agents/project/skills/ctx-live-probe/SKILL.md')),
+    manifestHash: name === 'negative' ? null : hash(path.join(cwd, '.agents/project/skills/ctx-live-probe/skill.yaml')),
     nativeHash: name === 'negative' ? null : hash(native), cursorHash: name === 'negative' ? null : hash(cursor) });
   fs.writeFileSync(path.join(evidence, 'setup.json'), JSON.stringify(report, null, 2) + '\n');
 }

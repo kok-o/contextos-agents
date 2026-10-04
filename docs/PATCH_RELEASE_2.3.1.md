@@ -19,6 +19,10 @@ remain experimental with seven documented skips. The dependency move does not
 turn internal labs into a supported library API. See the
 [skip inventory](MCP_SKIPPED_TESTS.md) and [client check](LIVE_CLIENT_CHECK_RU.md).
 
+The live-check fixture uses an explicit `skill.yaml` description. Current exporters
+fall back to a generic routing description for manifestless skills; body export
+coverage does not establish useful automatic routing for that variant.
+
 ## Acceptance before publication
 
 - Match both package.json versions and both lockfile root versions.
