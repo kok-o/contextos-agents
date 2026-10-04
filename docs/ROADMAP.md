@@ -1,10 +1,9 @@
 # ContextOS roadmap
 
-Updated 4 October 2026. The maintenance release record lists core 2.3.1 and
-MCP 0.4.1 as published; see [the release record](PATCH_RELEASE_2.3.1.md).
-Changes below the release boundary are local, unreleased improvements.
-The [2.3.2 / 0.4.2 candidate](PATCH_RELEASE_2.3.2.md) prepares these improvements
-as a separate patch release with its own archive and CI evidence.
+Updated 4 October 2026. Core 2.3.2 and MCP 0.4.2 are published; see
+[the release record](PATCH_RELEASE_2.3.2.md) and its archive and CI evidence.
+Historical 2.3.1 / 0.4.1 archive identities remain unchanged. The reliability
+improvements below are included in this maintenance release.
 
 ## Implemented
 
@@ -18,7 +17,7 @@ as a separate patch release with its own archive and CI evidence.
 - Upgrade/checkpoint rollback preserving user rules.
 - Release records include Windows/Linux/macOS installed archive acceptance.
 
-## Local reliability improvements
+## Maintenance reliability improvements
 
 - Destructive task selection handles intervening words in Russian and English,
   while ordinary import cleanup keeps its standard risk classification.

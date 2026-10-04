@@ -106,6 +106,30 @@ test('upload error after registry accepted bytes is recovered by identity check'
     runNpm: runner(pair, pkg => { published.add(pkg.name); throw new Error('lost response'); }) });
   assert.equal(result.length, 2);
 });
+test('delayed registry visibility recovers without repeating an accepted upload', async t => {
+  const pair = fixture(t); const uploaded = new Set(); const calls = [];
+  const elapsed = new Map(pair.map(pkg => [pkg.name, 0]));
+  let waitingFor;
+  const result = await publishPair(pair, {
+    inspect: async pkg => uploaded.has(pkg.name) && elapsed.get(pkg.name) >= 120000 ? pkg.bytes : null,
+    runNpm: runner(pair, pkg => { calls.push(pkg.name); uploaded.add(pkg.name); waitingFor = pkg.name; }),
+    wait: async ms => elapsed.set(waitingFor, elapsed.get(waitingFor) + ms),
+  });
+  assert.deepEqual(calls, pair.map(pkg => pkg.name));
+  assert.ok(result.every(pkg => pkg.action === 'published-and-verified'));
+});
+
+test('registry visibility timeout is bounded and prevents publishing the second package', async t => {
+  const pair = fixture(t); const calls = []; let elapsed = 0;
+  await assert.rejects(publishPair(pair, {
+    inspect: async () => null,
+    runNpm: runner(pair, pkg => calls.push(pkg.name)),
+    wait: async ms => { elapsed += ms; },
+  }), /publication not visible/);
+  assert.equal(elapsed, 300000);
+  assert.deepEqual(calls, ['contextos-agents']);
+});
+
 test('registry distinguishes 404 from authentication/server failures', async () => {
   const pkg = { name: 'contextos-mcp', version: '0.4.0', sha256: '0'.repeat(64) };
   assert.equal(await registryArchive(pkg, async () => new Response('', { status: 404 })), null);

@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-04",
-  "status": "verified-maintenance-candidate",
+  "status": "published-and-verified-maintenance-release",
   "sourceRevision": "051af188d7abf0e03a0c58c0f3bf48a8f463073a",
   "versions": {
     "core": "2.3.2",
     "mcp": "0.4.2"
   },
-  "publication": "not-published",
+  "publication": "published-and-registry-verified",
   "archives": [
     {
       "file": "contextos-agents-2.3.2.tgz",
@@ -189,5 +189,114 @@
       "package/package.json"
     ],
     "runtimePayloadUnchanged": true
+  },
+  "publicationCi": {
+    "runId": 37222144320,
+    "url": "https://github.com/kok-o/contextos-agents/actions/runs/37222144320",
+    "tag": "v2.3.2",
+    "headSha": "5d97713878293680f7b1f9c23d8cdb18df28d593",
+    "attempt": 3,
+    "conclusion": "success",
+    "successfulJobs": 21,
+    "packages": [
+      {
+        "name": "contextos-agents",
+        "version": "2.3.2",
+        "sha256": "91faf01515252b3a499c7c0b7db677fd5f482d5daeb546ca3834d2515d439d7a",
+        "action": "verified-existing"
+      },
+      {
+        "name": "contextos-mcp",
+        "version": "0.4.2",
+        "sha256": "80d609c7d5c9d630ef4f6f18a18c16e414fc3fe0a5a32b196edc614545c329d7",
+        "action": "verified-existing"
+      }
+    ],
+    "registry": {
+      "checkedAt": "2026-10-04T18:19:44.379Z",
+      "packages": [
+        {
+          "name": "contextos-agents",
+          "version": "2.3.2",
+          "publishedAt": "2026-10-04T18:07:28.464Z",
+          "latest": "2.3.2"
+        },
+        {
+          "name": "contextos-mcp",
+          "version": "0.4.2",
+          "publishedAt": "2026-10-04T18:12:29.034Z",
+          "latest": "0.4.2"
+        }
+      ]
+    },
+    "platforms": [
+      {
+        "platform": "ubuntu",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH"
+      },
+      {
+        "platform": "macos",
+        "node": "v22.23.2",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH"
+      },
+      {
+        "platform": "windows",
+        "node": "v22.23.3",
+        "installation": "PASS",
+        "productionOnlyInstall": true,
+        "typescriptResolution": null,
+        "currentMigration": "PASS",
+        "legacyMigration": "PASS",
+        "currentFilesRestored": 424,
+        "legacyFilesRestored": 325,
+        "userRulesPreserved": true,
+        "archiveHashes": "MATCH"
+      }
+    ],
+    "recovery": [
+      {
+        "attempt": 1,
+        "result": "failed",
+        "package": "contextos-agents",
+        "reason": "New version was not visible within the 30-second registry verification window; the subsequently downloaded archive matched the reviewed SHA-256."
+      },
+      {
+        "attempt": 2,
+        "result": "failed",
+        "package": "contextos-mcp",
+        "reason": "Core was verified-existing; MCP was not visible within the 30-second registry verification window. Retries preserve immutable versions and compare published archive hashes."
+      }
+    ]
+  },
+  "postReleaseAutomation": {
+    "scope": "Publication helper and regression tests only; excluded from both npm archives. Repacked archives retain their published SHA-256 identities.",
+    "registryVisibility": {
+      "probeAttempts": 31,
+      "probeDelayMs": 10000,
+      "maximumTotalProbeDelayMs": 300000
+    },
+    "verification": {
+      "command": "node --test tests/release-publish.test.js",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    }
   }
 }

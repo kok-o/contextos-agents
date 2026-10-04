@@ -36,8 +36,9 @@ The live-check fixture uses an explicit `skill.yaml` description. Released expor
 fall back to a generic routing description for manifestless skills; body export
 coverage does not establish useful automatic routing for that variant.
 
-The unreleased working tree fixes this metadata fallback and restores the seven
-skipped handler/persistence cases. See [local improvements](RELIABILITY_IMPROVEMENTS.md).
+The subsequent [2.3.2 / 0.4.2 release](PATCH_RELEASE_2.3.2.md) fixes this metadata
+fallback and restores the seven skipped handler/persistence cases. See
+[the improvement record](RELIABILITY_IMPROVEMENTS.md).
 These changes do not modify the published archive identities or expand the
 historical release's acceptance evidence.
 

@@ -94,9 +94,11 @@ async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait
         if (!await inspect(pkg)) throw error;
       }
       let verified = false;
-      for (let attempt = 0; attempt < 7; attempt++) {
+      // Registry propagation can take minutes after an accepted upload.
+      // Allow five minutes of probe delays without repeating publication.
+      for (let attempt = 0; attempt < 31; attempt++) {
         if (await inspect(pkg)) { verified = true; break; }
-        if (attempt < 6) await wait(5000);
+        if (attempt < 30) await wait(10000);
       }
       if (!verified) throw new Error(`${pkg.name}: publication not visible; rerun safely after checking registry`);
     }

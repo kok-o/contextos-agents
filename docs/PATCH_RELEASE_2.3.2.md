@@ -1,9 +1,9 @@
 # Maintenance release: core 2.3.2 / MCP 0.4.2
 
-Status: verified maintenance candidate; publication is pending.
+Status: published and verified maintenance release.
 Previous published pair: core 2.3.1 / MCP 0.4.1. Its
 [archive evidence](evidence/release-2.3.1.json) remains unchanged.
-This candidate has its own [manifest](evidence/release-2.3.2.json).
+This release has its own [manifest](evidence/release-2.3.2.json).
 
 ## Resulting behavior
 
@@ -49,6 +49,20 @@ source is `051af18`; later evidence-only changes preserve those package bytes.
 MCP archive comparison with 0.4.1 finds 223 files in both versions; only README
 and package metadata differ. Executable payload bytes match the previous release.
 
+The [publication run](https://github.com/kok-o/contextos-agents/actions/runs/37222144320)
+passed all 21 jobs on its third attempt at tag `v2.3.2` / `5d97713`. Both npm
+versions are published as latest. Windows/Linux/macOS registry installation,
+current and legacy upgrade/checkpoint rollback passed; downloaded registry
+archives match the reviewed SHA-256 values and preserve user rules.
+
+Attempts 1 and 2 stopped because the accepted core and MCP uploads, respectively,
+were not visible within the old 30-second verification window. The retry verified
+the existing archives before skipping uploads. No version or tag was overwritten.
+The subsequent repository-only publication helper allows 31 probes with 10-second
+delays, up to five minutes of total probe delays. Its 12 recovery tests cover
+delayed visibility and bounded timeout; the helper and tests are excluded from
+both npm archives, whose published identities remain unchanged.
+
 ## Acceptance
 
 1. Match package/lockfile versions, build both packages and run core/MCP suites.
@@ -65,7 +79,7 @@ Paid model benchmarks remain paused; they are outside this maintenance release.
 
 ## Upgrade
 
-After publication:
+Install the published pair:
 
 ```sh
 npm install --save-dev --save-exact contextos-agents@2.3.2 contextos-mcp@0.4.2

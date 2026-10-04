@@ -10,16 +10,17 @@ with GPT-6.1 Sol/high passed on 2 October; automatic routing, other live clients
 and the external pilot were unverified in that record. See [calibration evidence](BENCHMARK_RESULTS.md)
 and [R2 preparation](R2_RELEASE_PREPARATION.md).
 
-The published maintenance pair is core 2.3.1 / MCP 0.4.1. Its
+The earlier maintenance pair is core 2.3.1 / MCP 0.4.1. Its
 [release manifest](evidence/release-2.3.1.json) records a separate 4 October
 Codex CLI 0.149.1 API check with GPT-6 Astra/low: negative control, explicit body
 injection and automatic selection/read of the native skill passed once each.
 The fixture uses `skill.yaml` routing metadata. This does not establish
 manifestless automatic routing, other clients or long-session reliability.
-The unreleased working tree now preserves manifestless routing descriptions
-from entrypoint frontmatter, including quoted text and folded YAML. Regression
-tests cover metadata precedence and description-only drift; a new live client
-run is still required to establish automatic activation for this variant.
+The published [2.3.2 / 0.4.2 pair](PATCH_RELEASE_2.3.2.md) preserves manifestless
+routing descriptions from entrypoint frontmatter, including quoted text and
+folded YAML. Regression and installed-archive tests on Windows/Linux/macOS cover
+metadata precedence and description-only drift; a new live client run is still
+required to establish automatic activation for this variant.
 MCP supports default read-only inspection within this release scope. Execution,
 Python, crash recovery and concurrent runtime persistence are experimental;
 the [skip inventory](MCP_SKIPPED_TESTS.md) records their coverage gaps.
