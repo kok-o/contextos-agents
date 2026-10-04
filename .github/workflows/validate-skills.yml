@@ -272,7 +272,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force ../scratch | Out-Null
-          npm test -- --reporter=default --reporter=json --outputFile=../scratch/mcp-tests.json 2>&1 | Tee-Object -FilePath ../scratch/mcp-tests.log
+          node node_modules/vitest/vitest.mjs run --reporter=default --reporter=json --outputFile=../scratch/mcp-tests.json 2>&1 | Tee-Object -FilePath ../scratch/mcp-tests.log
           exit $LASTEXITCODE
 
       - name: Retain MCP test logs and skip inventory

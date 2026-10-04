@@ -1,11 +1,25 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-04",
-  "status": "candidate-preparation",
-  "sourceRevision": null,
-  "versions": { "core": "2.3.2", "mcp": "0.4.2" },
+  "status": "locally-verified-candidate",
+  "sourceRevision": "051af188d7abf0e03a0c58c0f3bf48a8f463073a",
+  "versions": {
+    "core": "2.3.2",
+    "mcp": "0.4.2"
+  },
   "publication": "not-published",
-  "archives": [],
+  "archives": [
+    {
+      "file": "contextos-agents-2.3.2.tgz",
+      "sha256": "91faf01515252b3a499c7c0b7db677fd5f482d5daeb546ca3834d2515d439d7a",
+      "bytes": 351540
+    },
+    {
+      "file": "contextos-mcp-0.4.2.tgz",
+      "sha256": "80d609c7d5c9d630ef4f6f18a18c16e414fc3fe0a5a32b196edc614545c329d7",
+      "bytes": 1923061
+    }
+  ],
   "ci": null,
   "scope": {
     "core": "manifestless metadata, YAML export, Zed compatibility, destructive routing, core instructions and example validation",
@@ -14,5 +28,42 @@
   "limitations": [
     "No new live model/client or paid benchmark runs",
     "Runtime execution/recovery remains experimental"
-  ]
+  ],
+  "local": {
+    "platform": "win32",
+    "node": "v22.14.0",
+    "core": {
+      "command": "npm test",
+      "passed": 542,
+      "failed": 0,
+      "skipped": 0
+    },
+    "mcp": {
+      "command": "npm test",
+      "passed": 635,
+      "failed": 0,
+      "skipped": 0
+    },
+    "publicationRecovery": {
+      "passed": 10,
+      "failed": 0
+    },
+    "installedConsumer": {
+      "result": "PASS",
+      "productionOnlyInstall": true,
+      "typescriptResolution": null,
+      "userInstructionsPreserved": true,
+      "userOverridePreserved": true,
+      "manifestlessRoutingMetadata": "PASS",
+      "destructiveTaskRouting": "PASS",
+      "sourceRevision": "19cf9e0fec4e8f85e8c27783b90f8dc1de42b25e",
+      "sourceWorktreeDirty": true,
+      "archivesMatch": true
+    },
+    "validation": "PASS",
+    "drift": "PASS",
+    "markdown": "PASS",
+    "secretScan": "PASS",
+    "releaseSurface": "PASS"
+  }
 }
