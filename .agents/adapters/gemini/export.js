@@ -46,7 +46,6 @@ ${mergedContent.trim()}
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: [skillName],
-      inputsHash: context?.sourceGraphHash || 'none',
     },
     {
       path: `.agents/skills/${skillName}/SKILL.md`,
@@ -55,13 +54,12 @@ ${mergedContent.trim()}
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: [skillName],
-      inputsHash: context?.sourceGraphHash || 'none',
     },
   ];
 
   artifacts.push(...renderSkillResources(skillDir, [
     `.agents/generated/gemini/skills/${skillName}`, `.agents/skills/${skillName}`,
-  ], { kind: 'generated-adapter', generator: GENERATOR_ID, sourceSkillIds: [skillName], inputsHash: context?.sourceGraphHash || 'none' }));
+  ], { kind: 'generated-adapter', generator: GENERATOR_ID, sourceSkillIds: [skillName] }));
   return artifacts;
 }
 
@@ -92,7 +90,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export gemini', context });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export gemini', context, force: options.force });
   console.log(`✓ Gemini export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

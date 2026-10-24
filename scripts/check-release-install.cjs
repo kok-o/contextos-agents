@@ -10,12 +10,14 @@ const { pathToFileURL } = require('node:url');
 const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
-const candidates = path.resolve(process.argv[2] || path.join(root, 'scratch/release-candidate'));
+const coreOnly = process.argv.includes('--core-only');
+const positional = process.argv.slice(2).filter(arg => arg !== '--core-only');
+const candidates = path.resolve(positional[0] || path.join(root, 'scratch/release-candidate'));
 const coreVersion = require('../package.json').version;
-const mcpVersion = require('../contextos-mcp/package.json').version;
+const mcpVersion = coreOnly ? null : require('../contextos-mcp/package.json').version;
 const archives = [
   path.join(candidates, `contextos-agents-${coreVersion}.tgz`),
-  path.join(candidates, `contextos-mcp-${mcpVersion}.tgz`),
+  ...(!coreOnly ? [path.join(candidates, `contextos-mcp-${mcpVersion}.tgz`)] : []),
 ];
 for (const archive of archives) assert.ok(fs.existsSync(archive), `Pack first: ${archive}`);
 
@@ -70,7 +72,7 @@ try {
   }
   const cli = (...args) => wrapper('contextos', ...args);
   assert.equal(JSON.parse(cli('--version', '--json')).version, coreVersion);
-  assert.equal(wrapper('contextos-mcp', '--version').trim(), mcpVersion);
+  if (!coreOnly) assert.equal(wrapper('contextos-mcp', '--version').trim(), mcpVersion);
   cli('init', '--minimal');
   cli('skill', 'add', 'typescript');
   fs.cpSync(path.join(root, 'examples/quickstart/src'), path.join(consumer, 'src'), { recursive: true });
@@ -111,32 +113,37 @@ try {
   assert.ok(destructive.selected.some(skill => skill.id === 'security'));
   assert.ok(destructive.warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED'));
   assert.equal(JSON.parse(cli('resolve', 'Remove unused imports from files', '--json')).risk.value, 'standard');
-  const mcpPkgDir = ['contextos-mcp', '@contextos/mcp'].find(dir => fs.existsSync(path.join(consumer, 'node_modules', dir))) || 'contextos-mcp';
-  const mcpMetadata = JSON.parse(read(`node_modules/${mcpPkgDir}/package.json`));
-  assert.equal(mcpMetadata.dependencies?.typescript, undefined, 'The supported MCP entrypoint must not require the TypeScript compiler');
-  const typescriptResolution = JSON.parse(run(process.execPath, ['--eval', `
-    const { createRequire } = require('node:module');
-    const resolve = createRequire(${JSON.stringify(path.join(consumer, 'node_modules', mcpPkgDir, 'package.json'))});
-    try { console.log(JSON.stringify(resolve.resolve('typescript'))); }
-    catch (error) { if (error.code !== 'MODULE_NOT_FOUND') throw error; console.log('null'); }
-  `]));
-  assert.equal(typescriptResolution, null, 'Consumer must exercise MCP without an ambient TypeScript compiler');
-  const loaderUrl = pathToFileURL(path.join(consumer, 'node_modules', mcpPkgDir, 'dist/contextos/loader.js')).href;
-  run(process.execPath, ['--input-type=module', '--eval', `
-    import assert from 'node:assert/strict';
-    import { assembleContextPrompt } from ${JSON.stringify(loaderUrl)};
-    const { prompt, report } = assembleContextPrompt(process.cwd(), 'Implement @team-bare @team-custom');
-    assert.ok(prompt.includes('BARE_RULE_MUST_SURVIVE'));
-    assert.ok(prompt.includes('CUSTOM_ENTRYPOINT_MUST_SURVIVE'));
-    assert.ok(!prompt.includes('STALE_ENTRYPOINT_MUST_NOT_LOAD'));
-    assert.ok(report.sources.some(source => source.path === '.agents/project/skills/team-custom/RULES.md'));
-  `]);
+  let typescriptResolution = null;
+  if (!coreOnly) {
+    const mcpPkgDir = ['contextos-mcp', '@contextos/mcp'].find(dir => fs.existsSync(path.join(consumer, 'node_modules', dir))) || 'contextos-mcp';
+    const mcpMetadata = JSON.parse(read(`node_modules/${mcpPkgDir}/package.json`));
+    assert.equal(mcpMetadata.dependencies?.typescript, undefined, 'The supported MCP entrypoint must not require the TypeScript compiler');
+    typescriptResolution = JSON.parse(run(process.execPath, ['--eval', `
+      const { createRequire } = require('node:module');
+      const resolve = createRequire(${JSON.stringify(path.join(consumer, 'node_modules', mcpPkgDir, 'package.json'))});
+      try { console.log(JSON.stringify(resolve.resolve('typescript'))); }
+      catch (error) { if (error.code !== 'MODULE_NOT_FOUND') throw error; console.log('null'); }
+    `]));
+    assert.equal(typescriptResolution, null, 'Consumer must exercise MCP without an ambient TypeScript compiler');
+    const loaderUrl = pathToFileURL(path.join(consumer, 'node_modules', mcpPkgDir, 'dist/contextos/loader.js')).href;
+    run(process.execPath, ['--input-type=module', '--eval', `
+      import assert from 'node:assert/strict';
+      import { assembleContextPrompt } from ${JSON.stringify(loaderUrl)};
+      const { prompt, report } = assembleContextPrompt(process.cwd(), 'Implement @team-bare @team-custom');
+      assert.ok(prompt.includes('BARE_RULE_MUST_SURVIVE'));
+      assert.ok(prompt.includes('CUSTOM_ENTRYPOINT_MUST_SURVIVE'));
+      assert.ok(!prompt.includes('STALE_ENTRYPOINT_MUST_NOT_LOAD'));
+      assert.ok(report.sources.some(source => source.path === '.agents/project/skills/team-custom/RULES.md'));
+    `]);
+    console.log(run(process.execPath, [path.join(__dirname, 'check-installed-mcp.cjs'), consumer]).trim());
+    fs.copyFileSync(path.join(consumer, 'mcp-handshake.json'), path.join(root, 'scratch/installed-mcp-handshake.json'));
+    assert.equal(JSON.parse(read('mcp-handshake.json')).installedVersion, mcpVersion);
+  } else {
+    assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/contextos-mcp')), 'Core acceptance must not install MCP');
+  }
   assert.equal(read('AGENTS.md'), userAgents);
   assert.ok(read('CLAUDE.md').startsWith(userClaude));
   assert.equal(read('.cursor/rules/team.mdc'), userCursor);
-  console.log(run(process.execPath, [path.join(__dirname, 'check-installed-mcp.cjs'), consumer]).trim());
-  fs.copyFileSync(path.join(consumer, 'mcp-handshake.json'), path.join(root, 'scratch/installed-mcp-handshake.json'));
-  assert.equal(JSON.parse(read('mcp-handshake.json')).installedVersion, mcpVersion);
   cli('uninstall', '--yes');
   assert.equal(read('AGENTS.md'), userAgents);
   assert.ok(read('CLAUDE.md').startsWith(userClaude));
@@ -150,15 +157,16 @@ try {
     sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     sourceWorktreeDirty: !!execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim(),
     archives: archives.map(file => ({ file: path.basename(file), sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') })),
-    lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', 'MCP handshake', 'uninstall'],
+    coreOnly, mcpChecked: !coreOnly,
+    lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', ...(!coreOnly ? ['MCP handshake'] : []), 'uninstall'],
     userInstructionsPreserved: true, userOverridePreserved: true, quickstartFixture: 'PASS',
     manifestlessAndCustomEntrypoint: 'PASS', manifestlessRoutingMetadata: 'PASS', destructiveTaskRouting: 'PASS', consumerPath: consumer,
     productionOnlyInstall: true, typescriptResolution, outsideSourceTree: !consumer.startsWith(root + path.sep),
   };
-  fs.writeFileSync(path.join(root, 'scratch/release-install-result.json'), JSON.stringify(result, null, 2) + '\n');
+  fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-install-result.json' : 'scratch/release-install-result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(`Release consumer acceptance: PASS (${consumer})`);
 } catch (error) {
-  fs.writeFileSync(path.join(root, 'scratch/release-install-result.json'), JSON.stringify({
+  fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-install-result.json' : 'scratch/release-install-result.json'), JSON.stringify({
     result: 'FAIL', coreVersion, mcpVersion, consumerPath: consumer, error: error.message,
   }, null, 2) + '\n');
   console.error(`Release consumer acceptance: FAIL (${consumer})`);

@@ -241,11 +241,12 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-contextos-mcp:
-    name: contextos-mcp (${{ matrix.os }}, Lint, Test, Build, Pack Smoke-Test)
+    name: contextos-mcp (Node ${{ matrix.node }} on ${{ matrix.os }}, Lint, Test, Build, Pack Smoke-Test)
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        node: ["22", "24"]
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
@@ -253,7 +254,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: ${{ matrix.node }}
 
       - name: Install MCP dependencies
         working-directory: ./contextos-mcp
@@ -279,7 +280,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mcp-evidence-${{ matrix.os }}
+          name: mcp-evidence-${{ matrix.os }}-node-${{ matrix.node }}
           path: |
             scratch/mcp-tests.log
             scratch/mcp-tests.json

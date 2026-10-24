@@ -250,8 +250,8 @@ function checkCompiledAdapters(projectDir) {
   if (fs.existsSync(genGemini) && fs.readdirSync(genGemini).length > 0) {
     compiled.push('gemini');
   }
-  const genClaude = path.join(projectDir, '.agents', 'generated', 'claude', 'skills');
-  if (fs.existsSync(genClaude) && fs.readdirSync(genClaude).length > 0) {
+  const claudeDirs = ['rules', 'skills'].map(name => path.join(projectDir, '.claude', name));
+  if (claudeDirs.some(dir => fs.existsSync(dir) && fs.readdirSync(dir).length > 0)) {
     compiled.push('claude');
   }
   if (fs.existsSync(path.join(projectDir, '.cursorrules')) || fs.existsSync(path.join(projectDir, '.cursor', 'rules'))) {
@@ -696,52 +696,27 @@ function isContextOSDevRepo(projectDir) {
   }
 }
 
-function checkModuleExecution(projectDir) {
+/**
+ * Verifies the tool the CLI actually runs: the modules of the installed package.
+ * Project folders are never required (and never executed) here; a project holds rules, not code.
+ */
+function checkModuleExecution() {
   const errors = [];
+  const modules = [
+    { label: 'CanonicalResolver', file: 'resolver/canonical-resolver.js', exportName: 'CanonicalResolver' },
+    { label: 'RuleCatalog', file: 'rules/rule-catalog.js', exportName: 'RuleCatalog' },
+    { label: 'ManifestCompiler', file: 'compiler/manifest-compiler.js', exportName: 'ManifestCompiler' },
+  ];
 
-  // Check CanonicalResolver
-  try {
-    const resolverPath = path.join(projectDir, '.agents', 'resolver', 'canonical-resolver.js');
-    if (fs.existsSync(resolverPath)) {
-      const resolver = require(resolverPath);
-      if (!resolver || typeof resolver.CanonicalResolver !== 'function') {
-        errors.push('CanonicalResolver is not exported correctly');
+  for (const { label, file, exportName } of modules) {
+    try {
+      const loaded = require(path.join(__dirname, file));
+      if (!loaded || typeof loaded[exportName] !== 'function') {
+        errors.push(`${label} is not exported correctly`);
       }
-    } else {
-      errors.push('.agents/resolver/canonical-resolver.js missing');
+    } catch (err) {
+      errors.push(`${label} import failed: ${err.message}`);
     }
-  } catch (err) {
-    errors.push(`CanonicalResolver import failed: ${err.message}`);
-  }
-
-  // Check RuleCatalog
-  try {
-    const rulesPath = path.join(projectDir, '.agents', 'rules', 'rule-catalog.js');
-    if (fs.existsSync(rulesPath)) {
-      const rules = require(rulesPath);
-      if (!rules || typeof rules.RuleCatalog !== 'function') {
-        errors.push('RuleCatalog is not exported correctly');
-      }
-    } else {
-      errors.push('.agents/rules/rule-catalog.js missing');
-    }
-  } catch (err) {
-    errors.push(`RuleCatalog import failed: ${err.message}`);
-  }
-
-  // Check ManifestCompiler
-  try {
-    const compilerPath = path.join(projectDir, '.agents', 'compiler', 'manifest-compiler.js');
-    if (fs.existsSync(compilerPath)) {
-      const compiler = require(compilerPath);
-      if (!compiler || typeof compiler.ManifestCompiler !== 'function') {
-        errors.push('ManifestCompiler is not exported correctly');
-      }
-    } else {
-      errors.push('.agents/compiler/manifest-compiler.js missing');
-    }
-  } catch (err) {
-    errors.push(`ManifestCompiler import failed: ${err.message}`);
   }
 
   if (errors.length > 0) {
@@ -751,7 +726,7 @@ function checkModuleExecution(projectDir) {
       ok: false,
       message: errors.join('; '),
       errors,
-      remediation: 'Reinstall package via `npx contextos-agents init --force` to restore core modules',
+      remediation: 'Reinstall the package: npm install --save-dev contextos-agents',
     };
   }
 
@@ -759,19 +734,18 @@ function checkModuleExecution(projectDir) {
     id: 'module_execution',
     status: STATUS.PASS,
     ok: true,
-    message: 'all core modules verified (resolver, rules, compiler)',
+    message: 'package modules verified (resolver, rules, compiler)',
     remediation: null,
   };
 }
 
 function inspectSkills(projectDir, activeProfile) {
-  const skillsDir = path.join(projectDir, '.agents', 'core', 'skills');
-  if (!fs.existsSync(skillsDir)) return { total: 0, active: 0, excluded: 0, byDomain: { frontend: [], backend: [], cross: [] } };
-
-  const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
-  const allSkills = entries
-    .filter(e => e.isDirectory() && fs.existsSync(path.join(skillsDir, e.name, 'SKILL.md')))
-    .map(e => e.name);
+  // Everything the exporters would see: project rules, plugins, vendor skills and any bundled core.
+  const { collectAllSkillDirs } = require('./plugins.js');
+  const allSkills = collectAllSkillDirs(projectDir)
+    .filter(dir => fs.existsSync(path.join(dir, 'SKILL.md')))
+    .map(dir => path.basename(dir));
+  if (allSkills.length === 0) return { total: 0, active: 0, excluded: 0, byDomain: { frontend: [], backend: [], cross: [] } };
 
   const excludedSet = new Set(activeProfile ? activeProfile.exclude_skills || [] : []);
   const activeSkills = allSkills.filter(s => !excludedSet.has(s));
@@ -985,7 +959,6 @@ function runDoctor(projectDir = process.cwd(), options = {}) {
   const claimCheck = checkClaimEvidence(projectDir);
   checks.push(claimCheck);
   if (!claimCheck.ok) errors.push(claimCheck.message);
-  else if (claimCheck.status === STATUS.SKIP) warnings.push(claimCheck.message);
 
   const projectLockCheck = checkProjectLock(projectDir);
   checks.push(projectLockCheck);

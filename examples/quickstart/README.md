@@ -3,21 +3,27 @@
 Use this fixture in a new project to see a TypeScript task select a domain skill
 and an explicit team rule. No model or paid API is needed.
 
-## Public Quickstart (Recommended via npm)
+## Local 3.0.0-rc.1 candidate
 
-From PowerShell, create a temporary demo workspace and install the published package:
+The candidate is not published. From the repository root, build and pack the
+core into a dedicated directory, then create a temporary project and install
+that exact archive. No MCP package is built or installed.
 
 ```powershell
+npm.cmd run build
+New-Item -ItemType Directory -Force scratch/release-candidate-3.0.0-rc.1 | Out-Null
+npm.cmd pack --ignore-scripts --pack-destination scratch/release-candidate-3.0.0-rc.1
+$package = (Resolve-Path scratch/release-candidate-3.0.0-rc.1/contextos-agents-3.0.0-rc.1.tgz).Path
 $demo = Join-Path $env:TEMP ('contextos-demo-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $demo | Out-Null
 Copy-Item -Recurse examples/quickstart/src $demo
 Push-Location $demo
 try {
     npm.cmd init -y
-    npm.cmd install --save-dev contextos-agents
+    npm.cmd install --save-dev --save-exact --ignore-scripts $package
     git init
-    npx.cmd contextos init --minimal
-    npx.cmd contextos skill add typescript
+    npx.cmd --no-install contextos init
+    npx.cmd --no-install contextos skill add typescript
 } finally { Pop-Location }
 ```
 
@@ -25,33 +31,19 @@ On Linux or macOS (bash):
 
 ```bash
 demo="$(mktemp -d -t contextos-demo-XXXXXX)"
+npm run build
+mkdir -p scratch/release-candidate-3.0.0-rc.1
+npm pack --ignore-scripts --pack-destination scratch/release-candidate-3.0.0-rc.1
+package="$PWD/scratch/release-candidate-3.0.0-rc.1/contextos-agents-3.0.0-rc.1.tgz"
 cp -r examples/quickstart/src "$demo"
 (
   cd "$demo"
   npm init -y
-  npm install --save-dev contextos-agents
+  npm install --save-dev --save-exact --ignore-scripts "$package"
   git init
-  npx contextos init --minimal
-  npx contextos skill add typescript
+  npx --no-install contextos init
+  npx --no-install contextos skill add typescript
 )
-```
-
-## Alternative: Local Repository Checkout
-
-If you are developing inside this repository and testing local changes:
-Run `npm run build` and `npm pack --ignore-scripts` from the root, then install
-the generated tarball:
-
-```powershell
-$package = (Resolve-Path (Get-ChildItem contextos-agents-*.tgz | Select-Object -Last 1)).Path
-Push-Location $demo
-try {
-    npm.cmd init -y
-    npm.cmd install --save-dev --ignore-scripts $package
-    git init
-    npx.cmd --no-install contextos init --minimal
-    npx.cmd --no-install contextos skill add typescript
-} finally { Pop-Location }
 ```
 
 ## Adding a Team Rule and Verifying Drift

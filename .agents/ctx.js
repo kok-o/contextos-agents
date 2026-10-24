@@ -14,6 +14,7 @@
 
 const process = require('process');
 const path = require('path');
+require('./cli-errors.js').installCliErrorHandler();
 
 const args = process.argv.slice(2);
 
@@ -217,6 +218,7 @@ if (command === 'export') {
     const result = pureCompiler.applyArtifacts(process.cwd(), rendered.artifacts, {
       command: 'export all',
       context: rendered.context,
+      force: args.includes('--force'),
     });
 
     if (asJson) {
@@ -237,7 +239,7 @@ if (command === 'export') {
       process.exit(1);
     }
 
-    const result = adapter.run({ profile: overrideProfile, projectRoot: process.cwd() });
+    const result = adapter.run({ profile: overrideProfile, projectRoot: process.cwd(), force: args.includes('--force') });
     if (asJson) {
       console.log(JSON.stringify(result, null, 2));
     }
@@ -386,6 +388,8 @@ if (command === 'export') {
     files: parsed.files,
     explicitPhase: parsed.explicitPhase,
     contextBudgetTokens: parsed.contextBudgetTokens,
+    // By default catalog skills are recommended even when not installed; --installed-only limits the answer to this project.
+    installedOnly: parsed.installedOnly,
   });
 
   if (asJson) {
@@ -397,6 +401,11 @@ if (command === 'export') {
     console.log('  ContextOS — Dynamic Skill Resolution');
     console.log('══════════════════════════════════════════');
     console.log(resolver.formatDeclaration(result));
+    const installed = new Set(Object.keys(resolver.registry?.skills || {}));
+    const missing = installed.size > 0 ? (result.skills || []).filter(id => !installed.has(id)) : [];
+    if (missing.length > 0) {
+      console.log(`Not installed in this project: ${missing.join(', ')} (add with: contextos skill add <name>, or use --installed-only)`);
+    }
     console.log('──────────────────────────────────────────\n');
   }
 
@@ -639,7 +648,7 @@ if (command === 'export') {
   if (subcommand === 'add') {
     const isAll = args.includes('--all') || ref === '--all' || ref === 'all';
     const forceUnsafe = args.includes('--force-unsafe-prompts') || args.includes('--force-unsafe');
-    plugins.add(isAll ? '--all' : ref, { dryRun, checksum, forceUnsafe, all: isAll }).catch(err => {
+    plugins.add(isAll ? '--all' : ref, { dryRun, checksum, forceUnsafe, allowFloating: args.includes('--allow-floating'), all: isAll }).catch(err => {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     });

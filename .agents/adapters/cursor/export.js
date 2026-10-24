@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, AGENTS_MD_PATH, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectSkillDirectories, stripFrontmatter, resolveActivation } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'cursor@2';
@@ -17,58 +17,6 @@ function describe() {
     description: 'Compiles modular rules for Cursor (.cursor/rules/*.mdc and legacy .cursorrules)',
     targetPattern: '.cursor/rules/*.mdc',
   };
-}
-
-function getSkillGlobsAndFlags(skillName, skillDir = null) {
-  // 1. Dynamic extraction from skill.yaml if available
-  if (skillDir) {
-    const yamlPath = path.join(skillDir, 'skill.yaml');
-    if (fs.existsSync(yamlPath)) {
-      try {
-        const yamlContent = fs.readFileSync(yamlPath, 'utf8');
-        const match = yamlContent.match(/(?:fileGlobs|triggers\s*:\s*(?:files|globs)|globs)\s*:\s*\[?([^\r\n\]]+)\]?/i);
-        if (match && match[1]) {
-          const globsVal = match[1].replace(/['"]/g, '').trim();
-          if (globsVal) {
-            return { globs: globsVal, alwaysApply: false };
-          }
-        }
-      } catch {}
-    }
-  }
-
-  const GLOB_MAP = {
-    'react': '**/*.{tsx,jsx}',
-    'react-best-practices': '**/*.{tsx,jsx}',
-    'nextjs': 'app/**/*,pages/**/*,next.config.*',
-    'typescript': '**/*.{ts,tsx}',
-    'ui-design': '**/*.{tsx,jsx,css,scss}',
-    'ui-ux-pro': '**/*.{tsx,jsx,css,scss}',
-    'ux-design': '**/*.{tsx,jsx}',
-    'impeccable-design': '**/*.{tsx,jsx,css,scss}',
-    'brutalist-design': '**/*.{tsx,jsx,css,scss}',
-    'minimalist-design': '**/*.{tsx,jsx,css,scss}',
-    'soft-design': '**/*.{tsx,jsx,css,scss}',
-    'redesign-audit': '**/*.{tsx,jsx,css,scss}',
-    'web-accessibility': '**/*.{tsx,jsx,html}',
-    'ddd': '**/domain/**/*,**/entities/**/*,**/aggregates/**/*',
-    'microservices': '**/services/**/*,docker-compose.*,**/gateway/**/*',
-    'nestjs': '**/*.module.ts,**/*.controller.ts,**/*.service.ts,nest-cli.json',
-    'node': '**/*.{ts,js}',
-    'database': '**/*.{prisma,sql,sqlite,db,drizzle.config.*}',
-    'docker': '**/Dockerfile*,**/docker-compose*.{yml,yaml}',
-    'testing': '**/*.{test,spec}.{ts,js,tsx,jsx},vitest.config.*,jest.config.*',
-    'state-management': '**/*{store,state,slice,reducer,atom}*.{ts,js,tsx,jsx}',
-    'performance': '**/*.{ts,tsx,js,jsx,json}',
-    'vercel-optimize': '**/*.{ts,tsx,js,jsx,json}',
-    'fastapi': '**/*.{py,requirements.txt,Pipfile,pyproject.toml}',
-  };
-
-  if (GLOB_MAP[skillName]) {
-    return { globs: GLOB_MAP[skillName], alwaysApply: false };
-  }
-
-  return { globs: '', alwaysApply: false };
 }
 
 function buildSkillSection(skillDir) {
@@ -92,10 +40,12 @@ function generateCursorMdc(skillDir, context) {
 
   let raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw).trimEnd();
-  const { globs, alwaysApply } = getSkillGlobsAndFlags(skillName, skillDir);
+  const activation = resolveActivation(skillDir);
+  const globs = activation.globs.join(',');
+  const alwaysApply = activation.mode === 'always';
 
   let cleanDescription = description.replace(/\r?\n+/g, ' ').replace(/"/g, "'").trim();
-  if (!globs && !alwaysApply) {
+  if (activation.mode === 'auto') {
     cleanDescription = `Agent-requested: invoke when working on ${title}. ${cleanDescription}`.trim();
   }
   const mdcContent = `---
@@ -115,23 +65,17 @@ ${body}
 }
 
 function render(context) {
-  const projectRoot = context?.projectRoot || '.';
-  const agentsMdPath = fs.existsSync(path.join(projectRoot, '.agents', 'AGENTS.md'))
-    ? path.join(projectRoot, '.agents', 'AGENTS.md')
-    : AGENTS_MD_PATH;
+  const agentsMd = readCoreRules(context?.projectRoot);
 
   const artifacts = [];
 
   const prov = createProvenanceHeader({
     generator: GENERATOR_ID,
-    sourceGraphHash: context?.sourceGraphHash,
     profileId: context?.profileId,
-    profileHash: context?.profileHash,
   });
 
   // 1. 00-project-rules.mdc
-  if (fs.existsSync(agentsMdPath)) {
-    const agentsMd = fs.readFileSync(agentsMdPath, 'utf8');
+  if (agentsMd !== null) {
     const projectMdc = `---
 description: "ContextOS core project rules and role orchestration"
 globs: ""
@@ -150,7 +94,6 @@ ${agentsMd}
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: ['project-rules'],
-      inputsHash: context?.sourceGraphHash || 'none',
     });
   }
 
@@ -166,7 +109,6 @@ ${agentsMd}
         kind: 'generated-adapter',
         generator: GENERATOR_ID,
         sourceSkillIds: [mdc.skillName],
-        inputsHash: context?.sourceGraphHash || 'none',
       });
     }
   }
@@ -189,7 +131,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export cursor', context });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export cursor', context, force: options.force });
   console.log(`✓ Cursor export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

@@ -115,10 +115,21 @@ function readMeaningfulMarkdown(filePath) {
   return content;
 }
 
+/** Parse YAML and name the file in the error, so a typo in a rule is easy to find. */
+function parseYamlFile(text, file) {
+  try {
+    return require('../compiler/vendor/yaml.js').parse(text);
+  } catch (err) {
+    const where = path.relative(process.cwd(), file).split(path.sep).join('/') || file;
+    const reason = String(err.message).split(/\r?\n/)[0];
+    throw new Error(`Invalid YAML in ${where}: ${reason}`);
+  }
+}
+
 /** Read the same manifest precedence and entrypoint used by the compiler. */
 function readSkillManifest(skillDir) {
   const manifestPath = ['skill.v2.yaml', 'skill.yaml'].map(name => path.join(skillDir, name)).find(file => fs.existsSync(file));
-  return manifestPath ? require('../compiler/vendor/yaml.js').parse(fs.readFileSync(manifestPath, 'utf8')) : {};
+  return manifestPath ? parseYamlFile(fs.readFileSync(manifestPath, 'utf8'), manifestPath) : {};
 }
 
 function getSkillEntrypointPath(skillDir) {
@@ -132,7 +143,7 @@ function readSkillMetadata(skillDir, { fallbackDescription } = {}) {
   const entrypoint = getSkillEntrypointPath(skillDir);
   const raw = fs.existsSync(entrypoint) ? fs.readFileSync(entrypoint, 'utf8') : '';
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-  const frontmatter = match ? require('../compiler/vendor/yaml.js').parse(match[1]) : {};
+  const frontmatter = match ? parseYamlFile(match[1], entrypoint) : {};
   const name = manifest?.displayName || manifest?.name || frontmatter?.name || path.basename(skillDir);
   const description = manifest?.description || frontmatter?.description || fallbackDescription || `ContextOS skill for ${name}`;
   return { name, description: typeof description === 'string' ? description.trim() : description };
@@ -159,6 +170,126 @@ function renderSkillResources(skillDir, destinations, metadata) {
   return artifacts;
 }
 
+const ACTIVATION_MODES = ['always', 'auto', 'globs'];
+
+// Path scopes known for the catalog skills. A skill can state its own
+// `activation` and `globs`; these only apply when it states neither.
+const CATALOG_GLOBS = {
+  'react': '**/*.{tsx,jsx}',
+  'react-best-practices': '**/*.{tsx,jsx}',
+  'nextjs': 'app/**/*,pages/**/*,next.config.*',
+  'typescript': '**/*.{ts,tsx}',
+  'ui-design': '**/*.{tsx,jsx,css,scss}',
+  'ui-ux-pro': '**/*.{tsx,jsx,css,scss}',
+  'ux-design': '**/*.{tsx,jsx}',
+  'impeccable-design': '**/*.{tsx,jsx,css,scss}',
+  'brutalist-design': '**/*.{tsx,jsx,css,scss}',
+  'minimalist-design': '**/*.{tsx,jsx,css,scss}',
+  'soft-design': '**/*.{tsx,jsx,css,scss}',
+  'redesign-audit': '**/*.{tsx,jsx,css,scss}',
+  'web-accessibility': '**/*.{tsx,jsx,html}',
+  'ddd': '**/domain/**/*,**/entities/**/*,**/aggregates/**/*',
+  'microservices': '**/services/**/*,docker-compose.*,**/gateway/**/*',
+  'nestjs': '**/*.module.ts,**/*.controller.ts,**/*.service.ts,nest-cli.json',
+  'node': '**/*.{ts,js}',
+  'database': '**/*.{prisma,sql,sqlite,db,drizzle.config.*}',
+  'docker': '**/Dockerfile*,**/docker-compose*.{yml,yaml}',
+  'testing': '**/*.{test,spec}.{ts,js,tsx,jsx},vitest.config.*,jest.config.*',
+  'state-management': '**/*{store,state,slice,reducer,atom}*.{ts,js,tsx,jsx}',
+  'performance': '**/*.{ts,tsx,js,jsx,json}',
+  'vercel-optimize': '**/*.{ts,tsx,js,jsx,json}',
+  'fastapi': '**/*.{py,requirements.txt,Pipfile,pyproject.toml}',
+};
+
+/** Split a comma-separated glob string, ignoring commas inside {a,b} groups. */
+function splitGlobs(value) {
+  const list = Array.isArray(value) ? value.map(String) : [String(value || '')];
+  const result = [];
+  for (const item of list) {
+    let depth = 0;
+    let current = '';
+    for (const ch of item) {
+      if (ch === '{') depth++;
+      if (ch === '}') depth = Math.max(0, depth - 1);
+      if (ch === ',' && depth === 0) {
+        result.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current);
+  }
+  return result.map(g => g.replace(/['"]/g, '').trim()).filter(Boolean);
+}
+
+function readSkillFrontmatter(skillDir) {
+  const entrypoint = getSkillEntrypointPath(skillDir);
+  const raw = fs.existsSync(entrypoint) ? fs.readFileSync(entrypoint, 'utf8') : '';
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  return match ? (parseYamlFile(match[1], entrypoint) || {}) : {};
+}
+
+/**
+ * How a skill reaches the agent.
+ *   always - the rule is part of every session (always-loaded instruction files)
+ *   globs  - the rule applies to matching files only
+ *   auto   - the agent decides from the description (progressive disclosure)
+ *
+ * Stated in the skill's frontmatter or manifest as `activation:` and `globs:`.
+ * Without either, catalog path scopes apply, then `auto`.
+ */
+function resolveActivation(skillDir) {
+  const name = path.basename(skillDir);
+  const manifest = readSkillManifest(skillDir) || {};
+  const frontmatter = readSkillFrontmatter(skillDir);
+  const stated = manifest.activation ?? frontmatter.activation;
+  const statedGlobs = manifest.globs ?? frontmatter.globs ?? manifest.fileGlobs;
+
+  if (stated !== undefined && !ACTIVATION_MODES.includes(stated)) {
+    throw new Error(`Skill '${name}': activation must be one of ${ACTIVATION_MODES.join(', ')} (got '${stated}')`);
+  }
+  if (stated === 'always') return { mode: 'always', globs: [] };
+  if (stated === 'auto') return { mode: 'auto', globs: [] };
+  if (stated === 'globs') {
+    const globs = splitGlobs(statedGlobs);
+    if (globs.length === 0) throw new Error(`Skill '${name}': activation 'globs' needs a 'globs' list`);
+    return { mode: 'globs', globs };
+  }
+  if (statedGlobs !== undefined) {
+    const globs = splitGlobs(statedGlobs);
+    if (globs.length > 0) return { mode: 'globs', globs };
+  }
+
+  const yamlPath = path.join(skillDir, 'skill.yaml');
+  if (fs.existsSync(yamlPath)) {
+    const match = fs.readFileSync(yamlPath, 'utf8').match(/(?:triggers\s*:\s*(?:files|globs))\s*:\s*\[?([^\r\n\]]+)\]?/i);
+    const globs = match ? splitGlobs(match[1]) : [];
+    if (globs.length > 0) return { mode: 'globs', globs };
+  }
+  if (CATALOG_GLOBS[name]) return { mode: 'globs', globs: splitGlobs(CATALOG_GLOBS[name]) };
+  return { mode: 'auto', globs: [] };
+}
+
+/** Project-owned core rules (`.agents/AGENTS.md`); the package's own copy is never injected. */
+function readCoreRules(projectRoot) {
+  const file = path.join(projectRoot || '.', '.agents', 'AGENTS.md');
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+}
+
+/** Bodies of the skills that must be part of every session. */
+function collectAlwaysRules(skillDirs) {
+  const rules = [];
+  for (const skillDir of skillDirs) {
+    const entrypoint = getSkillEntrypointPath(skillDir);
+    if (!fs.existsSync(entrypoint)) continue;
+    if (resolveActivation(skillDir).mode !== 'always') continue;
+    const { name } = readSkillMetadata(skillDir);
+    rules.push({ id: path.basename(skillDir), title: name, body: stripFrontmatter(fs.readFileSync(entrypoint, 'utf8')).trim() });
+  }
+  return rules;
+}
+
 module.exports = {
   AGENTS_DIR,
   AGENTS_MD_PATH,
@@ -172,4 +303,10 @@ module.exports = {
   readSkillManifest,
   readSkillMetadata,
   getSkillEntrypointPath,
+  ACTIVATION_MODES,
+  splitGlobs,
+  readSkillFrontmatter,
+  resolveActivation,
+  readCoreRules,
+  collectAlwaysRules,
 };

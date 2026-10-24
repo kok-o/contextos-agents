@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
+const { packRepository, extractArchive } = require('./helpers/pack.js');
 
 describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => {
   let tmpBase;
@@ -23,19 +24,13 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
     tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-consumer-init-'));
 
     // 1. Pack distribution tarball directly from repo
-    const packOutput = execSync('npm pack', {
-      cwd: projectRoot,
-      encoding: 'utf8',
-    }).trim();
-
-    const tarballFileName = packOutput.split(/\r?\n/).pop().trim();
-    tarballPath = path.join(projectRoot, tarballFileName);
+    tarballPath = packRepository(path.join(tmpBase, 'archive'));
     assert.ok(fs.existsSync(tarballPath), `Tarball must exist at ${tarballPath}`);
 
     // 2. Unpack into isolated directory to ensure zero dev dependencies bleed
     const extractedPkgDir = path.join(tmpBase, 'unpacked');
     fs.mkdirSync(extractedPkgDir, { recursive: true });
-    execSync(`tar -xzf "${tarballPath}" -C "${extractedPkgDir}"`);
+    extractArchive(tarballPath, extractedPkgDir);
 
     pkgBin = path.join(extractedPkgDir, 'package', 'bin', 'index.js');
     assert.ok(fs.existsSync(pkgBin), 'Unpacked binary must exist');
@@ -60,18 +55,32 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
       encoding: 'utf8',
     });
 
-    assert.ok(fs.existsSync(path.join(consumerAppDir, '.agents')), '.agents/ must be created');
-    assert.ok(fs.existsSync(path.join(consumerAppDir, '.agents', 'AGENTS.md')), 'AGENTS.md must exist');
+    assert.ok(fs.existsSync(path.join(consumerAppDir, '.agents', 'project', 'skills')), 'rule source folder must be created');
+    // The tool runs from node_modules; the project receives no code and no bundled opinions by default.
+    for (const unwanted of ['AGENTS.md', 'ctx.js', 'core', 'adapters', 'contextos.lock.json']) {
+      assert.ok(!fs.existsSync(path.join(consumerAppDir, '.agents', unwanted)), `${unwanted} must not be copied`);
+    }
+    assert.ok(output.includes('Next steps:'), 'Init must say what to do next');
     assert.ok(
-      fs.existsSync(path.join(consumerAppDir, '.agents', 'contextos.lock.json')) ||
-      fs.existsSync(path.join(consumerAppDir, '.agents', 'lockfile.v2.json')),
-      'Lockfile must exist'
+      fs.readFileSync(path.join(consumerAppDir, '.gitignore'), 'utf8').includes('.agents/compiled/'),
+      'Derived caches must be ignored'
     );
+  });
 
-    const coreSkillsDir = path.join(consumerAppDir, '.agents', 'core', 'skills');
-    assert.ok(fs.existsSync(path.join(coreSkillsDir, 'engineering-workflow')), 'engineering-workflow must exist');
-    assert.ok(fs.existsSync(path.join(coreSkillsDir, 'security')), 'security must exist');
-    assert.ok(fs.existsSync(path.join(coreSkillsDir, 'ponytail-mindset')), 'ponytail-mindset must exist');
+  test('Task 3.1a2: init --with-core installs the seven bundled skills and AGENTS.md on request', () => {
+    const coreAppDir = path.join(tmpBase, 'with-core-consumer-app');
+    fs.mkdirSync(coreAppDir, { recursive: true });
+
+    execSync(`node "${pkgBin}" init --with-core --skip-compile`, { cwd: coreAppDir, encoding: 'utf8' });
+
+    assert.ok(fs.existsSync(path.join(coreAppDir, '.agents', 'AGENTS.md')), 'AGENTS.md must exist with --with-core');
+    assert.ok(fs.existsSync(path.join(coreAppDir, '.agents', 'contextos.lock.json')), 'Provenance lockfile must track the copied files');
+    const coreSkillsDir = path.join(coreAppDir, '.agents', 'core', 'skills');
+    assert.deepEqual(
+      fs.readdirSync(coreSkillsDir).sort(),
+      ['context-manager', 'context-os', 'engineering-workflow', 'gemini-precision', 'gstack-roles', 'ponytail-mindset', 'security']
+    );
+    assert.ok(!fs.existsSync(path.join(coreAppDir, '.agents', 'ctx.js')), 'Tool code is still not copied');
   });
 
   test('Task 3.1b: init --minimal installs only essential core skills', () => {
@@ -119,7 +128,8 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
     const cursorAppDir = path.join(tmpBase, 'cursor-consumer-app');
     fs.mkdirSync(cursorAppDir, { recursive: true });
 
-    execSync(`node "${pkgBin}" init --agent cursor`, {
+    // A project without rules has nothing to export; with the bundled core it exports at once.
+    execSync(`node "${pkgBin}" init --with-core --agent cursor`, {
       cwd: cursorAppDir,
       encoding: 'utf8',
     });
@@ -176,7 +186,7 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
       failedClosed = true;
       assert.equal(err.status, 1, 'Refusal to overwrite must exit with code 1');
       const stderr = err.stderr.toString();
-      assert.ok(stderr.includes('.agents/ already exists. Refusing to overwrite it.'));
+      assert.ok(stderr.includes('.agents/ already exists; nothing was changed.'));
     }
     assert.ok(failedClosed, 'Must fail closed when .agents already exists');
 
@@ -289,7 +299,7 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
     assert.ok(fs.existsSync(path.join(recoverAppDir, '.agents', 'AGENTS.md')), 'Original installation must remain intact');
   });
 
-  test('UX Improvement: default init outputs Lean Core explanation and 7 core skills', () => {
+  test('UX Improvement: default init explains where rules live and how to opt into the bundled core', () => {
     const appDir = path.join(tmpBase, 'lean-core-init-app');
     fs.mkdirSync(appDir, { recursive: true });
 
@@ -298,9 +308,9 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
       encoding: 'utf8',
     });
 
-    assert.match(output, /Installed 7 foundational core skills/);
-    assert.match(output, /Why 7\? ContextOS uses a Lean Core/);
-    assert.match(output, /contextos skill add <name> \(or --all\)/);
+    assert.match(output, /\.agents\/project\/skills\/<name>\/SKILL\.md/);
+    assert.match(output, /add --with-core for the seven general engineering skills/);
+    assert.match(output, /contextos skill add <name>/);
   });
 
   test('UX Improvement: init --all installs full catalog skills in consumer project', () => {
@@ -312,7 +322,7 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
       encoding: 'utf8',
     });
 
-    assert.match(output, /Installing all 36 catalog skills/);
+    assert.match(output, /Installing all \d+ catalog skills/);
     const pluginsLock = JSON.parse(fs.readFileSync(path.join(allAppDir, '.agents', 'plugins.json'), 'utf8'));
     assert.ok(pluginsLock.plugins.length >= 30, 'Should have installed catalog skills into plugins.json');
     assert.ok(fs.existsSync(path.join(allAppDir, '.agents', 'plugins', 'react', 'SKILL.md')));

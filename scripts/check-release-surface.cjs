@@ -60,11 +60,16 @@ function checkTestInventory(projectRoot = root) {
   }
   return violations;
 }
-function checkPublicInstructions(projectRoot = root) {
+function checkPublicInstructions(projectRoot = root, { coreOnly = false } = {}) {
   const read = file => fs.readFileSync(path.join(projectRoot, file), 'utf8');
-  const { version } = JSON.parse(read('package.json'));
+  const pkg = JSON.parse(read('package.json'));
+  const { version } = pkg;
   const violations = [];
-  for (const file of ['README.md', 'GUIDE.md', 'docs/PRODUCT_BOUNDARIES.md', 'docs/MIGRATION.md', 'contextos-mcp/README.md']) {
+  if (version.includes('-') && (!pkg.publishConfig?.tag || pkg.publishConfig.tag === 'latest')) {
+    violations.push('Core prerelease must use an explicit non-latest publishConfig.tag');
+  }
+  const docs = ['README.md', 'GUIDE.md', 'docs/PRODUCT_BOUNDARIES.md', 'docs/MIGRATION.md', ...(!coreOnly ? ['contextos-mcp/README.md'] : [])];
+  for (const file of docs) {
     if (/\bnpm(?:\.cmd)?\s+(?:install|i|add)\b[^\n]*@contextos\/mcp\b/.test(read(file))) {
       violations.push(`${file}: installs the historical @contextos/mcp package`);
     }
@@ -83,20 +88,21 @@ function checkPublicInstructions(projectRoot = root) {
   return violations;
 }
 function main() {
+  const coreOnly = process.argv.includes('--core-only');
   const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
   const files = [...new Set(git(['ls-files', '-z']).concat(git(['ls-files', '--others', '--exclude-standard', '-z'])))];
   const ignoredTracked = git(['ls-files', '-ci', '--exclude-standard', '-z']);
   const violations = [...validateGitPaths(files), ...ignoredTracked.map(file => `Ignored but still tracked: ${file}`), ...checkLinks(files),
-    ...checkTestInventory(), ...checkPublicInstructions()];
-  const core = require('../package.json'), mcp = require('../contextos-mcp/package.json');
-  for (const [folder, pkg] of [['.', core], ['contextos-mcp', mcp]]) {
+    ...checkTestInventory(), ...checkPublicInstructions(root, { coreOnly })];
+  const identities = [['.', require('../package.json')], ...(!coreOnly ? [['contextos-mcp', require('../contextos-mcp/package.json')]] : [])];
+  for (const [folder, pkg] of identities) {
     const lock = JSON.parse(fs.readFileSync(path.join(root, folder, 'package-lock.json')));
     if (pkg.version !== lock.version || pkg.version !== lock.packages[''].version) violations.push(`Version/lockfile mismatch: ${folder}`);
   }
   const npm = process.env.npm_execpath || path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
-  const secrets = ['.env', 'contextos-mcp/.env'].filter(file => fs.existsSync(path.join(root, file))).flatMap(file =>
+  const secrets = ['.env', ...(!coreOnly ? ['contextos-mcp/.env'] : [])].filter(file => fs.existsSync(path.join(root, file))).flatMap(file =>
     Object.entries(parseEnv(fs.readFileSync(path.join(root, file), 'utf8'))).filter(([name, value]) => /KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL/i.test(name) && value.length >= 16).map(([, value]) => Buffer.from(value)));
-  const packages = [['core', '.'], ['mcp', 'contextos-mcp']].map(([kind, folder]) => {
+  const packages = [['core', '.'], ...(!coreOnly ? [['mcp', 'contextos-mcp']] : [])].map(([kind, folder]) => {
     const packed = JSON.parse(execFileSync(process.execPath, [npm, 'pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: path.join(root, folder), encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }))[0];
     const paths = packed.files.map(file => file.path);
     const metadata = JSON.parse(fs.readFileSync(path.join(root, folder, 'package.json')));
@@ -109,9 +115,9 @@ function main() {
     if (kind === 'core' && packed.unpackedSize > 2 * 1024 * 1024) violations.push('Core exceeds 2 MiB unpacked');
     return { kind, name: packed.name, version: packed.version, entries: paths.length, unpackedSize: packed.unpackedSize, files: paths };
   });
-  const report = { result: violations.length ? 'FAIL' : 'PASS', gitFiles: files.length, packages, violations };
+  const report = { result: violations.length ? 'FAIL' : 'PASS', coreOnly, gitFiles: files.length, packages, violations };
   fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'scratch/release-surface.json'), JSON.stringify(report, null, 2));
+  fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-surface.json' : 'scratch/release-surface.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ result: report.result, gitFiles: files.length, packages: packages.map(({ files, ...info }) => info), violations }, null, 2));
   if (violations.length) process.exitCode = 1;
 }

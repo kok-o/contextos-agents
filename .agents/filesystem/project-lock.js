@@ -14,6 +14,7 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const { isNetworkOrUNCPath } = require('./platform-hardening.js');
+const { resolveManagedPath } = require('./safe-path.js');
 
 const LOCK_SUBPATH = path.join('.agents', '.contextos', 'locks', 'mutation.lock');
 const ERROR_CODES = {
@@ -92,6 +93,7 @@ class ProjectMutationLock {
    * @returns {string} The secret lock token required for release
    */
   acquire(meta = {}) {
+    resolveManagedPath(this.projectRoot, path.relative(this.projectRoot, this.lockPath));
     if (!fs.existsSync(this.lockDir)) {
       fs.mkdirSync(this.lockDir, { recursive: true });
     }

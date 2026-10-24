@@ -397,6 +397,56 @@ function matchesTaskPhrase(text, pattern) {
   return new RegExp(`(?:^|[^\\p{L}\\p{N}_])(?:${pattern})(?=$|[^\\p{L}\\p{N}_])`, 'iu').test(text);
 }
 
+// Words that say nothing about what a rule covers.
+const ROUTING_STOPWORDS = new Set([
+  'about', 'after', 'also', 'always', 'being', 'code', 'coding', 'every', 'from', 'guide', 'guideline', 'guidelines',
+  'have', 'into', 'must', 'never', 'only', 'project', 'rule', 'rules', 'should', 'skill', 'standard', 'standards',
+  'team', 'that', 'their', 'then', 'there', 'these', 'this', 'when', 'where', 'which', 'with', 'work', 'your',
+]);
+
+function stemToken(token) {
+  let t = token.toLowerCase();
+  for (const suffix of ['ing', 'ed', 'es', 's']) {
+    if (t.length > suffix.length + 3 && t.endsWith(suffix)) { t = t.slice(0, -suffix.length); break; }
+  }
+  return /([b-df-hj-np-tv-z])\1$/.test(t) ? t.slice(0, -1) : t;
+}
+
+function routingTokens(text) {
+  return Array.from(new Set(
+    (String(text || '').toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [])
+      .filter(token => !ROUTING_STOPWORDS.has(token))
+      .map(stemToken)
+  ));
+}
+
+function tokensMatch(a, b) {
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return short.length >= 4 && long.startsWith(short);
+}
+
+/**
+ * A team's own rule has no authored routing signals, so route on what it says
+ * about itself: a word of its name found in the task is a strong signal, two
+ * words of its description are a medium one.
+ */
+function matchOwnRule(id, skill, taskText) {
+  const taskTokens = routingTokens(taskText);
+  const nameTokens = routingTokens(id.replace(/[-_.]/g, ' '));
+  const descriptionTokens = routingTokens(skill.description).filter(token => !nameTokens.includes(token));
+  const find = candidates => candidates.filter(c => taskTokens.some(t => tokensMatch(c, t)));
+  const byName = find(nameTokens);
+  if (byName.length > 0) return { weight: 40, why: `task mentions "${byName[0]}", a word in the rule name "${id}"` };
+  const byDescription = find(descriptionTokens);
+  if (byDescription.length >= 2) return { weight: 30, why: `task shares ${byDescription.slice(0, 3).map(t => `"${t}"`).join(', ')} with the description of "${id}"` };
+  return null;
+}
+
+function isOwnRule(skill) {
+  return /(^|\/)\.agents\/(project|vendor)\/skills\//.test(String(skill.source || '').replace(/\\/g, '/'));
+}
+
 const SECURITY_TASK_PATTERN = String.raw`secur\w*|auth\w*|jwt|passwords?|tokens?|secrets?|permissions?|idor|bola|ssrf|csrf|xss|login|access\s*control|rate\s*limit|безопасн[\p{L}]*|авториз[\p{L}]*|аутентифик[\p{L}]*|парол[\p{L}]*|токен[\p{L}]*|доступ(?:а|у|ом|е|ы|ов)?|прав[\p{L}]*\s+доступ[\p{L}]*`;
 
 // Bounded noun phrases allow common articles/adjectives without interpreting
@@ -650,6 +700,10 @@ class CanonicalResolver {
     const evidenceBySkill = new Map(); // skillId -> Evidence[]
     const deprecatedMap = { ...DEPRECATED_ALIASES, ...(this.registry?.deprecatedAliases || {}) };
 
+    // With installedOnly, only skills present in this project's registry can be selected; a skill whose
+    // body is not installed cannot be exported, so recommending it would be a dead end.
+    const installedIds = new Set(Object.keys(this.registry?.skills || {}));
+    const installedOnly = Boolean(request.installedOnly) && installedIds.size > 0;
     const addEvidence = (id, kind, weight, reason) => {
       let resolvedId = id;
       if (deprecatedMap[id]) {
@@ -671,6 +725,7 @@ class CanonicalResolver {
         kind = 'safety_required';
       }
       if (profileExcluded.has(resolvedId)) return;
+      if (installedOnly && !installedIds.has(resolvedId)) return;
       if (!evidenceBySkill.has(resolvedId)) evidenceBySkill.set(resolvedId, []);
       evidenceBySkill.get(resolvedId).push({ kind, weight, reason });
     };
@@ -757,6 +812,11 @@ class CanonicalResolver {
     for (const id of skillIds) {
       const skill = skillsDict[id];
       const signals = skill.signals || {};
+
+      if (isOwnRule(skill) && (signals.keywords || []).length === 0) {
+        const own = matchOwnRule(id, skill, task);
+        if (own) addEvidence(id, 'keyword', own.weight, `Rule routing: ${own.why} (+${own.weight})`);
+      }
 
       // Exact alias match
       for (const alias of signals.aliases || []) {
@@ -949,6 +1009,8 @@ class CanonicalResolver {
       'vercel-optimize': ['nextjs', 'react', 'typescript'],
     };
 
+    const requiredBy = id => getTransitiveDeps(id, depGraph, profileExcluded).filter(dep => !installedOnly || installedIds.has(dep));
+
     const closureMap = new Map();
     for (const item of initialSelection) {
       const rawEst = skillsDict[item.id]?.estimatedTokens || 1000;
@@ -966,7 +1028,7 @@ class CanonicalResolver {
 
     // Populate required dependencies in closureMap
     for (const cand of initialSelection) {
-      const reqs = getTransitiveDeps(cand.id, depGraph, profileExcluded);
+      const reqs = requiredBy(cand.id);
       for (const reqId of reqs) {
         if (closureMap.has(reqId)) {
           const entry = closureMap.get(reqId);
@@ -1061,7 +1123,7 @@ class CanonicalResolver {
     for (const cand of mandatoryCandidates) {
       if (admitted.has(cand.id)) continue;
 
-      const reqs = getTransitiveDeps(cand.id, depGraph, profileExcluded);
+      const reqs = requiredBy(cand.id);
       const cluster = [cand.id, ...reqs.filter(d => !admitted.has(d))];
 
       for (const sId of cluster) {
@@ -1101,7 +1163,7 @@ class CanonicalResolver {
         continue;
       }
 
-      const reqs = getTransitiveDeps(cand.id, depGraph, profileExcluded);
+      const reqs = requiredBy(cand.id);
       const unadmittedCluster = [cand.id, ...reqs.filter(d => !admitted.has(d))];
 
       if (maxSkillsLimit !== Infinity && admitted.size + unadmittedCluster.length > maxSkillsLimit) {

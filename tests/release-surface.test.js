@@ -43,7 +43,7 @@ test('public install commands and gate examples agree with package metadata', t 
   const original = fs.readFileSync(readme, 'utf8');
   fs.writeFileSync(readme, original.replace('npm install --save-dev contextos-mcp', 'npm install --save-dev @contextos/mcp'));
   assert.match(checkPublicInstructions(fixture).join('\n'), /README.md: installs/);
-  fs.writeFileSync(readme, original.replace(/version: '[\d.]+'/g, "version: '0.0.0'"));
+  fs.writeFileSync(readme, original.replace(/version: '[^']+'/g, "version: '0.0.0'"));
   assert.match(checkPublicInstructions(fixture).join('\n'), /README.md: gate example/);
   fs.writeFileSync(readme, original);
   const action = path.join(fixture, '.github/actions/contextos-gate/action.yml');
@@ -51,6 +51,24 @@ test('public install commands and gate examples agree with package metadata', t 
   const version = JSON.parse(fs.readFileSync(path.join(fixture, 'package.json'))).version;
   fs.writeFileSync(action, fs.readFileSync(action, 'utf8').replace(`default: '${version}'`, "default: '0.0.0'") + `\nother:\n  default: '${version}'\n`);
   assert.match(checkPublicInstructions(fixture).join('\n'), /inputs.version.default/);
+});
+
+test('core-only public instructions do not require an MCP checkout', t => {
+  const fixture = contractFixture(t);
+  fs.unlinkSync(path.join(fixture, 'contextos-mcp/README.md'));
+  assert.deepEqual(checkPublicInstructions(fixture, { coreOnly: true }), []);
+  assert.throws(() => checkPublicInstructions(fixture), /ENOENT/);
+});
+
+test('a prerelease cannot default to the latest npm tag', t => {
+  const fixture = contractFixture(t);
+  const file = path.join(fixture, 'package.json');
+  const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
+  // This guard is relevant while preparing the prerelease; stable fixtures still exercise it.
+  pkg.version = '3.0.0-rc.1';
+  pkg.publishConfig = { tag: 'latest' };
+  fs.writeFileSync(file, JSON.stringify(pkg));
+  assert.match(checkPublicInstructions(fixture, { coreOnly: true }).join('\n'), /non-latest publishConfig.tag/);
 });
 
 test('release surface rejects credentials, local probes and raw evidence while retaining public docs', () => {

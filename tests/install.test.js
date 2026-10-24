@@ -62,21 +62,20 @@ describe('bin/index.js - installer', () => {
     assert.ok(!fs.existsSync(targetAgents), '.agents/ should NOT be created in dry-run mode');
   });
 
-  test('installs .agents/ folder with required files (excluding mcp by default)', () => {
+  test('init prepares rule sources only: no tool code, no bundled opinions, no mcp', () => {
     const testDir = path.join(tmpDir, 'install-test');
     fs.mkdirSync(testDir, { recursive: true });
 
     execSync(`node "${BIN_PATH}" --skip-compile`, { cwd: testDir });
 
     const agentsDir = path.join(testDir, '.agents');
-    assert.ok(fs.existsSync(agentsDir), '.agents/ should be created');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'AGENTS.md')), 'AGENTS.md should exist');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'skills.json')), 'skills.json should exist');
-    assert.ok(fs.existsSync(path.join(agentsDir, 'ctx.js')), 'ctx.js should exist');
-    assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp')), 'mcp/ should NOT be installed by default');
-    assert.ok(!fs.existsSync(path.join(agentsDir, 'mcp_config.json')), 'mcp_config.json should NOT be created by default');
+    assert.ok(fs.existsSync(path.join(agentsDir, 'project', 'skills')), 'rule source folder should exist');
+    for (const unwanted of ['ctx.js', 'AGENTS.md', 'skills.json', 'adapters', 'core', 'mcp', 'mcp_config.json', 'contextos.lock.json']) {
+      assert.ok(!fs.existsSync(path.join(agentsDir, unwanted)), `${unwanted} must not be copied into the project`);
+    }
+    const ignore = fs.readFileSync(path.join(testDir, '.gitignore'), 'utf8');
+    assert.ok(ignore.includes('.agents/compiled/') && ignore.includes('.agents/.contextos/'), 'derived caches must be ignored');
   });
-
 
   test('refuses to overwrite an existing .agents/ folder without --force', () => {
     const testDir = path.join(tmpDir, 'preserve-existing-test');
@@ -92,24 +91,23 @@ describe('bin/index.js - installer', () => {
     assert.equal(fs.readFileSync(sentinel, 'utf8'), 'do not overwrite');
   });
 
-  test('--force flag installs without warning output', () => {
+  test('--force refreshes the bundled files and never deletes anything', () => {
     const testDir = path.join(tmpDir, 'force-test');
     const oldAgents = path.join(testDir, '.agents');
-    fs.mkdirSync(oldAgents, { recursive: true });
+    fs.mkdirSync(path.join(oldAgents, 'project', 'skills', 'mine'), { recursive: true });
+    fs.writeFileSync(path.join(oldAgents, 'project', 'skills', 'mine', 'SKILL.md'), '---\nname: mine\ndescription: mine\n---\n# Mine\n');
     fs.writeFileSync(path.join(oldAgents, 'old-custom-file.txt'), 'old configuration');
 
-    // Should not throw even though .agents/ exists
-    const output = execSync(`node "${BIN_PATH}" --force --skip-compile`, {
-      cwd: testDir,
-    }).toString();
+    const output = execSync(`node "${BIN_PATH}" --force --minimal --skip-compile`, { cwd: testDir }).toString();
 
-    assert.ok(!output.includes('Warning:'), '--force should suppress the warning');
-    assert.ok(fs.existsSync(path.join(oldAgents, 'AGENTS.md')), 'Atomic replacement should install complete new content');
-    assert.ok(!fs.existsSync(path.join(oldAgents, 'old-custom-file.txt')), 'Old content should not leak into replacement');
+    assert.ok(!output.includes('Warning:'), '--force should not warn');
+    assert.ok(fs.existsSync(path.join(oldAgents, 'AGENTS.md')), 'bundled core must be installed with --minimal');
+    assert.ok(fs.existsSync(path.join(oldAgents, 'project', 'skills', 'mine', 'SKILL.md')), 'project rules must survive');
+    assert.equal(fs.readFileSync(path.join(oldAgents, 'old-custom-file.txt'), 'utf8'), 'old configuration', 'unknown files must survive');
     assert.deepEqual(
       fs.readdirSync(testDir).filter(name => name.startsWith('.agents.backup') || name.startsWith('.agents.staging')),
       [],
-      'Successful replacement should clean temporary backup and staging directories'
+      'no temporary backup or staging directories are used any more'
     );
   });
 
@@ -141,9 +139,9 @@ describe('bin/index.js - installer', () => {
 
   test('contextos stats runs successfully and outputs context savings report', () => {
     const output = execSync(`node "${BIN_PATH}" stats`, { cwd: path.join(__dirname, '..') }).toString();
-    assert.ok(output.includes('Context Savings Report'), 'Should print stats header');
-    assert.ok(output.includes('Full ('), 'Should report full token payload');
-    assert.ok(output.includes('Savings'), 'Should report percentage savings');
+    assert.ok(output.includes('Rule Payload Size'), 'Should print stats header');
+    assert.ok(output.includes('All installed ('), 'Should report the full payload');
+    assert.ok(output.includes('vs full'), 'Should report the share against loading everything');
   });
 
   test('contextos watch module initializes and closes cleanly', () => {
@@ -172,7 +170,7 @@ describe('bin/index.js - installer', () => {
   test('direct node .agents/ctx.js stats runs and outputs context savings report', () => {
     const ctxPath = path.join(__dirname, '..', '.agents', 'ctx.js');
     const output = execSync(`node "${ctxPath}" stats`, { cwd: path.join(__dirname, '..') }).toString();
-    assert.ok(output.includes('Context Savings Report'), 'Direct ctx.js stats should print report header');
+    assert.ok(output.includes('Rule Payload Size'), 'Direct ctx.js stats should print report header');
   });
 
   test('direct node .agents/ctx.js init outputs initialization guide', () => {

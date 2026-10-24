@@ -64,8 +64,10 @@ function scanCommand(args, flags = {}) {
   }
 
   console.log('──────────────────────────────────────────────────────');
-  if (result.ok) {
-    console.log('  RESULT: PASSED (Verification completed cleanly, no blocking violations)');
+  if (result.ok && result.findings.length === 0) {
+    console.log('  RESULT: PASSED (no violations found in the staged files)');
+  } else if (result.ok) {
+    console.log('  RESULT: REPORTED (advisory mode: findings above do not block the commit; add --enforce to fail on them)');
   } else {
     console.log('  RESULT: FAILED (Commit blocked due to staged violations)');
   }

@@ -48,4 +48,4 @@ node node_modules/vitest/vitest.mjs run --reporter=default --reporter=json --out
 
 Direct invocation forwards reporter flags consistently on Windows. Python
 absence reduces experimental coverage and remains visible in the JSON report.
-See [the local improvement record](RELIABILITY_IMPROVEMENTS.md) for current results.
+See [the local improvement record](archive/RELIABILITY_IMPROVEMENTS.md) for current results.

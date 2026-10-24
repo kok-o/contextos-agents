@@ -83,7 +83,7 @@ test('Project override affects registry hash, resolver entry and all skill proje
   const resolver = new CanonicalResolver({ rootDir: root, registry: after });
   assert.ok(resolver.resolve({ task: 'context-os' }).skills.includes('context-os'));
   const projected = renderAdapters(root, ['gemini', 'claude', 'cursor']).artifacts;
-  for (const file of ['.agents/skills/context-os/SKILL.md', '.agents/generated/claude/skills/context-os/SKILL.md', '.cursor/rules/context-os.mdc']) {
+  for (const file of ['.agents/skills/context-os/SKILL.md', '.claude/skills/context-os/SKILL.md', '.cursor/rules/context-os.mdc']) {
     assert.ok(projected.find(art => art.path === file)?.content.toString().includes('CUSTOM PROJECT GOVERNANCE'), file);
   }
 });
@@ -156,7 +156,7 @@ for (const manifestFile of ['skill.yaml', 'skill.v2.yaml']) {
     apply(root, 'all');
     assert.ok(fs.readFileSync(path.join(root, '.agents/skills/team-custom/SKILL.md'), 'utf8').includes('Canonical team rules'));
     assert.ok(fs.readFileSync(path.join(root, '.cursor/rules/team-custom.mdc'), 'utf8').includes('Canonical team rules'));
-    for (const file of ['.agents/skills/team-custom/SKILL.md', '.agents/generated/claude/skills/team-custom/SKILL.md', '.cursor/rules/team-custom.mdc', '.zed/prompts/team-custom.md']) {
+    for (const file of ['.agents/skills/team-custom/SKILL.md', '.claude/skills/team-custom/SKILL.md', '.cursor/rules/team-custom.mdc', '.zed/prompts/team-custom.md']) {
       const content = fs.readFileSync(path.join(root, file), 'utf8');
       assert.ok(content.includes('CANONICAL_BODY_MARKER'), file);
       assert.equal(content.includes('STALE_BODY_MARKER'), false, file);
@@ -171,7 +171,7 @@ for (const manifestFile of ['skill.yaml', 'skill.v2.yaml']) {
     assert.equal(withoutLegacy.success, true, JSON.stringify(withoutLegacy.diagnostics));
     assert.ok(withoutLegacy.registry.skills['team-custom']);
     apply(root, 'all');
-    assert.ok(fs.readFileSync(path.join(root, '.agents/generated/claude/skills/team-custom/SKILL.md'), 'utf8').includes('CANONICAL_BODY_MARKER'));
+    assert.ok(fs.readFileSync(path.join(root, '.claude/skills/team-custom/SKILL.md'), 'utf8').includes('CANONICAL_BODY_MARKER'));
   });
 }
 
@@ -190,11 +190,11 @@ test('One fresh all export passes drift and preserves declared supporting resour
   apply(root, 'all');
   const drift = detectDrift(root, 'all');
   assert.equal(drift.hasDrift, false, JSON.stringify(drift));
-  const claudeReference = path.join(root, '.agents/generated/claude/skills/context-os/references/context-rules.md');
+  const claudeReference = path.join(root, '.claude/skills/context-os/references/context-rules.md');
   const referenceBefore = fs.readFileSync(claudeReference, 'utf8');
   apply(root, 'gemini');
   assert.equal(fs.readFileSync(claudeReference, 'utf8'), referenceBefore, 'Scoped export must not prune another adapter resources');
-  for (const prefix of ['.agents/skills', '.agents/generated/gemini/skills', '.agents/generated/claude/skills']) {
+  for (const prefix of ['.agents/skills', '.agents/generated/gemini/skills', '.claude/skills']) {
     assert.equal(fs.readFileSync(path.join(root, prefix, 'context-os/references/context-rules.md'), 'utf8'), fs.readFileSync(path.join(root, '.agents/core/skills/context-os/references/context-rules.md'), 'utf8'));
   }
   fs.appendFileSync(path.join(root, '.agents/core/skills/security/EXAMPLES.md'), '\nEXAMPLE_ONLY_MARKER\n');

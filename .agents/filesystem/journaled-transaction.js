@@ -164,6 +164,20 @@ class JournaledTransaction {
   }
 
   /**
+   * Plans deletion of a file and of every parent directory that is empty once
+   * it is gone. Directories are removed only when empty at commit time, and
+   * never above the project root.
+   */
+  stageDeleteWithParents(relativePath, options = {}) {
+    this.stageDelete(relativePath, options);
+    let dir = path.posix.dirname(toPosix(relativePath));
+    while (dir && dir !== '.' && dir !== '') {
+      this.stageDeleteDir(dir);
+      dir = path.posix.dirname(dir);
+    }
+  }
+
+  /**
    * Writes the journal and staged files to disk.
    */
   prepare() {
@@ -174,6 +188,7 @@ class JournaledTransaction {
       );
     }
 
+    resolveManagedPath(this.projectRoot, path.relative(this.projectRoot, this.txDir));
     fs.mkdirSync(this.stagingDir, { recursive: true });
     fs.mkdirSync(this.backupDir, { recursive: true });
 

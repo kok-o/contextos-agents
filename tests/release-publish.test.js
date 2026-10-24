@@ -30,6 +30,13 @@ function runner(pair, publish) {
   };
 }
 
+test('the stable paired publisher rejects a core release candidate before reading MCP', t => {
+  const pair = fixture(t);
+  const root = path.dirname(pair[0].archive);
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'contextos-agents', version: '3.0.0-rc.1' }));
+  assert.throws(() => packages(root, root), /Expected a stable core release version/);
+});
+
 test('a patch release selects its own manifest and refuses stale identities', t => {
   const oldPair = fixture(t);
   const root = path.dirname(oldPair[0].archive);

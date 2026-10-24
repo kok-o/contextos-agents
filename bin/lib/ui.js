@@ -113,18 +113,14 @@ function renderSuccessCard(options = {}) {
   const bottomBorder = ` ╰${'─'.repeat(innerWidth + 2)}╯`;
 
   console.log('\n' + c.green(topBorder));
-  console.log(renderCardLine(c.bold(c.green('✓ Project ready for AI coding agents!')), innerWidth));
+  console.log(renderCardLine(c.bold(c.green('✓ Project ready!')), innerWidth));
   console.log(renderCardLine('', innerWidth));
   console.log(renderCardLine(c.bold('Next steps:'), innerWidth));
-  console.log(renderCardLine('1. Default init exports Gemini workspace skills.', innerWidth));
-  console.log(renderCardLine(`   Other clients: ${c.cyan('contextos export <agent>')}`, innerWidth));
+  console.log(renderCardLine('1. Add a rule: .agents/project/skills/<name>/SKILL.md', innerWidth));
+  console.log(renderCardLine(`2. ${c.cyan('contextos compile')} && ${c.cyan('contextos export all')}`, innerWidth));
+  console.log(renderCardLine(`3. ${c.cyan('contextos export all --check')}   (the same check for CI)`, innerWidth));
   console.log(renderCardLine('', innerWidth));
-  console.log(renderCardLine('2. Explore and install domain skills:', innerWidth));
-  console.log(renderCardLine(`   ${c.cyan('contextos skill list --available')}`, innerWidth));
-  console.log(renderCardLine(`   ${c.cyan('contextos skill add <name>')}    (or ${c.cyan('--all')})`, innerWidth));
-  console.log(renderCardLine('', innerWidth));
-  console.log(renderCardLine('3. Inspect project health anytime:', innerWidth));
-  console.log(renderCardLine(`   ${c.cyan('contextos doctor')}`, innerWidth));
+  console.log(renderCardLine(`More: ${c.cyan('contextos skill add <name>')} · ${c.cyan('contextos doctor')}`, innerWidth));
   console.log(c.green(bottomBorder) + '\n');
 }
 

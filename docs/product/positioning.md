@@ -1,8 +1,8 @@
 # ContextOS Product Positioning & ICP Governance
 
-Status: CORE STABLE / MCP BETA / RUNTIME EXPERIMENTAL
-Release record: core 2.3.2 / MCP 0.4.2
-Last Updated: 2026-10-04
+Status: CORE 3.0.0-rc.1 CANDIDATE (UNPUBLISHED) / MCP EXCLUDED / RUNTIME EXPERIMENTAL
+Historical release record: core 2.3.2 / MCP 0.4.2
+Last Updated: 2026-10-24
 
 ---
 

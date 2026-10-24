@@ -230,12 +230,12 @@ const yaml = require('./vendor/yaml.js');
  * Robust zero-dep YAML parser for skill manifests.
  * Handles scalars, inline arrays, block lists, nested maps, and quoted multiline strings.
  */
-function parseYaml(yamlText) {
+function parseYaml(yamlText, source = '') {
   if (typeof yamlText !== 'string' || !yamlText.trim()) return {};
   const doc = yaml.parseDocument(yamlText, { merge: true, strict: true, uniqueKeys: true });
   if (doc.errors && doc.errors.length > 0) {
     throw new DiagnosticError({
-      message: `YAML Parse Error: ${doc.errors[0].message}`,
+      message: `YAML Parse Error${source ? ` in ${source}` : ''}: ${doc.errors[0].message}`,
       code: CODES.PARSE_ERROR
     });
   }
@@ -280,7 +280,7 @@ class ManifestCompiler {
     const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)/);
     if (!match) return { malformed: true };
     const rawYaml = match[1].trim();
-    const parsed = parseYaml(rawYaml);
+    const parsed = parseYaml(rawYaml, path.relative(this.rootDir, filePath).split(path.sep).join('/'));
     return {
       raw: rawYaml,
       parsed,
@@ -292,7 +292,7 @@ class ManifestCompiler {
    * Normalizes a v1 or v2 manifest into canonical SkillManifestV2 format.
    */
   normalizeManifest(skillDir, rawYamlText) {
-    const parsed = parseYaml(rawYamlText);
+    const parsed = parseYaml(rawYamlText, `${path.relative(this.rootDir, skillDir).split(path.sep).join('/')}/skill.yaml`);
     const skillId = parsed.id || parsed.name || path.basename(skillDir);
     const displayName = parsed.displayName || parsed.name || skillId;
     const isV2 = parsed.schemaVersion === 2;

@@ -13,6 +13,7 @@ const path = require('path');
 const { version } = require('../package.json');
 const profiles = require('../.agents/profiles.js');
 const lockfileLib = require('./lib/lockfile.js');
+const { LockfileV2Manager } = require('../.agents/filesystem/index.js');
 
 /**
  * Collects holistic status metadata for a target project.
@@ -26,16 +27,22 @@ function getStatus(projectDir = process.cwd()) {
   const lockData = lockfileLib.loadLockfile(projectDir);
   const activeProfile = hasAgents ? profiles.getActiveProfile(projectDir) : null;
   
+  // Every rule the exporters would see: project rules, plugins, vendor skills and any bundled core.
   let skillsCount = 0;
-  const skillsDir = path.join(agentsDir, 'core', 'skills');
-  if (fs.existsSync(skillsDir)) {
+  if (hasAgents) {
     try {
-      skillsCount = fs.readdirSync(skillsDir, { withFileTypes: true })
-        .filter(d => d.isDirectory() && fs.existsSync(path.join(skillsDir, d.name, 'SKILL.md')))
-        .length;
+      skillsCount = require('../.agents/plugins.js').collectAllSkillDirs(projectDir)
+        .filter(dir => fs.existsSync(path.join(dir, 'SKILL.md'))).length;
     } catch {
       skillsCount = 0;
     }
+  }
+
+  let exportLock = null;
+  try {
+    exportLock = new LockfileV2Manager(projectDir).read({ tolerateConflicts: true });
+  } catch {
+    exportLock = null;
   }
 
   const mcpServerPath = path.join(agentsDir, 'mcp', 'server.mjs');
@@ -44,7 +51,7 @@ function getStatus(projectDir = process.cwd()) {
   // Check compiled adapter outputs
   const compiledAdapters = [];
   if (fs.existsSync(path.join(agentsDir, 'generated', 'gemini', 'skills'))) compiledAdapters.push('gemini');
-  if (fs.existsSync(path.join(agentsDir, 'generated', 'claude', 'skills'))) compiledAdapters.push('claude');
+  if (['rules', 'skills'].some(name => fs.existsSync(path.join(projectDir, '.claude', name)))) compiledAdapters.push('claude');
   if (fs.existsSync(path.join(projectDir, '.cursorrules')) || fs.existsSync(path.join(projectDir, '.cursor', 'rules'))) compiledAdapters.push('cursor');
   if (fs.existsSync(path.join(projectDir, '.github', 'copilot-instructions.md'))) compiledAdapters.push('copilot');
   if (fs.existsSync(path.join(projectDir, '.aider.conf.yml'))) compiledAdapters.push('aider');
@@ -59,6 +66,7 @@ function getStatus(projectDir = process.cwd()) {
     skillsCount,
     mcpInstalled,
     compiledAdapters,
+    exportLockfile: exportLock ? { managedFilesCount: Object.keys(exportLock.managedFiles || {}).length } : null,
     lockfile: lockData ? {
       schemaVersion: lockData.schemaVersion,
       version: lockData.version,
@@ -88,10 +96,13 @@ function formatStatusText(status) {
     `  Adapters Compiled : ${status.compiledAdapters.length ? status.compiledAdapters.join(', ') : 'none'}`,
   ];
 
-  if (status.lockfile) {
-    lines.push(`  Lockfile          : Valid (${status.lockfile.managedFilesCount} managed files, v${status.lockfile.version})`);
+  if (status.exportLockfile) {
+    lines.push(`  Export lockfile   : ${status.exportLockfile.managedFilesCount} generated files tracked (.agents/lockfile.v2.json)`);
   } else if (status.initialized) {
-    lines.push(`  Lockfile          : Missing (.agents/contextos.lock.json)`);
+    lines.push('  Export lockfile   : none yet (run: contextos export all)');
+  }
+  if (status.lockfile) {
+    lines.push(`  Bundled files     : ${status.lockfile.managedFilesCount} tracked from init (v${status.lockfile.version})`);
   }
 
   return lines.join('\n');

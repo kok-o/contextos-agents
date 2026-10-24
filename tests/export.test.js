@@ -31,7 +31,7 @@ describe('ctx.js - context compiler', () => {
     fs.cpSync(path.join(__dirname, '..', '.agents'), path.join(tmpDir, '.agents'), { recursive: true });
 
     GENERATED_GEMINI = path.join(tmpDir, '.agents', 'generated', 'gemini', 'skills');
-    GENERATED_CLAUDE = path.join(tmpDir, '.agents', 'generated', 'claude', 'skills');
+    GENERATED_CLAUDE = path.join(tmpDir, '.claude', 'skills');
     CURSOR_FILE      = path.join(tmpDir, '.cursorrules');
     CURSOR_RULES_DIR = path.join(tmpDir, '.cursor', 'rules');
     COPILOT_FILE     = path.join(tmpDir, '.github', 'copilot-instructions.md');
@@ -126,19 +126,16 @@ describe('ctx.js - context compiler', () => {
       execSync(`node "${CTX_PATH}" export claude`, { cwd: tmpDir });
     });
 
-    test('creates generated/claude/skills/ directory', () => {
-      assert.ok(fs.existsSync(GENERATED_CLAUDE), 'generated/claude/skills/ should exist');
+    test('creates .claude/skills/ directory', () => {
+      assert.ok(fs.existsSync(GENERATED_CLAUDE), '.claude/skills/ should exist');
     });
 
-    test('claude SKILL.md files do NOT have YAML frontmatter', () => {
+    test('claude SKILL.md files carry name and description for native discovery', () => {
       const skills = fs.readdirSync(GENERATED_CLAUDE);
+      assert.ok(skills.length > 0);
       for (const skill of skills) {
-        const skillMd = path.join(GENERATED_CLAUDE, skill, 'SKILL.md');
-        const content = fs.readFileSync(skillMd, 'utf8');
-        assert.ok(
-          !content.startsWith('---'),
-          `${skill}/SKILL.md should not start with YAML frontmatter for Claude format`
-        );
+        const content = fs.readFileSync(path.join(GENERATED_CLAUDE, skill, 'SKILL.md'), 'utf8');
+        assert.match(content, new RegExp(`^---\nname: ${skill}\ndescription: `), `${skill}/SKILL.md needs native frontmatter`);
       }
     });
   });

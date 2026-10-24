@@ -1,46 +1,73 @@
-# ContextOS Security Threat Model
+# ContextOS security model
 
-## Core Philosophy
-ContextOS assumes that language models (LLMs) are highly capable but fundamentally untrusted actors. They can hallucinate destructive commands, output vulnerable code, or inadvertently execute path traversal attacks. The execution environment must fail-closed.
+ContextOS compiles Markdown rules into the instruction files that coding agents
+read, and checks that those files are up to date. It is a configuration tool. It
+is **not** a sandbox, not a firewall for model actions, and not a guarantee that
+a model follows any rule. This page lists what the tool does guarantee, with the
+test that exercises it, and what it does not.
 
-## Trust Boundaries
+## What it guarantees
 
-1. **Host Filesystem Boundary**:
-   - The LLM cannot write arbitrary files to the host.
-   - All filesystem writes must flow through `JournaledTransaction`, which strictly enforces `safe-path.js` constraints.
-   - UNC paths, network drives, and path traversals (`../`) are explicitly blocked.
+| Guarantee | Mechanism | Evidence |
+| --- | --- | --- |
+| Writes stay inside the project. `export`, `init`, `update` and `uninstall` refuse paths that leave the project root through `..`, UNC or network paths, reserved device names, symlinks or junctions. A refused path aborts before anything is changed. | One write path: the journaled transaction resolves every path through `safe-path`. | `tests/safe-path.test.js`; the junction case in `tests/scenarios.test.js` runs `export`, `update` and `uninstall` against a managed directory that is a junction to an outside folder and checks that nothing outside changes. |
+| Files that ContextOS did not write are not overwritten or deleted. Generated files you edited are kept by `uninstall`; a differing file at a generated path stops `export` unless you pass `--force`. | Ownership check against the lockfile (`ownsDiskFile`), shared by export and uninstall. | `tests/scenarios.test.js` ("export refuses…", "uninstall keeps a generated file that you edited"). |
+| Your text next to a managed block is preserved. | Marker-delimited block replace/remove; a conflict outside the block stops the export. | `tests/scenarios.test.js`, `tests/adapter-compatibility.test.js`. |
+| A multi-file change applies completely or not at all. An interrupted change is listed and rolled back by `contextos recover`. | Journaled transaction with backups and preconditions on the previous file hash. | `tests/journaled-transaction.test.js`, `tests/recovery-cli.test.js`. |
+| Two ContextOS processes do not write one project at the same time. | Project mutation lock. | `tests/project-lock.test.js`. |
+| Installing a skill does not run code from it. | npm sources are installed into a temporary prefix with `--ignore-scripts`; GitHub sources must be pinned to a 40-character commit unless `--allow-floating` is given; `--checksum` verifies the entrypoint. | `tests/plugin-supply-chain.test.js`, `tests/cli-honesty.test.js`. |
+| The CI gate does not execute the pull request's scripts. | The gate runs from the pinned package, in process; it reads rule sources as data. | `tests/consumer-gate.test.js`. |
+| `doctor`, `resolve` and `compile` run the installed package, not code found in the project. | They load modules relative to the package. | `tests/consumer-gate.test.js` (a rogue `.agents/ctx.js` is not executed), `tests/cli-honesty.test.js` (doctor). |
 
-2. **Execution Boundary (Sandbox)**:
-   - LLMs cannot execute shell commands directly on the host operating system unless explicitly permitted by user override in `host-unsafe` mode.
-   - Code execution defaults to OCI-compliant containers (Docker/Podman).
-   - Containers are launched with:
-     - `--read-only` root filesystem.
-     - `--cap-drop=ALL` and `--security-opt=no-new-privileges`.
-     - `--network=none` by default.
-     - Ephemeral, isolated `tmpfs` mounts.
+To our knowledge ContextOS commands do not execute code that lives in rule
+sources or skills; a rule contributes text, plus declared resource files that
+are copied unchanged. This was designed for, not independently audited.
 
-3. **Concurrency Boundary**:
-   - Multiple agents or processes attempting concurrent modifications are serialized by `ProjectMutationLock`.
-   - `ProjectMutationLock` guarantees single-writer semantics and prevents corrupted intermediate states using UUID tokens.
+## What it does not do
 
-## Known Risks & Acceptances
-- **Supply Chain**: Plugin execution requires the supply chain to be cryptographically verifiable. Floating or unpinned plugins are rejected by default.
-- **Host-Unsafe Override**: If a user explicitly allows `host-unsafe` mode, the sandbox protections are bypassed. In this state, `AutoMerge` is disabled to ensure a human remains in the loop.
+- **It does not constrain the model.** Instruction files are context. Claude
+  Code's documentation says plainly that its memory files are "context, not
+  enforced configuration" ([source](https://code.claude.com/docs/en/memory#claude-md-vs-auto-memory)),
+  and the same holds for every client. To block an action, use the client's
+  enforcement features (permissions, hooks) or a runtime action firewall.
+- **It does not sandbox anything.** The experimental MCP runtime can run agents
+  and an optional container-based verification sandbox; both are outside the
+  stable core, carry their own risks, and should be used only in trusted
+  repositories.
+- **Its content scan is a speed bump.** `skill add` rejects text matching a short
+  list of patterns (for example "ignore previous instructions", piping a download
+  into a shell). A rephrased instruction passes, and an innocent line such as
+  `system: linux` can be flagged. Third-party skills are instructions your model
+  will read: review them like code you are about to run.
+- **`scan` is pattern matching.** It finds well-known token formats, blocked file
+  names and placeholder stubs in staged files. It reports only, unless run with
+  `--enforce`; the pre-commit hook uses `--enforce` but can be skipped with
+  `git commit --no-verify`. For serious secret detection use a dedicated scanner
+  next to it.
+- **A legacy fallback exists in the MCP package.** It prefers the resolver of the
+  installed `contextos-agents` package. Only if that package cannot be found does
+  it load a resolver copy from the project's `.agents/`, as installations from
+  before the current layout need.
 
-## Defense-in-Depth & Runtime Interception (Action Firewall Synergy)
+## Using it safely
 
-ContextOS operates as a **deterministic static compiler and pre-commit governance engine**:
-- Enforces safe paths and atomic journaled writes on the host filesystem.
-- Scans the Git staged index (`contextos scan --staged`) for leaked credentials, blocked files (`.env`), and unfinished lazy stubs prior to commit.
-- Runs verification gates in CI (`contextos gate`).
+1. Pin `contextos-agents` as a development dependency and run the CI gate from
+   the pinned version.
+2. Review the diff of generated files in pull requests; rule changes are
+   instruction changes for every developer's agent.
+3. Install third-party skills from commits you have read, with
+   `owner/repo@<commit>`.
+4. Keep secrets out of rule files. They are committed and read by models.
 
-During active model inference and tool execution (in-flight), language models can encounter **indirect prompt injection** (e.g. malicious GitHub issues, poisoned dependency READMEs, or untrusted MCP results) and attempt external data egress or destructive shell commands before any Git commit occurs.
+## Reporting a vulnerability
 
-### Recommended Runtime Complement
+Please open a private security advisory on the
+[GitHub repository](https://github.com/kok-o/contextos-agents/security/advisories/new)
+instead of a public issue.
 
-To achieve complete zero-trust defense across the entire AI engineering lifecycle, ContextOS is designed to complement local runtime action firewalls, such as [Stroq](https://github.com/AGGIB/Stroq):
+## Complementary tools
 
-1. **Static Rules & Context (ContextOS):** Defines and compiles engineering policies, role boundaries, and architectural guidelines into native IDE configurations.
-2. **In-Flight Action Firewall (e.g. Stroq):** Intercepts tool calls in real time, monitors taint from untrusted reads, and deterministically denies outbound secret egress (`deny-secret-egress`) or self-tampering of governance files (`deny-self-tamper`).
-3. **Commit Governance (ContextOS):** Verifies the Git staged index and prevents dirty commits.
-4. **CI/CD Quality Gate (ContextOS):** Verifies adapter parity and rule synchronization.
+ContextOS is a static compiler and a commit-time checker. It does not see what a
+model does during a session. A local runtime action firewall (for example
+[Stroq](https://github.com/AGGIB/Stroq)) addresses that layer; neither tool
+replaces the other.

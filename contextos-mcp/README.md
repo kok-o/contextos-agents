@@ -12,6 +12,8 @@ JavaScript library import is not a supported interface.
 
 ## Stable and experimental scope
 
+**Status: frozen.** This package is maintained for compatibility and security fixes only, and no runtime, swarm or labs features are developed until the core `contextos-agents` package has recorded external users. The read-only inspection below is the supported surface; context selection uses the resolver of the installed `contextos-agents` package.
+
 - Default MCP registration and read-only handlers are covered by protocol and
   installed-archive tests on Windows, Linux and macOS.
 - Selected context bodies are preserved whole, with source hashes, omissions and

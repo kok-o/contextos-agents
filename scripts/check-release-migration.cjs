@@ -8,13 +8,16 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const previous = path.resolve(process.argv[2] || 'scratch/r2-previous/contextos-agents-2.2.0.tgz');
-const candidate = path.resolve(process.argv[3] || `scratch/release-candidate/contextos-agents-${require('../package.json').version}.tgz`);
-const previousMcp = path.resolve(process.argv[4] || 'scratch/r2-previous/contextos-mcp-0.3.1.tgz');
-const candidateMcp = path.join(path.dirname(candidate), `contextos-mcp-${require('../contextos-mcp/package.json').version}.tgz`);
+const coreOnly = process.argv.includes('--core-only');
+const positional = process.argv.slice(2).filter(arg => arg !== '--core-only');
+const previous = path.resolve(positional[0] || 'scratch/r2-previous/contextos-agents-2.2.0.tgz');
+const candidate = path.resolve(positional[1] || `scratch/release-candidate/contextos-agents-${require('../package.json').version}.tgz`);
+const previousMcp = coreOnly ? null : path.resolve(positional[2] || 'scratch/r2-previous/contextos-mcp-0.3.1.tgz');
+const candidateMcp = coreOnly ? null : path.join(path.dirname(candidate), `contextos-mcp-${require('../contextos-mcp/package.json').version}.tgz`);
+const archives = [previous, candidate, ...(!coreOnly ? [previousMcp, candidateMcp] : [])];
 const npm = process.env.npm_execpath || path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
 assert.ok(fs.existsSync(npm), 'Run through npm run check:migration');
-for (const archive of [previous, candidate, previousMcp, candidateMcp]) assert.ok(fs.existsSync(archive), `Missing archive: ${archive}`);
+for (const archive of archives) assert.ok(fs.existsSync(archive), `Missing archive: ${archive}`);
 function archiveIdentity(archive, names) {
   const pkg = JSON.parse(execFileSync('tar', ['-xOf', archive, 'package/package.json'], { encoding: 'utf8', windowsHide: true }));
   assert.ok(names.includes(pkg.name), `Unexpected package in ${archive}: ${pkg.name}`);
@@ -22,12 +25,12 @@ function archiveIdentity(archive, names) {
   return { name: pkg.name, version: pkg.version };
 }
 const previousCoreIdentity = archiveIdentity(previous, ['contextos-agents']);
-const previousMcpIdentity = archiveIdentity(previousMcp, ['@contextos/mcp', 'contextos-mcp']);
-const candidateMcpIdentity = archiveIdentity(candidateMcp, ['contextos-mcp']);
+const previousMcpIdentity = coreOnly ? null : archiveIdentity(previousMcp, ['@contextos/mcp', 'contextos-mcp']);
+const candidateMcpIdentity = coreOnly ? null : archiveIdentity(candidateMcp, ['contextos-mcp']);
 fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
 const consumer = fs.mkdtempSync(path.join(os.tmpdir(), 'contextos-migration-consumer-space '));
 const checkpoint = path.join(consumer, 'checkpoint');
-const configPaths = ['.agents', '.cursor', 'AGENTS.md', 'CLAUDE.md', '.github', '.aider.conf.yml', 'CONVENTIONS.md', '.zed', 'GEMINI.md'];
+const configPaths = ['.agents', '.claude', '.cursor', 'AGENTS.md', 'CLAUDE.md', '.github', '.aider.conf.yml', 'CONVENTIONS.md', '.zed', 'GEMINI.md'];
 const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache') };
 delete env.NODE_PATH;
 const steps = [];
@@ -86,8 +89,10 @@ try {
   write('.cursor/rules/team.mdc', 'USER_CURSOR_KEEP\n');
   run('git', ['init', '-q']);
   install(previous);
-  install(previousMcp);
-  verifyInstalled(previousMcpIdentity);
+  if (!coreOnly) {
+    install(previousMcp);
+    verifyInstalled(previousMcpIdentity);
+  }
   const previousVersion = JSON.parse(cli('--version', '--json')).version;
   assert.equal(previousVersion, previousCoreIdentity.version);
   cli('init', '--minimal');
@@ -106,8 +111,10 @@ try {
     if (fs.existsSync(file)) fs.cpSync(file, path.join(checkpoint, rel), { recursive: true });
   }
   install(candidate);
-  install(candidateMcp);
-  verifyInstalled(candidateMcpIdentity);
+  if (!coreOnly) {
+    install(candidateMcp);
+    verifyInstalled(candidateMcpIdentity);
+  }
   cli('update');
   cli('compile');
   cli('export', 'all');
@@ -118,7 +125,8 @@ try {
   assert.ok(fs.readFileSync(path.join(consumer, 'CLAUDE.md'), 'utf8').includes('USER_CLAUDE_KEEP'));
   const candidateVersion = JSON.parse(cli('--version', '--json')).version;
   assert.equal(candidateVersion, require('../package.json').version);
-  run(process.execPath, [path.join(__dirname, 'check-installed-mcp.cjs'), consumer]);
+  if (!coreOnly) run(process.execPath, [path.join(__dirname, 'check-installed-mcp.cjs'), consumer]);
+  else assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/contextos-mcp')), 'Core migration must not install MCP');
   // Preserve the entire upgraded configuration for manual reconciliation of later edits.
   const upgraded = path.join(consumer, 'upgraded-config');
   fs.mkdirSync(upgraded);
@@ -130,10 +138,10 @@ try {
   for (const rel of ['package.json', 'package-lock.json']) fs.copyFileSync(path.join(checkpoint, rel), path.join(consumer, rel));
   run(process.execPath, [npm, 'ci', '--ignore-scripts', '--no-audit', '--no-fund'], npmTimeoutMs);
   assert.equal(JSON.parse(cli('--version', '--json')).version, previousVersion);
-  verifyInstalled(previousMcpIdentity);
+  if (!coreOnly) verifyInstalled(previousMcpIdentity);
   assert.deepEqual(configHashes(), before, 'Rollback must restore every configuration byte');
   assert.equal(JSON.parse(cli('export', 'all', '--check', '--json')).hasDrift, false);
-  result = { result: 'PASS', previousVersion, candidateVersion, previousMcp: previousMcpIdentity, candidateMcp: candidateMcpIdentity,
+  result = { result: 'PASS', coreOnly, mcpChecked: !coreOnly, previousVersion, candidateVersion, previousMcp: previousMcpIdentity, candidateMcp: candidateMcpIdentity,
     platform: process.platform, node: process.version,
     sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     rollback: 'checkpoint + previous package-lock + npm ci', configurationFilesRestored: Object.keys(before).length,
@@ -142,7 +150,7 @@ try {
   result = { result: 'FAIL', consumerPath: consumer, error: error.message };
   process.exitCode = 1;
 }
-result.archives = [previous, candidate, previousMcp, candidateMcp].map(file => ({ file, sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') }));
+result.archives = archives.map(file => ({ file, sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') }));
 result.steps = steps;
-fs.writeFileSync(path.join(root, 'scratch/release-migration-result.json'), JSON.stringify(result, null, 2) + '\n');
+fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-migration-result.json' : 'scratch/release-migration-result.json'), JSON.stringify(result, null, 2) + '\n');
 console.log(JSON.stringify({ ...result, steps: undefined }, null, 2));

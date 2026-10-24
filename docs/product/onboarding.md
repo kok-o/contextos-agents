@@ -1,86 +1,94 @@
 # ContextOS: five-minute onboarding
 
-ContextOS selects engineering instructions for a task and exports them into client
-configuration files. Start with one task and one team rule. You need Node.js 22+
-and a project folder; these steps do not call a model API.
+ContextOS keeps your coding-agent rules in one place and exports them into the
+files each agent reads. Start with one project and one team rule. You need
+Node.js 22+ and a project folder; these steps do not call a model API.
 
 ## 1. Install in your project
 
-```sh
-npm install --save-dev contextos-agents
-npx --no-install contextos init --minimal
-npx --no-install contextos skill add typescript
-```
-
-On Windows PowerShell, use `npm.cmd` and `npx.cmd` if your script execution policy
-blocks the PowerShell wrappers. Commit your package lockfile to pin the version.
-The current repository candidate can instead be installed from its local tarball:
-see the [tested demo](../../examples/quickstart/README.md).
-
-Initialization exports the shared `.agents/skills` projection. Codex can discover
-that path. Export another adapter explicitly when your team uses that client.
-
-## 2. Inspect a task's selection
+This guide targets the unpublished core **3.0.0-rc.1** candidate. Build the
+[local archive](../RELEASE_3.0.0-rc.1.md) first; do not fetch `latest` for these steps.
 
 ```sh
-npx --no-install contextos resolve "Implement TypeScript validation" --files src/order.ts --explain
-npx --no-install contextos resolve "Implement TypeScript validation" --files src/order.ts --json
+npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0-rc.1.tgz
+npx --no-install contextos init
 ```
 
-The result identifies selected skills and the evidence for each selection. Token
-counts estimate skill bodies; client prompts, tools, and conversation history add
-more context. A soft budget may overflow to retain required instructions.
+`init` creates `.agents/project/skills/` for your rules and adds a `.gitignore`
+block for derived caches. It copies no tool code and no bundled rules into the
+project. Commit your package lockfile to pin the version. To also install the
+seven bundled engineering skills and `AGENTS.md`, use `init --with-core`; to add
+catalog skills, use `contextos skill add typescript` or a preset such as
+`init --preset frontend`.
 
-## 3. Add your team's rule
+On Windows PowerShell, use `npm.cmd` and `npx.cmd` if your script execution
+policy blocks the PowerShell wrappers. The current repository candidate can
+instead be installed from its local tarball: see the
+[tested demo](../../examples/quickstart/README.md).
 
-Copy the [team-order example](../../examples/quickstart/team-order/SKILL.md) and its
-[skill.yaml](../../examples/quickstart/team-order/skill.yaml) to:
+## 2. Add your team's rule
 
-```text
-.agents/project/skills/team-order/
-  SKILL.md
-  skill.yaml
+Create `.agents/project/skills/team-order/SKILL.md`, or copy the
+[team-order example](../../examples/quickstart/team-order/SKILL.md) together with
+its [skill.yaml](../../examples/quickstart/team-order/skill.yaml):
+
+```markdown
+---
+name: team-order
+description: "Order handling rules for the checkout service."
+activation: auto
+---
+# Order handling
+
+- Keep `createOrder` pure; do I/O in the caller.
 ```
 
-Edit the rule to fit your project. Use the project directory for your own skills;
-use `contextos skill override engineering-workflow` when customizing a built-in.
-Core updates retain project overrides.
+`activation` chooses how the rule reaches the agent: `always` (every session),
+`globs` (matching files, with a `globs:` list) or `auto` (the agent decides from
+the description). See the table in the [README](../../README.md#how-a-rule-reaches-each-agent).
+Use `contextos skill override engineering-workflow` when you customize a bundled
+rule; project files always take precedence over bundled ones.
+
+## 3. Export and verify
 
 ```sh
 npx --no-install contextos compile
-npx --no-install contextos resolve "Implement @team-order TypeScript validation" --files src/order.ts --explain
 npx --no-install contextos export all
-```
-
-The explicit `@team-order` request should select the team rule. Its generated
-native entrypoint is `.agents/skills/team-order/SKILL.md`. Edit source rules under
-`.agents/project`, then compile and export again.
-
-## 4. Verify exported files
-
-```sh
 npx --no-install contextos export all --check --json
 ```
 
-Exit zero means managed exports match the current sources. A changed source or
-missing export causes drift. If someone edited a managed output, review and move
-that change into its source before exporting; ownership conflicts can refuse an
-overwrite. Existing user files are not blanket overwrite targets.
+Exit zero means every generated file matches the current sources. A changed
+source or a missing export is reported as drift (exit `1`); an unreadable
+lockfile or unresolved merge conflict is an error (exit `2`). If someone edited a
+generated file, the next export refuses to overwrite it: move the change into
+its source, restore the file, or use `--force`. Files you own are never replaced
+silently.
 
 Useful paths:
 
 | Purpose | Path |
 | --- | --- |
-| Built-in source | `.agents/core/skills/` |
-| Your rules and overrides | `.agents/project/skills/` |
-| Shared native skills | `.agents/skills/` |
-| Compiled registry | `.agents/compiled/registry.v2.json` |
-| Managed artifact provenance | `.agents/lockfile.v2.json` |
+| Your rules | `.agents/project/skills/` |
+| Bundled rules, if installed | `.agents/core/skills/` |
+| Claude Code output | `.claude/rules/`, `.claude/skills/` |
+| Shared native skills (Codex, Gemini CLI) | `.agents/skills/` |
+| Which files ContextOS wrote | `.agents/lockfile.v2.json` |
+| Derived registry cache (not committed) | `.agents/compiled/` |
 
-For other clients, check the [adapter matrix](../ADAPTER_COMPATIBILITY.md). An
-export test proves the file configuration; it does not prove client loading or
-model adherence. In Codex, try a task explicitly referencing `$team-order` and
-inspect skill loading and the resulting patch.
+An export test proves the file; it does not prove that a client loaded it or
+that a model followed it. To check a client yourself, use the protocol in the
+[compatibility matrix](../ADAPTER_COMPATIBILITY.md#verification-record).
+
+## 4. Ask what applies to a task
+
+```sh
+npx --no-install contextos resolve "Implement order validation" --files src/order.ts --explain
+```
+
+The result names the recommended rules and the evidence for each, including
+your own rules (matched on name and description). Skills that are not installed
+are listed as such. Resolution recommends; exports contain every installed rule
+the profile allows.
 
 ## 5. Keep the check reproducible
 
@@ -99,17 +107,23 @@ steps:
 ```
 
 This installs your project's dependencies. For a gate isolated from consumer
-installation and scripts, use the composite action described in the [guide](../../GUIDE.md).
+installation and scripts, use the composite action described in the
+[guide](../../GUIDE.md#ci-configuration-check).
 
-After changing source rules, compile, export, inspect the diff, and commit the
-source plus managed outputs and lockfile together. For updates and removal:
+After changing source rules, export, inspect the diff, and commit the sources,
+generated files and lockfile together. For branches and merges see the
+[team workflow](../TEAM_WORKFLOW.md). To upgrade or remove:
 
 ```sh
-npx --no-install contextos update
+npx --no-install contextos update               # refresh bundled files, migrate 2.x projects
+npx --no-install contextos uninstall --dry-run  # show what would be removed
 npx --no-install contextos uninstall --yes
 ```
 
+`uninstall` removes generated files, managed blocks, the lockfile and caches, and
+keeps `.agents/project/` and anything you edited.
+
 The repository's installed-package acceptance gate verifies initialization,
-custom skill selection, export drift, update and uninstall preservation, and a
-read-only MCP protocol request in a fresh project. None of these checks measures
-AI answer quality or promises token savings.
+custom rule selection, export drift, merges, update and uninstall preservation,
+and a read-only MCP protocol request in a fresh project. None of these checks
+measures AI answer quality or promises token savings.
