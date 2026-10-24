@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No additional changes recorded after the candidate below.
+### Fixed
+
+- Give npm installation in the Windows installed-archive CI gate the same
+  bounded ten-minute allowance as migration installs. CLI checks retain their
+  three-minute limit. Failed subprocess reports now include the command, timeout
+  and elapsed time so installation stalls can be distinguished from CLI failures.
 
 ## [3.0.0-rc.1] - 2026-10-24
 

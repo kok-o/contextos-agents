@@ -38,8 +38,18 @@ fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
 const consumer = fs.mkdtempSync(path.join(os.tmpdir(), 'contextos-release-consumer-space '));
 const env = { ...process.env, NO_COLOR: '1', npm_config_cache: path.join(root, 'scratch/consumer-npm-cache'), NODE_OPTIONS: '--max-old-space-size=4096 --no-global-search-paths' };
 delete env.NODE_PATH;
+// Match the migration gate: Windows dependency extraction can exceed three
+// minutes on hosted runners. CLI commands retain the strict 180-second limit.
+const npmInstallTimeoutMs = process.platform === 'win32' ? 600000 : 180000;
 function run(executable, args, options = {}) {
-  return execFileSync(executable, args, { cwd: consumer, env, encoding: 'utf8', timeout: 180000, windowsHide: true, ...options });
+  const executionOptions = { cwd: consumer, env, encoding: 'utf8', timeout: 180000, windowsHide: true, ...options };
+  const started = Date.now();
+  try {
+    return execFileSync(executable, args, executionOptions);
+  } catch (error) {
+    error.releaseStep = { command: [executable, ...args], timeoutMs: executionOptions.timeout, durationMs: Date.now() - started, code: error.code ?? null };
+    throw error;
+  }
 }
 function write(relative, content) {
   const file = path.join(consumer, relative);
@@ -61,7 +71,7 @@ try {
   write('AGENTS.md', userAgents);
   write('CLAUDE.md', userClaude);
   write('.cursor/rules/team.mdc', userCursor);
-  run(process.execPath, [npmCli(), 'install', '--save-prod', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts', '--no-package-lock', ...archives]);
+  run(process.execPath, [npmCli(), 'install', '--save-prod', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts', '--no-package-lock', ...archives], { timeout: npmInstallTimeoutMs });
   run('git', ['init', '-q']);
   // Invoke npm's real .bin wrapper, with explicit quoting on Windows.
   function wrapper(name, ...args) {
@@ -167,9 +177,10 @@ try {
   console.log(`Release consumer acceptance: PASS (${consumer})`);
 } catch (error) {
   fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-install-result.json' : 'scratch/release-install-result.json'), JSON.stringify({
-    result: 'FAIL', coreVersion, mcpVersion, consumerPath: consumer, error: error.message,
+    result: 'FAIL', coreVersion, mcpVersion, consumerPath: consumer, error: error.message, failedStep: error.releaseStep ?? null,
   }, null, 2) + '\n');
   console.error(`Release consumer acceptance: FAIL (${consumer})`);
   console.error(error.message);
+  if (error.releaseStep) console.error(JSON.stringify(error.releaseStep));
   process.exitCode = 1;
 }

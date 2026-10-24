@@ -71,6 +71,45 @@ test('a prerelease cannot default to the latest npm tag', t => {
   assert.match(checkPublicInstructions(fixture, { coreOnly: true }).join('\n'), /non-latest publishConfig.tag/);
 });
 
+test('consumer gate records timeouts and extends only npm installation on Windows', t => {
+  const fixture = contractFixture(t);
+  const script = path.join(fixture, 'scripts/check-release-install.cjs');
+  fs.mkdirSync(path.dirname(script));
+  fs.copyFileSync(path.resolve(__dirname, '../scripts/check-release-install.cjs'), script);
+  const version = JSON.parse(fs.readFileSync(path.join(fixture, 'package.json'))).version;
+  const archives = path.join(fixture, 'archives');
+  fs.mkdirSync(archives);
+  fs.writeFileSync(path.join(archives, `contextos-agents-${version}.tgz`), 'unused: npm is intercepted before reading it');
+
+  for (const phase of ['install', 'cli']) {
+    const preload = path.join(fixture, 'timeout.cjs');
+    fs.writeFileSync(preload, `
+      const cp = require('node:child_process');
+      cp.execFileSync = (executable, args) => {
+        const npmInstall = args[1] === 'install';
+        if (${JSON.stringify(phase)} === 'cli' && npmInstall) return '';
+        if (!npmInstall && !(executable === 'git' && args[0] === 'init')) throw new Error('unexpected command');
+        const error = new Error('simulated timeout'); error.code = 'ETIMEDOUT'; throw error;
+      };
+    `);
+    const result = spawnSync(process.execPath, ['--require', preload, script, '--core-only', archives], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const report = JSON.parse(fs.readFileSync(path.join(fixture, 'scratch/release-core-install-result.json')));
+    t.after(() => {
+      const consumer = fs.realpathSync(report.consumerPath);
+      assert.equal(path.dirname(consumer), fs.realpathSync(os.tmpdir()));
+      assert.ok(path.basename(consumer).startsWith('contextos-release-consumer-space '));
+      fs.rmSync(consumer, { recursive: true, force: true });
+    });
+    assert.equal(report.result, 'FAIL', 'a timeout must not be converted into a passing check');
+    assert.equal(report.failedStep.code, 'ETIMEDOUT');
+    assert.equal(report.failedStep.timeoutMs, phase === 'install' && process.platform === 'win32' ? 600000 : 180000);
+    assert.ok(report.failedStep.durationMs >= 0);
+    if (phase === 'install') assert.ok(report.failedStep.command.includes('install'));
+    else assert.deepEqual(report.failedStep.command, ['git', 'init', '-q']);
+  }
+});
+
 test('release surface rejects credentials, local probes and raw evidence while retaining public docs', () => {
   const bad = ['contextos-mcp/.env', 'scratch/key.txt', 'docs/evidence/private.json', 'docs/AUDIT_2026-10-03.md', 'benchmarks/run-sol-agent.js', 'private.pem'];
   assert.deepEqual(validateGitPaths(bad), bad);
