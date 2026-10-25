@@ -94,47 +94,58 @@ describe('Phase 2: Adapter Compatibility & Technical Contracts', () => {
     assert.ok(backendContent.includes('BACKEND_SCOPED_RULE_MARKER'), 'Must include backend marker');
   });
 
-  test('Task 2.4: Claude Code export compiles clean markdown without YAML frontmatter', () => {
+  test('Task 2.4: Claude Code export writes native rules and skills', () => {
     const rendered = renderAdapters(fixtureDir, 'claude');
     assert.equal(rendered.collisions.length, 0);
+    const byPath = new Map(rendered.artifacts.map(a => [a.path, a.content.toString('utf8')]));
 
-    const frontendClaude = rendered.artifacts.find(a =>
-      a.path === '.agents/generated/claude/skills/scoped-frontend/SKILL.md'
-    );
-    assert.ok(frontendClaude, 'Must generate Claude skill file');
-    const content = frontendClaude.content.toString('utf8');
+    // A skill with a path scope becomes a path-scoped Claude rule.
+    const frontendRule = byPath.get('.claude/rules/scoped-frontend.md');
+    assert.ok(frontendRule, 'Must generate .claude/rules/scoped-frontend.md');
+    assert.match(frontendRule, /^---\npaths:\n  - "/, 'Path-scoped rule must declare paths frontmatter');
+    assert.ok(frontendRule.includes('FRONTEND_SCOPED_RULE_MARKER'), 'Must retain skill body');
+    assert.ok(!frontendRule.includes('description:'), 'Rule frontmatter carries paths only');
 
-    // Must be clean markdown without YAML frontmatter header
-    assert.ok(!content.startsWith('---'), 'Claude skill must strip YAML frontmatter');
-    assert.ok(content.includes('FRONTEND_SCOPED_RULE_MARKER'), 'Must retain skill body');
+    // A skill that is only described is a native skill: name and description are what Claude sees.
+    const workflow = byPath.get('.claude/skills/engineering-workflow/SKILL.md');
+    assert.ok(workflow, 'Must generate .claude/skills/engineering-workflow/SKILL.md');
+    assert.match(workflow, /^---\nname: engineering-workflow\ndescription: ".+"\n---\n/);
+
+    assert.ok(![...byPath.keys()].some(p => p.startsWith('.agents/generated/claude/')), 'Legacy link copies are gone');
+    assert.ok(!byPath.has('CLAUDE.md'), 'CLAUDE.md is no longer managed');
   });
 
-  test('Task 2.4b: Claude Code generates CLAUDE.md and preserves user content idempotently', () => {
+  test('Task 2.4b: Claude Code leaves CLAUDE.md alone and strips a block written by an earlier version', () => {
     const claudeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-claude-test-'));
     try {
       fs.cpSync(fixtureSrc, claudeDir, { recursive: true });
 
-      // Create pre-existing user CLAUDE.md
-      const initialUserContent = '# Custom User Team Instructions\n\n- Build using pnpm\n- Keep bundle small\n';
-      fs.writeFileSync(path.join(claudeDir, 'CLAUDE.md'), initialUserContent, 'utf8');
+      const userText = '# Custom User Team Instructions\n\n- Build using pnpm\n- Keep bundle small\n';
+      const legacyBlock = '<!-- CONTEXTOS:START -->\n# ContextOS Agent Governance\n- [x](.agents/generated/claude/skills/x/SKILL.md)\n<!-- CONTEXTOS:END -->';
+      const legacy = `${userText}\n${legacyBlock}\n`;
+      fs.writeFileSync(path.join(claudeDir, 'CLAUDE.md'), legacy, 'utf8');
 
-      // First render and apply
-      const res1 = renderAdapters(claudeDir, 'claude');
-      const claudeArt1 = res1.artifacts.find(a => a.path === 'CLAUDE.md');
-      assert.ok(claudeArt1, 'CLAUDE.md must be generated');
-      applyArtifacts(claudeDir, res1.artifacts, { context: res1.context });
+      // Record CLAUDE.md as managed by an earlier export, as a 2.3 lockfile did.
+      const { LockfileV2Manager } = require('../.agents/filesystem/index.js');
+      const manager = new LockfileV2Manager(claudeDir);
+      const lock = manager.createEmpty({});
+      manager.recordManagedFile(lock, 'CLAUDE.md', {
+        exactSha256: computeExactHash(Buffer.from(legacy)),
+        semanticTextSha256: computeSemanticHash(Buffer.from(legacy)),
+        generator: 'claude@2',
+      });
+      fs.mkdirSync(path.join(claudeDir, '.agents'), { recursive: true });
+      fs.writeFileSync(path.join(claudeDir, '.agents', 'lockfile.v2.json'), JSON.stringify(lock, null, 2));
 
-      const onDisk1 = fs.readFileSync(path.join(claudeDir, 'CLAUDE.md'), 'utf8');
-      assert.ok(onDisk1.includes('# Custom User Team Instructions'), 'User preamble must be preserved');
-      assert.ok(onDisk1.includes('<!-- CONTEXTOS:START -->'), 'Managed start marker must be present');
-      assert.ok(onDisk1.includes('<!-- CONTEXTOS:END -->'), 'Managed end marker must be present');
+      const res = renderAdapters(claudeDir, 'claude');
+      applyArtifacts(claudeDir, res.artifacts, { context: res.context });
 
-      // Second render and apply (idempotency check)
-      const res2 = renderAdapters(claudeDir, 'claude');
-      applyArtifacts(claudeDir, res2.artifacts, { context: res2.context });
+      const onDisk = fs.readFileSync(path.join(claudeDir, 'CLAUDE.md'), 'utf8');
+      assert.equal(onDisk, userText, 'User text must survive; only the generated block is removed');
 
-      const onDisk2 = fs.readFileSync(path.join(claudeDir, 'CLAUDE.md'), 'utf8');
-      assert.equal(onDisk2, onDisk1, 'Repeated export must be strictly idempotent');
+      const again = renderAdapters(claudeDir, 'claude');
+      assert.equal(applyArtifacts(claudeDir, again.artifacts, { context: again.context }).skipped, true,
+        'A second export must change nothing');
     } finally {
       fs.rmSync(claudeDir, { recursive: true, force: true });
     }

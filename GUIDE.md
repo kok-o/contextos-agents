@@ -18,50 +18,90 @@ Key system principles:
 
 ## 2. CLI Commands (`contextos` / `ctx.js`)
 
-The examples below use the `contextos` executable. Use `npx contextos-agents`
-without a project installation, or install a pinned development dependency and
-use `npx --no-install contextos`. Prefer the package executable in ESM projects;
-running the copied `.agents/ctx.js` directly can inherit the project's module type.
+This guide targets the **3.0.0-rc.1** core candidate on npm's `next` tag. Follow the
+[RC instructions](docs/RELEASE_3.0.0-rc.1.md) to install a pinned development dependency,
+then use `npx --no-install contextos`. The compiler runs from the installed package;
+the project holds rules only, so there is no `.agents/ctx.js` to run.
 
 ### Initialization options
 
-The [README quickstart](README.md#quickstart) initializes the sources first and
-exports after adding a team rule. `--skip-compile` defers the installer's local
-script invocation; subsequent package CLI commands also work in projects with
-`"type": "module"`.
+The [README quickstart](README.md#quickstart) initializes the rule folder first
+and exports after you add a team rule.
 
 ```sh
-npx contextos-agents init --skip-compile
-npx contextos-agents init --dry-run           # Preview installation
-npx contextos-agents init --preset frontend  # Frontend catalog skills
-npx contextos-agents init --preset backend   # Backend catalog skills
-npx contextos-agents init --preset devops    # DevOps catalog skills
-npx contextos-agents init --all              # All catalog skills
-npx contextos-agents init --profile startup
-npx contextos-agents init --auto
-npx contextos-agents --help
-npx contextos-agents --version
+npx --no-install contextos init                    # .agents/project/skills + .gitignore block, nothing else
+npx --no-install contextos init --dry-run          # Preview, writes nothing
+npx --no-install contextos init --with-core        # Also the seven bundled core skills and AGENTS.md (alias: --minimal)
+npx --no-install contextos init --preset frontend  # Frontend catalog skills
+npx --no-install contextos init --preset backend   # Backend catalog skills
+npx --no-install contextos init --preset devops    # DevOps catalog skills
+npx --no-install contextos init --all              # Bundled core plus every catalog skill
+npx --no-install contextos init --profile startup  # Also install and apply a profile
+npx --no-install contextos init --with-core --agent cursor   # Export for one client right away
+npx --no-install contextos --help
+npx --no-install contextos --version
 ```
 
-Each `init` line is an alternative for a new installation. Add `--skip-compile`
-to a preset or profile initialization to defer export, then run `compile` and
-`export` through the package CLI. Default initialization installs seven core
-skills; `--minimal` makes that choice explicit. `--force` permits overwriting an
-existing `.agents` installation and is not needed for the quickstart.
+Each `init` line is an alternative for a new project. A project with no rules has
+nothing to export, so `--agent` exports only when rules exist (for example with
+`--with-core`). `init` refuses to run in an initialized project; `--force`
+refreshes the bundled files (core skills, `AGENTS.md`, profile definitions) and
+deletes nothing, so your rules under `.agents/project/` are always safe.
 
 For a reproducible project setup:
 
 ```sh
-npm install --save-dev --save-exact contextos-agents@2.3.2
-npx --no-install contextos init --skip-compile
+npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0-rc.1.tgz
+npx --no-install contextos init
 npx --no-install contextos compile
-npx --no-install contextos export gemini
+npx --no-install contextos export all
 ```
 
 Commit the dependency lockfile. Use `npm.cmd` and `npx.cmd` in PowerShell if its
 execution policy blocks the wrappers. For updates and removal, follow
 [onboarding](docs/product/onboarding.md) and the
-[migration guide](docs/COMPACT_CONTEXT_MIGRATION.md).
+[migration guide](docs/MIGRATION.md).
+
+### Activation: how a rule reaches an agent
+
+A rule's frontmatter (or `skill.yaml`) states how it should be delivered:
+
+```yaml
+activation: always   # always | auto | globs  (default: auto)
+globs: "src/api/**/*.ts,src/routes/**/*.ts"   # required when activation is globs
+```
+
+`always` rules are placed where each client loads files at the start of a session
+(`.claude/rules/`, `alwaysApply` in Cursor, the body inside Copilot and Aider
+files). `globs` rules apply to matching files only. `auto` rules are skills the
+agent selects from their description. The per-client mapping is in the
+[README](README.md#how-a-rule-reaches-each-agent) and the
+[compatibility matrix](docs/ADAPTER_COMPATIBILITY.md). `contextos validate`
+reports an unknown value, an empty body, or a `name` that differs from the folder.
+
+### Updating and removing
+
+```sh
+contextos update --dry-run     # plan: refresh bundled files, migrate 2.x projects, re-export
+contextos update
+contextos uninstall            # prints the plan; changes nothing without --yes
+contextos uninstall --yes
+```
+
+`uninstall` removes generated files that still match what ContextOS wrote, the
+managed block in files that also hold your text, lockfiles, caches and the
+`.gitignore` block. It keeps `.agents/project/`, anything you edited and anything
+it did not write, and refuses to follow a symlink or junction out of the project.
+Merged settings files such as `.aider.conf.yml` are kept in full because their
+values may belong to you. Remove obsolete `CONVENTIONS.md` references manually
+after uninstalling.
+
+### Working in a team
+
+Branches, merges, CRLF checkouts and conflict recovery are covered in the
+[team workflow](docs/TEAM_WORKFLOW.md). In short: commit sources, generated files
+and the lockfile together; after a merge, resolve source conflicts and run
+`contextos export all`.
 
 ### Dynamic Skill Resolution (`resolve`)
 
@@ -72,11 +112,14 @@ contextos resolve "Build an accessible modal component with React and Tailwind"
 # With detailed evidence scoring explanation:
 contextos resolve "security review Next.js auth" --files apps/web/app/login/page.tsx --explain
 
+# Limit the answer to skills installed in this project:
+contextos resolve "Fix the login handler" --installed-only
+
 # Output structured JSON for scripts and IDE integrations:
 contextos resolve "Dockerize NestJS API" --json
 ```
 
-Selection does not install a skill or prove that a client loaded its body.
+Your own rules are routed on their name and description. Selection does not install a skill or prove that a client loaded its body.
 The text output's `Skills loaded:` label describes a selection declaration.
 Missing selected skills can produce `CTX_SELECTED_SKILL_UNAVAILABLE`; install
 them with `contextos skill add <name>` before using them. Resolver budgets are
@@ -88,7 +131,6 @@ and tool output. Required safety guidance can overflow the budget with a warning
 ```bash
 # Auto-detect project tech stack (React, Next.js, FastAPI, Cargo, Go, etc.):
 contextos detect
-# or: node .agents/ctx.js detect
 
 # Target a specific monorepo package with evidence breakdown:
 contextos detect --scope apps/web --explain
@@ -140,7 +182,12 @@ contextos skill eject gemini-precision
 ```bash
 # Export installed skills allowed by the active profile:
 contextos export all
-# or: node .agents/ctx.js export all
+
+# Check without writing (exit 0 pass, 1 drift, 2 error):
+contextos export all --check --json
+
+# Replace a differing file at a generated path explicitly:
+contextos export all --force
 
 # Compile rules for a specific agent:
 contextos export gemini
@@ -149,27 +196,24 @@ contextos export cursor
 contextos export zed
 ```
 
-After changing source skills, run `contextos compile` before exporting. Ordinary
-exports do not use the last `resolve` query as a filter. Default initialization
-exports the shared Gemini/Codex skills unless `--skip-compile` was supplied.
-Cursor's default bootstrap is always applied; individual skills use globs or
-agent-requested activation. Claude uses an instruction index, while Zed outputs
-are manual templates. See the [adapter matrix](docs/ADAPTER_COMPATIBILITY.md).
+After changing source skills, run `contextos compile` before exporting (the check
+does not depend on it, but `resolve` does). Ordinary exports do not use the last
+`resolve` query as a filter. `init` exports only when you ask for it with
+`--agent`. Claude Code receives `.claude/rules/` and `.claude/skills/`; your
+`CLAUDE.md` is not touched. Zed outputs are manual templates. See the
+[adapter matrix](docs/ADAPTER_COMPATIBILITY.md).
 
 ### Diagnostics and Monitoring
 
 ```bash
 # Run pre-flight health diagnostics (stack, installed skills, MCP, secrets):
 contextos doctor
-# or: node .agents/ctx.js doctor
 
-# View context configuration statistics:
+# Estimate the size of the installed rule payload:
 contextos stats
-# or: node .agents/ctx.js stats
 
 # Background daemon for continuous synchronization on file changes:
 contextos watch
-# or: node .agents/ctx.js watch
 ```
 
 ### Validation and Testing
@@ -177,7 +221,6 @@ contextos watch
 ```bash
 # Validate integrity of skills, schemas, and dependencies:
 contextos validate
-# or: node .agents/ctx.js validate
 
 # Run the full test suite:
 npm test
@@ -189,7 +232,8 @@ cd contextos-mcp && npm test
 ### Security Scanning & Governance Hooks
 
 ```bash
-# Scan staged Git index for secrets, blocked files, and placeholders:
+# Scan staged Git index for secrets, blocked files, and placeholders
+# (reports only; add --enforce to fail on findings):
 contextos scan --staged --enforce
 
 # Enforce task write-scope containment:
@@ -214,10 +258,13 @@ that a model followed the instructions or wrote correct application code.
 The [README](README.md#check-rule-changes-in-ci) contains a complete workflow.
 Pin both the action and its CLI input to the version your repository uses:
 
+The RC package and tag are not published yet. Until then, run the local
+`npx --no-install contextos gate --target all`; the example below is for after publication.
+
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.2
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0-rc.1
   with:
-    version: '2.3.2'
+    version: '3.0.0-rc.1'
     adapters: 'all'
     working-directory: '.'
 ```
@@ -230,7 +277,7 @@ the exports you committed. Commit source rules, generated files, and
 The older `v2.3.0` action tag defaults to CLI 2.2.0; retain an explicit `version`
 when using that tag. Updating the action source does not update existing tags.
 Maintenance release details and validation records are linked from
-[the 2.3.2 checklist](docs/PATCH_RELEASE_2.3.2.md).
+[the 2.3.2 checklist](docs/archive/PATCH_RELEASE_2.3.2.md).
 
 ### MCP Server (Beta, Separate Package)
 
@@ -267,7 +314,7 @@ require a separate approval cycle or role declaration.
 
 ## 4. Key Core & Catalog Skills
 
-Skills live in `.agents/core/skills/` (core essential skills) and `catalog/skills/` (36 on-demand domain skills installable via `contextos skill add <name>`):
+Your rules live in `.agents/project/skills/`. The package also carries seven core skills (copied into `.agents/core/skills/` by `init --with-core`) and `catalog/skills/` (36 on-demand domain skills installable via `contextos skill add <name>`):
 
 ### Core Skills (7)
 
@@ -356,10 +403,12 @@ Use these templates to quickly launch workflows:
 
 Explore deeper architecture guides, adapter references, and product specifications:
 
-- **Quickstart & Onboarding:** [docs/product/onboarding.md](./docs/product/onboarding.md) - Five-minute guide to installing, configuring, and verifying ContextOS.
-- **Adapter Compatibility Matrix:** [docs/ADAPTER_COMPATIBILITY.md](./docs/ADAPTER_COMPATIBILITY.md) - Support tiers, file layouts, and test coverage across AI coding tools.
-- **Catalog Quality & Code Examples:** [docs/product/catalog-quality.md](./docs/product/catalog-quality.md) - Quality tiers and test runner for executable code snippets in `SKILL.md`.
-- **Architecture & Boundaries:** [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) and [docs/PRODUCT_BOUNDARIES.md](./docs/PRODUCT_BOUNDARIES.md) - Internal compiler pipeline and stable vs experimental scope boundaries.
-- **Security Policy:** [docs/SECURITY.md](./docs/SECURITY.md) - Vulnerability reporting and security assurance standards.
-- **Architecture Decision Records:** [docs/decisions/](./docs/decisions/) - Key design choices, trade-offs, and governance foundations.
-- **Project Roadmap:** [docs/ROADMAP.md](./docs/ROADMAP.md) - Strategic evolution milestones and upcoming capabilities.
+- **Quickstart & Onboarding:** [docs/product/onboarding.md](docs/product/onboarding.md) - Five-minute guide to installing, configuring, and verifying ContextOS.
+- **Adapter Compatibility Matrix:** [docs/ADAPTER_COMPATIBILITY.md](docs/ADAPTER_COMPATIBILITY.md) - Support tiers, file layouts, and test coverage across AI coding tools.
+- **Catalog Quality & Code Examples:** [docs/product/catalog-quality.md](docs/product/catalog-quality.md) - Quality tiers and test runner for executable code snippets in `SKILL.md`.
+- **Architecture & Boundaries:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/PRODUCT_BOUNDARIES.md](docs/PRODUCT_BOUNDARIES.md) - Internal compiler pipeline and stable vs experimental scope boundaries.
+- **Team Workflow:** [docs/TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md) - What to commit, how merges behave, and how to recover from conflicts.
+- **Alternatives:** [docs/ALTERNATIVES.md](docs/ALTERNATIVES.md) - Simpler options and other tools, compared honestly.
+- **Security Model:** [docs/SECURITY.md](docs/SECURITY.md) - What is guaranteed, what is not, and how to report a vulnerability.
+- **Architecture Decision Records:** [docs/decisions/](docs/decisions) - Key design choices, trade-offs, and governance foundations.
+- **Project Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) - Strategic evolution milestones and upcoming capabilities.

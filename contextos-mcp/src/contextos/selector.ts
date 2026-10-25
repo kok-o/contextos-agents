@@ -1,7 +1,7 @@
 /**
  * ContextOS Selector — determines which rules and skills are relevant for a task.
  *
- * Unified with CanonicalResolver (.agents/resolver/canonical-resolver.js) for 100%
+ * Unified with the CanonicalResolver of the installed contextos-agents package for 100%
  * parity between CLI and MCP runtimes:
  *   - Evidence-based scoring (aliases, keywords, file globs, nearest package)
  *   - Direct query to compiled registry (registry.v2.json)
@@ -40,10 +40,26 @@ export interface SelectorOptions {
 }
 
 /**
- * Lazily loads the canonical resolver instance from .agents.
+ * Lazily loads the canonical resolver.
+ *
+ * The resolver that ships with the installed contextos-agents package is used
+ * first: a project holds rules, not tool code, and project files must not decide
+ * which code runs. A copy inside the project is only a fallback for installations
+ * that predate the slim layout and have no package to resolve.
  */
 function getCanonicalResolver(rootDir?: string): any {
 	const cwd = rootDir || process.cwd();
+
+	try {
+		const packaged = require.resolve("contextos-agents/.agents/resolver/canonical-resolver.js", {
+			paths: [cwd, path.join(cwd, "..")],
+		});
+		const mod = require(packaged);
+		if (mod?.CanonicalResolver) return new mod.CanonicalResolver({ rootDir: cwd });
+	} catch {
+		// not installed next to the project; try the legacy project copy
+	}
+
 	const candidatePaths = [
 		path.join(cwd, ".agents", "resolver", "canonical-resolver.js"),
 		path.join(cwd, "..", ".agents", "resolver", "canonical-resolver.js"),

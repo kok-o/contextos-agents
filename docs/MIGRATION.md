@@ -2,13 +2,62 @@
 
 This document outlines how to upgrade to major versions of ContextOS and adapt to structural breaking changes.
 
-For the current core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 releases,
+The current checkout prepares **core 3.0.0-rc.1**, which is not published.
+Use the [local candidate archive](RELEASE_3.0.0-rc.1.md); MCP is not part of this migration.
+
+For the historical core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 releases,
 use the [concrete upgrade and checkpoint rollback guide](COMPACT_CONTEXT_MIGRATION.md).
 The sections below describe older migrations.
 
 The core 2.3.2 / MCP 0.4.2 maintenance update is described in the
-[patch checklist](PATCH_RELEASE_2.3.2.md). The previous published pair is recorded
-in [the 2.3.1 checklist](PATCH_RELEASE_2.3.1.md).
+[patch checklist](archive/PATCH_RELEASE_2.3.2.md). The previous published pair is recorded
+in [the 2.3.1 checklist](archive/PATCH_RELEASE_2.3.1.md).
+
+<a id="upgrading-from-2x-projects"></a>
+
+## Upgrading from 2.x projects to 3.0.0-rc.1
+
+Projects initialized by 2.x contain a full copy of the tool in `.agents/`
+(adapters, compiler, resolver, about a hundred files) and, with older defaults,
+the seven bundled core skills. The current version runs the tool from
+`node_modules` and keeps only your rules, the lockfile and the generated files in
+the project. One command moves an existing project over:
+
+```sh
+npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0-rc.1.tgz
+npx --no-install contextos update --dry-run   # review the plan
+npx --no-install contextos update
+npx --no-install contextos export all --check --json
+git diff --stat                         # review, then commit
+```
+
+`update`:
+
+- **removes tool code that 2.x copied** (`.agents/ctx.js`, `adapters/`,
+  `compiler/`, `resolver/`, `schemas/` and so on) and the copy of the skill
+  catalog, but only files that still match what 2.x installed. A copy your team
+  edited is kept and reported;
+- **refreshes the bundled core files** (`.agents/core/`, `.agents/AGENTS.md`) only
+  if the project already has them. It never adds the bundle to a project that
+  does not use it;
+- adds the `.gitignore` block for `.agents/compiled/` and `.agents/.contextos/`
+  (run `git rm -r --cached .agents/compiled` if the cache was committed);
+- **re-exports** the agent files the project already exports.
+
+What changes in the generated files, and why:
+
+| Before | Now |
+| --- | --- |
+| `CLAUDE.md` held a block of links; `.agents/generated/claude/skills/` held copies | Claude Code reads `.claude/rules/` and `.claude/skills/`. The old block is removed from `CLAUDE.md` (your own text stays; a file that held only the block is deleted) and the old copies are pruned. |
+| Every generated file carried a hash of all sources in its header; the lockfile had a revision counter, timestamps and per-file source hashes | Headers name the generator and profile only; the lockfile is sorted and changes only when a file's content changes. The first export after upgrading rewrites them once; later edits touch far fewer lines and merge cleanly. |
+| Aider, Zed and Copilot outputs always included the ContextOS operating rules | They are included only when the project has its own `.agents/AGENTS.md` (installed by `init --with-core`). |
+| `uninstall` ran immediately | `uninstall` prints its plan and needs `--yes`. It now removes generated files, managed blocks, lockfiles, caches and the `.gitignore` block, and keeps `.agents/project/`. |
+| `init --force` replaced `.agents/` | `init --force` only refreshes the bundled files and deletes nothing. |
+
+To roll back, check out the previous commit and reinstall the previous package
+version from your package lockfile (`npm ci`). The installed-package migration
+check in CI upgrades a project from the previous release and restores it this
+way byte for byte.
 
 ## Upgrading to v2.0 (The Context Governance Release)
 
@@ -61,14 +110,16 @@ In v1.x, the composite action ran `npm ci --ignore-scripts`, executed the incomi
 **Migration:**
 Update your `.github/workflows/` workflow step:
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v2.3.2
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0-rc.1
   with:
-    version: '2.3.2'
+    version: '3.0.0-rc.1'
     adapters: 'all'
     working-directory: '.'
 ```
 
-The example pins the v2.3.2 tag and CLI package. The older `v2.3.0`
+The example targets the future v3.0.0-rc.1 tag and CLI package and becomes usable
+only after both are published. For this unpublished candidate, run
+`npx --no-install contextos gate --target all` locally instead. The older `v2.3.0`
 action tag defaults to CLI 2.2.0, so retain an explicit `version` when using it.
 
 If you previously relied on ContextOS Gate for secret scanning, add a dedicated scanner action to your workflow:

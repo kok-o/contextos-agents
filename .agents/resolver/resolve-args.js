@@ -7,6 +7,7 @@ function parseResolveArgs(args) {
     const arg = args[i];
     if (arg === '--json') result.json = true;
     else if (arg === '--explain') result.explain = true;
+    else if (arg === '--installed-only') result.installedOnly = true;
     else if (['--files', '--phase', '--budget'].includes(arg)) {
       const value = args[++i];
       if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);

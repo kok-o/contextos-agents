@@ -5,10 +5,11 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, collectSkillDirectories, collectAlwaysRules, readCoreRules, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'copilot@2';
+const { CONTEXTOS_BLOCK_START, CONTEXTOS_BLOCK_END, replaceManagedBlock } = require('../../filesystem/index.js');
 
 function describe() {
   return {
@@ -53,26 +54,39 @@ function render(context) {
 
   const prov = createProvenanceHeader({
     generator: GENERATOR_ID,
-    sourceGraphHash: context?.sourceGraphHash,
     profileId: context?.profileId,
-    profileHash: context?.profileHash,
   });
 
+  const hasCoreRules = readCoreRules(context?.projectRoot) !== null;
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
+  const alwaysRules = collectAlwaysRules(skills);
+
+  lines.push(prov + `# GitHub Copilot Instructions — ContextOS\n\n`);
+
+  if (hasCoreRules) {
+    lines.push(
+      `## Project Rules\n\n` +
+      `### Step 0 — Identify Before Acting\n\n` +
+      `When useful for substantial work, identify:\n` +
+      `\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n` +
+      `> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.\n\n` +
+      `### Non-Negotiable Rules\n\n` +
+      `- **Zero-Assumption Investigation**: Never guess file paths or signatures. Inspect before modifying.\n` +
+      `- **Zero-Placeholder Production Code**: Never emit lazy stubs, \`// TODO\`, or partial code.\n` +
+      `- **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.\n` +
+      `- **Surgical Blast Radius**: Modify only files strictly within scope.\n` +
+      `- **Fast-Track Exception**: Routine maintenance, git commands, version bumps, typo fixes, and diagnostics skip spec/plan ceremonies.\n\n` +
+      `---\n\n`
+    );
+  }
+
+  if (alwaysRules.length > 0) {
+    lines.push(`## Always-on Rules\n`);
+    for (const rule of alwaysRules) lines.push(`\n### ${rule.title}\n\n${rule.body}\n`);
+    lines.push(`\n---\n\n`);
+  }
+
   lines.push(
-    prov +
-    `# GitHub Copilot Instructions — ContextOS\n\n` +
-    `## Project Rules\n\n` +
-    `### Step 0 — Identify Before Acting\n\n` +
-    `When useful for substantial work, identify:\n` +
-    `\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n` +
-    `> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.\n\n` +
-    `### Non-Negotiable Rules\n\n` +
-    `- **Zero-Assumption Investigation**: Never guess file paths or signatures. Inspect before modifying.\n` +
-    `- **Zero-Placeholder Production Code**: Never emit lazy stubs, \`// TODO\`, or partial code.\n` +
-    `- **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.\n` +
-    `- **Surgical Blast Radius**: Modify only files strictly within scope.\n` +
-    `- **Fast-Track Exception**: Routine maintenance, git commands, version bumps, typo fixes, and diagnostics skip spec/plan ceremonies.\n\n` +
-    `---\n\n` +
     `## Skills Library\n\n` +
     `ContextOS uses on-demand progressive disclosure. Read the relevant \`SKILL.md\` file only when your task matches the trigger.\n\n` +
     `### Skill Routing Table\n\n` +
@@ -80,7 +94,6 @@ function render(context) {
     `| --- | --- | --- |\n`
   );
 
-  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
     const skillName = path.basename(skill);
     const yamlPath = path.join(skill, 'skill.yaml');
@@ -104,18 +117,11 @@ function render(context) {
 
   const target = path.join(context?.projectRoot || '.', '.github/copilot-instructions.md');
   const existing = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
-  const start = '<!-- CONTEXTOS:START -->';
-  const end = '<!-- CONTEXTOS:END -->';
-  const block = `${start}\n${lines.join('').replace(/\r\n/g, '\n')}${end}`;
-  let content;
-  if (existing.includes(start) || existing.includes(end)) {
-    if (existing.split(start).length !== 2 || existing.split(end).length !== 2 || existing.indexOf(end) < existing.indexOf(start)) {
-      throw new Error('Malformed ContextOS block in Copilot instructions; refusing to overwrite.');
-    }
-    content = existing.slice(0, existing.indexOf(start)) + block + existing.slice(existing.indexOf(end) + end.length);
-  } else {
+  const block = `${CONTEXTOS_BLOCK_START}\n${lines.join('').replace(/\r\n/g, '\n')}${CONTEXTOS_BLOCK_END}`;
+  let content = replaceManagedBlock(existing, block, CONTEXTOS_BLOCK_START, CONTEXTOS_BLOCK_END, '.github/copilot-instructions.md');
+  if (content === null) {
     const { LockfileV2Manager, computeExactHash } = require('../../filesystem/index.js');
-    const managed = new LockfileV2Manager(context?.projectRoot || '.').read()?.managedFiles?.['.github/copilot-instructions.md'];
+    const managed = new LockfileV2Manager(context?.projectRoot || '.').read({ tolerateConflicts: true })?.managedFiles?.['.github/copilot-instructions.md'];
     const legacyManaged = managed?.generator === GENERATOR_ID && managed.exactSha256 === computeExactHash(Buffer.from(existing));
     content = legacyManaged ? block + '\n' : existing + (existing && !existing.endsWith('\n') ? '\n' : '') + (existing ? '\n' : '') + block + '\n';
   }
@@ -130,7 +136,6 @@ function render(context) {
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: skills.map(s => path.basename(s)),
-      inputsHash: context?.sourceGraphHash || 'none',
     },
   ];
 }
@@ -150,7 +155,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export copilot', context });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export copilot', context, force: options.force });
   console.log(`✓ Copilot export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

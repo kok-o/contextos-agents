@@ -277,7 +277,7 @@ describe('Task 1.1: Consumer Project Root & Unique Skill Isolation', () => {
     const collidingAdapter = {
       describe: () => ({ name: 'collider', description: 'Colliding adapter for test' }),
       render: () => [{
-        path: '.cursor/rules/00-project-rules.mdc',
+        path: `.cursor/rules/${customSkillName}.mdc`,
         content: Buffer.from('collision-content'),
         generator: 'collider@2',
         kind: 'generated-adapter',
@@ -290,7 +290,7 @@ describe('Task 1.1: Consumer Project Root & Unique Skill Isolation', () => {
     try {
       const collisionResult = renderAdapters(consumerDir, ['cursor', 'collider']);
       assert.ok(collisionResult.collisions.length > 0, 'Must detect path collision between cursor and collider');
-      assert.equal(collisionResult.collisions[0].path, '.cursor/rules/00-project-rules.mdc');
+      assert.equal(collisionResult.collisions[0].path, `.cursor/rules/${customSkillName}.mdc`);
     } finally {
       unregisterAdapter('collider');
     }
@@ -397,14 +397,12 @@ describe('Task 1.1: Consumer Project Root & Unique Skill Isolation', () => {
     assert.equal(passResult.code, 0);
 
     // 2. Modifying Claude export produces drift
-    const claudeMdPath = path.join(pythonRepoDir, 'CLAUDE.md');
-    if (fs.existsSync(claudeMdPath)) {
-      fs.appendFileSync(claudeMdPath, '\n# User local drift edit\n');
-      const driftResult = runGate(pythonRepoDir, { target: 'claude' });
-      assert.equal(driftResult.ok, false, 'Modifying CLAUDE.md must trigger drift detection');
-      assert.equal(driftResult.status, 'drift');
-      assert.equal(driftResult.code, 1);
-    }
+    const claudeFile = path.join(pythonRepoDir, rendered.artifacts[0].path);
+    fs.appendFileSync(claudeFile, '\n# User local drift edit\n');
+    const driftResult = runGate(pythonRepoDir, { target: 'claude' });
+    assert.equal(driftResult.ok, false, 'Modifying a generated Claude file must trigger drift detection');
+    assert.equal(driftResult.status, 'drift');
+    assert.equal(driftResult.code, 1);
   });
 });
 

@@ -89,6 +89,14 @@ describe('Task 1.4a: Safe CLI update Command', () => {
     assert.equal(loadedLock.version, '1.0.0');
   });
 
+  test('planning an untracked installation never writes a migration lockfile', () => {
+    fs.mkdirSync(path.join(tmpProject, '.agents', 'core'), { recursive: true });
+    const planned = planUpdate(tmpProject, path.join(tmpSource, '.agents'));
+    assert.equal(planned.ok, true);
+    assert.equal(planned.migrated, true);
+    assert.equal(loadLockfile(tmpProject), null, 'planning must be read-only even without --dry-run');
+  });
+
   test('updates clean managed files and creates newly added upstream skills', () => {
     const projAgents = path.join(tmpProject, '.agents');
     fs.mkdirSync(path.join(projAgents, 'core', 'skills', 'react'), { recursive: true });
@@ -215,10 +223,52 @@ describe('Task 1.4a: Safe CLI update Command', () => {
     assert.equal(loadedLock.managedFiles['.agents/core/skills/deprecated-skill/SKILL.md'], undefined);
   });
 
+  test('removes tool code that 2.x init copied into the project, but not edited files or generated outputs', () => {
+    const projAgents = path.join(tmpProject, '.agents');
+    const lock = createLockfileData({ version: '2.3.2' });
+    const put = (rel, content) => {
+      const full = path.join(tmpProject, rel);
+      fs.mkdirSync(path.dirname(full), { recursive: true });
+      fs.writeFileSync(full, content);
+      recordManagedFile(lock, rel, content);
+    };
+
+    put('.agents/adapters/cursor/export.js', '// copied adapter\n');
+    put('.agents/compiler/manifest-compiler.js', '// copied compiler\n');
+    put('.agents/skills-index.json', '{}\n');
+    put('.agents/generated/gemini/skills/react/SKILL.md', '# generated output\n');
+    put('.agents/skills/react/SKILL.md', '# native skill output\n');
+    put('.agents/doctor.js', '// copied doctor\n');
+    fs.writeFileSync(path.join(projAgents, 'doctor.js'), '// edited by the team\n');
+    saveLockfile(tmpProject, lock);
+
+    const result = runUpdate(tmpProject, { sourceAgentsDir: path.join(tmpSource, '.agents'), dryRun: false, skipCompile: true });
+
+    assert.equal(result.ok, true);
+    assert.equal(fs.existsSync(path.join(projAgents, 'adapters')), false, 'unmodified copied adapter code must be removed with its folder');
+    assert.equal(fs.existsSync(path.join(projAgents, 'compiler')), false);
+    assert.equal(fs.existsSync(path.join(projAgents, 'skills-index.json')), false);
+    assert.equal(fs.readFileSync(path.join(projAgents, 'doctor.js'), 'utf8'), '// edited by the team\n', 'an edited copy is the team\'s file now');
+    assert.ok(fs.existsSync(path.join(projAgents, 'generated', 'gemini', 'skills', 'react', 'SKILL.md')), 'generated outputs are not tool code');
+    assert.ok(fs.existsSync(path.join(projAgents, 'skills', 'react', 'SKILL.md')));
+  });
+
+  test('a project without bundled core has nothing to update', () => {
+    const projAgents = path.join(tmpProject, '.agents');
+    fs.mkdirSync(path.join(projAgents, 'project', 'skills', 'team-auth'), { recursive: true });
+    const rule = path.join(projAgents, 'project', 'skills', 'team-auth', 'SKILL.md');
+    fs.writeFileSync(rule, '---\nname: team-auth\ndescription: Rules.\n---\n# Rules\n');
+
+    const planned = planUpdate(tmpProject, path.join(tmpSource, '.agents'));
+    assert.deepEqual(planned.plans.filter(plan => plan.action !== 'SKIP'), [], 'update must not opt a project into the bundled core');
+    assert.ok(fs.existsSync(rule));
+  });
+
   test('reads profile exclusions without executing project profiles.js', () => {
     const projAgents = path.join(tmpProject, '.agents');
     const marker = path.join(tmpProject, 'profiles-executed');
-    fs.mkdirSync(projAgents, { recursive: true });
+    // A project that carries the bundled core is the one update refreshes.
+    fs.mkdirSync(path.join(projAgents, 'core'), { recursive: true });
     fs.writeFileSync(
       path.join(projAgents, 'profiles.js'),
       `require('fs').writeFileSync(${JSON.stringify(marker)}, 'executed');\n`
@@ -256,6 +306,8 @@ describe('Task 1.4a: Safe CLI update Command', () => {
     const lock = createLockfileData({ version: '1.0.0' });
     recordManagedFile(lock, '.agents/ctx.js', '# previously installed compiler\n');
     saveLockfile(tmpProject, lock);
+    // The project already exports agent files, so update refreshes them with the package compiler.
+    fs.writeFileSync(path.join(projAgents, 'lockfile.v2.json'), '{}\n');
 
     const result = runUpdate(tmpProject, {
       sourceAgentsDir: sourceAgents,

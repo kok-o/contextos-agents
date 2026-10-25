@@ -3,7 +3,7 @@
  * ContextOS Adapter Output Drift & Out-of-Sync Detector
  *
  * Implements Section 12.4 drift states:
- * - STALE_INPUT: Source graph or profile modified since last compile
+ * - STALE_INPUT: Generated output differs from what the current sources render
  * - MISSING_OUTPUT: Planned or recorded file absent from disk
  * - MODIFIED_MANAGED_OUTPUT: Disk content differs from lockfile (user edits)
  * - ORPHAN_MANAGED_OUTPUT: Lockfile records file no longer rendered
@@ -104,6 +104,8 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
       reason: err.message,
     });
     return {
+      schemaVersion: '2.0.0',
+      status: 'error',
       hasDrift: true,
       hasError: true,
       code: 2,
@@ -138,16 +140,6 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
     }
   }
 
-  // 4. Check Stale Input (Source Graph Hash)
-  if (lockfile && lockfile.sourceGraphHash) {
-    if (context.sourceGraphHash && lockfile.sourceGraphHash !== context.sourceGraphHash) {
-      findings[DRIFT_STATES.STALE_INPUT].push({
-        expected: context.sourceGraphHash,
-        actual: lockfile.sourceGraphHash,
-      });
-    }
-  }
-
   const projectedPaths = new Set(artifacts.map(a => a.path));
 
   // 5. Inspect each projected artifact against disk and lockfile
@@ -174,10 +166,14 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
 
       // Check if disk matches projected render and recorded lockfile
       const matchesProjection = diskSemanticHash === projectedSemanticHash;
-      const matchesLock = lockRecord ? diskSemanticHash === lockRecord.semanticTextSha256 : matchesProjection;
+      // Files that also hold user text are projected from their current content, so
+      // the projection alone decides: the user's own lines are not part of the contract.
+      const matchesLock = art.preservesUserContent || !lockRecord
+        ? matchesProjection
+        : diskSemanticHash === lockRecord.semanticTextSha256;
 
       if (!matchesProjection || !matchesLock) {
-        if (lockRecord && lockRecord.semanticTextSha256 !== diskSemanticHash) {
+        if (!art.preservesUserContent && lockRecord && lockRecord.semanticTextSha256 !== diskSemanticHash) {
           findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].push({
             path: art.path,
             reason: 'Managed file was modified by user on disk',

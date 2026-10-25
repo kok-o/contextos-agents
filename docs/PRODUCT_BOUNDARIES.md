@@ -2,19 +2,23 @@
 
 To ensure stability and secure deployments, the ContextOS project is strictly separated into different maturity boundaries. Features in Experimental or Labs stages are not included in the default `contextos-agents` npm package.
 
-## Stable (Core)
+## Core (3.0.0-rc.1 release candidate)
+
+This core candidate uses npm's `next` tag. MCP is excluded from its core-only validation.
 
 These components form the versioned `contextos-agents` root package. Their contracts are checked by compiler and consumer tests; compatibility with a particular client loader requires client-specific verification.
 
 * **Manifest & Resolver Engine:** The dependency resolution and skill graph planning engine.
-* **Adapter Generation:** Compilers that produce Cursor MDC rules, Claude instruction indexes, Copilot instructions and other documented exports.
+* **Adapter Generation:** Compilers that produce Cursor MDC rules, native Claude rules and skills, Copilot instructions and other documented exports.
 * **Lockfile & Validation (Drift Detection):** Generation of deterministic lockfiles and CI quality gates (`contextos validate`, `contextos gate`).
 * **Staged Index Scanner & Safe Hooks:** Scanning Git index blobs for secrets and lazy stubs (`contextos scan`), and managing isolated pre-commit hooks (`contextos hook`).
-* **Core Commands:** `init`, `export`, `resolve`, `doctor`, `watch`, `scan`, `hook`, `gate`.
+* **Core Commands:** `init`, `compile`, `export` (including `--check`), `resolve`, `update`, `uninstall`, `doctor`, `watch`, `scan`, `hook`, `gate`.
 
 ## Beta (MCP Bridge)
 
 These components are feature-complete but their APIs (specifically MCP schemas) may undergo minor changes. They are distributed via the separate `contextos-mcp` package.
+
+**Frozen.** The read-only bridge is maintained for compatibility and security fixes only. No new MCP, runtime, swarm or labs features are developed until the core has recorded external users; the roadmap states the reason and the criteria for lifting the freeze.
 
 * **Read-Only MCP Server:** `contextos_status`, `contextos_compare`, and `contextos_diff` inspect existing session/thread state without initializing runtime worktrees. The bridge does not expose `contextos_resolve` or `contextos_explain`.
 * **Interactive CLI Framework:** Foundations for interactive shells, though not recommended for automated CI use.

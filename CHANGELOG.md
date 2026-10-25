@@ -7,11 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0-rc.1] - 2026-10-25
+
+**Core release candidate on `next`.** MCP is excluded; its version is unchanged.
+See the [RC validation and installation instructions](docs/RELEASE_3.0.0-rc.1.md).
+
+### Fixed
+
+- Give npm installation in the Windows installed-archive CI gate the same
+  bounded ten-minute allowance as migration installs. CLI checks retain their
+  three-minute limit. Failed subprocess reports now include the command, timeout
+  and elapsed time so installation stalls can be distinguished from CLI failures.
+
+Rework after an independent audit of 2.3.2. It changes the project layout and the
+generated files; see [upgrading from 2.x](docs/MIGRATION.md#upgrading-from-2x-projects).
+Run `contextos update` in existing projects.
+
+### Changed
+
+- **Core-only RC validation.** Added `test:core`, `check:consumer:core`,
+  `check:migration:core` and `check:release-surface:core`, plus
+  `scripts/release.js --core-only`. Prerelease metadata uses the `next` npm tag;
+  the stable paired publisher still rejects prerelease versions.
+- **Claude Code output.** Rules and skills are written to `.claude/rules/` and
+  `.claude/skills/`, which Claude Code loads, instead of a block of plain links
+  in `CLAUDE.md` plus copies under `.agents/generated/claude/`. `CLAUDE.md` is no
+  longer written; a block from an earlier version is removed on the next export.
+- **Per-rule activation.** A rule can declare `activation: always | auto | globs`
+  (and `globs`); every adapter maps it to its client's native mechanism, and
+  `always` rule bodies are inlined into the Copilot, Aider and Zed files.
+- **A project receives rules, not the tool.** `init` creates
+  `.agents/project/skills/` and a `.gitignore` block and copies no code. The
+  seven core skills, `AGENTS.md` and profile definitions are opt-in
+  (`--with-core`, alias `--minimal`). The package's `AGENTS.md` is no longer
+  injected into outputs of projects that did not install it.
+- **Merge-safe generated files.** Headers carry no source-graph hash, the lockfile
+  has no revision counter, timestamps or per-file source hashes and is sorted by
+  path, text output is LF whatever the checkout's line endings, and the registry
+  cache is git-ignored. Files that also hold user text record only the hash of the
+  managed block, so editing your own lines no longer reports drift.
+- `uninstall` prints its plan and requires `--yes`; it removes generated files,
+  managed blocks, lockfiles, caches and the `.gitignore` block and keeps
+  `.agents/project/`. `init --force` only refreshes bundled files.
+- `update` refreshes the bundled core only in projects that have it, removes
+  unmodified tool code and catalog copies that 2.x copied into projects, adds the
+  `.gitignore` block and re-exports.
+- `resolve` routes a team's own rules on their name and description; uninstalled
+  recommendations are reported, `--installed-only` excludes them.
+- `stats` reports the size of the rule payload and says what the numbers are;
+  `scan` without `--enforce` says it only reported findings.
+- `doctor` verifies the installed package's modules and never loads modules from
+  the project. The MCP selector prefers the installed package's resolver.
+- Removed the unwired init state machine and the duplicate supply-chain bundle;
+  MCP runtime, swarm and labs are frozen.
+
+### Fixed
+
+- `doctor --strict` no longer fails a consumer project merely because optional
+  benchmark claims are absent. Missing evidence for explicitly declared claims
+  still fails; installed CJS and ESM consumer scenarios verify both outcomes.
+- Preserve merged Aider settings on uninstall, refuse conflicts that mix user
+  text with a managed block, and keep ownership checks active when recovering a
+  conflicted lockfile. Regression scenarios exercise each case on an installed
+  package, including explicit `--force` and uninstall preservation.
+- Validate update state paths before mutation, plan legacy migration in memory,
+  and commit its lockfile in the same journaled transaction as the file changes.
+  Mutation locks and transaction journals reject external junctions before
+  creating their directories.
+- Two branches that add neighbouring rules no longer leave a lockfile and
+  aggregate files that need manual deletion before `export` works: `export all`
+  rebuilds files that hold conflict markers and a conflicted lockfile, and stops
+  with a clear message only for conflicts in text that belongs to the user.
+- `uninstall` and `update` followed a symlink or junction out of the project and
+  deleted files there; all writes now go through the journaled transaction.
+- `init --force` deleted `.agents/project/`.
+- `skill add --allow-floating` was ignored.
+- Drift reports for configuration errors now carry `status: "error"`.
+- YAML errors in a rule name the file; user mistakes no longer print stack traces.
+- Tests no longer delete a release archive from the repository root and no longer
+  fail under GNU tar on Windows or on Node.js 24.
+
 ## [2.3.2] - 2026-10-04
 
 Maintenance pair: `contextos-agents@2.3.2` and `contextos-mcp@0.4.2`.
 Publication and archive acceptance are recorded in the
-[release checklist](docs/PATCH_RELEASE_2.3.2.md).
+[release checklist](docs/archive/PATCH_RELEASE_2.3.2.md).
 
 ### Fixed
 
@@ -44,7 +124,7 @@ Publication and archive acceptance are recorded in the
 ## [2.3.1] - 2026-10-04
 
 Release pair: `contextos-agents@2.3.1` and `contextos-mcp@0.4.1`.
-The [release checklist](docs/PATCH_RELEASE_2.3.1.md) records publication and acceptance.
+The [release checklist](docs/archive/PATCH_RELEASE_2.3.1.md) records publication and acceptance.
 
 ### Fixed
 

@@ -43,7 +43,7 @@ test('public install commands and gate examples agree with package metadata', t 
   const original = fs.readFileSync(readme, 'utf8');
   fs.writeFileSync(readme, original.replace('npm install --save-dev contextos-mcp', 'npm install --save-dev @contextos/mcp'));
   assert.match(checkPublicInstructions(fixture).join('\n'), /README.md: installs/);
-  fs.writeFileSync(readme, original.replace(/version: '[\d.]+'/g, "version: '0.0.0'"));
+  fs.writeFileSync(readme, original.replace(/version: '[^']+'/g, "version: '0.0.0'"));
   assert.match(checkPublicInstructions(fixture).join('\n'), /README.md: gate example/);
   fs.writeFileSync(readme, original);
   const action = path.join(fixture, '.github/actions/contextos-gate/action.yml');
@@ -51,6 +51,63 @@ test('public install commands and gate examples agree with package metadata', t 
   const version = JSON.parse(fs.readFileSync(path.join(fixture, 'package.json'))).version;
   fs.writeFileSync(action, fs.readFileSync(action, 'utf8').replace(`default: '${version}'`, "default: '0.0.0'") + `\nother:\n  default: '${version}'\n`);
   assert.match(checkPublicInstructions(fixture).join('\n'), /inputs.version.default/);
+});
+
+test('core-only public instructions do not require an MCP checkout', t => {
+  const fixture = contractFixture(t);
+  fs.unlinkSync(path.join(fixture, 'contextos-mcp/README.md'));
+  assert.deepEqual(checkPublicInstructions(fixture, { coreOnly: true }), []);
+  assert.throws(() => checkPublicInstructions(fixture), /ENOENT/);
+});
+
+test('a prerelease cannot default to the latest npm tag', t => {
+  const fixture = contractFixture(t);
+  const file = path.join(fixture, 'package.json');
+  const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
+  // This guard is relevant while preparing the prerelease; stable fixtures still exercise it.
+  pkg.version = '3.0.0-rc.1';
+  pkg.publishConfig = { tag: 'latest' };
+  fs.writeFileSync(file, JSON.stringify(pkg));
+  assert.match(checkPublicInstructions(fixture, { coreOnly: true }).join('\n'), /non-latest publishConfig.tag/);
+});
+
+test('consumer gate records timeouts and extends only npm installation on Windows', t => {
+  const fixture = contractFixture(t);
+  const script = path.join(fixture, 'scripts/check-release-install.cjs');
+  fs.mkdirSync(path.dirname(script));
+  fs.copyFileSync(path.resolve(__dirname, '../scripts/check-release-install.cjs'), script);
+  const version = JSON.parse(fs.readFileSync(path.join(fixture, 'package.json'))).version;
+  const archives = path.join(fixture, 'archives');
+  fs.mkdirSync(archives);
+  fs.writeFileSync(path.join(archives, `contextos-agents-${version}.tgz`), 'unused: npm is intercepted before reading it');
+
+  for (const phase of ['install', 'cli']) {
+    const preload = path.join(fixture, 'timeout.cjs');
+    fs.writeFileSync(preload, `
+      const cp = require('node:child_process');
+      cp.execFileSync = (executable, args) => {
+        const npmInstall = args[1] === 'install';
+        if (${JSON.stringify(phase)} === 'cli' && npmInstall) return '';
+        if (!npmInstall && !(executable === 'git' && args[0] === 'init')) throw new Error('unexpected command');
+        const error = new Error('simulated timeout'); error.code = 'ETIMEDOUT'; throw error;
+      };
+    `);
+    const result = spawnSync(process.execPath, ['--require', preload, script, '--core-only', archives], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const report = JSON.parse(fs.readFileSync(path.join(fixture, 'scratch/release-core-install-result.json')));
+    t.after(() => {
+      const consumer = fs.realpathSync(report.consumerPath);
+      assert.equal(path.dirname(consumer), fs.realpathSync(os.tmpdir()));
+      assert.ok(path.basename(consumer).startsWith('contextos-release-consumer-space '));
+      fs.rmSync(consumer, { recursive: true, force: true });
+    });
+    assert.equal(report.result, 'FAIL', 'a timeout must not be converted into a passing check');
+    assert.equal(report.failedStep.code, 'ETIMEDOUT');
+    assert.equal(report.failedStep.timeoutMs, phase === 'install' && process.platform === 'win32' ? 600000 : 180000);
+    assert.ok(report.failedStep.durationMs >= 0);
+    if (phase === 'install') assert.ok(report.failedStep.command.includes('install'));
+    else assert.deepEqual(report.failedStep.command, ['git', 'init', '-q']);
+  }
 });
 
 test('release surface rejects credentials, local probes and raw evidence while retaining public docs', () => {

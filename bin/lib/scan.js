@@ -433,7 +433,11 @@ function runScan(options = {}) {
   return {
     ok: exitCode === 0,
     code: exitCode,
-    message: exitCode === 0 ? 'Verification completed cleanly, no blocking violations' : 'Blocking violations detected in staged index',
+    message: !hasViolations
+      ? 'No violations found in the staged files'
+      : (enforce
+        ? 'Blocking violations detected in staged index'
+        : `${findings.length} finding(s) reported in advisory mode; nothing blocks the commit (use --enforce to fail on them)`),
     gitRoot,
     enforce,
     scope: {

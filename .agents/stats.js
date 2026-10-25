@@ -1,6 +1,6 @@
 /**
  * .agents/stats.js
- * ContextOS — Context Savings & Token Optimization Report
+ * ContextOS — Rule Payload Size Report
  *
  * Measures:
  *   1. Full context payload (all skills + AGENTS.md)
@@ -104,30 +104,31 @@ function calculateContextStats(projectDir = process.cwd()) {
 function runStats(projectDir = process.cwd()) {
   const stats = calculateContextStats(projectDir);
 
-  console.log('\nContextOS — Context Savings Report & Payload Reduction\n');
+  console.log('\nContextOS — Rule Payload Size (estimate)\n');
   console.log('┌──────────────────────────────────────┬─────────────┬──────────┐');
-  console.log('│ Context Mode                         │ Est. Tokens │  Savings │');
+  console.log('│ Selection                            │ Est. Tokens │  vs full │');
   console.log('├──────────────────────────────────────┼─────────────┼──────────┤');
 
-  const fullLabel = `Full (${stats.totalSkillCount} skills catalog)`;
+  const fullLabel = `All installed (${stats.totalSkillCount} skills)`;
   const fullTok = stats.full.tokens.toLocaleString().padStart(9);
   console.log(`│ ${fullLabel.slice(0, 36).padEnd(36)} │ ${fullTok}   │ baseline │`);
 
-  const profLabel = `Profile: ${stats.profileName} (${stats.profiledSkillCount} skills)`;
+  const profLabel = `After profile ${stats.profileName} (${stats.profiledSkillCount})`;
   const profTok = stats.profile.tokens.toLocaleString().padStart(9);
   const profSav = `${stats.profile.savings}%`.padStart(7);
   console.log(`│ ${profLabel.slice(0, 36).padEnd(36)} │ ${profTok}   │  ${profSav} │`);
 
-  const resLabel = `Dynamic: resolved task (${stats.resolvedSkillCount} skills)`;
+  const resLabel = `Sample task selection (${stats.resolvedSkillCount})`;
   const resTok = stats.resolved.tokens.toLocaleString().padStart(9);
   const resSav = `${stats.resolved.savings}%`.padStart(7);
   console.log(`│ ${resLabel.slice(0, 36).padEnd(36)} │ ${resTok}   │  ${resSav} │`);
 
   console.log('└──────────────────────────────────────┴─────────────┴──────────┘');
-  console.log(`Resolved skills for project: ${stats.resolvedSkillList.join(', ')}`);
-  console.log('\nNote: Character-based token estimation (~4 chars/token heuristic).');
-  console.log('Measures static rule payload reduction against an uncurated full-catalog dump.');
-  console.log('Real workflow cost savings depend on prompt turns, model tokenizer, and task complexity.\n');
+  console.log(`Sample task selection: ${stats.resolvedSkillList.join(', ') || '(none installed)'}`);
+  console.log('\nEstimate: about 4 characters per token.');
+  console.log('The last row selects skills for the fixed prompt "Implement standard feature". Exports do not');
+  console.log('use a task selection: they contain every installed rule the profile allows, so the first two');
+  console.log('rows describe what exports carry. This report measures size only, not answer quality, cost or time.\n');
 
   return stats;
 }

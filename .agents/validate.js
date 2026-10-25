@@ -23,8 +23,8 @@ const CORE_SKILLS = path.join(AGENTS_DIR, 'core', 'skills');
 const CORE_PROFILES = path.join(AGENTS_DIR, 'core', 'profiles');
 const GENERATED   = path.join(AGENTS_DIR, 'generated');
 
-// Adapters that compile to generated/<name>/skills/
-const COMPILED_ADAPTERS = ['gemini', 'claude'];
+// Adapters that compile to generated/<name>/skills/ (Claude Code now reads .claude/ natively)
+const COMPILED_ADAPTERS = ['gemini'];
 
 // Well-known external frameworks/tools valid in conflicts/optional/profiles but not internal ContextOS skills
 const EXTERNAL_NAMES = new Set([
@@ -124,9 +124,9 @@ function parseSkillYaml(yamlText) {
 // ── Collect all source skills ─────────────────────────────────────────────────
 function collectSourceSkills() {
   const skills = {};
-  if (!fs.existsSync(CORE_SKILLS)) return skills;
 
-  for (const dir of collectAllSkillDirs()) {
+  // An explicit root keeps the packaged core skills out of a project that did not install them.
+  for (const dir of collectAllSkillDirs(ROOT)) {
     const name = path.basename(dir);
 
     const skillMdPath = path.join(dir, 'SKILL.md');
@@ -231,6 +231,45 @@ function checkSkillYaml(sourceSkills) {
   }
 
   info(`[yaml] ${pass} skill.yaml files validated`);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  CHECK 2b — A team's own rules (.agents/project and .agents/vendor)
+// ═════════════════════════════════════════════════════════════════════════════
+function checkOwnRules(sourceSkills) {
+  const { resolveActivation, stripFrontmatter } = require('./adapters/shared.js');
+  let pass = 0;
+
+  for (const [name, skill] of Object.entries(sourceSkills)) {
+    const rel = path.relative(AGENTS_DIR, skill.dir).split(path.sep).join('/');
+    if (!/^(project|vendor)\//.test(rel)) continue;
+    const label = `${rel}/SKILL.md`;
+
+    if (!skill.hasSkillMd) {
+      error(`[rule] ${label} — missing; a rule folder needs a SKILL.md`);
+      continue;
+    }
+    const content = fs.readFileSync(skill.skillMdPath, 'utf8');
+    if (stripFrontmatter(content).trim() === '') {
+      error(`[rule] ${label} — empty body; a rule without text exports nothing`);
+      continue;
+    }
+    const fm = parseFrontmatter(content);
+    const declared = fm && !fm.malformed ? yamlField(fm.raw, 'name') : null;
+    if (declared && declared.replace(/^["']|["']$/g, '') !== name) {
+      error(`[rule] ${label} — frontmatter name '${declared}' must match its folder '${name}'`);
+      continue;
+    }
+    try {
+      resolveActivation(skill.dir);
+    } catch (err) {
+      error(`[rule] ${label} — ${err.message}`);
+      continue;
+    }
+    pass++;
+  }
+
+  if (pass > 0) info(`[rule] ${pass} project rule(s) checked (body, name, activation)`);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -718,8 +757,8 @@ function run(options = {}) {
 
   console.log(c.cyan('\nContextOS Validator — scanning skills...\n'));
 
-  if (!fs.existsSync(CORE_SKILLS)) {
-    console.error(c.red('[ERROR] .agents/core/skills/ not found. Run from your project root.'));
+  if (!fs.existsSync(AGENTS_DIR)) {
+    console.error(c.red('[ERROR] .agents/ not found. Run from your project root, or start with: contextos init'));
     process.exit(1);
   }
 
@@ -730,6 +769,7 @@ function run(options = {}) {
 
   checkFrontmatter(sourceSkills);
   checkSkillYaml(sourceSkills);
+  checkOwnRules(sourceSkills);
   checkStale(sourceSkills);
   checkSync(sourceSkills);
   checkDependencies(sourceSkills);

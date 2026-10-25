@@ -112,7 +112,7 @@ describe('Catalog Skills Export & Verification Integration', () => {
       'Gemini adapter must compile fastapi SKILL.md'
     );
     assert.ok(
-      artifactPaths.some((p) => p.includes('generated/claude/skills/web-accessibility/SKILL.md')),
+      artifactPaths.some((p) => p.includes('.claude/rules/web-accessibility.md')),
       'Claude adapter must compile web-accessibility SKILL.md'
     );
   });

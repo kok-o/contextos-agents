@@ -18,7 +18,7 @@ const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
 
-const REPO_ROOT = path.resolve(__dirname, '..');
+const { REPO_ROOT, packRepository, extractArchive } = require('./helpers/pack.js');
 
 describe('Consumer Tarball Smoke Test', () => {
   let tmpBase;
@@ -35,14 +35,12 @@ describe('Consumer Tarball Smoke Test', () => {
     fs.mkdirSync(consumerProjectDir, { recursive: true });
 
     // 1. Pack root project into tarball
-    const packOutput = execSync('npm pack', { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
-    const tgzFileName = packOutput.split('\n').filter(Boolean).pop().trim();
-    tgzPath = path.join(REPO_ROOT, tgzFileName);
+    tgzPath = packRepository(path.join(tmpBase, 'archive'));
 
     assert.ok(fs.existsSync(tgzPath), `Tarball must exist: ${tgzPath}`);
 
     // 2. Extract tarball to extractedPkgDir
-    execSync(`tar -xzf "${tgzPath}" -C "${extractedPkgDir}"`, { stdio: 'pipe' });
+    extractArchive(tgzPath, extractedPkgDir);
   });
 
   after(() => {
@@ -92,8 +90,9 @@ describe('Consumer Tarball Smoke Test', () => {
       'Init command should succeed and print confirmation'
     );
 
-    const ctxPath = path.join(consumerProjectDir, '.agents', 'ctx.js');
-    assert.ok(fs.existsSync(ctxPath), 'Consumer project must have .agents/ctx.js');
+    // The compiler runs from the installed package; the project keeps rules, never a copy of the tool.
+    assert.ok(!fs.existsSync(path.join(consumerProjectDir, '.agents', 'ctx.js')), 'Consumer project must not receive a copy of ctx.js');
+    const ctxPath = path.join(extractedPkgDir, 'package', '.agents', 'ctx.js');
 
     // Verify resolve executes successfully
     const resolveOutput = execSync(`node "${ctxPath}" resolve "Implement user login"`, {

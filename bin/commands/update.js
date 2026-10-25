@@ -13,29 +13,46 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  LockfileV2Manager,
   ProjectMutationLock,
   JournaledTransaction,
-  computeExactHash,
-  computeSemanticHash,
+  resolveManagedPath,
 } = require('../../.agents/filesystem/index.js');
 const {
   loadLockfile,
-  saveLockfile,
+  LOCKFILE_REL_PATH,
   recordManagedFile,
   migrateExistingInstallation,
 } = require('../lib/lockfile.js');
 const {
   planFileWrite,
   planFileDelete,
-  cleanEmptyParentDirectories,
 } = require('../lib/safe-writer.js');
 
+const gitignore = require('../lib/gitignore.js');
 const pkg = require('../../package.json');
 const profiles = require('../../.agents/profiles.js');
 
+// What a project receives from the package: bundled core rules and profile definitions.
+function isBundledPayload(relToAgents) {
+  return relToAgents === 'AGENTS.md' || relToAgents.startsWith('core/');
+}
+
+// Tool code and generated indexes that 2.x init copied into projects; nothing reads them there.
+const LEGACY_COPIED_PATHS = [
+  '.agents/ctx.js', '.agents/customization-dx.js', '.agents/doctor.js', '.agents/plugins.js',
+  '.agents/profiles.js', '.agents/resolver.js', '.agents/stats.js', '.agents/validate.js',
+  '.agents/validation-evidence.js', '.agents/watch.js', '.agents/skills.json', '.agents/skills-index.json',
+  '.agents/adapters/', '.agents/compiler/', '.agents/filesystem/', '.agents/resolver/', '.agents/rules/',
+  '.agents/runtime/', '.agents/schemas/', '.agents/transaction-core/', '.agents/workspace/',
+  '.agents/init/', '.agents/catalog/',
+];
+
+function isLegacyCopiedPath(relPath) {
+  return LEGACY_COPIED_PATHS.some(entry => (entry.endsWith('/') ? relPath.startsWith(entry) : relPath === entry));
+}
+
 /**
- * Collect all distributable files from the source .agents directory.
+ * Collect the bundled files from the source .agents directory.
  */
 function collectDistributionFiles(sourceAgentsDir, options = {}) {
   const files = [];
@@ -72,6 +89,7 @@ function collectDistributionFiles(sourceAgentsDir, options = {}) {
         if (entry.name === 'contextos.lock.json' || entry.name.endsWith('.bak')) continue;
 
         const relToAgents = path.relative(sourceAgentsDir, full).replace(/\\/g, '/');
+        if (!options.everything && !isBundledPayload(relToAgents)) continue;
         files.push({
           relPath: `.agents/${relToAgents}`,
           fullSourcePath: full,
@@ -99,12 +117,16 @@ function planUpdate(projectDir, sourceAgentsDir, options = {}) {
     };
   }
 
+  // Validate before reading/migrating state or creating a mutation lock.
+  resolveManagedPath(projectDir, '.agents');
+  resolveManagedPath(projectDir, LOCKFILE_REL_PATH);
+
   // Load existing lockfile or safely migrate
   let lockData = loadLockfile(projectDir);
   let migrated = false;
   if (!lockData) {
     lockData = migrateExistingInstallation(projectDir, sourceAgentsDir, {
-      dryRun: Boolean(options.dryRun),
+      inMemory: true,
       version: pkg.version,
     });
     migrated = true;
@@ -119,7 +141,9 @@ function planUpdate(projectDir, sourceAgentsDir, options = {}) {
     }
   } catch {}
 
-  const distFiles = collectDistributionFiles(sourceAgentsDir, { excludedSkills });
+  // Only a project that already carries the bundled core receives refreshed core files; update never opts a project in.
+  const hasBundledCore = fs.existsSync(path.join(targetAgentsDir, 'core')) || fs.existsSync(path.join(targetAgentsDir, 'AGENTS.md'));
+  const distFiles = hasBundledCore ? collectDistributionFiles(sourceAgentsDir, { excludedSkills }) : [];
   const distRelPaths = new Set(distFiles.map(f => f.relPath));
 
   const plans = [];
@@ -141,7 +165,8 @@ function planUpdate(projectDir, sourceAgentsDir, options = {}) {
   // 2. Plan deletions for stale managed files that no longer exist in distribution
   if (lockData && lockData.managedFiles) {
     for (const managedRel of Object.keys(lockData.managedFiles)) {
-      if (managedRel.startsWith('.agents/') && !distRelPaths.has(managedRel)) {
+      const inBundledArea = isBundledPayload(managedRel.replace(/^\.agents\//, ''));
+      if (managedRel.startsWith('.agents/') && !distRelPaths.has(managedRel) && (inBundledArea || isLegacyCopiedPath(managedRel))) {
         const delPlan = planFileDelete({
           projectDir,
           relPath: managedRel,
@@ -152,6 +177,12 @@ function planUpdate(projectDir, sourceAgentsDir, options = {}) {
     }
   }
 
+  // 3. The catalog copy that 2.x init placed in the project: unmodified files are the package's own, kept nowhere else needed.
+  const { planLegacyCatalogCopies } = require('./uninstall.js');
+  const alreadyPlanned = new Set(plans.map(plan => plan.relPath));
+  for (const copy of planLegacyCatalogCopies(projectDir, sourceAgentsDir, alreadyPlanned)) {
+    plans.push({ action: 'DELETE', relPath: copy.relPath, targetPath: copy.targetPath, reason: 'LEGACY_CATALOG_COPY' });
+  }
   const summary = {
     create: plans.filter(p => p.action === 'CREATE').length,
     update: plans.filter(p => p.action === 'UPDATE').length,
@@ -230,47 +261,15 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
         tx.stageWrite(targetRel, item.newContent);
         if (item.action !== 'SKIP') executedCount++;
       } else if (item.action === 'DELETE') {
-        tx.stageDelete(item.relPath);
+        tx.stageDeleteWithParents(item.relPath);
         executedCount++;
       }
     }
 
-    const txResult = tx.commit();
-
-    // Clean up empty directories left behind by deletions
-    for (const item of plans) {
-      if (item.action === 'DELETE') {
-        cleanEmptyParentDirectories(path.join(projectDir, item.relPath));
-      }
-    }
-
-    // Update lockfile metadata via V2 Manager
-    const lockfileManager = new LockfileV2Manager(projectDir);
-    let lockfileData = lockfileManager.read();
-    
-    if (!lockfileData) {
-      lockfileData = lockfileManager.createEmpty({ packageVersion: options.packageVersion || pkg.version });
-    }
-
-    for (const item of plans) {
-      if (item.action === 'CREATE' || item.action === 'UPDATE') {
-        lockfileManager.recordManagedFile(lockfileData, item.relPath, {
-          exactSha256: computeExactHash(item.newContent),
-          semanticTextSha256: computeSemanticHash(item.newContent),
-          kind: 'distribution-skill',
-          generator: 'update',
-          lastTransaction: txResult.txId,
-        });
-      } else if (item.action === 'DELETE') {
-        if (lockfileData.managedFiles && lockfileData.managedFiles[item.relPath]) {
-          delete lockfileData.managedFiles[item.relPath];
-        }
-      }
-    }
-
-    lockfileData.package.version = options.packageVersion || pkg.version;
-    // We update the timestamp equivalent in v2
-    lockfileManager.write(lockfileData);
+    // Derived caches and journals stay out of version control (init adds the same block to new projects).
+    const currentIgnore = gitignore.readGitignore(projectDir);
+    const nextIgnore = gitignore.withBlock(currentIgnore);
+    if (nextIgnore !== currentIgnore) tx.stageWrite('.gitignore', nextIgnore);
 
     if (lockData) {
       for (const item of plans) {
@@ -281,8 +280,10 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
         }
       }
       lockData.version = options.packageVersion || pkg.version;
-      saveLockfile(projectDir, lockData);
+      tx.stageWrite(LOCKFILE_REL_PATH, JSON.stringify(lockData, null, 2) + '\n');
     }
+
+    tx.commit();
 
   } finally {
     lock.release(lockToken);
@@ -294,21 +295,21 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
     console.warn('       Inspect the .contextos.new file(s) to merge upstream updates.');
   }
 
-  // Re-compile if ctx.js exists and not skipped
-  if (!options.skipCompile) {
+  // Refresh the agent files the project already exports; a project that never exported has nothing to refresh.
+  if (!options.skipCompile && fs.existsSync(path.join(projectDir, '.agents', 'lockfile.v2.json'))) {
     // Run the compiler shipped with this package. The project's .agents/ctx.js
     // is user-controlled and must never be executed implicitly during update.
     const ctxPath = path.join(sourceAgentsDir, 'ctx.js');
     if (fs.existsSync(ctxPath)) {
       try {
         const { execFileSync } = require('child_process');
-        console.log('\nRecompiling skills...');
-        execFileSync(process.execPath, [ctxPath, 'export', 'gemini'], {
+        console.log('\nRe-exporting agent files...');
+        execFileSync(process.execPath, [ctxPath, 'export', 'all'], {
           cwd: projectDir,
           stdio: 'inherit',
         });
       } catch (err) {
-        console.error(`[ERROR] Post-update compilation failed: ${err.message}`);
+        console.error(`[ERROR] Post-update export failed: ${err.message}`);
         process.exit(1);
       }
     }

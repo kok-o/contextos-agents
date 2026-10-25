@@ -21,12 +21,16 @@ const {
 
 const {
   LockfileV2Manager,
+  serializeLockfile,
   computeExactHash,
   computeSemanticHash,
   LockfileV2Error,
   ERROR_CODES: LOCKFILE_ERRORS,
   DEFAULT_LOCKFILE_SUBPATH,
 } = require('./lockfile-v2.js');
+
+const managedBlock = require('./managed-block.js');
+const ownership = require('./ownership.js');
 
 const {
   JournaledTransaction,
@@ -51,8 +55,13 @@ module.exports = {
   LOCK_ERRORS,
   isPidAlive,
 
+  // Managed blocks inside user-owned files
+  ...managedBlock,
+  ...ownership,
+
   // Lockfile v2
   LockfileV2Manager,
+  serializeLockfile,
   computeExactHash,
   computeSemanticHash,
   LockfileV2Error,

@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { digest, packages, verifyLocal, registryArchive, publishPair } = require('../scripts/publish-release-pair.cjs');
+const { digest, packages, corePrerelease, verifyLocal, registryArchive, publishPair } = require('../scripts/publish-release-pair.cjs');
 function fixture(t) {
   const directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-release-publish-')));
   t.after(() => {
@@ -29,6 +29,72 @@ function runner(pair, publish) {
     return '';
   };
 }
+
+test('the stable paired publisher rejects a core release candidate before reading MCP', t => {
+  const pair = fixture(t);
+  const root = path.dirname(pair[0].archive);
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'contextos-agents', version: '3.0.0-rc.1' }));
+  assert.throws(() => packages(root, root), /Expected a stable core release version/);
+});
+
+test('core RC publication requires matching versions, next tag and a reviewed hash without MCP', t => {
+  const [archive] = fixture(t);
+  const root = path.dirname(archive.archive);
+  const write = (file, data) => fs.writeFileSync(path.join(root, file), JSON.stringify(data));
+  const pkg = { name: 'contextos-agents', version: '3.0.0-rc.1', publishConfig: { tag: 'next' } };
+  const lock = { version: pkg.version, packages: { '': { version: pkg.version } } };
+  fs.mkdirSync(path.join(root, 'docs'));
+  const manifest = { version: pkg.version, file: `${pkg.name}-${pkg.version}.tgz`, sha256: archive.sha256 };
+  write('package.json', pkg);
+  write('package-lock.json', lock);
+  write('docs/release-core-rc.json', manifest);
+  fs.copyFileSync(archive.archive, path.join(root, manifest.file));
+  assert.equal(corePrerelease(root, root).name, pkg.name);
+  verifyLocal([corePrerelease(root, root)]);
+  for (const invalid of [{ ...pkg, version: '3.0.0' }, { ...pkg, publishConfig: { tag: 'latest' } }, { ...pkg, name: 'contextos-mcp' }]) {
+    write('package.json', invalid);
+    assert.throws(() => corePrerelease(root, root), /matching core RC identity/);
+  }
+  write('package.json', pkg);
+  write('package-lock.json', { ...lock, version: '2.3.2' });
+  assert.throws(() => corePrerelease(root, root), /matching core RC identity/);
+  write('package-lock.json', lock);
+  write('docs/release-core-rc.json', { ...manifest, version: '3.0.0-rc.2' });
+  assert.throws(() => corePrerelease(root, root), /reviewed archive identity/);
+  write('docs/release-core-rc.json', { ...manifest, sha256: '0'.repeat(64) });
+  assert.throws(() => verifyLocal([corePrerelease(root, root)]), /differs/);
+});
+
+test('Core RC explicitly publishes to next and retries without uploading an existing archive', async t => {
+  const pair = fixture(t).slice(0, 1);
+  pair[0].version = '3.0.0-rc.1';
+  let published = false;
+  const calls = [];
+  const inspect = async () => published ? pair[0].bytes : null;
+  await publishPair(pair, { tag: 'next', inspect, runNpm: args => {
+    calls.push(args);
+    return runner(pair, () => { published = true; })(args);
+  } });
+  const upload = calls.find(args => args[0] === 'publish');
+  assert.deepEqual(upload.slice(-2), ['--tag', 'next']);
+  assert.equal(calls.filter(args => args[0] === 'publish').length, 1);
+  await publishPair(pair, { tag: 'next', inspect, runNpm: () => assert.fail('existing RC must not be uploaded again') });
+});
+
+test('release workflows separate prerelease publication from the stable paired publisher', () => {
+  const { parse } = require('yaml');
+  const read = name => parse(fs.readFileSync(path.resolve(__dirname, '../.github/workflows', name), 'utf8'));
+  const stable = read('publish.yml');
+  const rc = read('publish-core-rc.yml');
+  assert.equal(stable.jobs.version.if, '${{ !github.event.release.prerelease }}');
+  assert.equal(rc.jobs.verify.if, '${{ github.event.release.prerelease }}');
+  assert.deepEqual(rc.jobs.publish.needs, 'verify');
+  assert.deepEqual(rc.jobs.registry.needs, 'publish');
+  assert.equal(rc.jobs.verify.steps.some(step => step.env?.NODE_AUTH_TOKEN), false);
+  const upload = rc.jobs.publish.steps.find(step => step.env?.NODE_AUTH_TOKEN);
+  assert.equal(upload.run, 'node scripts/publish-release-pair.cjs publish-core-rc');
+  assert.ok(rc.jobs.registry.steps.some(step => step.run === 'node scripts/publish-release-pair.cjs download-core-rc'));
+});
 
 test('a patch release selects its own manifest and refuses stale identities', t => {
   const oldPair = fixture(t);

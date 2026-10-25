@@ -1,4 +1,4 @@
-import { execSync, spawn } from "node:child_process";
+import { execFileSync, execSync, spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -51,10 +51,8 @@ describe("Task 0.7: Packaged MCP Tarball Smoke-Test & Release Freeze", () => {
 		}
 
 		// 3. Extract to clean temp directory
-		const tarballPath = path.join(tempDir, tarball);
-		execSync(`tar -xzf "${tarballPath.replace(/\\/g, "/")}" -C "${tempDir.replace(/\\/g, "/")}"`, {
-			stdio: "pipe",
-		});
+		// Relative archive operand: GNU tar treats a drive-letter path as a remote host.
+		execFileSync("tar", ["-xzf", tarball, "-C", tempDir], { cwd: tempDir, stdio: "pipe" });
 
 		extractedPkgDir = path.join(tempDir, "package");
 		expect(fs.existsSync(extractedPkgDir)).toBe(true);

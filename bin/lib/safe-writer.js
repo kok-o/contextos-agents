@@ -1,12 +1,13 @@
 /**
  * bin/lib/safe-writer.js
- * Safe Atomic File Writer & Conflict Management for ContextOS
+ * Conflict planning for files that ContextOS installed into a project.
  *
- * Implements non-destructive file writes and uninstalls:
+ * This module only decides; it never touches the disk. Applying a plan goes
+ * through the journaled transaction (.agents/filesystem), which is the single
+ * write path and refuses symlink or junction escapes. It implements:
  * - Classified actions: CREATE, UPDATE, CONFLICT, SKIP, DELETE
  * - Unmanaged user-created files are NEVER touched or deleted
- * - User-modified managed files trigger sidecar (.contextos.new) without overwriting user work
- * - Atomic write via temporary file + rename with rollback on failure
+ * - User-modified managed files trigger a sidecar (.contextos.new) instead of an overwrite
  */
 
 const fs = require('fs');
@@ -16,87 +17,7 @@ const {
   computeHash,
   computeFileHash,
   classifyFile,
-  recordManagedFile,
-  isManagedFile,
 } = require('./lockfile.js');
-
-/**
- * Atomically write content to a file with directory creation and rollback.
- */
-function atomicWriteFile(targetPath, content) {
-  const dir = path.dirname(targetPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  const tmpPath = `${targetPath}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  try {
-    fs.writeFileSync(tmpPath, content, 'utf8');
-
-    let renamed = false;
-    let lastError = null;
-    const maxRetries = 3;
-    const delays = [10, 50, 100];
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        fs.renameSync(tmpPath, targetPath);
-        renamed = true;
-        break;
-      } catch (renameErr) {
-        lastError = renameErr;
-        // Check for transient locking errors common on Windows (EPERM, EBUSY, EACCES)
-        const isTransient = renameErr.code === 'EPERM' || renameErr.code === 'EBUSY' || renameErr.code === 'EACCES';
-        if (isTransient && attempt < maxRetries) {
-          const waitMs = delays[attempt];
-          try {
-            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitMs);
-          } catch {
-            const start = Date.now();
-            while (Date.now() - start < waitMs) {}
-          }
-        } else {
-          break;
-        }
-      }
-    }
-
-    if (!renamed) {
-      throw lastError || new Error(`Failed to atomically rename ${tmpPath} to ${targetPath}`);
-    }
-  } catch (err) {
-    try {
-      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
-    } catch {}
-    throw err;
-  }
-}
-
-/**
- * Clean up empty parent directories up to the .agents boundary.
- */
-function cleanEmptyParentDirectories(filePath) {
-  let currentDir = path.dirname(filePath);
-  while (
-    currentDir &&
-    currentDir.includes('.agents') &&
-    !currentDir.endsWith('.agents') &&
-    !currentDir.endsWith('.agents/') &&
-    !currentDir.endsWith('.agents\\')
-  ) {
-    try {
-      const entries = fs.readdirSync(currentDir);
-      if (entries.length === 0) {
-        fs.rmdirSync(currentDir);
-        currentDir = path.dirname(currentDir);
-      } else {
-        break;
-      }
-    } catch {
-      break;
-    }
-  }
-}
 
 /**
  * Plan a file write operation against the current filesystem and lockfile state.
@@ -172,39 +93,6 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
 }
 
 /**
- * Execute a planned file write operation.
- */
-function executeFileWrite(planItem, lockData, { dryRun = false } = {}) {
-  if (dryRun) {
-    return { ...planItem, executed: false, dryRun: true };
-  }
-
-  if (planItem.action === 'SKIP') {
-    return { ...planItem, executed: false };
-  }
-
-  if (planItem.action === 'CREATE' || planItem.action === 'UPDATE') {
-    atomicWriteFile(planItem.targetPath, planItem.newContent);
-    if (lockData) {
-      recordManagedFile(lockData, planItem.relPath, planItem.newHash || planItem.newContent);
-    }
-    return { ...planItem, executed: true };
-  }
-
-  if (planItem.action === 'CONFLICT') {
-    const conflictTarget = planItem.conflictFullPath || `${planItem.targetPath}.contextos.new`;
-    atomicWriteFile(conflictTarget, planItem.newContent);
-    return {
-      ...planItem,
-      executed: true,
-      conflictPath: planItem.conflictPath || `${planItem.relPath}.contextos.new`,
-    };
-  }
-
-  return { ...planItem, executed: false };
-}
-
-/**
  * Plan a file deletion operation during uninstall or cleanup.
  *
  * Returns ActionPlan:
@@ -252,39 +140,7 @@ function planFileDelete({ projectDir, relPath, lockData, options = {} }) {
   };
 }
 
-/**
- * Execute a planned file deletion operation.
- */
-function executeFileDelete(planItem, lockData, { dryRun = false } = {}) {
-  if (dryRun) {
-    return { ...planItem, executed: false, dryRun: true };
-  }
-
-  if (planItem.action === 'DELETE') {
-    if (fs.existsSync(planItem.targetPath)) {
-      try {
-        fs.unlinkSync(planItem.targetPath);
-      } catch (err) {
-        return { ...planItem, executed: false, error: err.message };
-      }
-    }
-
-    if (lockData && lockData.managedFiles) {
-      delete lockData.managedFiles[planItem.relPath];
-    }
-
-    cleanEmptyParentDirectories(planItem.targetPath);
-    return { ...planItem, executed: true };
-  }
-
-  return { ...planItem, executed: false };
-}
-
 module.exports = {
-  atomicWriteFile,
   planFileWrite,
-  executeFileWrite,
   planFileDelete,
-  executeFileDelete,
-  cleanEmptyParentDirectories,
 };

@@ -1,74 +1,58 @@
 # ContextOS roadmap
 
-Updated 4 October 2026. Core 2.3.2 and MCP 0.4.2 are published; see
-[the release record](PATCH_RELEASE_2.3.2.md) and its archive and CI evidence.
-Historical 2.3.1 / 0.4.1 archive identities remain unchanged. The reliability
-improvements below are included in this maintenance release.
+Updated 24 October 2026, after an independent audit of core 2.3.2 and the rework
+that followed it, now prepared as **3.0.0-rc.1 (unpublished, core only)**.
+Candidate instructions are in the [RC checklist](RELEASE_3.0.0-rc.1.md).
+Earlier release records are in the
+[archive](archive/README.md).
 
-## Implemented
+## Done in the rework
 
-- Deterministic compilation, six adapter exports, preservation of user content,
-  project overrides and drift checks.
-- Compact bootstrap, task/file selection, whole selected skill bodies and
-  warnings for missing sources, omissions and soft-budget overflow.
-- Required safety guidance survives profile exclusions and small soft budgets.
-- Offline catalog, presets, staged scanning and installed-consumer CI.
-- Default read-only MCP inspection; runtime execution remains experimental.
-- Upgrade/checkpoint rollback preserving user rules.
-- Release records include Windows/Linux/macOS installed archive acceptance.
+- Merge-safe output: no whole-graph hash in headers, a sorted lockfile without a
+  revision counter, derived caches out of git, LF output on any checkout, and one
+  command (`export all`) that rebuilds files holding conflict markers.
+- Claude Code gets its native locations (`.claude/rules`, `.claude/skills`)
+  instead of a block of links in `CLAUDE.md`; per-rule `activation` is mapped to
+  each client.
+- A project receives rules, not the tool: `init` creates `.agents/project/skills`
+  and a `.gitignore` block; the bundled core is opt-in; `update` migrates 2.x
+  projects.
+- Every write goes through the journaled transaction; `uninstall` removes
+  generated files and managed blocks, needs `--yes`, and cannot be steered
+  outside the project by a junction.
+- Installed-package scenarios for branches, merges, CRLF checkouts, user-owned
+  files and removal run in CI.
 
-## Maintenance reliability improvements
+## Next: find out whether anyone needs it
 
-- Destructive task selection handles intervening words in Russian and English,
-  while ordinary import cleanup keeps its standard risk classification.
-- Manifestless descriptions survive compilation and native, Cursor and Zed
-  exports; v2 manifests and custom entrypoints retain precedence.
-- Formerly skipped MCP handlers and persistence cases use the current contract.
-  A killed child process exercises reconciliation of saved running work.
-- A deterministic executor fixture exercises failed verification, repair,
-  stale-evidence rejection and a verified Git merge. No paid model is invoked.
-- Skill checks cover all seven core skills and four catalog skills, with syntax,
-  structure, simulated behavior and original-source behavior counted separately.
+The core is only worth more work if teams outside this repository use it. Run
+the [pilot protocol](PILOT_PROTOCOL.md) with three to five teams that have at
+least two coding agents and three developers, for three to four weeks, with the
+check in their CI. Record: how many times the check caught a real stale file,
+false alarms, merge conflicts and how long they took to resolve, and why a team
+stopped if it did.
 
-See [the improvement record](RELIABILITY_IMPROVEMENTS.md). Runtime execution and
-recovery remain experimental; a local fixture does not establish provider or
-power-loss reliability.
+Decision after the pilots: if fewer than two teams are still using it, reduce
+the product to the `export --check` idea on top of existing formats (or stop);
+if two or more are, spend the next effort on what they report.
 
-## Next acceptance work
+## Open verification
 
-1. Keep published archive identities unchanged; bind a future candidate to its
-   own source, CI results and archive hashes.
-2. Define and verify the supported external skill bundle contract end to end:
-   entrypoint, routing metadata, declared resources, install and export. The
-   GitHub path currently fetches a fixed file set; manifestless resources are
-   not included by the shared resource exporter. Exercise fresh consumers and
-   reuse existing preview, provenance and transaction mechanisms.
-3. Extend existing resolver and consumer suites with a labeled RU/EN corpus and
-   generated invariant cases. Keep ContextOS resolution separate from client
-   model routing; retain seeds and reproducible counterexamples.
-4. Extend the client pilot. The 2.3.1 Codex CLI record covers negative, explicit
-   and automatic scenarios once each with a manifest. Unrelated-task,
-   updated-skill, manifestless, resource loading and other-client scenarios
-   remain unverified. Compare the same rule with manual setup or an existing
-   synchronization script, recording maintenance effort and detected drift.
+Live client behavior has not been verified for the new Claude Code layout or for
+Cursor, Copilot, Aider and Zed; see the
+[verification record](ADAPTER_COMPATIBILITY.md#verification-record) and its
+protocol. Run it before relying on any client.
 
-See [the direction review](PROJECT_DIRECTION_2026-10-04.md) for the proposed
-scope, acceptance criteria and task-specific use of external skills. These are
-planned next steps; external skills have not been installed by this review.
-The personal Astra/Gemini workflow remains a separate local plan, beginning
-with one task handoff and verification using existing
-contracts before expanding runtime automation.
+## Frozen
 
-## Quality and cost
+MCP runtime execution, swarm orchestration, recursive memory, the container
+verification sandbox and the labs shell. They stay in the repository, are not
+part of the stable contract, and receive security fixes only. The freeze ends
+when the pilots show a need that only they could meet.
 
-[Calibration results](BENCHMARK_RESULTS.md) compare compact selection, full
-instructions and vanilla prompts. They do not establish a general quality
-advantage or production long-session performance. The next measurement phase
-uses real repository tasks and longer sessions with independent acceptance.
-Paid benchmarks remain paused until explicitly requested.
+## Not planned
 
-## Deferred until demonstrated need
-
-AST graph extensions, swarm redesign, automatic learning, catalog expansion,
-private registries, organization policy synchronization, IDE extensions and a
-hosted service are research directions without promised versions or dates.
+New adapters, catalog growth, paid benchmarks, rule-catalog enforcement levels,
+and any claim of token or cost savings. The recorded
+[calibration](BENCHMARK_RESULTS.md) found no quality advantage over a plain
+prompt, and no later measurement has changed that.

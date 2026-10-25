@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, AGENTS_MD_PATH, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectAlwaysRules, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'zed@2';
@@ -41,29 +41,20 @@ function buildSkillSection(skillDir) {
 }
 
 function render(context) {
-  const projectRoot = context?.projectRoot || '.';
-  const agentsMdPath = fs.existsSync(path.join(projectRoot, '.agents', 'AGENTS.md'))
-    ? path.join(projectRoot, '.agents', 'AGENTS.md')
-    : AGENTS_MD_PATH;
+  const agentsMd = readCoreRules(context?.projectRoot);
 
   const prov = createProvenanceHeader({
     generator: GENERATOR_ID,
-    sourceGraphHash: context?.sourceGraphHash,
     profileId: context?.profileId,
-    profileHash: context?.profileHash,
   });
 
   const artifacts = [];
   const rulesLines = [];
 
-  rulesLines.push(
-    prov +
-    `# ContextOS — AI Rules for Zed Assistant\n\n` +
-    `> **Core law: Do not read everything. Read only what the current task requires.**\n\n`
-  );
+  rulesLines.push(prov + `# ContextOS — AI Rules for Zed Assistant\n\n`);
 
-  if (fs.existsSync(agentsMdPath)) {
-    const agentsMd = fs.readFileSync(agentsMdPath, 'utf8');
+  if (agentsMd !== null) {
+    rulesLines.push(`> **Core law: Do not read everything. Read only what the current task requires.**\n\n`);
     rulesLines.push(`## Core Rules & Step 0\n\n${agentsMd}\n\n---\n`);
 
     artifacts.push({
@@ -73,8 +64,14 @@ function render(context) {
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: ['project-rules'],
-      inputsHash: context?.sourceGraphHash || 'none',
     });
+  }
+
+  const allSkills = collectSkillDirectories(context?.profile, context?.projectRoot);
+  const alwaysRules = collectAlwaysRules(allSkills);
+  if (alwaysRules.length > 0) {
+    rulesLines.push(`\n## Always-on Rules\n`);
+    for (const rule of alwaysRules) rulesLines.push(`\n### ${rule.title}\n\n${rule.body}\n`);
   }
 
   rulesLines.push(
@@ -83,7 +80,7 @@ function render(context) {
     `### Available Skills\n`
   );
 
-  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
+  const skills = allSkills;
   for (const skill of skills) {
     const res = buildSkillSection(skill);
     if (res) {
@@ -96,7 +93,6 @@ function render(context) {
         kind: 'generated-adapter',
         generator: GENERATOR_ID,
         sourceSkillIds: [res.skillName],
-        inputsHash: context?.sourceGraphHash || 'none',
       });
     }
   }
@@ -108,7 +104,6 @@ function render(context) {
     kind: 'generated-adapter',
     generator: GENERATOR_ID,
     sourceSkillIds: skills.map(s => path.basename(s)),
-    inputsHash: context?.sourceGraphHash || 'none',
   });
 
   return artifacts;
@@ -129,7 +124,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export zed', context });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export zed', context, force: options.force });
   console.log(`✓ Zed export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

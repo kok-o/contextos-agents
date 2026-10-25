@@ -1,5 +1,9 @@
 # Contributing to contextos-agents
 
+This checkout prepares the unpublished core **3.0.0-rc.1** candidate. For the
+core-only validation route (excluding MCP source imports, builds and suites),
+use `npm run test:core` and the [RC checklist](docs/RELEASE_3.0.0-rc.1.md).
+
 Thank you for contributing! This guide explains how to add skills, run tests, and submit pull requests.
 
 ---
@@ -59,7 +63,8 @@ node .agents/ctx.js export all
 
 # Verify the generated output
 cat .agents/generated/gemini/skills/<your-skill-name>/SKILL.md
-cat .agents/generated/claude/skills/<your-skill-name>/SKILL.md
+cat .claude/skills/<your-skill-name>/SKILL.md      # activation: auto (default)
+cat .claude/rules/<your-skill-name>.md             # activation: always or globs
 ```
 
 ### Step 4: Run tests
@@ -68,7 +73,11 @@ cat .agents/generated/claude/skills/<your-skill-name>/SKILL.md
 npm test
 ```
 
-The repository test suite and validation workflow must pass before submitting a PR. CI tests the core package on Node.js 22 and 24 across Windows, macOS, and Linux; the separate MCP package has its own checks.
+The repository test suite and validation workflow must pass before submitting a PR. CI tests the core package on Node.js 22 and 24 across Windows, macOS, and Linux; the separate MCP package has its own checks, also on Node.js 22 and 24.
+
+Behavior that users depend on (init, merges, CRLF checkouts, uninstall, path safety) is tested against the **packed archive installed into a throwaway project**, not against the checkout: see `tests/scenarios.test.js` and its helpers in `tests/helpers/`. Add a scenario there when you change what a command does to a user's files. Tests that call `npm pack` must pack into a temporary directory (`tests/helpers/pack.js`), never into the repository root, which may hold a release archive.
+
+`.agents/transaction-core/plugin-supply-chain-bundle.js` is generated from `contextos-mcp/src/plugins` and committed. The MCP build does not rewrite it; after changing that source, run `npm run build:supply-chain` in `contextos-mcp` and commit the result.
 
 ---
 
@@ -131,7 +140,7 @@ The `benchmarks/` directory contains maintainer research tooling. It is not part
 
 ## Skill Manifest V2 Format (`skill.yaml`)
 
-Each skill must include a `skill.yaml` alongside `SKILL.md` conforming to the Manifest V2 schema ([`.agents/schemas/skill.manifest.v2.json`](./.agents/schemas/skill.manifest.v2.json)):
+Each skill must include a `skill.yaml` alongside `SKILL.md` conforming to the Manifest V2 schema ([`.agents/schemas/skill.manifest.v2.json`](.agents/schemas/skill.manifest.v2.json)):
 
 ```yaml
 schemaVersion: 2
@@ -178,7 +187,7 @@ The manifest compiler validates DAG cycles, ensures referential integrity, and g
 
 ## Architecture Decision Records (ADRs)
 
-Any architectural changes, new platform layers, lifecycle phases, or contract modifications require an Architecture Decision Record (ADR) under [`docs/decisions/`](./docs/decisions/) before implementation. Follow the format of existing ADRs (ADR-001 through ADR-010).
+Any architectural changes, new platform layers, lifecycle phases, or contract modifications require an Architecture Decision Record (ADR) under [`docs/decisions/`](docs/decisions) before implementation. Follow the format of existing ADRs (ADR-001 through ADR-010).
 
 ---
 
@@ -236,7 +245,7 @@ node .agents/ctx.js skill add alice/my-monorepo/skills/docker
 
 ### Option C - Add to the Community Registry
 
-Submit a PR to add your skill to [`registry.json`](./registry.json):
+Submit a PR to add your skill to [`registry.json`](registry.json):
 
 ```json
 {
@@ -294,6 +303,7 @@ contextos-agents/
 ├── .agents/
 │   ├── AGENTS.md             ← Master orchestrator (skill routing rules)
 │   ├── skills.json           ← Skill registry
+│   ├── cli-errors.js         ← One handler that turns uncaught errors into messages
 │   ├── ctx.js                ← Context compiler + skill plugin CLI
 │   ├── validate.js           ← Skill validation engine
 │   ├── plugins.js            ← Plugin manager (add/remove/list/search)
@@ -320,8 +330,7 @@ contextos-agents/
 │   │       ├── skill.yaml    ← optional
 │   │       └── .source       ← install provenance metadata
 │   └── generated/            ← COMPILED OUTPUT (do not edit manually)
-│       ├── gemini/skills/
-│       └── claude/skills/
+│       └── gemini/skills/    ← Claude output is written to .claude/ at the project root
 ├── contextos-mcp/            ← Separate MCP server package (Beta)
 ├── tests/
 │   ├── install.test.js

@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, AGENTS_MD_PATH, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readCoreRules, collectAlwaysRules, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 const YAML = require('../../compiler/vendor/yaml.js');
 
@@ -51,22 +51,16 @@ function buildSkillSection(skillDir, context) {
 
 function render(context) {
   const projectRoot = context?.projectRoot || '.';
-  const agentsMdPath = fs.existsSync(path.join(projectRoot, '.agents', 'AGENTS.md'))
-    ? path.join(projectRoot, '.agents', 'AGENTS.md')
-    : AGENTS_MD_PATH;
+  const agentsMd = readCoreRules(projectRoot);
 
   const yamlProv = createProvenanceHeader({
     generator: GENERATOR_ID,
-    sourceGraphHash: context?.sourceGraphHash,
     profileId: context?.profileId,
-    profileHash: context?.profileHash,
   }, 'yaml');
 
   const mdProv = createProvenanceHeader({
     generator: GENERATOR_ID,
-    sourceGraphHash: context?.sourceGraphHash,
     profileId: context?.profileId,
-    profileHash: context?.profileHash,
   }, 'markdown');
 
   // 1. .aider.conf.yml
@@ -102,22 +96,24 @@ function render(context) {
 
   // 2. CONVENTIONS.md
   const convSections = [];
-  convSections.push(
-    mdProv +
-    `# ContextOS - Project Conventions for Aider\n\n` +
-    `> **Core law: Do not read everything. Read only what the current task requires.**\n\n`
-  );
+  convSections.push(mdProv + `# ContextOS - Project Conventions for Aider\n\n`);
 
-  if (fs.existsSync(agentsMdPath)) {
-    const agentsMd = fs.readFileSync(agentsMdPath, 'utf8');
+  if (agentsMd !== null) {
+    convSections.push(`> **Core law: Do not read everything. Read only what the current task requires.**\n\n`);
     convSections.push(`## Core Operational Rules\n\n${agentsMd}\n\n---\n`);
+  }
+
+  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
+  const alwaysRules = collectAlwaysRules(skills);
+  if (alwaysRules.length > 0) {
+    convSections.push(`\n## Always-on Rules\n`);
+    for (const rule of alwaysRules) convSections.push(`\n### ${rule.title}\n\n${rule.body}\n`);
   }
 
   convSections.push(`\n## Available Specialist Skills\n\n` +
     `Skills are loaded on demand. Use \`/read .agents/skills/<skill>/SKILL.md\` when needed.\n\n` +
     `### Skill Index\n`);
 
-  const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   for (const skill of skills) {
     const section = buildSkillSection(skill, context);
     if (section) convSections.push(section);
@@ -133,7 +129,6 @@ function render(context) {
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: [],
-      inputsHash: context?.sourceGraphHash || 'none',
     },
     {
       path: 'CONVENTIONS.md',
@@ -142,7 +137,6 @@ function render(context) {
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
       sourceSkillIds: skills.map(s => path.basename(s)),
-      inputsHash: context?.sourceGraphHash || 'none',
     },
   ];
 }
@@ -162,7 +156,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export aider', context });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export aider', context, force: options.force });
   console.log(`✓ Aider export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

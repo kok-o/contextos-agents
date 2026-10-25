@@ -54,6 +54,52 @@ function computeSemanticHash(content) {
   return `sha256:${hash}`;
 }
 
+/**
+ * Split text with git conflict markers into the "ours" and "theirs" versions.
+ * Lines of a diff3 base section are dropped.
+ */
+function splitConflictSides(raw) {
+  const ours = [];
+  const theirs = [];
+  let mode = 'both';
+  for (const line of raw.split(/\r?\n/)) {
+    if (/^<{7}(?: .*)?$/.test(line)) { mode = 'ours'; continue; }
+    if (mode !== 'both' && /^\|{7}(?: .*)?$/.test(line)) { mode = 'base'; continue; }
+    if (mode !== 'both' && /^={7}$/.test(line)) { mode = 'theirs'; continue; }
+    if (mode !== 'both' && /^>{7}(?: .*)?$/.test(line)) { mode = 'both'; continue; }
+    if (mode === 'both' || mode === 'ours') ours.push(line);
+    if (mode === 'both' || mode === 'theirs') theirs.push(line);
+  }
+  return { ours: ours.join('\n'), theirs: theirs.join('\n') };
+}
+
+function hasConflictMarkers(text) {
+  return /^(<{7}|={7}|>{7})(?: .*)?$/m.test(text);
+}
+
+const RECORD_FIELD_ORDER = ['exactSha256', 'semanticTextSha256', 'kind', 'generator', 'inputsHash', 'mode', 'userContent', 'lastTransaction'];
+
+/**
+ * Deterministic lockfile text: managed files sorted by path with a fixed field
+ * order, so that independent additions merge cleanly and neither line endings
+ * nor insertion order change the file.
+ */
+function serializeLockfile(data) {
+  const files = {};
+  for (const file of Object.keys(data.managedFiles || {}).sort()) {
+    const record = data.managedFiles[file];
+    const fixed = {};
+    for (const key of RECORD_FIELD_ORDER) {
+      if (record[key] !== undefined) fixed[key] = record[key];
+    }
+    for (const key of Object.keys(record)) {
+      if (!(key in fixed) && record[key] !== undefined) fixed[key] = record[key];
+    }
+    files[file] = fixed;
+  }
+  return JSON.stringify({ ...data, managedFiles: files }, null, 2) + '\n';
+}
+
 class LockfileV2Manager {
   constructor(projectRoot, options = {}) {
     this.projectRoot = path.resolve(projectRoot);
@@ -97,15 +143,61 @@ class LockfileV2Manager {
   }
 
   /**
-   * Reads and parses Lockfile v2 from disk. Returns null if file does not exist.
+   * Merge both sides of a conflicted lockfile. Managed-file records from either
+   * side are kept (ours wins on a clash); the other side's record is remembered
+   * as an alternate so that ownership checks still recognise its files.
    */
-  read() {
+  recoverFromConflict(raw) {
+    const sides = splitConflictSides(raw);
+    let ours;
+    let theirs;
+    try {
+      ours = JSON.parse(sides.ours);
+      theirs = JSON.parse(sides.theirs);
+      this.validate(ours);
+      this.validate(theirs);
+    } catch (err) {
+      throw new LockfileV2Error(
+        ERROR_CODES.CORRUPT,
+        `Lockfile at '${this.lockfilePath}' has merge conflicts that cannot be recovered automatically: ${err.message}`,
+        { lockfilePath: this.lockfilePath, conflict: true }
+      );
+    }
+
+    const merged = { ...ours, managedFiles: { ...theirs.managedFiles, ...ours.managedFiles } };
+    merged.enabledAdapters = Array.from(new Set([...(ours.enabledAdapters || []), ...(theirs.enabledAdapters || [])])).sort();
+    const alternates = {};
+    for (const [file, record] of Object.entries(theirs.managedFiles)) {
+      const kept = ours.managedFiles[file];
+      if (kept && JSON.stringify(kept) !== JSON.stringify(record)) alternates[file] = [record];
+    }
+    Object.defineProperty(merged, 'recovered', { value: { alternates }, enumerable: false });
+    return merged;
+  }
+
+  /**
+   * Reads and parses Lockfile v2 from disk. Returns null if file does not exist.
+   *
+   * With `tolerateConflicts`, a lockfile that still holds git merge-conflict
+   * markers is rebuilt from the union of both sides instead of failing. The
+   * result then carries a non-enumerable `recovered` property listing, per
+   * path, the record of the side that was not kept; it is never serialized.
+   */
+  read(options = {}) {
     if (!fs.existsSync(this.lockfilePath)) {
       return null;
     }
 
     try {
       const raw = fs.readFileSync(this.lockfilePath, 'utf8');
+      if (hasConflictMarkers(raw)) {
+        if (options.tolerateConflicts) return this.recoverFromConflict(raw);
+        throw new LockfileV2Error(
+          ERROR_CODES.CORRUPT,
+          `Lockfile at '${this.lockfilePath}' has unresolved merge conflicts. Run 'contextos export all' to rebuild it from the rule sources.`,
+          { lockfilePath: this.lockfilePath, conflict: true }
+        );
+      }
       const parsed = JSON.parse(raw);
       this.validate(parsed);
       return parsed;
@@ -219,7 +311,7 @@ class LockfileV2Manager {
     }
 
     const tmpPath = `${this.lockfilePath}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    fs.writeFileSync(tmpPath, JSON.stringify(dataToWrite, null, 2) + '\n', 'utf8');
+    fs.writeFileSync(tmpPath, serializeLockfile(dataToWrite), 'utf8');
 
     try {
       safeRenameSync(tmpPath, this.lockfilePath);
@@ -241,15 +333,17 @@ class LockfileV2Manager {
   recordManagedFile(data, relativePosixPath, fileMeta) {
     if (!data.managedFiles) data.managedFiles = {};
 
-    data.managedFiles[relativePosixPath] = {
+    const record = {
       exactSha256: fileMeta.exactSha256,
       semanticTextSha256: fileMeta.semanticTextSha256,
       kind: fileMeta.kind || 'generated-adapter',
       generator: fileMeta.generator,
-      inputsHash: fileMeta.inputsHash || 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
       mode: fileMeta.mode || 420,
-      lastTransaction: fileMeta.lastTransaction || undefined,
     };
+    if (fileMeta.inputsHash) record.inputsHash = fileMeta.inputsHash;
+    if (fileMeta.userContent) record.userContent = true;
+    if (fileMeta.lastTransaction) record.lastTransaction = fileMeta.lastTransaction;
+    data.managedFiles[relativePosixPath] = record;
 
     return data;
   }
@@ -267,6 +361,8 @@ class LockfileV2Manager {
 
 module.exports = {
   LockfileV2Manager,
+  serializeLockfile,
+  hasConflictMarkers,
   computeExactHash,
   computeSemanticHash,
   LockfileV2Error,

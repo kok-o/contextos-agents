@@ -43,7 +43,7 @@ describe('pure-compiler.js — Pure Adapter Contract & Multi-Adapter Rendering',
     assert.ok(Buffer.isBuffer(sample.content));
     assert.ok(typeof sample.generator === 'string');
     assert.ok(sample.kind === 'generated-adapter');
-    assert.ok(sample.inputsHash.startsWith('sha256:'));
+    assert.strictEqual(sample.inputsHash, undefined, 'a whole-graph hash per artifact makes every entry change on every edit');
   });
 
   it('generates deterministic provenance headers without volatile timestamps', () => {
@@ -51,7 +51,6 @@ describe('pure-compiler.js — Pure Adapter Contract & Multi-Adapter Rendering',
       generator: 'cursor@2',
       sourceGraphHash: 'sha256:1111111111111111111111111111111111111111111111111111111111111111',
       profileId: 'startup',
-      profileHash: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
     };
 
     const header1 = createProvenanceHeader(meta, 'markdown');
@@ -59,8 +58,8 @@ describe('pure-compiler.js — Pure Adapter Contract & Multi-Adapter Rendering',
 
     assert.strictEqual(header1, header2);
     assert.ok(header1.includes('Adapter: cursor@2'));
-    assert.ok(header1.includes('Source graph: sha256:1111'));
-    assert.ok(header1.includes('Profile: startup sha256:2222'));
+    assert.strictEqual(header1.includes('Source graph'), false, 'no hash that changes with every rule edit');
+    assert.ok(header1.includes('Profile: startup'));
     assert.strictEqual(header1.includes('Date'), false);
     assert.strictEqual(header1.includes('202'), false); // No year/timestamp
   });
@@ -141,13 +140,13 @@ describe('drift-detector.js — Adapter Output Drift Detection', () => {
     applyArtifacts(tmpRoot, rendered.artifacts, { context: rendered.context });
 
     // Simulate user editing .cursorrules on disk
-    const targetFile = path.join(tmpRoot, '.cursor', 'rules', '00-project-rules.mdc');
-    fs.writeFileSync(targetFile, '# USER MODIFIED CONTENT THAT DRIFTED\n', 'utf8');
+    const editedPath = rendered.artifacts[0].path;
+    fs.writeFileSync(path.join(tmpRoot, editedPath), '# USER MODIFIED CONTENT THAT DRIFTED\n', 'utf8');
 
     const report = detectDrift(tmpRoot, ['cursor']);
     assert.strictEqual(report.hasDrift, true);
     assert.ok(
-      report.findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].some(f => f.path === '.cursor/rules/00-project-rules.mdc')
+      report.findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].some(f => f.path === editedPath)
     );
   });
 

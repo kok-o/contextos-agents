@@ -638,9 +638,10 @@ describe("Full Pipeline — End-to-End", () => {
 		const accepted = tm.getThread("repair-reverified")!;
 		const merged = await mergeThreadBranch(repoDir, accepted.branchName!, accepted.id, accepted);
 		expect(merged.success).toBe(true);
-		expect(execFileSync(process.execPath, ["--test", "verify.cjs"], { cwd: repoDir, encoding: "utf8" })).toContain(
-			"# pass 1",
-		);
+		// Exit status is the stable contract: the reporter format differs between Node majors.
+		expect(() =>
+			execFileSync(process.execPath, ["--test", "verify.cjs"], { cwd: repoDir, stdio: "pipe" }),
+		).not.toThrow();
 	});
 
 	it("should complete full pipeline: spawn → execute → diff → compress → merge", async () => {
