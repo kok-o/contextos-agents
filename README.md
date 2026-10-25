@@ -48,9 +48,9 @@ see [alternatives](docs/ALTERNATIVES.md) for an honest comparison.
 
 ## Quickstart
 
-This checkout prepares **3.0.0-rc.1**, an **unpublished core release candidate**.
-Build its local archive using the [RC instructions](docs/RELEASE_3.0.0-rc.1.md),
-then install that exact archive below. The npm badge above describes the
+This checkout targets **3.0.0-rc.1**, a **core release candidate** distributed
+through npm's `next` tag. See the [release status](https://github.com/kok-o/contextos-agents/releases/tag/v3.0.0-rc.1)
+and [RC instructions](docs/RELEASE_3.0.0-rc.1.md). The npm badge above describes the
 published package, not this checkout. MCP is outside this candidate.
 
 Requires **Node.js 22+** and npm. Run these commands in your project's root.
@@ -59,7 +59,7 @@ This workflow does not call a model API.
 **1. Prepare the rule sources.**
 
 ```sh
-npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0-rc.1.tgz
+npm install --save-dev --save-exact contextos-agents@3.0.0-rc.1
 npx --no-install contextos init
 ```
 

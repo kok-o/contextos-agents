@@ -4,7 +4,7 @@ To ensure stability and secure deployments, the ContextOS project is strictly se
 
 ## Core (3.0.0-rc.1 release candidate)
 
-This core candidate is not published. MCP is excluded from its validation.
+This core candidate uses npm's `next` tag. MCP is excluded from its core-only validation.
 
 These components form the versioned `contextos-agents` root package. Their contracts are checked by compiler and consumer tests; compatibility with a particular client loader requires client-specific verification.
 

@@ -7,17 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0-rc.1] - 2026-10-25
+
+**Core release candidate on `next`.** MCP is excluded; its version is unchanged.
+See the [RC validation and installation instructions](docs/RELEASE_3.0.0-rc.1.md).
+
 ### Fixed
 
 - Give npm installation in the Windows installed-archive CI gate the same
   bounded ten-minute allowance as migration installs. CLI checks retain their
   three-minute limit. Failed subprocess reports now include the command, timeout
   and elapsed time so installation stalls can be distinguished from CLI failures.
-
-## [3.0.0-rc.1] - 2026-10-24
-
-**Unpublished core release candidate.** MCP is excluded; its version is unchanged.
-See the [RC validation and installation instructions](docs/RELEASE_3.0.0-rc.1.md).
 
 Rework after an independent audit of 2.3.2. It changes the project layout and the
 generated files; see [upgrading from 2.x](docs/MIGRATION.md#upgrading-from-2x-projects).

@@ -1,9 +1,19 @@
 # ContextOS Core 3.0.0-rc.1
 
-Status: **local, unpublished release candidate**. Prepared 24 October 2026.
-The preparation is proposed for code review. Git tags, GitHub releases and npm
-publication remain separate actions. The separate MCP package is excluded from
-the final candidate validation and retains its existing version.
+Status: **core release candidate**, prepared 24 October 2026 for publication on
+25 October 2026 through npm's `next` tag. The [GitHub prerelease](https://github.com/kok-o/contextos-agents/releases/tag/v3.0.0-rc.1)
+and its linked publication workflow record whether registry acceptance completed.
+The separate MCP package is excluded from the core-only release validation and
+retains its existing version.
+
+Once the publication workflow succeeds, install the exact candidate with:
+
+```sh
+npm install --save-dev --save-exact contextos-agents@3.0.0-rc.1
+```
+
+The `latest` tag remains on the stable 2.x release. Fresh client loading and
+model adherence still require the checks in the compatibility matrix.
 
 ## Why a major version
 
@@ -89,11 +99,15 @@ fails. The installed-package regression covers both CJS and ESM consumers.
 
 - Local file-contract and installed-package tests establish compiler behavior.
   They do not establish live rule loading or model adherence in every client.
-- Cross-platform hosted CI and fresh client sessions remain separate gates.
+- Cross-platform hosted CI passed for PR #29 at `fef136e`; the publication
+  workflow additionally verifies the reviewed core archive on all three OSes.
+  Fresh client sessions remain a separate gate before a stable 3.0.0 release.
 - `publishConfig.tag` is `next`, so a future authorized prerelease publication
-  does not use `latest` by default. No tag has been published during preparation.
+  does not use `latest` by default.
 - The existing stable paired publisher rejects prerelease versions. This RC
-  does not authorize or configure a Core + MCP publication.
+  uses `publish-core-rc.yml` and the `*-core-rc` publisher modes to publish only
+  the reviewed core archive. Its identity is in `docs/release-core-rc.json`;
+  publication retries verify registry bytes before skipping an existing version.
 - Hashes and run reports under `scratch/release-candidate-3.0.0-rc.1/` were captured
   from the local prepared tree before committing. They do not establish
   publication or hosted CI acceptance.

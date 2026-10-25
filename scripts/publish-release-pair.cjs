@@ -41,6 +41,22 @@ function packages(directory, projectRoot = root) {
     return { kind, folder, name, version: pkg.version, file, archive: path.join(directory, file), sha256: expected.sha256 };
   });
 }
+function corePrerelease(directory, projectRoot = root) {
+  const read = file => JSON.parse(fs.readFileSync(path.join(projectRoot, file)));
+  const pkg = read('package.json');
+  const lock = read('package-lock.json');
+  if (pkg.name !== 'contextos-agents' || !/^\d+\.\d+\.\d+-rc\.[1-9]\d*$/.test(pkg.version)
+    || pkg.publishConfig?.tag !== 'next' || lock.version !== pkg.version || lock.packages?.['']?.version !== pkg.version) {
+    throw new Error('Expected a matching core RC identity with the next distribution tag');
+  }
+  const manifest = read('docs/release-core-rc.json');
+  const file = `${pkg.name}-${pkg.version}.tgz`;
+  if (manifest.version !== pkg.version || manifest.file !== file || !/^[a-f0-9]{64}$/.test(manifest.sha256)) {
+    throw new Error('Core RC is missing its reviewed archive identity');
+  }
+  return { kind: 'core', folder: '.', name: pkg.name, version: pkg.version, file,
+    archive: path.join(directory, file), sha256: manifest.sha256 };
+}
 function verifyLocal(pair) {
   for (const pkg of pair) {
     if (!sameHash(digest(fs.readFileSync(pkg.archive)), pkg.sha256)) throw new Error(`${pkg.name}: archive differs from reviewed release evidence`);
@@ -77,7 +93,7 @@ function authorize(pair, runNpm = npm) {
     if (error.message && error.message.includes('read-write access not confirmed')) throw error;
   }
 }
-async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait = ms => new Promise(resolve => setTimeout(resolve, ms)), record = () => {} } = {}) {
+async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait = ms => new Promise(resolve => setTimeout(resolve, ms)), record = () => {}, tag } = {}) {
   verifyLocal(pair);
   // Complete both checks and permission preflight before the first mutation.
   const present = [];
@@ -88,7 +104,7 @@ async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait
     const pkg = pair[i];
     if (!present[i]) {
       try {
-        runNpm(['publish', pkg.archive, '--ignore-scripts', '--access', 'public', '--registry', registry]);
+        runNpm(['publish', pkg.archive, '--ignore-scripts', '--access', 'public', '--registry', registry, ...(tag ? ['--tag', tag] : [])]);
       } catch (error) {
         // A network error can arrive after npm accepted the upload.
         if (!await inspect(pkg)) throw error;
@@ -108,9 +124,11 @@ async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait
   return results;
 }
 async function main(mode) {
+  const coreOnly = mode?.endsWith('-core-rc');
+  if (coreOnly) mode = mode.slice(0, -'-core-rc'.length);
   const directory = path.join(root, 'scratch', mode === 'download' ? 'registry-release-candidate' : 'release-candidate');
   fs.mkdirSync(directory, { recursive: true });
-  const pair = packages(directory);
+  const pair = coreOnly ? [corePrerelease(directory)] : packages(directory);
   if (mode === 'prepare') {
     for (const pkg of pair) {
       const packed = JSON.parse(npm(['pack', '--ignore-scripts', '--json', '--pack-destination', directory], path.join(root, pkg.folder)))[0];
@@ -119,20 +137,20 @@ async function main(mode) {
     }
     verifyLocal(pair);
     fs.writeFileSync(path.join(root, 'scratch/release-publish-prepared.json'), JSON.stringify(pair.map(({ name, version, file, sha256 }) => ({ name, version, file, sha256 })), null, 2));
-    console.log('Both archives match reviewed release evidence; ready for preflight');
+    console.log('Selected archives match reviewed release evidence; ready for preflight');
   } else if (mode === 'publish') {
     const report = path.join(root, 'scratch/release-publish-result.json');
     const record = completed => fs.writeFileSync(report, JSON.stringify({ completed }, null, 2));
     record([]);
-    console.log(JSON.stringify(await publishPair(pair, { record }), null, 2));
+    console.log(JSON.stringify(await publishPair(pair, { record, ...(coreOnly ? { tag: 'next' } : {}) }), null, 2));
   } else if (mode === 'download') {
     for (const pkg of pair) {
       const bytes = await registryArchive(pkg);
       if (!bytes) throw new Error(`${pkg.name}@${pkg.version}: not published`);
       fs.writeFileSync(pkg.archive, bytes);
     }
-    console.log('Both registry archives match reviewed SHA-256 hashes');
+    console.log('Selected registry archives match reviewed SHA-256 hashes');
   } else throw new Error('Expected prepare, publish or download');
 }
 if (require.main === module) main(process.argv[2]).catch(error => { console.error(error.message); process.exitCode = 1; });
-module.exports = { digest, sameHash, packages, verifyLocal, registryArchive, authorize, publishPair };
+module.exports = { digest, sameHash, packages, corePrerelease, verifyLocal, registryArchive, authorize, publishPair };

@@ -18,8 +18,8 @@ Key system principles:
 
 ## 2. CLI Commands (`contextos` / `ctx.js`)
 
-This guide targets the unpublished **3.0.0-rc.1** core candidate. Install its
-[local archive](docs/RELEASE_3.0.0-rc.1.md) as a pinned development dependency,
+This guide targets the **3.0.0-rc.1** core candidate on npm's `next` tag. Follow the
+[RC instructions](docs/RELEASE_3.0.0-rc.1.md) to install a pinned development dependency,
 then use `npx --no-install contextos`. The compiler runs from the installed package;
 the project holds rules only, so there is no `.agents/ctx.js` to run.
 

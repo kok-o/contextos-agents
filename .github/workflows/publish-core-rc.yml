@@ -1,0 +1,124 @@
+name: Publish reviewed Core RC
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-release-pair
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: ${{ github.event.release.prerelease }}
+    name: Core RC acceptance (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Check release tag against reviewed RC identity
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: node -e "const p = require('./scripts/publish-release-pair.cjs').corePrerelease('scratch/release-candidate'); if (process.env.RELEASE_TAG !== 'v' + p.version) throw new Error('RC tag mismatch');"
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: git diff --exit-code
+      - run: npm run validate
+      - run: npm run validate:catalog
+      - run: npm run check:secrets
+      - run: npm run test:core
+      - run: node --test tests/release-publish.test.js
+      - run: npm run test:skills
+      - run: npm run lint:md
+      - run: npm run check:release-surface:core
+      - name: Pack the reviewed core archive
+        run: node scripts/publish-release-pair.cjs prepare-core-rc
+      - run: npm run check:consumer:core -- scratch/release-candidate
+      - name: Verify stable upgrade and checkpoint rollback
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force scratch/previous-core | Out-Null
+          npm pack contextos-agents@2.3.2 --ignore-scripts --pack-destination scratch/previous-core
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $version = node -p "require('./package.json').version"
+          npm run check:migration:core -- scratch/previous-core/contextos-agents-2.3.2.tgz "scratch/release-candidate/contextos-agents-$version.tgz"
+          exit $LASTEXITCODE
+      - name: Retain acceptance evidence and exact archive
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-rc-${{ matrix.os }}-attempt-${{ github.run_attempt }}
+          path: |
+            scratch/release-candidate/*.tgz
+            scratch/release-publish-prepared.json
+            scratch/release-core-install-result.json
+            scratch/release-core-migration-result.json
+            scratch/release-surface.json
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-rc-ubuntu-latest-attempt-${{ github.run_attempt }}
+          path: scratch
+      - name: Publish only the verified Core RC to next
+        run: node scripts/publish-release-pair.cjs publish-core-rc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Retain publication result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-rc-publication-attempt-${{ github.run_attempt }}
+          path: scratch/release-publish-result.json
+
+  registry:
+    needs: publish
+    name: Core RC registry acceptance (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Download and verify the published archive SHA-256
+        run: node scripts/publish-release-pair.cjs download-core-rc
+      - run: npm run check:consumer:core -- scratch/registry-release-candidate
+      - name: Confirm the next distribution tag
+        run: node -e "fetch('https://registry.npmjs.org/-/package/contextos-agents/dist-tags').then(r => { if (!r.ok) throw new Error('Registry HTTP ' + r.status); return r.json(); }).then(tags => { if (tags.next !== require('./package.json').version) throw new Error('next tag mismatch'); console.log(JSON.stringify(tags)); }).catch(e => { console.error(e.message); process.exitCode = 1; });"
+      - name: Retain registry acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-rc-registry-${{ matrix.os }}-attempt-${{ github.run_attempt }}
+          path: scratch/release-core-install-result.json

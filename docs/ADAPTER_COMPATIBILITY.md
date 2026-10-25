@@ -12,7 +12,7 @@ Passing (a) says nothing about (b) or (c).
 
 ## Verification record
 
-The current core candidate is **3.0.0-rc.1 (unpublished)**. File-contract tests
+The current core candidate is **3.0.0-rc.1** on npm's `next` tag. File-contract tests
 are separate from real client loading and model adherence; older client records
 below are historical observations, not fresh RC acceptance. MCP is excluded.
 
