@@ -73,6 +73,8 @@ class CoalescingWatchDaemon {
     this.watchers = [];
     this.watchedDirectories = new Set();
     this.fallbackWatchers = new Map();
+    this.fallbackSnapshot = null;
+    this.reconcileTimer = null;
     this.lastStack = null;
     this.errorLogPath = path.join(this.projectDir, '.agents', '.contextos', 'watch-error.json');
     this.lock = new ProjectMutationLock(this.projectDir);
@@ -105,6 +107,12 @@ class CoalescingWatchDaemon {
       if (fs.existsSync(dir)) {
         this.watchDirectory(dir);
       }
+    }
+    if (this.fallbackWatchers.size > 0) {
+      this.fallbackSnapshot = this.snapshotFallbackSources();
+      // Native registration is asynchronous on macOS and events can be
+      // nameless or coalesced. Reconcile sources without reading their bodies.
+      this.reconcileTimer = setInterval(() => this.reconcileFallbackSources(), 1000);
     }
 
     // 2. Monitored individual files
@@ -179,7 +187,10 @@ class CoalescingWatchDaemon {
           this.triggerRecompile(toPosix(path.relative(this.projectDir, dirPath)));
           return;
         }
-        if (!filename) return;
+        if (!filename) {
+          this.reconcileFallbackSources();
+          return;
+        }
         const full = path.join(dirPath, filename);
         const relToProject = toPosix(path.relative(this.projectDir, full));
         if (shouldIgnorePath(relToProject)) return;
@@ -214,6 +225,44 @@ class CoalescingWatchDaemon {
       return stat.isDirectory() ? `${stat.dev}:${stat.ino}:${stat.birthtimeMs}` : null;
     } catch {
       return null;
+    }
+  }
+
+  snapshotFallbackSources() {
+    const files = [];
+    for (const [dir, entry] of this.fallbackWatchers) {
+      if (this.directoryIdentity(dir) !== entry.identity) this.forgetWatchTree(dir);
+    }
+    const visit = dir => {
+      let entries;
+      try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
+      catch (err) { if (err.code === 'ENOENT') return; throw err; }
+      this.watchTreeFallback(dir);
+      for (const entry of entries) {
+        const file = path.join(dir, entry.name);
+        const relative = toPosix(path.relative(this.projectDir, file));
+        if (shouldIgnorePath(relative)) continue;
+        try {
+          const stat = fs.lstatSync(file);
+          if (stat.isDirectory()) visit(file);
+          else if (stat.isFile()) files.push([relative, stat.mtimeMs, stat.ctimeMs, stat.size, stat.ino]);
+        } catch (err) { if (err.code !== 'ENOENT') throw err; }
+      }
+    };
+    visit(path.join(this.projectDir, '.agents'));
+    return JSON.stringify(files.sort((a, b) => a[0].localeCompare(b[0])));
+  }
+
+  reconcileFallbackSources() {
+    if (this.closed) return;
+    try {
+      const snapshot = this.snapshotFallbackSources();
+      if (snapshot !== this.fallbackSnapshot) {
+        this.fallbackSnapshot = snapshot;
+        this.triggerRecompile('fallback:reconcile');
+      }
+    } catch (err) {
+      this.saveFailureDiagnostics(['fallback:reconcile'], err);
     }
   }
 
@@ -293,6 +342,11 @@ class CoalescingWatchDaemon {
   async executeSync(reasons) {
     let lockToken = null;
     try {
+      // Capture inputs before rendering: a later edit must remain detectable.
+      if (this.reconcileTimer) {
+        try { this.fallbackSnapshot = this.snapshotFallbackSources(); }
+        catch (err) { this.fallbackSnapshot = null; throw err; }
+      }
       try {
         lockToken = this.lock.acquire({ command: 'watch:sync' });
       } catch (err) {
@@ -408,6 +462,10 @@ class CoalescingWatchDaemon {
    */
   close() {
     this.closed = true;
+    if (this.reconcileTimer) {
+      clearInterval(this.reconcileTimer);
+      this.reconcileTimer = null;
+    }
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;

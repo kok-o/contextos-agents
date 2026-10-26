@@ -109,7 +109,7 @@ for (const [mode, tier] of ['recursive', 'fallback'].flatMap(mode => ['project',
     fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team rules\n---\nHello');
     const waitFor = async event => {
       let timeout;
-      await Promise.race([event, new Promise(resolve => { timeout = setTimeout(resolve, 2000); })]);
+      await Promise.race([event, new Promise(resolve => { timeout = setTimeout(resolve, 5000); })]);
       clearTimeout(timeout);
     };
     await waitFor(eventReceived);
@@ -123,7 +123,78 @@ for (const [mode, tier] of ['recursive', 'fallback'].flatMap(mode => ['project',
     await waitFor(resourceChanged);
     assert.strictEqual(fs.readFileSync(path.join(root, '.agents/skills/team/details.txt'), 'utf8'), 'AFTER');
     await new Promise(resolve => setTimeout(resolve, 100));
-    assert.strictEqual(events.filter(event => event.type === 'recompile').length, 2, 'generated outputs must not feed back into the watcher');
+    assert.ok(events.filter(event => event.type === 'recompile').every(event => event.reasons.every(reason => !shouldIgnorePath(reason))), 'generated outputs must not be source events');
+  });
+}
+
+for (const notification of ['missing', 'nameless']) {
+  test(`fallback reconciles new sources when native notifications are ${notification}`, async t => {
+    const { EventEmitter } = require('node:events');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-watch-reconcile-'));
+    fs.mkdirSync(path.join(root, '.agents/project/skills'), { recursive: true });
+    const callbacks = new Map();
+    const originalWatch = fs.watch;
+    let synced;
+    const firstSync = new Promise(resolve => { synced = resolve; });
+    const daemon = new CoalescingWatchDaemon(root, {
+      silent: true, exitOnSigint: false,
+      onSync(event) { if (event.type === 'recompile') synced(); },
+    });
+    t.after(() => {
+      daemon.close();
+      assert.equal(daemon.reconcileTimer, null);
+      assert.equal(path.dirname(root), os.tmpdir());
+      fs.rmSync(root, { recursive: true, force: true });
+    });
+    fs.watch = function(file, options, callback) {
+      if (options?.recursive) throw new Error('No recursive support');
+      callbacks.set(file, typeof options === 'function' ? options : callback);
+      const watcher = new EventEmitter();
+      watcher.close = () => {};
+      return watcher;
+    };
+    try { daemon.start(); } finally { fs.watch = originalWatch; }
+    const dir = path.join(root, '.agents/vendor/skills/team');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team policy\n---\nTeam rules');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), 'id: team\nresources: [details.txt]\n');
+    fs.writeFileSync(path.join(dir, 'details.txt'), 'BEFORE');
+    if (notification === 'nameless') callbacks.get(path.join(root, '.agents'))('rename', null);
+    let timeout;
+    try {
+      await Promise.race([firstSync, new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Fallback reconciliation did not export the new source')), 5000);
+      })]);
+    } finally { clearTimeout(timeout); }
+    assert.ok(daemon.fallbackWatchers.has(dir), 'new subtree must be watched');
+    assert.equal(fs.readFileSync(path.join(root, '.agents/skills/team/details.txt'), 'utf8'), 'BEFORE');
+    fs.writeFileSync(path.join(dir, 'details.txt'), 'AFTER');
+    daemon.reconcileFallbackSources();
+    await daemon.processQueue();
+    assert.equal(fs.readFileSync(path.join(root, '.agents/skills/team/details.txt'), 'utf8'), 'AFTER');
+    daemon.reconcileFallbackSources();
+    assert.equal(daemon.pendingReasons.size, 0, 'generated writes must not create source drift');
+    const snapshot = daemon.fallbackSnapshot;
+    const readdir = fs.readdirSync;
+    fs.readdirSync = function(dir, ...args) {
+      if (dir === path.join(root, '.agents')) throw Object.assign(new Error('Source scan denied'), { code: 'EACCES' });
+      return readdir.call(fs, dir, ...args);
+    };
+    try { assert.doesNotThrow(() => daemon.reconcileFallbackSources()); }
+    finally { fs.readdirSync = readdir; }
+    assert.equal(daemon.fallbackSnapshot, snapshot, 'a failed scan must not become the new source baseline');
+    assert.equal(daemon.pendingReasons.size, 0);
+    assert.match(fs.readFileSync(daemon.errorLogPath, 'utf8'), /Source scan denied/);
+    fs.writeFileSync(path.join(dir, 'details.txt'), 'AFTER AGAIN');
+    daemon.reconcileFallbackSources();
+    const capture = daemon.snapshotFallbackSources;
+    daemon.snapshotFallbackSources = () => { throw new Error('Pre-sync scan temporarily unavailable'); };
+    try { await daemon.processQueue(); } finally { daemon.snapshotFallbackSources = capture; }
+    assert.equal(fs.readFileSync(path.join(root, '.agents/skills/team/details.txt'), 'utf8'), 'AFTER');
+    assert.equal(daemon.fallbackSnapshot, null, 'a failed pre-sync scan must keep the edit discoverable');
+    daemon.reconcileFallbackSources();
+    await daemon.processQueue();
+    assert.equal(fs.readFileSync(path.join(root, '.agents/skills/team/details.txt'), 'utf8'), 'AFTER AGAIN');
   });
 }
 

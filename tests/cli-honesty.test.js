@@ -33,7 +33,7 @@ test('--project targets diagnostics, fixes, and proxied exports without touching
   assert.equal(JSON.parse(status.stdout).projectDir, target);
   const detect = run('detect');
   assert.equal(detect.status, 0, detect.stderr);
-  assert.equal(path.resolve(JSON.parse(detect.stdout).workspaceGraph.repositoryRoot), target);
+  assert.equal(fs.realpathSync(JSON.parse(detect.stdout).workspaceGraph.repositoryRoot), fs.realpathSync(target));
   const doctor = run('doctor', '--fix');
   assert.doesNotThrow(() => JSON.parse(doctor.stdout), doctor.stderr);
   assert.equal(fs.existsSync(path.join(target, '.agents/.contextos/watch-error.json')), false);

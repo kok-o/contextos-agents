@@ -250,6 +250,9 @@ contextos watch
 skills created after it starts, and excludes generated projections and caches.
 If another ContextOS command holds the project lock, it retries after a delay.
 Fallback directory watchers are replaced when source directories are recreated.
+Fallback mode also reconciles source-file metadata every second, so missing or
+nameless native notifications do not leave newly created source trees untracked.
+Generated files and state are excluded from that scan.
 
 After an interrupted export or update, inspect its journal and choose whether
 to finish the transaction or restore its original files:
