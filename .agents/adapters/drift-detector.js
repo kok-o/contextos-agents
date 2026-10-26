@@ -200,7 +200,7 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
   // Task 1.4: Scoped strictly to the active adapters being checked
   if (lockfile && lockfile.managedFiles) {
     const targetGenerators = new Set(artifacts.map(a => a.generator));
-    const adapterList = adapters === 'all' ? null : (Array.isArray(adapters) ? adapters : [adapters]);
+    const adapterList = adapters === 'all' ? null : context.enabledAdapters;
     const allowedPrefixes = adapterList ? adapterList.map(a => `${a}@`) : null;
 
     for (const [recordedPath, meta] of Object.entries(lockfile.managedFiles)) {

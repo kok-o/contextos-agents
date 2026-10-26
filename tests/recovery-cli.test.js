@@ -174,6 +174,35 @@ test('the source CLI uses the same locked crash recovery implementation', t => {
   assert.deepStrictEqual(JournaledTransaction.listPending(root), []);
 });
 
+for (const action of ['commit', 'rollback']) {
+  for (const code of ['EPERM', 'EBUSY', 'EACCES']) {
+    test(`${action} preserves an edit during ${code} rename backoff`, t => {
+      const root = crashedTransaction(t, action === 'commit' ? 'write-before' : 'write');
+      const result = spawnSync(NODE, ['-e', `
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const [modulePath, root, action, code] = process.argv.slice(1);
+        const { JournaledTransaction } = require(modulePath);
+        const rename = fs.renameSync;
+        let failed = false;
+        fs.renameSync = function(...args) {
+          if (!failed && args[1] === path.join(root, 'first.md')) {
+            failed = true;
+            fs.writeFileSync(args[1], 'USER EDIT DURING BACKOFF');
+            throw Object.assign(new Error('Transient sharing violation'), { code });
+          }
+          return rename.apply(fs, args);
+        };
+        JournaledTransaction.load(root, 'tx-crash')[action]();
+      `, TX_MODULE, root, action, code], { encoding: 'utf8', timeout: 10000 });
+      assert.strictEqual(result.status, 1, result.stderr);
+      assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'USER EDIT DURING BACKOFF');
+      assert.strictEqual(fs.readFileSync(path.join(root, '.agents/.contextos/transactions/tx-crash/backup/0-first.md'), 'utf8'), 'BEFORE');
+      assert.strictEqual(JournaledTransaction.listPending(root).length, 1);
+    });
+  }
+}
+
 test('recovery preserves edits made after the crash and retains backups on refusal', t => {
   const root = crashedTransaction(t);
   fs.writeFileSync(path.join(root, 'first.md'), 'USER EDIT');

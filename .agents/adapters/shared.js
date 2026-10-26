@@ -157,14 +157,44 @@ function relocateSkillLinks(content, { skillDir, destination, projectRoot, resou
     const [, file, suffix = ''] = link.match(/^([^?#]*)(.*)$/);
     if (!file) return target;
     let decoded;
-    try { decoded = decodeURI(file); } catch { return target; }
+    try { decoded = decodeURIComponent(file); } catch { return target; }
     let resolved = path.resolve(sourceDir, decoded);
     if (resourceRoot) resolved = path.resolve(projectRoot, resourceRoot, resolved === entrypoint ? 'SKILL.md' : path.relative(skillDir, resolved));
-    return encodeURI(path.relative(outputDir, resolved).split(path.sep).join('/')) + suffix;
+    const relative = path.relative(outputDir, resolved).split(path.sep).join('/');
+    return relative.split('/').map(segment => encodeURIComponent(segment)
+      .replace(/\(/g, '%28').replace(/\)/g, '%29')).join('/') + suffix;
+  };
+  const relocateInlineLinks = text => {
+    let output = '';
+    let cursor = 0;
+    let start;
+    while ((start = text.indexOf('](', cursor)) !== -1) {
+      const from = start + 2;
+      let end = from;
+      if (text[from] === '<') {
+        const close = text.indexOf('>', from + 1);
+        if (close === -1 || /[\r\n]/.test(text.slice(from, close))) break;
+        end = close + 1;
+      } else {
+        let depth = 0;
+        for (; end < text.length; end++) {
+          const ch = text[end];
+          if (ch === '\\' && end + 1 < text.length) { end++; continue; }
+          if (ch === '(') depth++;
+          else if (ch === ')') { if (!depth) break; depth--; }
+          else if (/\s/.test(ch)) break;
+        }
+        if (depth) break;
+      }
+      const close = text.indexOf(')', end);
+      if (close === -1 || /[\r\n]/.test(text.slice(end, close))) break;
+      output += text.slice(cursor, from) + relocate(text.slice(from, end));
+      cursor = end;
+    }
+    return output + text.slice(cursor);
   };
   // Fenced examples describe literal source; do not rewrite their links.
-  return content.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g).map((part, index) => index % 2 ? part : part
-    .replace(/(\]\()(<[^>\n]+>|[^\s)]+)([^)\n]*\))/g, (_, start, target, end) => start + relocate(target) + end)
+  return content.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g).map((part, index) => index % 2 ? part : relocateInlineLinks(part)
     .replace(/^(\s{0,3}\[[^\]\n]+\]:\s*)(<[^>\n]+>|[^\s]+)(.*)$/gm, (_, start, target, end) => start + relocate(target) + end)
   ).join('');
 }

@@ -69,6 +69,30 @@ it('Copilot and Aider use metadata from the winning manifest', t => {
   }
 });
 
+it('exported links preserve encoded filename characters and URL fragments', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-encoded-resource-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  const files = ['ref#draft.md', 'ref%literal.md', 'ref (draft).md', 'ref(draft).md', 'ref((draft)).md'];
+  fs.writeFileSync(path.join(dir, 'skill.yaml'), `id: team\nresources: ${JSON.stringify(files)}\n`);
+  const links = files.map((file, i) => `[policy${i}](${i >= 3 ? file : encodeURIComponent(file).replace(/\(/g, '%28').replace(/\)/g, '%29')}#section)`);
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: team\ndescription: Team policy\n---\n${links.join('\n')}`);
+  for (const file of files) fs.writeFileSync(path.join(dir, file), '# RESOURCE');
+  const rendered = renderAdapters(root, 'all');
+  applyArtifacts(root, rendered.artifacts, { context: rendered.context });
+  for (const output of ['.claude/skills/team/SKILL.md', '.agents/skills/team/SKILL.md', '.cursor/rules/team.mdc', '.zed/prompts/team.md']) {
+    const text = fs.readFileSync(path.join(root, output), 'utf8');
+    const matches = [...text.matchAll(/\[policy\d\]\(([^)]+)\)/g)];
+    assert.strictEqual(matches.length, files.length, output);
+    for (const [, href] of matches) {
+      assert.ok(href.endsWith('#section'), href);
+      const target = path.resolve(root, path.dirname(output), decodeURIComponent(href.slice(0, -'#section'.length)));
+      assert.strictEqual(fs.readFileSync(target, 'utf8'), '# RESOURCE', href);
+    }
+  }
+});
+
 for (const activation of ['always', 'auto', 'globs']) {
   it(`exported resource links remain usable for a nested entrypoint (${activation})`, t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-resource-links-'));

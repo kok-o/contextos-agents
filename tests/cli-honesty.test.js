@@ -69,6 +69,27 @@ test('export and export --check honor the same --target adapter set', t => {
   }
 });
 
+test('comma-separated target checks detect orphans from an adapter with an empty projection', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-comma-orphan-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const source = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(source, { recursive: true });
+  fs.writeFileSync(path.join(root, '.agents/AGENTS.md'), '# Project rules');
+  fs.writeFileSync(path.join(source, 'SKILL.md'), '---\nname: team\ndescription: Team rules\nactivation: always\n---\nTeam policy');
+  const bin = path.resolve(__dirname, '../bin/index.js');
+  const run = (entrypoint, ...args) => spawnSync(process.execPath, [entrypoint, ...args], { cwd: root, encoding: 'utf8' });
+  assert.equal(run(bin, 'export', '--target', 'cursor,claude').status, 0);
+  fs.unlinkSync(path.join(source, 'SKILL.md'));
+  fs.rmdirSync(source);
+  assert.equal(run(bin, 'export', 'cursor').status, 0);
+  for (const entrypoint of [bin, path.resolve(__dirname, '../.agents/ctx.js')]) {
+    const checked = run(entrypoint, 'export', '--target', 'cursor,claude', '--check', '--json');
+    assert.equal(checked.status, 1, checked.stdout + checked.stderr);
+    const report = JSON.parse(checked.stdout);
+    assert.ok(report.findings.ORPHAN_MANAGED_OUTPUT.some(item => item.path === '.claude/rules/team.md'));
+  }
+});
+
 function gitProject(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-honesty-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

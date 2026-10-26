@@ -51,7 +51,7 @@ class TransactionError extends Error {
 /**
  * Windows-aware atomic rename with bounded retry for transient locks.
  */
-function safeRenameSync(sourcePath, targetPath, maxRetries = 3, delays = [10, 50, 150]) {
+function safeRenameSync(sourcePath, targetPath, maxRetries = 3, delays = [10, 50, 150], beforeAttempt = null) {
   const targetDir = path.dirname(targetPath);
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
@@ -59,6 +59,9 @@ function safeRenameSync(sourcePath, targetPath, maxRetries = 3, delays = [10, 50
 
   let lastError = null;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // A sharing violation can outlast the caller's last hash check. Validate
+    // immediately before every attempt, including attempts after backoff.
+    if (beforeAttempt) beforeAttempt();
     try {
       fs.renameSync(sourcePath, targetPath);
       return;
@@ -288,7 +291,11 @@ class JournaledTransaction {
           throw new TransactionError(ERROR_CODES.PRECONDITION_FAILED, `Precondition hash mismatch for '${op.relativePath}'`);
         }
         if (op.type === 'write') {
-          safeRenameSync(op.stagedFilePath, op.resolvedPath);
+          safeRenameSync(op.stagedFilePath, op.resolvedPath, 3, [10, 50, 150], () => {
+            if (this.currentHash(op) !== op.beforeHash) {
+              throw new TransactionError(ERROR_CODES.PRECONDITION_FAILED, `Precondition hash mismatch for '${op.relativePath}'`);
+            }
+          });
         } else if (op.type === 'delete') {
           if (fs.existsSync(op.resolvedPath)) {
             fs.unlinkSync(op.resolvedPath);
@@ -365,10 +372,11 @@ class JournaledTransaction {
           // Keep the original backup until the entire rollback has succeeded.
           const restorePath = path.join(this.stagingDir, 'restore.tmp');
           fs.copyFileSync(op.backupFilePath, restorePath);
-          if (this.currentHash(op) !== beforeRestore) {
-            throw new Error(`Refusing recovery: '${op.relativePath}' changed while preparing its restore; backups preserved`);
-          }
-          safeRenameSync(restorePath, op.resolvedPath);
+          safeRenameSync(restorePath, op.resolvedPath, 3, [10, 50, 150], () => {
+            if (this.currentHash(op) !== beforeRestore) {
+              throw new Error(`Refusing recovery: '${op.relativePath}' changed while preparing its restore; backups preserved`);
+            }
+          });
         } else if (!op.hadExisting && fs.existsSync(op.resolvedPath)) {
           // File or dir was newly created by this tx, remove it
           if (op.type === 'write' || op.type === 'delete') {
