@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readCoreRules, collectAlwaysRules, collectSkillDirectories, extractYamlField, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectAlwaysRules, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 const YAML = require('../../compiler/vendor/yaml.js');
 
@@ -21,27 +21,15 @@ function describe() {
 }
 
 function buildSkillSection(skillDir, context) {
-  const skillName = path.basename(skillDir);
   const skillMdPath = getSkillEntrypointPath(skillDir);
-  const yamlPath = path.join(skillDir, 'skill.yaml');
-
-  let title = skillName;
-  let description = '';
-  if (fs.existsSync(yamlPath)) {
-    const yaml = fs.readFileSync(yamlPath, 'utf8');
-    title = extractYamlField(yaml, 'name') || skillName;
-    description = extractYamlField(yaml, 'description') || '';
-  }
 
   if (!fs.existsSync(skillMdPath)) return null;
 
   const raw = fs.readFileSync(skillMdPath, 'utf8');
   const body = stripFrontmatter(raw);
 
-  if (!description) {
-    const firstLine = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
-    description = firstLine || '';
-  }
+  const fallbackDescription = body.split(/\r?\n/).map(l => l.trim()).find(l => l && !l.startsWith('#'));
+  const { name: title, description } = readSkillMetadata(skillDir, { fallbackDescription });
 
   const descLine = description ? `> ${description.replace(/\r?\n+/g, ' ').trim()}\n` : '';
   const sourcePath = path.relative(context?.projectRoot || '.', skillMdPath).split(path.sep).join('/');
@@ -104,7 +92,7 @@ function render(context) {
   }
 
   const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
-  const alwaysRules = collectAlwaysRules(skills);
+  const alwaysRules = collectAlwaysRules(skills, { projectRoot: context.projectRoot, destination: 'CONVENTIONS.md' });
   if (alwaysRules.length > 0) {
     convSections.push(`\n## Always-on Rules\n`);
     for (const rule of alwaysRules) convSections.push(`\n### ${rule.title}\n\n${rule.body}\n`);

@@ -1,6 +1,5 @@
 'use strict';
 
-const path = require('path');
 const { JournaledTransaction, TX_STATES } = require('../../.agents/filesystem/journaled-transaction.js');
 const { ProjectMutationLock } = require('../../.agents/filesystem/project-lock.js');
 
@@ -14,15 +13,15 @@ const c = {
 };
 
 function recoverCommand(args, flags) {
-  const ROOT = process.cwd();
+  const ROOT = flags.project || process.cwd();
 
-  const isList = flags.list || args.includes('--list');
+  const isList = flags.list || args.includes('--list') || args.includes('--status');
   
   const rollbackIdx = args.indexOf('--rollback');
-  const txIdRollback = rollbackIdx !== -1 && args[rollbackIdx + 1] ? args[rollbackIdx + 1] : null;
+  const txIdRollback = rollbackIdx !== -1 && args[rollbackIdx + 1] && !args[rollbackIdx + 1].startsWith('--') ? args[rollbackIdx + 1] : null;
 
-  const resumeIdx = args.indexOf('--resume');
-  const txIdResume = resumeIdx !== -1 && args[resumeIdx + 1] ? args[resumeIdx + 1] : null;
+  const resumeIdx = args.includes('--resume') ? args.indexOf('--resume') : args.indexOf('--continue');
+  const txIdResume = resumeIdx !== -1 && args[resumeIdx + 1] && !args[resumeIdx + 1].startsWith('--') ? args[resumeIdx + 1] : null;
 
   if (isList) {
     const pending = JournaledTransaction.listPending(ROOT);
@@ -44,41 +43,30 @@ function recoverCommand(args, flags) {
     process.exit(0);
   }
 
-  if (txIdRollback) {
-    console.log(c.cyan(`Attempting to rollback transaction: ${txIdRollback}`));
+  if (rollbackIdx !== -1 || resumeIdx !== -1) {
+    const action = rollbackIdx !== -1 ? 'rollback' : 'resume';
+    const txId = txIdRollback || txIdResume || JournaledTransaction.listPending(ROOT)[0]?.txId;
+    if (!txId) {
+      console.error(c.red('No pending transactions found to recover.'));
+      process.exit(1);
+    }
+    console.log(c.cyan(`Attempting to ${action} transaction: ${txId}`));
     const projectLock = new ProjectMutationLock(ROOT);
     let lockToken = null;
+    let exitCode = 0;
     try {
-      lockToken = projectLock.acquire({ command: 'recover:rollback' });
-      const tx = JournaledTransaction.load(ROOT, txIdRollback);
-      tx.rollback();
-      console.log(c.green(`✓ Transaction ${txIdRollback} successfully rolled back.`));
+      lockToken = projectLock.acquire({ command: `recover:${action}` });
+      const tx = JournaledTransaction.load(ROOT, txId);
+      if (action === 'rollback') tx.rollback();
+      else tx.commit();
+      console.log(c.green(`✓ Transaction ${txId} successfully ${action === 'rollback' ? 'rolled back' : 'resumed and committed'}.`));
     } catch (err) {
-      console.error(c.red(`\n[ERROR] Rollback failed: ${err.message}`));
-      process.exit(1);
+      console.error(c.red(`\n[ERROR] ${action === 'rollback' ? 'Rollback' : 'Resume'} failed: ${err.message}`));
+      exitCode = 1;
     } finally {
       if (lockToken) projectLock.release(lockToken);
     }
-    process.exit(0);
-  }
-
-  if (txIdResume) {
-    console.log(c.cyan(`Attempting to resume transaction: ${txIdResume}`));
-    const projectLock = new ProjectMutationLock(ROOT);
-    let lockToken = null;
-    try {
-      lockToken = projectLock.acquire({ command: 'recover:resume' });
-      const tx = JournaledTransaction.load(ROOT, txIdResume);
-      // Simply calling commit() will resume if it's not COMMITTED/ROLLED_BACK
-      tx.commit();
-      console.log(c.green(`✓ Transaction ${txIdResume} successfully resumed and committed.`));
-    } catch (err) {
-      console.error(c.red(`\n[ERROR] Resume failed: ${err.message}`));
-      process.exit(1);
-    } finally {
-      if (lockToken) projectLock.release(lockToken);
-    }
-    process.exit(0);
+    process.exit(exitCode);
   }
 
   console.log(c.red('Usage: contextos recover [--list] [--rollback <txId>] [--resume <txId>]'));

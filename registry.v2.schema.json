@@ -7,7 +7,6 @@
     "schemaVersion",
     "compilerVersion",
     "sourceGraphHash",
-    "generatedAt",
     "skills"
   ],
   "additionalProperties": false,
@@ -49,6 +48,15 @@
           "category": { "type": "string" },
           "type": { "type": "string" },
           "entrypoint": { "type": "string" },
+          "activation": {
+            "type": "object",
+            "required": ["mode", "globs"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": { "enum": ["always", "auto", "globs"] },
+              "globs": { "type": "array", "items": { "type": "string" } }
+            }
+          },
           "entrypointHash": { "type": "string" },
           "resourceTreeHash": { "type": "string" },
           "estimatedTokens": { "type": "integer" },
@@ -70,6 +78,14 @@
     "aliases": {
       "type": "object",
       "additionalProperties": { "type": "string" }
+    },
+    "deprecatedAliases": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": { "type": "object" }
     },
     "packageMap": {
       "type": "object",

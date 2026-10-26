@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectSkillDirectories, stripFrontmatter, resolveActivation } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectSkillDirectories, stripFrontmatter, resolveActivation, relocateSkillLinks } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'cursor@2';
@@ -39,7 +39,7 @@ function generateCursorMdc(skillDir, context) {
   const { name: title, description } = readSkillMetadata(skillDir);
 
   let raw = fs.readFileSync(skillMdPath, 'utf8');
-  const body = stripFrontmatter(raw).trimEnd();
+  const body = relocateSkillLinks(stripFrontmatter(raw).trimEnd(), { skillDir, destination: `.cursor/rules/${skillName}.mdc`, projectRoot: context.projectRoot });
   const activation = resolveActivation(skillDir);
   const globs = activation.globs.join(',');
   const alwaysApply = activation.mode === 'always';
@@ -56,7 +56,7 @@ alwaysApply: ${alwaysApply}
 
 # Skill: ${title}
 
-Resolve supporting resource paths relative to \`${path.relative(context?.projectRoot || process.cwd(), skillDir).replace(/\\/g, '/')}\`. Read examples and references only when needed.
+Resolve bare supporting resource paths relative to \`${path.relative(context?.projectRoot || process.cwd(), path.dirname(skillMdPath)).replace(/\\/g, '/')}\`. Markdown links are relative to this rule file. Read examples and references only when needed.
 
 ${body}
 `;
@@ -131,7 +131,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export cursor', context, force: options.force });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export cursor', context, enabledAdapters: ['cursor'], force: options.force });
   console.log(`✓ Cursor export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

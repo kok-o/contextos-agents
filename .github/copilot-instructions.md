@@ -53,7 +53,7 @@ ContextOS uses on-demand progressive disclosure. Read the relevant `SKILL.md` fi
 *Source: `.agents/core/skills/context-manager/SKILL.md` (Read on demand)*
 
 ### context-os
-> Deterministic context compiler and policy engine for AI coding agents.
+> Configure and debug ContextOS manifests, resolver selection, profiles, budgets, and adapter exports.
 *Source: `.agents/core/skills/context-os/SKILL.md` (Read on demand)*
 
 ### engineering-workflow

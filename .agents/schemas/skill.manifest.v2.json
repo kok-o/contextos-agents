@@ -57,6 +57,24 @@
       "type": "string",
       "pattern": "^[^/\\\\].*\\.md$"
     },
+    "activation": {
+      "type": "string",
+      "enum": ["always", "auto", "globs"]
+    },
+    "globs": {
+      "description": "Adapter file scopes; distinct from resolver signals.fileGlobs.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
+    "fileGlobs": {
+      "description": "Legacy alias for adapter globs.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
     "signals": {
       "type": "object",
       "additionalProperties": false,

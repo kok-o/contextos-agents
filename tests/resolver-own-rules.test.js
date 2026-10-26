@@ -51,6 +51,15 @@ test('generic words such as team or rules never match on their own', () => {
   assert.ok(!result.selected.some(skill => skill.id === 'team-auth'));
 });
 
+test('a similar word is not evidence for an authentication rule', () => {
+  const resolver = new CanonicalResolver({ rootDir, registry: registryWith({ 'team-auth': teamAuth }) });
+  for (const task of ['Update author credits', 'Document the authority of a literary critic']) {
+    const result = resolver.resolve({ task, installedOnly: true });
+    assert.equal(result.skills.includes('team-auth'), false, task);
+    assert.equal(result.risk.value, 'standard', task);
+  }
+});
+
 test('catalog skills are recommended by default and dropped with installedOnly', () => {
   const registry = registryWith({ 'team-auth': teamAuth });
   const defaults = new CanonicalResolver({ rootDir, registry }).resolve({ task: 'Add a Dockerfile for the service' });
@@ -58,4 +67,50 @@ test('catalog skills are recommended by default and dropped with installedOnly',
 
   const installed = new CanonicalResolver({ rootDir, registry }).resolve({ task: 'Add a Dockerfile for the service', installedOnly: true });
   assert.ok(!installed.selected.some(skill => skill.id === 'docker'), 'docker is not installed in this project');
+});
+
+test('installedOnly remains enabled for an empty registry, including safety-related tasks', () => {
+  for (const task of ['Add a Dockerfile for the service', 'Implement authentication', 'Use @docker']) {
+    const result = new CanonicalResolver({ rootDir, registry: registryWith({}) }).resolve({ task, installedOnly: true });
+    assert.deepEqual(result.skills, []);
+    if (task !== 'Add a Dockerfile for the service') assert.ok(result.warnings.some(w => w.code === 'CTX_REQUIRED_SKILL_UNAVAILABLE'));
+  }
+});
+
+test('installed-only resolution reports missing prerequisites without selecting an incomplete root', () => {
+  const registry = { ...registryWith({ 'team-auth': teamAuth }), dependencyGraph: { 'team-auth': ['team-policy'] } };
+  const result = new CanonicalResolver({ rootDir, registry }).resolve({ explicitSkills: ['team-auth'], installedOnly: true });
+  assert.deepEqual(result.skills, []);
+  assert.ok(result.excluded.some(item => item.id === 'team-auth' && item.reasonCode === 'unavailable_dependency'));
+  assert.ok(result.warnings.some(w => w.code === 'CTX_RESOLVER_DEPENDENCY_UNAVAILABLE'));
+});
+
+test('installedOnly also applies to architectural synergy suggestions', () => {
+  const registry = registryWith({ database: { ...teamAuth, displayName: 'database', signals: { aliases: ['database'] } } });
+  const result = new CanonicalResolver({ rootDir, registry }).resolve({ task: 'Use @database', installedOnly: true });
+  assert.deepEqual(result.skills, ['database']);
+});
+
+test('explicit selection honors registered aliases without inventing an unavailable skill', () => {
+  const registry = { ...registryWith({ 'team-auth': teamAuth }), aliases: { 'team-login': 'team-auth' } };
+  const result = new CanonicalResolver({ rootDir, registry }).resolve({ explicitSkills: ['team-login'], installedOnly: true });
+  assert.deepEqual(result.skills, ['team-auth']);
+  assert.ok(result.selected[0].reasons.some(r => r.kind === 'explicit'));
+  assert.equal(result.warnings.some(w => w.code === 'CTX_REQUIRED_SKILL_UNAVAILABLE'), false);
+});
+
+test('manifest glob signals match complete paths, including recursive directories', () => {
+  const globRule = { ...teamAuth, displayName: 'team-paths', signals: { fileGlobs: [{ value: 'src/**/*.special', weight: 70 }] } };
+  const resolver = new CanonicalResolver({ rootDir, registry: registryWith({ 'team-paths': globRule }) });
+  for (const [file, expected] of [['src/module.special', true], ['src/deep/nested/module.special', true], ['other/src/module.special', false], ['src/module.special.backup', false]]) {
+    const result = resolver.resolve({ task: 'Adjust behavior', files: [file], installedOnly: true });
+    assert.equal(result.skills.includes('team-paths'), expected, file);
+  }
+});
+
+test('soft skill limit emits one diagnostic for required instructions', () => {
+  const skills = { 'rule-a': teamAuth, 'rule-b': { ...teamAuth, displayName: 'rule-b' } };
+  const result = new CanonicalResolver({ rootDir, registry: registryWith(skills) }).resolve({ explicitSkills: ['rule-a', 'rule-b'], maxSkills: 1 });
+  assert.deepEqual(result.skills.sort(), ['rule-a', 'rule-b']);
+  assert.equal(result.warnings.filter(w => w.code === 'CTX_RESOLVER_SKILL_LIMIT_EXCEEDED').length, 1);
 });

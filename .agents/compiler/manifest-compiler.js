@@ -18,6 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { resolveManagedPath, SafePathError } = require('../filesystem/safe-path.js');
 
 // Standard error codes for manifest diagnostics
 const CODES = {
@@ -316,7 +317,12 @@ class ManifestCompiler {
 
     // Read SKILL.md frontmatter name if present to ensure alias parity
     const discoveredAliases = [];
-    const entrypointFile = path.join(skillDir, entrypoint);
+    const entrypointFile = resolveManagedPath(skillDir, entrypoint).resolvedPath;
+    if (fs.existsSync(entrypointFile) && !fs.statSync(entrypointFile).isFile()) {
+      const err = new Error(`Entrypoint must be a file: ${entrypoint}`);
+      err.diag = { code: CODES.INVALID_PATH };
+      throw err;
+    }
     if (fs.existsSync(entrypointFile)) {
       const fm = this.readFrontmatter(entrypointFile);
       if (!parsed.description && typeof fm?.parsed?.description === 'string' && fm.parsed.description.trim()) {
@@ -349,6 +355,9 @@ class ManifestCompiler {
 
     // Normalizing resources
     let resources = [];
+    if (parsed.resources != null && !Array.isArray(parsed.resources)) {
+      throw new DiagnosticError({ code: CODES.SCHEMA_ERROR, message: 'Skill resources must be a list' });
+    }
     if (Array.isArray(parsed.resources)) {
       resources = parsed.resources.map(r => {
         if (typeof r === 'string') return { path: r, mode: 'on-demand' };
@@ -399,7 +408,7 @@ class ManifestCompiler {
       'schemaVersion', 'id', 'name', 'displayName', 'entrypoint', 'version', 
       'description', 'type', 'category', 'dependencies', 'requires', 'optional', 
       'conflicts', 'signals', 'context', 'weight', 'resources', 'deprecated', 
-      'canonical', 'rules'
+      'canonical', 'rules', 'activation', 'globs', 'fileGlobs'
     ]);
     if (manifest._raw) {
       for (const key of Object.keys(manifest._raw)) {
@@ -413,6 +422,12 @@ class ManifestCompiler {
       }
     }
 
+    try {
+      manifest.activation = require('../adapters/shared.js').resolveActivation(skillDir);
+    } catch (err) {
+      this.addDiagnostic(CODES.SCHEMA_ERROR, err.message, { file: relManifestPath, path: '/activation' });
+    }
+
     // 1. Check ID format
     if (!manifest.id || !/^[a-z0-9-]+$/.test(manifest.id)) {
       this.addDiagnostic(
@@ -423,25 +438,16 @@ class ManifestCompiler {
     }
 
     // 2. Check entrypoint on disk
-    if (manifest.entrypoint.includes('..') || manifest.entrypoint.startsWith('/') || manifest.entrypoint.startsWith('\\') || manifest.entrypoint.includes('\0')) {
+    const skillMdPath = resolveManagedPath(skillDir, manifest.entrypoint).resolvedPath;
+    if (!fs.existsSync(skillMdPath)) {
       this.addDiagnostic(
-        CODES.INVALID_PATH,
-        `Entrypoint path '${manifest.entrypoint}' contains invalid characters or directory traversal.`,
-        { file: relManifestPath, path: '/entrypoint' }
+        CODES.MISSING_ENTRYPOINT,
+        `Required entrypoint file '${manifest.entrypoint}' does not exist on disk.`,
+        { file: relManifestPath, path: '/entrypoint', remediation: `Create ${manifest.entrypoint} in ${path.relative(this.rootDir, skillDir)}` }
       );
-    } else {
-      const fullEntrypoint = path.join(skillDir, manifest.entrypoint);
-      if (!fs.existsSync(fullEntrypoint)) {
-        this.addDiagnostic(
-          CODES.MISSING_ENTRYPOINT,
-          `Required entrypoint file '${manifest.entrypoint}' does not exist on disk.`,
-          { file: relManifestPath, path: '/entrypoint', remediation: `Create ${manifest.entrypoint} in ${path.relative(this.rootDir, skillDir)}` }
-        );
-      }
     }
 
     // 3. Frontmatter parity check with SKILL.md
-    const skillMdPath = path.join(skillDir, manifest.entrypoint);
     if (fs.existsSync(skillMdPath)) {
       const fm = this.readFrontmatter(skillMdPath);
       if (fm && fm.parsed && fm.parsed.name) {
@@ -463,20 +469,16 @@ class ManifestCompiler {
     }
 
     // 4. Resource paths validation
-    const realSkillDir = fs.realpathSync(skillDir);
     for (let i = 0; i < manifest.resources.length; i++) {
       const res = manifest.resources[i];
       const resPath = res.path;
-      if (!resPath || resPath.includes('..') || path.isAbsolute(resPath) || resPath.includes('\0')) {
-        this.addDiagnostic(
-          CODES.INVALID_PATH,
-          `Resource path '${resPath}' is invalid or attempts path traversal.`,
-          { file: relManifestPath, path: `/resources/${i}/path` }
-        );
+      let fullResPath;
+      try {
+        fullResPath = resolveManagedPath(skillDir, resPath).resolvedPath;
+      } catch (err) {
+        this.addDiagnostic(CODES.INVALID_PATH, err.message, { file: relManifestPath, path: `/resources/${i}/path` });
         continue;
       }
-
-      const fullResPath = path.join(skillDir, resPath);
       if (!fs.existsSync(fullResPath)) {
         this.addDiagnostic(
           CODES.MISSING_RESOURCE,
@@ -484,12 +486,10 @@ class ManifestCompiler {
           { file: relManifestPath, path: `/resources/${i}/path`, remediation: `Create the file or remove it from resources.` }
         );
       } else {
-        // Symlink escape check
-        const realResPath = fs.realpathSync(fullResPath);
-        if (!realResPath.startsWith(realSkillDir)) {
+        if (!fs.statSync(fullResPath).isFile()) {
           this.addDiagnostic(
             CODES.INVALID_PATH,
-            `Resource file '${resPath}' resolves outside skill directory (symlink escape).`,
+            `Resource '${resPath}' must be a file.`,
             { file: relManifestPath, path: `/resources/${i}/path` }
           );
         }
@@ -665,6 +665,16 @@ class ManifestCompiler {
 
     // Sort skill directories for determinism
     skillDirs.sort();
+    const registerManifest = norm => {
+      if (Object.hasOwn(manifestsById, norm.id)) {
+        this.addDiagnostic(
+          CODES.DUPLICATE_ID,
+          `Duplicate skill id '${norm.id}' found in ${norm.source}`,
+          { file: norm.source, path: '/id' }
+        );
+      }
+      manifestsById[norm.id] = norm;
+    };
 
     // 2. Parse and normalize manifests
     for (const dir of skillDirs) {
@@ -672,36 +682,21 @@ class ManifestCompiler {
       const v1File = path.join(dir, 'skill.yaml');
       const manifestFile = fs.existsSync(v2File) ? v2File : (fs.existsSync(v1File) ? v1File : null);
 
-      if (!manifestFile) {
-        // Synthesize minimal manifest from directory name & SKILL.md
-        const id = path.basename(dir);
-        const norm = this.normalizeManifest(dir, `id: ${id}\nname: ${id}\n`);
-        norm.source = path.relative(this.rootDir, path.join(dir, norm.entrypoint)).replace(/\\/g, '/');
-        manifestsById[id] = norm;
-        continue;
-      }
-
       try {
-        const rawYaml = fs.readFileSync(manifestFile, 'utf8');
+        const sourceFile = manifestFile || path.join(dir, 'SKILL.md');
+        resolveManagedPath(dir, path.basename(sourceFile));
+        const rawYaml = manifestFile ? fs.readFileSync(manifestFile, 'utf8') : `id: ${path.basename(dir)}\n`;
         const norm = this.normalizeManifest(dir, rawYaml);
-        norm.source = path.relative(this.rootDir, manifestFile).replace(/\\/g, '/');
+        norm.source = path.relative(this.rootDir, sourceFile).replace(/\\/g, '/');
 
-        if (manifestsById[norm.id]) {
-          this.addDiagnostic(
-            CODES.DUPLICATE_ID,
-            `Duplicate skill id '${norm.id}' found in ${norm.source}`,
-            { file: norm.source, path: '/id' }
-          );
-        }
-
-        manifestsById[norm.id] = norm;
-        this.validateSingleManifest(dir, norm, manifestFile);
+        registerManifest(norm);
+        this.validateSingleManifest(dir, norm, sourceFile);
       } catch (err) {
         this.addDiagnostic(
-          err.diag ? err.diag.code : CODES.PARSE_ERROR,
-          `Failed to parse manifest at ${path.relative(this.rootDir, manifestFile)}: ${err.message}`,
+          err.diag ? err.diag.code : (err instanceof SafePathError ? CODES.INVALID_PATH : CODES.PARSE_ERROR),
+          `Failed to parse manifest at ${path.relative(this.rootDir, manifestFile || dir)}: ${err.message}`,
           { 
-            file: path.relative(this.rootDir, manifestFile),
+            file: path.relative(this.rootDir, manifestFile || dir),
             line: err.diag ? err.diag.line : undefined,
             column: err.diag ? err.diag.column : undefined
           }
@@ -765,6 +760,7 @@ class ManifestCompiler {
         category: m.category,
         type: m.type,
         entrypoint: m.entrypoint,
+        activation: m.activation,
         entrypointHash,
         resourceTreeHash,
         estimatedTokens,

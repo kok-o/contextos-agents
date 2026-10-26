@@ -2,7 +2,7 @@ schemaVersion: 2
 name: context-os
 type: compiler
 description: >-
-  Deterministic context compiler and policy engine for AI coding agents.
+  Configure and debug ContextOS manifests, resolver selection, profiles, budgets, and adapter exports.
 version: 1.0.0
 resources:
   - EXAMPLES.md

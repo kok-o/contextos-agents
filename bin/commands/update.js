@@ -181,7 +181,7 @@ function planUpdate(projectDir, sourceAgentsDir, options = {}) {
   const { planLegacyCatalogCopies } = require('./uninstall.js');
   const alreadyPlanned = new Set(plans.map(plan => plan.relPath));
   for (const copy of planLegacyCatalogCopies(projectDir, sourceAgentsDir, alreadyPlanned)) {
-    plans.push({ action: 'DELETE', relPath: copy.relPath, targetPath: copy.targetPath, reason: 'LEGACY_CATALOG_COPY' });
+    plans.push({ action: 'DELETE', relPath: copy.relPath, targetPath: copy.targetPath, expectedBeforeHash: copy.beforeHash, reason: 'LEGACY_CATALOG_COPY' });
   }
   const summary = {
     create: plans.filter(p => p.action === 'CREATE').length,
@@ -258,10 +258,10 @@ function runUpdate(projectDir = process.cwd(), options = {}) {
     for (const item of plans) {
       if (item.action === 'CREATE' || item.action === 'UPDATE' || item.action === 'CONFLICT') {
         const targetRel = item.action === 'CONFLICT' ? (item.conflictPath || `${item.relPath}.contextos.new`) : item.relPath;
-        tx.stageWrite(targetRel, item.newContent);
+        tx.stageWrite(targetRel, item.newContent, { expectedBeforeHash: item.expectedBeforeHash });
         if (item.action !== 'SKIP') executedCount++;
       } else if (item.action === 'DELETE') {
-        tx.stageDeleteWithParents(item.relPath);
+        tx.stageDeleteWithParents(item.relPath, { expectedBeforeHash: item.expectedBeforeHash });
         executedCount++;
       }
     }

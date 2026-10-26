@@ -9,6 +9,11 @@ const { detectProjectAttributes } = require('./lib/detector.js');
 
 // ── CLI argument parsing ──────────────────────────────────────────────────────
 const args = process.argv.slice(2);
+const projectIndex = args.indexOf('--project');
+if (projectIndex !== -1 && (!args[projectIndex + 1] || args[projectIndex + 1].startsWith('-'))) {
+  console.error('[ERROR] --project requires a path value.');
+  process.exit(1);
+}
 const flags = {
   help:        args.includes('--help') || args.includes('-h'),
   ver:         args.includes('--version') || args.includes('-v'),
@@ -162,7 +167,7 @@ if (mainCommand && mainCommand !== 'init' && !isKnownCommand(mainCommand)) {
 
 // Status command
 if (mainCommand === 'status') {
-  const status = getStatus(process.cwd());
+  const status = getStatus(flags.project);
   if (flags.json) {
     console.log(JSON.stringify(status, null, 2));
   } else {
@@ -181,7 +186,7 @@ if (mainCommand === 'detect') {
   const explain = args.includes('--explain');
 
   const builder = new WorkspaceGraphBuilder();
-  const graph = builder.build(process.cwd());
+  const graph = builder.build(flags.project);
 
   if (scopeArg) {
     const nearestPkg = builder.findNearestPackage(scopeArg, graph);
@@ -222,7 +227,7 @@ if (mainCommand === 'detect') {
       console.log('\n──────────────────────────────────────────\n');
     }
   } else if (flags.json) {
-    const detection = detectProjectAttributes(process.cwd());
+    const detection = detectProjectAttributes(flags.project);
     console.log(JSON.stringify({
       ...detection,
       workspaceGraph: graph,
@@ -250,7 +255,7 @@ if (mainCommand === 'detect') {
     }
     console.log('──────────────────────────────────────────\n');
   } else {
-    const detection = detectProjectAttributes(process.cwd());
+    const detection = detectProjectAttributes(flags.project);
     console.log('\nContextOS - Tech Stack & Environment Detection\n');
     console.log(`  Repository Root       : ${graph.repositoryRoot}`);
     console.log(`  Packages Detected     : ${graph.packages.map(p => `${p.id} (${p.root})`).join(', ')}`);
@@ -269,7 +274,7 @@ if (mainCommand === 'detect') {
 // Doctor command
 if (mainCommand === 'doctor') {
   const doctorModule = require('../.agents/doctor.js');
-  const result = doctorModule.runDoctor(process.cwd(), {
+  const result = doctorModule.runDoctor(flags.project, {
     json: flags.json,
     fix: args.includes('--fix'),
     strict: args.includes('--strict'),

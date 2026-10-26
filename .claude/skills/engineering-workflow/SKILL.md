@@ -10,7 +10,7 @@ Define the outcome, plan substantial changes, implement, verify, review, and rep
 
 ## When to Use
 
-Implementation, debugging, reviews, and release preparation. Routine maintenance and diagnostics use targeted checks.
+Implementation, debugging, reviews, and release preparation. Use targeted checks for routine maintenance. A direct question needs an answer; skip an implementation lifecycle unless a change is requested.
 
 ## Rules & Patterns
 
@@ -24,9 +24,9 @@ A README typo needs a small edit and formatting check. An authorization fix need
 
 ## Validation Checklist
 
-- [ ] The requested outcome and applicable failure cases are checked.
-- [ ] Evidence names commands, results, scope, and limitations.
-- [ ] Unrelated changes and existing authorization are preserved.
+- [ ] Changed behavior and affected callers satisfy the request; failures have a concrete reproduction when feasible.
+- [ ] Checks match the change's risk. An unavailable check is reported with the remaining uncertainty.
+- [ ] The diff preserves unrelated work; delivery stays within existing authorization.
 
 ## Common Mistakes
 

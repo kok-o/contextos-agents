@@ -8,7 +8,124 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { spawnSync } = require('child_process');
 const { CoalescingWatchDaemon, shouldIgnorePath } = require('../.agents/watch.js');
+
+test('fallback watching survives removal and recreation of a skill directory', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-watch-recreate-'));
+  const dir = path.join(root, '.agents/project/skills/team');
+  const source = path.join(dir, 'SKILL.md');
+  fs.mkdirSync(dir, { recursive: true });
+  const body = version => `---\nname: team\ndescription: Team rules\n---\nVERSION_${version}`;
+  fs.writeFileSync(source, body('ONE'));
+  const events = [];
+  const daemon = new CoalescingWatchDaemon(root, { silent: true, exitOnSigint: false, debounceMs: 20, onSync: event => events.push(event) });
+  t.after(() => { daemon.close(); assert.equal(path.dirname(root), os.tmpdir()); fs.rmSync(root, { recursive: true, force: true }); });
+  daemon.watchTreeFallback(path.join(root, '.agents'));
+  daemon.triggerRecompile('initial');
+  const waitFor = async predicate => {
+    const deadline = Date.now() + 2500;
+    while (!predicate() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25));
+    assert.ok(predicate(), 'watcher must synchronize the current source');
+  };
+  const output = path.join(root, '.agents/skills/team/SKILL.md');
+  const hasVersion = version => fs.existsSync(output) && fs.readFileSync(output, 'utf8').includes(`VERSION_${version}`);
+  await waitFor(() => hasVersion('ONE'));
+  fs.unlinkSync(source);
+  fs.rmdirSync(dir);
+  fs.mkdirSync(dir);
+  fs.writeFileSync(source, body('TWO'));
+  await waitFor(() => hasVersion('TWO'));
+  await new Promise(resolve => setTimeout(resolve, 100));
+  fs.writeFileSync(source, body('THREE'));
+  await waitFor(() => hasVersion('THREE'));
+  assert.ok(events.every(event => event.type === 'recompile'));
+  assert.equal(daemon.pendingReasons.size, 0);
+});
+
+test('watch yields while another process holds the lock and retries after release', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-watch-busy-'));
+  t.after(() => {
+    assert.ok(root.startsWith(path.join(os.tmpdir(), 'ctx-watch-busy-')));
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+  const result = spawnSync(process.execPath, ['-e', `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const [repo, root] = process.argv.slice(1);
+    const { CoalescingWatchDaemon } = require(path.join(repo, '.agents/watch.js'));
+    const { ProjectMutationLock } = require(path.join(repo, '.agents/filesystem/project-lock.js'));
+    const skill = path.join(root, '.agents/project/skills/team/SKILL.md');
+    fs.mkdirSync(path.dirname(skill), {recursive: true});
+    fs.writeFileSync(skill, '---\\nname: team\\ndescription: Team rule\\n---\\nHello');
+    const lock = new ProjectMutationLock(root);
+    const token = lock.acquire({command: 'holder'});
+    let timerFired = false;
+    const deadline = setTimeout(() => { console.error('retry timed out'); process.exit(2); }, 2500);
+    const daemon = new CoalescingWatchDaemon(root, {
+      silent: true, exitOnSigint: false, debounceMs: 10,
+      onSync(event) {
+        if (event.type !== 'recompile') return;
+        if (!timerFired || !event.reasons.includes('changed.md')) process.exit(3);
+        daemon.close(); clearTimeout(deadline); console.log('SYNCED_AFTER_RELEASE');
+      },
+    });
+    setTimeout(() => { timerFired = true; lock.release(token); }, 100);
+    daemon.triggerRecompile('changed.md');
+  `, path.resolve(__dirname, '..'), root], { encoding: 'utf8', timeout: 5000 });
+  assert.strictEqual(result.status, 0, result.error?.message || result.stderr);
+  assert.match(result.stdout, /SYNCED_AFTER_RELEASE/);
+});
+
+for (const [mode, tier] of ['recursive', 'fallback'].flatMap(mode => ['project', 'vendor'].map(tier => [mode, tier]))) {
+  test(`watch (${mode}) observes new ${tier} rules and subsequent resource edits`, async t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-watch-owned-'));
+    fs.mkdirSync(path.join(root, '.agents/project/skills'), { recursive: true });
+    const events = [];
+    let resolveEvent;
+    const nextEvent = () => new Promise(resolve => { resolveEvent = resolve; });
+    const eventReceived = nextEvent();
+    const daemon = new CoalescingWatchDaemon(root, {
+      silent: true, exitOnSigint: false, debounceMs: 20,
+      onSync(event) { events.push(event); resolveEvent(); },
+    });
+    t.after(() => {
+      daemon.close();
+      assert.ok(root.startsWith(path.join(os.tmpdir(), 'ctx-watch-owned-')));
+      fs.rmSync(root, { recursive: true, force: true });
+    });
+    const originalWatch = fs.watch;
+    if (mode === 'fallback') {
+      fs.watch = function(file, options, listener) {
+        if (options?.recursive) throw new Error('Recursive watching unavailable');
+        return originalWatch.apply(fs, arguments);
+      };
+    }
+    try { daemon.start(); } finally { fs.watch = originalWatch; }
+    const dir = path.join(root, `.agents/${tier}/skills/team`);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), 'id: team\nname: team\nresources:\n  - details.txt\n');
+    fs.writeFileSync(path.join(dir, 'details.txt'), 'BEFORE');
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team rules\n---\nHello');
+    const waitFor = async event => {
+      let timeout;
+      await Promise.race([event, new Promise(resolve => { timeout = setTimeout(resolve, 2000); })]);
+      clearTimeout(timeout);
+    };
+    await waitFor(eventReceived);
+    assert.ok(events.some(event => event.type === 'recompile'), 'new source rule must trigger export');
+    assert.ok(fs.existsSync(path.join(root, '.agents/skills/team/SKILL.md')));
+    // Let the native watcher finish delivering the initial directory events
+    // before modelling the user's next edit.
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const resourceChanged = nextEvent();
+    fs.writeFileSync(path.join(dir, 'details.txt'), 'AFTER');
+    await waitFor(resourceChanged);
+    assert.strictEqual(fs.readFileSync(path.join(root, '.agents/skills/team/details.txt'), 'utf8'), 'AFTER');
+    await new Promise(resolve => setTimeout(resolve, 100));
+    assert.strictEqual(events.filter(event => event.type === 'recompile').length, 2, 'generated outputs must not feed back into the watcher');
+  });
+}
 
 describe('Milestone 8 — Coalescing Watch Daemon', () => {
   let tmpDir;

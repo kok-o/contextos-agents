@@ -17,6 +17,29 @@ const CTX_PATH = path.join(__dirname, '..', '.agents', 'ctx.js');
 const VALIDATE_PATH = path.join(__dirname, '..', '.agents', 'validate.js');
 const ROOT = path.join(__dirname, '..');
 
+test('validation follows v2 precedence, declared nested entrypoint, and object resources', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-validate-precedence-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(path.join(dir, 'docs'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'skill.yaml'), 'this: [invalid');
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: wrong\n---\nObsolete entrypoint');
+  fs.writeFileSync(path.join(dir, 'skill.v2.yaml'), 'id: team\nentrypoint: docs/rules.md\nactivation: globs\nglobs: ["src/**/*.ts"]\nresources:\n  - path: docs/example.md\n    mode: on-demand\n');
+  fs.writeFileSync(path.join(dir, 'docs/rules.md'), '---\nname: team\ndescription: Team policy for TypeScript\n---\nUse the project conventions and check affected callers.');
+  fs.writeFileSync(path.join(dir, 'docs/example.md'), '# Example\nUse checked project types.');
+  const { renderAdapters, applyArtifacts } = require('../.agents/adapters/pure-compiler.js');
+  const rendered = renderAdapters(root, 'all');
+  applyArtifacts(root, rendered.artifacts, { context: rendered.context });
+  const result = runValidate(root);
+  assert.equal(result.code, 0, result.stdout + result.stderr);
+  assert.equal(fs.readFileSync(path.join(root, '.agents/skills/team/docs/example.md'), 'utf8'), '# Example\nUse checked project types.');
+  fs.unlinkSync(path.join(dir, 'SKILL.md'));
+  assert.equal(require('../bin/commands.js').getStatus(root).skillsCount, 1);
+  const stats = require('../.agents/stats.js').calculateContextStats(root);
+  assert.equal(stats.totalSkillCount, 1);
+  assert.equal(stats.full.chars, fs.readFileSync(path.join(dir, 'docs/rules.md'), 'utf8').length);
+});
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Run validate in a given cwd, return { stdout, stderr, code } */

@@ -11,7 +11,7 @@ Reduce unnecessary code and dependencies without weakening correctness or securi
 
 ## When to Use
 
-Substantive implementation, refactoring, and reviews of complexity.
+Substantive implementation, refactoring, and reviews of complexity. Skip for typos, direct questions, and diagnostics that need no implementation choice.
 
 ## Rules & Patterns
 
@@ -25,9 +25,9 @@ Reuse the installed date formatter. An update endpoint still validates its paylo
 
 ## Validation Checklist
 
-- [ ] The requested outcome and applicable failure cases are checked.
-- [ ] Evidence names commands, results, scope, and limitations.
-- [ ] Unrelated changes and existing authorization are preserved.
+- [ ] New code or dependencies solve an inspected requirement that existing facilities do not cover.
+- [ ] Simplification preserves error contracts, ownership checks, and meaningful failure tests.
+- [ ] A maintainer can follow the control flow without hidden side effects or speculative extension points.
 
 ## Common Mistakes
 

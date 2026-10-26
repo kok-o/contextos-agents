@@ -25,6 +25,8 @@ const {
 const IGNORED_PREFIXES = [
   '.agents/.contextos',
   '.agents/generated',
+  '.agents/compiled',
+  '.agents/skills',
   '.git',
   'node_modules',
   '.cursor',
@@ -69,6 +71,8 @@ class CoalescingWatchDaemon {
     this.closed = false;
     this.debounceTimer = null;
     this.watchers = [];
+    this.watchedDirectories = new Set();
+    this.fallbackWatchers = new Map();
     this.lastStack = null;
     this.errorLogPath = path.join(this.projectDir, '.agents', '.contextos', 'watch-error.json');
     this.lock = new ProjectMutationLock(this.projectDir);
@@ -93,12 +97,9 @@ class CoalescingWatchDaemon {
     }
 
     // 1. Monitored directories
-    const watchDirs = [
-      path.join(this.projectDir, '.agents', 'core', 'skills'),
-      path.join(this.projectDir, '.agents', 'plugins'),
-      path.join(this.projectDir, '.agents', 'resources'),
-      path.join(this.projectDir, '.agents', 'profiles'),
-    ];
+    // Observe the source parent so newly created project/vendor/plugin trees
+    // are discovered too. Generated projections and state are excluded above.
+    const watchDirs = [path.join(this.projectDir, '.agents')];
 
     for (const dir of watchDirs) {
       if (fs.existsSync(dir)) {
@@ -108,7 +109,6 @@ class CoalescingWatchDaemon {
 
     // 2. Monitored individual files
     const watchFiles = [
-      path.join(this.projectDir, '.agents', 'AGENTS.md'),
       path.join(this.projectDir, 'package.json'),
     ];
 
@@ -141,18 +141,17 @@ class CoalescingWatchDaemon {
    * Watches a directory with recursive watching, falling back to tree scanning.
    */
   watchDirectory(dirPath) {
+    if (this.watchedDirectories.has(dirPath)) return;
     try {
       const watcher = fs.watch(dirPath, { recursive: true }, (eventType, filename) => {
         if (!filename) return;
         const relToProject = toPosix(path.relative(this.projectDir, path.join(dirPath, filename)));
         if (shouldIgnorePath(relToProject)) return;
 
-        const lower = filename.toLowerCase();
-        if (lower.endsWith('.md') || lower.endsWith('.yaml') || lower.endsWith('.yml') || lower.endsWith('.json')) {
-          this.triggerRecompile(relToProject);
-        }
+        this.triggerRecompile(relToProject);
       });
       this.watchers.push(watcher);
+      this.watchedDirectories.add(dirPath);
     } catch (e) {
       // Fallback: Watch subdirectories individually if recursive is unsupported
       this.watchTreeFallback(dirPath);
@@ -163,15 +162,38 @@ class CoalescingWatchDaemon {
    * Fallback for systems where recursive fs.watch is unavailable.
    */
   watchTreeFallback(dirPath) {
+    const identity = this.directoryIdentity(dirPath);
+    const existing = this.fallbackWatchers.get(dirPath);
+    if (existing && existing.identity === identity) return;
+    if (existing) this.forgetWatchTree(dirPath);
+    if (!identity || this.closed) return;
     try {
       const watcher = fs.watch(dirPath, (eventType, filename) => {
+        // A queued event may belong to a closed handle for the old directory.
+        // Closing those handles also stops Windows deletion-event storms from
+        // continually postponing the debounce timer.
+        if (this.closed || this.fallbackWatchers.get(dirPath)?.watcher !== watcher) return;
+        if (this.directoryIdentity(dirPath) !== identity) {
+          this.forgetWatchTree(dirPath);
+          this.watchTreeFallback(dirPath);
+          this.triggerRecompile(toPosix(path.relative(this.projectDir, dirPath)));
+          return;
+        }
         if (!filename) return;
         const full = path.join(dirPath, filename);
         const relToProject = toPosix(path.relative(this.projectDir, full));
         if (shouldIgnorePath(relToProject)) return;
+        this.watchTreeFallback(full);
         this.triggerRecompile(relToProject);
       });
       this.watchers.push(watcher);
+      this.watchedDirectories.add(dirPath);
+      this.fallbackWatchers.set(dirPath, { watcher, identity });
+      watcher.on('error', () => {
+        if (this.fallbackWatchers.get(dirPath)?.watcher !== watcher) return;
+        this.forgetWatchTree(dirPath);
+        this.triggerRecompile(toPosix(path.relative(this.projectDir, dirPath)));
+      });
 
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
       for (const entry of entries) {
@@ -184,6 +206,27 @@ class CoalescingWatchDaemon {
         }
       }
     } catch {}
+  }
+
+  directoryIdentity(dirPath) {
+    try {
+      const stat = fs.lstatSync(dirPath);
+      return stat.isDirectory() ? `${stat.dev}:${stat.ino}:${stat.birthtimeMs}` : null;
+    } catch {
+      return null;
+    }
+  }
+
+  forgetWatchTree(dirPath) {
+    const removed = new Set();
+    for (const [watchedPath, entry] of this.fallbackWatchers) {
+      if (watchedPath !== dirPath && !watchedPath.startsWith(`${dirPath}${path.sep}`)) continue;
+      this.fallbackWatchers.delete(watchedPath);
+      this.watchedDirectories.delete(watchedPath);
+      removed.add(entry.watcher);
+      try { entry.watcher.close(); } catch {}
+    }
+    this.watchers = this.watchers.filter(watcher => !removed.has(watcher));
   }
 
   /**
@@ -206,7 +249,7 @@ class CoalescingWatchDaemon {
   /**
    * Queues a change reason and schedules a coalesced compilation pass.
    */
-  triggerRecompile(sourceReason) {
+  triggerRecompile(sourceReason, delayMs = this.debounceMs) {
     if (this.closed) return;
     if (sourceReason) {
       this.pendingReasons.add(sourceReason);
@@ -218,7 +261,7 @@ class CoalescingWatchDaemon {
 
     this.debounceTimer = setTimeout(() => {
       this.processQueue();
-    }, this.debounceMs);
+    }, delayMs);
   }
 
   /**
@@ -236,7 +279,8 @@ class CoalescingWatchDaemon {
         const reasonsSnapshot = Array.from(this.pendingReasons);
         this.pendingReasons.clear();
 
-        await this.executeSync(reasonsSnapshot);
+        const synced = await this.executeSync(reasonsSnapshot);
+        if (synced === false) break;
       }
     } finally {
       this.isProcessing = false;
@@ -259,7 +303,8 @@ class CoalescingWatchDaemon {
           for (const r of reasons) {
             this.pendingReasons.add(r);
           }
-          return;
+          this.triggerRecompile(null, Math.max(this.debounceMs, 50));
+          return false;
         }
         throw err;
       }
@@ -373,6 +418,8 @@ class CoalescingWatchDaemon {
       } catch {}
     }
     this.watchers = [];
+    this.watchedDirectories.clear();
+    this.fallbackWatchers.clear();
   }
 }
 

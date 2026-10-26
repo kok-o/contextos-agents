@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:1b5d0e2b86f8dc023ed48da798410c82c6d2855db15d6af500b575cb60234bd6",
+  "sourceGraphHash": "sha256:b5494d4fc44970adc5bad179b22a4f154900e892ce58bc3de2b3e78b73bbb621",
   "skills": {
     "context-manager": {
       "id": "context-manager",
@@ -11,9 +11,13 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:68da81d3dc530bd37260f61923c6dd4a3bc862a96500129fefd61cfa2021323b",
-      "resourceTreeHash": "sha256:c3a338efabd770e57bcaec7a127bc281cb718626f6a84a904f850164984aa5fe",
-      "estimatedTokens": 304,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:7f836a591ec0eeeb040354ca1aaa3b26b9ca71b4f22a81fd8f965012966aff7a",
+      "resourceTreeHash": "sha256:49aa0e0e79a04aaae6ac7e87702b3657249591404e88288e0282081807c4bd6c",
+      "estimatedTokens": 332,
       "source": ".agents/core/skills/context-manager/skill.yaml",
       "signals": {
         "aliases": [
@@ -30,7 +34,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 304
+        "estimatedTokens": 332
       },
       "resources": [
         {
@@ -62,13 +66,17 @@
       "id": "context-os",
       "displayName": "context-os",
       "version": "1.0.0",
-      "description": "Deterministic context compiler and policy engine for AI coding agents.",
+      "description": "Configure and debug ContextOS manifests, resolver selection, profiles, budgets, and adapter exports.",
       "category": "general",
       "type": "compiler",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:3d333bd492b24f62f4a5314bbbddd4a08014a8867645bedebbe9329a8d76e2d5",
-      "resourceTreeHash": "sha256:75f2c5ef977ad763b1bd84f5b2934fb317c9cc853760fa76a38f713aa422fddd",
-      "estimatedTokens": 562,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:3bd53d8f9e1028530d5072b1c6a0e72708947524309314bbf3dd914411ddbca9",
+      "resourceTreeHash": "sha256:dfe1f3529521be1a7037a29e641b3e8fb2d1eac987773a7649e971bb905cc02e",
+      "estimatedTokens": 718,
       "source": ".agents/core/skills/context-os/skill.yaml",
       "signals": {
         "aliases": [
@@ -85,7 +93,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 562
+        "estimatedTokens": 718
       },
       "resources": [
         {
@@ -137,9 +145,13 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:a36e56bf2b8ad3711e1209f9d7ee68de1a1e3d6fbf864eed423bdf4527474a5e",
-      "resourceTreeHash": "sha256:db770f6c0fe81ab7a4952ebf6391e36f4e0b53571ff09c9a3d36af770185ea77",
-      "estimatedTokens": 430,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:1c7d28c6f896e8c27d7e144c0880602c6640d904116b3949358124083b40b629",
+      "resourceTreeHash": "sha256:43fdd51dd1e05bca0d668ecf230dd3acf25ec5adb85e32d693f0dd35292c1fce",
+      "estimatedTokens": 481,
       "source": ".agents/core/skills/engineering-workflow/skill.yaml",
       "signals": {
         "aliases": [
@@ -156,7 +168,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 430
+        "estimatedTokens": 481
       },
       "resources": [
         {
@@ -192,9 +204,13 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:d0e1c8331b25d663c153a88ed7e88d349f2e8662f919a6d390f5e94cfee81093",
-      "resourceTreeHash": "sha256:343b58798199f697e8c547963e41f3160793e69a43ffa9feb5109450368d55e0",
-      "estimatedTokens": 444,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:19840b3681878bbd0a4f5d5c6f3367e1435a3a11393dc8e8ae62ad0a99cbbd01",
+      "resourceTreeHash": "sha256:3cb01bf69c6e47e7462f7fbce3e51c2c1ce606a739ac51a79dc1ef1adaa682fd",
+      "estimatedTokens": 503,
       "source": ".agents/core/skills/gemini-precision/skill.yaml",
       "signals": {
         "aliases": [
@@ -211,7 +227,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 444
+        "estimatedTokens": 503
       },
       "resources": [
         {
@@ -243,9 +259,13 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:60eb7b902ae8faf4c4205cf99abad4401ee2ec528b9c8490f909aa7db95fb5f2",
-      "resourceTreeHash": "sha256:4afcb9bffe3b4d6912d3d6c35b1a197b6471c9789f277295a2de6c56727eae34",
-      "estimatedTokens": 310,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:05cb4b80e5f39696de70e008df351f1b80177734b32d7e1d864271526128f85b",
+      "resourceTreeHash": "sha256:e7f5c36e41a656c739258dbb7cce075493b9b7dfca8ce02e28bc990bacac28b1",
+      "estimatedTokens": 345,
       "source": ".agents/core/skills/gstack-roles/skill.yaml",
       "signals": {
         "aliases": [
@@ -262,7 +282,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 310
+        "estimatedTokens": 345
       },
       "resources": [
         {
@@ -298,9 +318,13 @@
       "category": "general",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:d1d70efd4fec48ff5209c93bb18ce52039abc92c83f04d9aa691d0d147ed1b44",
-      "resourceTreeHash": "sha256:b760eceafd9d0e88df852029a262078b3089040edbf947d71a32fad6845be32b",
-      "estimatedTokens": 402,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:914ea397b7fa90606c72bdf192637901eb492f83b172e5d8b5115285de3bad76",
+      "resourceTreeHash": "sha256:bd957cbbe44d2f06259ff3390cda05895befd139a0fa3797b90d38206de516c5",
+      "estimatedTokens": 452,
       "source": ".agents/core/skills/ponytail-mindset/skill.yaml",
       "signals": {
         "aliases": [
@@ -317,7 +341,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 402
+        "estimatedTokens": 452
       },
       "resources": [
         {
@@ -353,9 +377,13 @@
       "category": "backend",
       "type": "instruction-only",
       "entrypoint": "SKILL.md",
-      "entrypointHash": "sha256:7d73d176ef08f6ae6210db12ecf0088e0177d12d4e365a626cfbb3d7236ccdad",
-      "resourceTreeHash": "sha256:a4e2b342b27a7c4532977f4788d8a406273ab1008c1a06bb4941da5a96752aa3",
-      "estimatedTokens": 1351,
+      "activation": {
+        "mode": "auto",
+        "globs": []
+      },
+      "entrypointHash": "sha256:5404df4596cbc7028bc66995a116e4d0fd89e463e1ebdbcc7faaed185b86ea80",
+      "resourceTreeHash": "sha256:73ea046463bf8f70dceef035cb8c794867df2e9fd49eac78fab3bccfc66c14f5",
+      "estimatedTokens": 1473,
       "source": ".agents/core/skills/security/skill.yaml",
       "signals": {
         "aliases": [
@@ -423,7 +451,7 @@
       },
       "context": {
         "priority": 90,
-        "estimatedTokens": 1351
+        "estimatedTokens": 1473
       },
       "resources": [
         {
@@ -450,7 +478,7 @@
           "id": "SEC-001",
           "level": "must",
           "enforcement": "prompt-guidance",
-          "summary": "Always validate and sanitize all user input and untrusted external payloads before processing"
+          "summary": "Validate untrusted boundary inputs against the operation schema before protected access; encode output for its destination"
         },
         {
           "id": "SEC-002",
@@ -498,7 +526,7 @@
       "id": "SEC-001",
       "level": "must",
       "enforcement": "prompt-guidance",
-      "summary": "Always validate and sanitize all user input and untrusted external payloads before processing",
+      "summary": "Validate untrusted boundary inputs against the operation schema before protected access; encode output for its destination",
       "sourceSkill": "security"
     },
     "SEC-002": {

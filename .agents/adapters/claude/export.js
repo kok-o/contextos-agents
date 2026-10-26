@@ -23,6 +23,7 @@ const {
   stripFrontmatter,
   renderSkillResources,
   resolveActivation,
+  relocateSkillLinks,
 } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
@@ -42,7 +43,7 @@ function ruleFrontmatter(globs) {
   return `---\npaths:\n${globs.map(g => `  - ${JSON.stringify(g)}`).join('\n')}\n---\n\n`;
 }
 
-function renderClaudeSkill(skillDir) {
+function renderClaudeSkill(skillDir, context) {
   const skillName = path.basename(skillDir);
   const entrypoint = getSkillEntrypointPath(skillDir);
   if (!fs.existsSync(entrypoint)) return [];
@@ -56,9 +57,9 @@ function renderClaudeSkill(skillDir) {
     const artifacts = [{
       ...base,
       path: `.claude/skills/${skillName}/SKILL.md`,
-      content: `---\nname: ${skillName}\ndescription: ${JSON.stringify(description)}\n---\n${body}\n`,
+      content: relocateSkillLinks(`---\nname: ${skillName}\ndescription: ${JSON.stringify(description)}\n---\n${body}\n`, { skillDir, destination: `.claude/skills/${skillName}/SKILL.md`, projectRoot: context.projectRoot, resourceRoot: `.claude/skills/${skillName}` }),
     }];
-    artifacts.push(...renderSkillResources(skillDir, [`.claude/skills/${skillName}`], base));
+    artifacts.push(...renderSkillResources(skillDir, [`.claude/skills/${skillName}`], base, context.projectRoot));
     return artifacts;
   }
 
@@ -66,14 +67,14 @@ function renderClaudeSkill(skillDir) {
   return [{
     ...base,
     path: `.claude/rules/${skillName}.md`,
-    content: `${ruleFrontmatter(activation.mode === 'globs' ? activation.globs : [])}${body}\n`,
+    content: relocateSkillLinks(`${ruleFrontmatter(activation.mode === 'globs' ? activation.globs : [])}${body}\n`, { skillDir, destination: `.claude/rules/${skillName}.md`, projectRoot: context.projectRoot }),
   }];
 }
 
 function render(context) {
   const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   const artifacts = [];
-  for (const skill of skills) artifacts.push(...renderClaudeSkill(skill));
+  for (const skill of skills) artifacts.push(...renderClaudeSkill(skill, context));
   return artifacts;
 }
 
@@ -92,7 +93,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export claude', context, force: options.force });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export claude', context, enabledAdapters: ['claude'], force: options.force });
   console.log(`✓ Claude export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

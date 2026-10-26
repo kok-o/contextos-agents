@@ -15,9 +15,23 @@ const path = require('path');
 const {
   normalizePath,
   computeHash,
-  computeFileHash,
-  classifyFile,
 } = require('./lockfile.js');
+const { computeExactHash } = require('../../.agents/filesystem/lockfile-v2.js');
+
+// Classification and the eventual transaction precondition must describe the
+// same read. Installation hashes normalize CRLF; mutation hashes retain bytes.
+function inspectFile(fullPath, record) {
+  let content = null;
+  try { content = fs.readFileSync(fullPath); }
+  catch (err) { if (err.code !== 'ENOENT') throw err; }
+  const diskHash = content === null ? null : computeHash(content.toString('utf8'));
+  return {
+    beforeHash: content === null ? 'NONE' : computeExactHash(content),
+    diskHash,
+    classification: !record?.managed ? 'UNMANAGED' : content === null ? 'MISSING'
+      : diskHash === record.sha256 ? 'MANAGED_CLEAN' : 'MANAGED_MODIFIED',
+  };
+}
 
 /**
  * Plan a file write operation against the current filesystem and lockfile state.
@@ -32,19 +46,21 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
   const normRel = normalizePath(relPath);
   const fullPath = path.join(projectDir, normRel);
   const newHash = computeHash(content);
+  const snapshot = inspectFile(fullPath, lockData?.managedFiles?.[normRel]);
 
-  if (!fs.existsSync(fullPath)) {
+  if (snapshot.beforeHash === 'NONE') {
     return {
       action: 'CREATE',
       relPath: normRel,
       targetPath: fullPath,
       newContent: content,
       newHash,
+      expectedBeforeHash: 'NONE',
       reason: 'NEW_FILE',
     };
   }
 
-  const classification = classifyFile(projectDir, normRel, lockData);
+  const classification = snapshot.classification;
 
   if (classification === 'UNMANAGED') {
     return {
@@ -66,12 +82,13 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
       conflictPath: conflictRelPath,
       newContent: content,
       newHash,
+      expectedBeforeHash: inspectFile(conflictFullPath).beforeHash,
       reason: 'USER_MODIFIED',
     };
   }
 
   // MANAGED_CLEAN: check if content changed
-  const diskHash = computeFileHash(fullPath);
+  const diskHash = snapshot.diskHash;
   if (diskHash === newHash) {
     return {
       action: 'SKIP',
@@ -87,6 +104,7 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
     targetPath: fullPath,
     newContent: content,
     oldHash: diskHash,
+    expectedBeforeHash: snapshot.beforeHash,
     newHash,
     reason: 'CONTENT_UPDATED',
   };
@@ -103,7 +121,8 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
 function planFileDelete({ projectDir, relPath, lockData, options = {} }) {
   const normRel = normalizePath(relPath);
   const fullPath = path.join(projectDir, normRel);
-  const classification = classifyFile(projectDir, normRel, lockData);
+  const snapshot = inspectFile(fullPath, lockData?.managedFiles?.[normRel]);
+  const classification = snapshot.classification;
 
   if (classification === 'UNMANAGED') {
     return {
@@ -137,6 +156,7 @@ function planFileDelete({ projectDir, relPath, lockData, options = {} }) {
     relPath: normRel,
     targetPath: fullPath,
     reason: 'MANAGED_CLEAN',
+    expectedBeforeHash: snapshot.beforeHash,
   };
 }
 

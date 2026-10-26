@@ -44,6 +44,14 @@ function collectSkillDirectories(overrideProfile = null, projectRoot = null) {
     });
   }
 
+  for (const dir of dirs) {
+    const entrypoint = getSkillEntrypointPath(dir);
+    if (!fs.existsSync(entrypoint) || !fs.statSync(entrypoint).isFile()) {
+      throw new Error(`Skill '${path.basename(dir)}': entrypoint must be an existing file: ${entrypoint}`);
+    }
+    resolveActivation(dir);
+    readSkillResources(dir);
+  }
   return dirs;
 }
 
@@ -129,12 +137,36 @@ function parseYamlFile(text, file) {
 /** Read the same manifest precedence and entrypoint used by the compiler. */
 function readSkillManifest(skillDir) {
   const manifestPath = ['skill.v2.yaml', 'skill.yaml'].map(name => path.join(skillDir, name)).find(file => fs.existsSync(file));
+  if (manifestPath) require('../filesystem/index.js').resolveManagedPath(skillDir, path.basename(manifestPath));
   return manifestPath ? parseYamlFile(fs.readFileSync(manifestPath, 'utf8'), manifestPath) : {};
 }
 
 function getSkillEntrypointPath(skillDir) {
   const manifest = readSkillManifest(skillDir);
   return require('../filesystem/index.js').resolveManagedPath(skillDir, manifest?.entrypoint || 'SKILL.md').resolvedPath;
+}
+
+/** Keep Markdown resource links valid when an entrypoint moves in an export. */
+function relocateSkillLinks(content, { skillDir, destination, projectRoot, resourceRoot = null, sourceFile = getSkillEntrypointPath(skillDir) }) {
+  const entrypoint = getSkillEntrypointPath(skillDir);
+  const sourceDir = path.dirname(sourceFile);
+  const outputDir = path.dirname(path.resolve(projectRoot, destination));
+  const relocate = target => {
+    const link = target.replace(/^<|>$/g, '');
+    if (/^(?:[a-z][a-z0-9+.-]*:|\/|#)/i.test(link)) return target;
+    const [, file, suffix = ''] = link.match(/^([^?#]*)(.*)$/);
+    if (!file) return target;
+    let decoded;
+    try { decoded = decodeURI(file); } catch { return target; }
+    let resolved = path.resolve(sourceDir, decoded);
+    if (resourceRoot) resolved = path.resolve(projectRoot, resourceRoot, resolved === entrypoint ? 'SKILL.md' : path.relative(skillDir, resolved));
+    return encodeURI(path.relative(outputDir, resolved).split(path.sep).join('/')) + suffix;
+  };
+  // Fenced examples describe literal source; do not rewrite their links.
+  return content.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g).map((part, index) => index % 2 ? part : part
+    .replace(/(\]\()(<[^>\n]+>|[^\s)]+)([^)\n]*\))/g, (_, start, target, end) => start + relocate(target) + end)
+    .replace(/^(\s{0,3}\[[^\]\n]+\]:\s*)(<[^>\n]+>|[^\s]+)(.*)$/gm, (_, start, target, end) => start + relocate(target) + end)
+  ).join('');
 }
 
 /** Routing metadata follows the declared manifest, then the real entrypoint. */
@@ -150,21 +182,34 @@ function readSkillMetadata(skillDir, { fallbackDescription } = {}) {
 }
 
 /** Copy declared resources beside exported entrypoints without inlining them. */
-function renderSkillResources(skillDir, destinations, metadata) {
+function readSkillResources(skillDir) {
   const manifest = readSkillManifest(skillDir);
-  const resources = manifest?.resources || [];
+  const resources = manifest?.resources ?? [];
+  if (!Array.isArray(resources)) throw new Error(`Skill '${path.basename(skillDir)}': resources must be a list`);
   const { resolveManagedPath } = require('../filesystem/index.js');
+  return resources.map(resource => {
+    const rel = typeof resource === 'string' ? resource : resource?.path;
+    const resolved = resolveManagedPath(skillDir, rel);
+    if (!fs.existsSync(resolved.resolvedPath) || !fs.statSync(resolved.resolvedPath).isFile()) {
+      throw new Error(`Skill resource must be an existing file: ${rel}`);
+    }
+    return resolved;
+  });
+}
+
+function renderSkillResources(skillDir, destinations, metadata, projectRoot) {
+  const entrypoint = getSkillEntrypointPath(skillDir);
   const artifacts = [];
   const seen = new Set();
-  for (const resource of resources) {
-    const rel = typeof resource === 'string' ? resource : resource.path;
-    if (rel === 'SKILL.md' || rel === manifest?.entrypoint || seen.has(rel)) continue;
+  for (const { resolvedPath, relativePosixPath: rel } of readSkillResources(skillDir)) {
+    if (resolvedPath === entrypoint || rel === 'SKILL.md' || seen.has(rel)) continue;
     seen.add(rel);
-    const { resolvedPath, relativePosixPath } = resolveManagedPath(skillDir, rel);
-    if (!fs.statSync(resolvedPath).isFile()) throw new Error(`Skill resource must be a file: ${rel}`);
     for (const destination of destinations) {
       const mediaType = /\.(md|txt|js|ts|py)$/i.test(rel) ? 'text/plain' : /\.ya?ml$/i.test(rel) ? 'application/yaml' : /\.json$/i.test(rel) ? 'text/plain' : 'application/octet-stream';
-      artifacts.push({ ...metadata, path: `${destination}/${relativePosixPath}`, content: fs.readFileSync(resolvedPath), mediaType });
+      const outputPath = `${destination}/${rel}`;
+      const raw = fs.readFileSync(resolvedPath);
+      const content = /\.md$/i.test(rel) ? relocateSkillLinks(raw.toString('utf8'), { skillDir, destination: outputPath, projectRoot, resourceRoot: destination, sourceFile: resolvedPath }) : raw;
+      artifacts.push({ ...metadata, path: outputPath, content, mediaType });
     }
   }
   return artifacts;
@@ -243,8 +288,13 @@ function resolveActivation(skillDir) {
   const name = path.basename(skillDir);
   const manifest = readSkillManifest(skillDir) || {};
   const frontmatter = readSkillFrontmatter(skillDir);
-  const stated = manifest.activation ?? frontmatter.activation;
-  const statedGlobs = manifest.globs ?? frontmatter.globs ?? manifest.fileGlobs;
+  const stated = manifest.activation !== undefined ? manifest.activation : frontmatter.activation;
+  const statedGlobs = manifest.globs !== undefined ? manifest.globs : (manifest.fileGlobs !== undefined ? manifest.fileGlobs : frontmatter.globs);
+
+  if (statedGlobs !== undefined && !(typeof statedGlobs === 'string' ||
+      (Array.isArray(statedGlobs) && statedGlobs.every(glob => typeof glob === 'string' && glob.trim())))) {
+    throw new Error(`Skill '${name}': globs must be a string or a list of non-empty strings`);
+  }
 
   if (stated !== undefined && !ACTIVATION_MODES.includes(stated)) {
     throw new Error(`Skill '${name}': activation must be one of ${ACTIVATION_MODES.join(', ')} (got '${stated}')`);
@@ -261,12 +311,6 @@ function resolveActivation(skillDir) {
     if (globs.length > 0) return { mode: 'globs', globs };
   }
 
-  const yamlPath = path.join(skillDir, 'skill.yaml');
-  if (fs.existsSync(yamlPath)) {
-    const match = fs.readFileSync(yamlPath, 'utf8').match(/(?:triggers\s*:\s*(?:files|globs))\s*:\s*\[?([^\r\n\]]+)\]?/i);
-    const globs = match ? splitGlobs(match[1]) : [];
-    if (globs.length > 0) return { mode: 'globs', globs };
-  }
   if (CATALOG_GLOBS[name]) return { mode: 'globs', globs: splitGlobs(CATALOG_GLOBS[name]) };
   return { mode: 'auto', globs: [] };
 }
@@ -278,19 +322,21 @@ function readCoreRules(projectRoot) {
 }
 
 /** Bodies of the skills that must be part of every session. */
-function collectAlwaysRules(skillDirs) {
+function collectAlwaysRules(skillDirs, relocation) {
   const rules = [];
   for (const skillDir of skillDirs) {
     const entrypoint = getSkillEntrypointPath(skillDir);
     if (!fs.existsSync(entrypoint)) continue;
     if (resolveActivation(skillDir).mode !== 'always') continue;
     const { name } = readSkillMetadata(skillDir);
-    rules.push({ id: path.basename(skillDir), title: name, body: stripFrontmatter(fs.readFileSync(entrypoint, 'utf8')).trim() });
+    const body = stripFrontmatter(fs.readFileSync(entrypoint, 'utf8')).trim();
+    rules.push({ id: path.basename(skillDir), title: name, body: relocation ? relocateSkillLinks(body, { skillDir, ...relocation }) : body });
   }
   return rules;
 }
 
 module.exports = {
+  relocateSkillLinks,
   AGENTS_DIR,
   AGENTS_MD_PATH,
   CORE_SKILLS_PATH,

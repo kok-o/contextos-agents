@@ -397,6 +397,29 @@ function matchesTaskPhrase(text, pattern) {
   return new RegExp(`(?:^|[^\\p{L}\\p{N}_])(?:${pattern})(?=$|[^\\p{L}\\p{N}_])`, 'iu').test(text);
 }
 
+// Manifest signals are path globs, not substring regular expressions. Expand
+// globstars before ordinary stars so recursion also matches zero directories.
+function skillGlobToRegex(pattern) {
+  let source = '';
+  let braceDepth = 0;
+  const glob = String(pattern).replace(/\\/g, '/').replace(/^\.\//, '');
+  for (let i = 0; i < glob.length; i++) {
+    const ch = glob[i];
+    if (ch === '*' && glob[i + 1] === '*') {
+      source += glob[i + 2] === '/' ? '(?:.*/)?' : '.*';
+      i += glob[i + 2] === '/' ? 2 : 1;
+    } else if (ch === '*') source += '[^/]*';
+    else if (ch === '?') source += '[^/]';
+    else if (ch === '{') { source += '(?:'; braceDepth++; }
+    else if (ch === '}' && braceDepth) { source += ')'; braceDepth--; }
+    else if (ch === ',' && braceDepth) source += '|';
+    else source += ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  // Treat malformed braces literally, rather than crashing resolution.
+  if (braceDepth) return new RegExp(`^${glob.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+  return new RegExp(`^${source}$`, 'i');
+}
+
 // Words that say nothing about what a rule covers.
 const ROUTING_STOPWORDS = new Set([
   'about', 'after', 'also', 'always', 'being', 'code', 'coding', 'every', 'from', 'guide', 'guideline', 'guidelines',
@@ -423,6 +446,7 @@ function routingTokens(text) {
 function tokensMatch(a, b) {
   if (a === b) return true;
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (short === 'auth') return /^auth(?:entication|orization|orisation|enticat|oriz|oris|n$|z$)/.test(long);
   return short.length >= 4 && long.startsWith(short);
 }
 
@@ -447,7 +471,7 @@ function isOwnRule(skill) {
   return /(^|\/)\.agents\/(project|vendor)\/skills\//.test(String(skill.source || '').replace(/\\/g, '/'));
 }
 
-const SECURITY_TASK_PATTERN = String.raw`secur\w*|auth\w*|jwt|passwords?|tokens?|secrets?|permissions?|idor|bola|ssrf|csrf|xss|login|access\s*control|rate\s*limit|безопасн[\p{L}]*|авториз[\p{L}]*|аутентифик[\p{L}]*|парол[\p{L}]*|токен[\p{L}]*|доступ(?:а|у|ом|е|ы|ов)?|прав[\p{L}]*\s+доступ[\p{L}]*`;
+const SECURITY_TASK_PATTERN = String.raw`secur\w*|auth(?:enticat(?:ion|e[ds]?|ing)|oris(?:ation|e[ds]?|ing)|oriz(?:ation|e[ds]?|ing)|n|z)?|oauth\d*|jwt|passwords?|tokens?|secrets?|permissions?|idor|bola|ssrf|csrf|xss|login|access\s*control|rate\s*limit|безопасн[\p{L}]*|авториз[\p{L}]*|аутентифик[\p{L}]*|парол[\p{L}]*|токен[\p{L}]*|доступ(?:а|у|ом|е|ы|ов)?|прав[\p{L}]*\s+доступ[\p{L}]*`;
 
 // Bounded noun phrases allow common articles/adjectives without interpreting
 // "remove unused imports from files" as deletion of the files themselves.
@@ -703,11 +727,12 @@ class CanonicalResolver {
     // With installedOnly, only skills present in this project's registry can be selected; a skill whose
     // body is not installed cannot be exported, so recommending it would be a dead end.
     const installedIds = new Set(Object.keys(this.registry?.skills || {}));
-    const installedOnly = Boolean(request.installedOnly) && installedIds.size > 0;
+    const installedOnly = Boolean(request.installedOnly);
     const addEvidence = (id, kind, weight, reason) => {
-      let resolvedId = id;
-      if (deprecatedMap[id]) {
-        resolvedId = deprecatedMap[id];
+      const registeredId = this.registry?.aliases?.[id] || id;
+      let resolvedId = registeredId;
+      if (deprecatedMap[registeredId]) {
+        resolvedId = deprecatedMap[registeredId];
         if (!warnings.some(w => w.code === 'CTX_SKILL_DEPRECATED_ALIAS' && w.deprecatedSkill === id)) {
           warnings.push({
             code: 'CTX_SKILL_DEPRECATED_ALIAS',
@@ -725,7 +750,13 @@ class CanonicalResolver {
         kind = 'safety_required';
       }
       if (profileExcluded.has(resolvedId)) return;
-      if (installedOnly && !installedIds.has(resolvedId)) return;
+      if (installedOnly && !installedIds.has(resolvedId)) {
+        if (['explicit', 'profile_required', 'safety_required'].includes(kind) &&
+            !warnings.some(w => w.code === 'CTX_REQUIRED_SKILL_UNAVAILABLE' && w.skillId === resolvedId)) {
+          warnings.push({ code: 'CTX_REQUIRED_SKILL_UNAVAILABLE', skillId: resolvedId, message: `Required skill "${resolvedId}" is not installed; --installed-only cannot supply its instructions.` });
+        }
+        return;
+      }
       if (!evidenceBySkill.has(resolvedId)) evidenceBySkill.set(resolvedId, []);
       evidenceBySkill.get(resolvedId).push({ kind, weight, reason });
     };
@@ -841,12 +872,7 @@ class CanonicalResolver {
       for (const file of files) {
         for (const fg of signals.fileGlobs || []) {
           const pattern = fg.value;
-          const rePattern = pattern
-            .replace(/\./g, '\\.')
-            .replace(/\*\*\//g, '.*')
-            .replace(/\*/g, '[^/]*')
-            .replace(/\{([^}]+)\}/g, (_, group) => `(${group.replace(/,/g, '|')})`);
-          const re = new RegExp(rePattern, 'i');
+          const re = skillGlobToRegex(pattern);
           if (re.test(file)) {
             const w = fg.weight || WEIGHTS.FILE_GLOB;
             addEvidence(id, 'file_glob', w, `Touched file "${file}" matches glob "${pattern}" (+${w})`);
@@ -974,7 +1000,8 @@ class CanonicalResolver {
 
     // Architectural synergy rules (e.g. database, microservices, ddd, graphify -> system-design)
     const needsSystemDesign = initialSelection.some(c => ['database', 'microservices', 'ddd', 'graphify'].includes(c.id));
-    if (needsSystemDesign && !initialSelection.some(c => c.id === 'system-design') && !profileExcluded.has('system-design')) {
+    if (needsSystemDesign && !initialSelection.some(c => c.id === 'system-design') && !profileExcluded.has('system-design') &&
+        (!installedOnly || installedIds.has('system-design'))) {
       initialSelection.push({
         id: 'system-design',
         score: WEIGHTS.SYNERGY_PREREQ,
@@ -987,7 +1014,8 @@ class CanonicalResolver {
 
     // Secondary profile enforce check (e.g. enforce.adr when system-design or microservices is present)
     if (profileEnforce.adr === true && initialSelection.some(c => c.id === 'system-design' || c.id === 'microservices')) {
-      if (!initialSelection.some(c => c.id === 'decisions') && !profileExcluded.has('decisions')) {
+      if (!initialSelection.some(c => c.id === 'decisions') && !profileExcluded.has('decisions') &&
+          (!installedOnly || installedIds.has('decisions'))) {
         initialSelection.push({
           id: 'decisions',
           score: 100,
@@ -1009,10 +1037,16 @@ class CanonicalResolver {
       'vercel-optimize': ['nextjs', 'react', 'typescript'],
     };
 
-    const requiredBy = id => getTransitiveDeps(id, depGraph, profileExcluded).filter(dep => !installedOnly || installedIds.has(dep));
+    const requiredBy = id => getTransitiveDeps(id, depGraph, new Set());
 
     const closureMap = new Map();
     for (const item of initialSelection) {
+      const blocked = requiredBy(item.id).filter(dep => profileExcluded.has(dep) || (installedOnly && !installedIds.has(dep)));
+      if (blocked.length) {
+        excluded.push({ id: item.id, reasonCode: 'unavailable_dependency', details: `Required dependencies unavailable or excluded by profile: ${blocked.join(', ')}` });
+        warnings.push({ code: 'CTX_RESOLVER_DEPENDENCY_UNAVAILABLE', skillId: item.id, message: `Cannot select "${item.id}" without required dependencies: ${blocked.join(', ')}` });
+        continue;
+      }
       const rawEst = skillsDict[item.id]?.estimatedTokens || 1000;
       const estTokens = rawEst;
       closureMap.set(item.id, {
@@ -1028,6 +1062,7 @@ class CanonicalResolver {
 
     // Populate required dependencies in closureMap
     for (const cand of initialSelection) {
+      if (!closureMap.has(cand.id)) continue;
       const reqs = requiredBy(cand.id);
       for (const reqId of reqs) {
         if (closureMap.has(reqId)) {
@@ -1082,6 +1117,29 @@ class CanonicalResolver {
           }
         }
       }
+    }
+
+    // Evict dependents of a rejected prerequisite as well. Budget admission
+    // must never reconstruct a dependency that conflict resolution removed.
+    const conflictExcluded = new Set(excluded.filter(item => item.reasonCode === 'conflict').map(item => item.id));
+    for (const [id, item] of closureMap) {
+      const blocked = requiredBy(id).find(dep => conflictExcluded.has(dep));
+      if (!blocked) continue;
+      closureMap.delete(id);
+      conflictExcluded.add(id);
+      excluded.push({ id, reasonCode: 'conflict', details: `Required dependency "${blocked}" was excluded by conflict resolution` });
+      if (item.reasons.some(r => ['explicit', 'profile_required', 'safety_required'].includes(r.kind))) {
+        conflicts.push({ skillA: id, skillB: blocked, resolution: 'error', reason: `Required skill "${id}" cannot be selected without conflicting dependency "${blocked}"` });
+      }
+    }
+    const neededIds = new Set();
+    for (const root of initialSelection) {
+      if (!closureMap.has(root.id)) continue;
+      neededIds.add(root.id);
+      for (const dep of requiredBy(root.id)) neededIds.add(dep);
+    }
+    for (const id of closureMap.keys()) {
+      if (!neededIds.has(id)) closureMap.delete(id);
     }
 
     // 7. Token Budget Planner & Capability Clustering
@@ -1227,9 +1285,6 @@ class CanonicalResolver {
       if (!skillsDict[skill.id]) {
         warnings.push({ code: 'CTX_SELECTED_SKILL_UNAVAILABLE', message: `Selected skill "${skill.id}" has no installed manifest. Install it before assembling runtime context.` });
       }
-    }
-    if (finalSelected.length > maxSkillsLimit) {
-      warnings.push({ code: 'CTX_RESOLVER_SKILL_LIMIT_EXCEEDED', message: `Required skills and dependencies occupy ${finalSelected.length} slots; soft maxSkills limit is ${maxSkillsLimit}.` });
     }
     if (finalSelected.length > maxSkillsLimit) {
       warnings.push({ code: 'CTX_RESOLVER_SKILL_LIMIT_EXCEEDED', message: `Required skills and dependencies occupy ${finalSelected.length} slots; soft maxSkills limit is ${maxSkillsLimit}.` });

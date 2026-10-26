@@ -30,10 +30,10 @@ function calculateContextStats(projectDir = process.cwd()) {
   }
 
   const skillCharMap = new Map();
-  const { collectSkillDirectories } = require('./adapters/shared.js');
+  const { collectSkillDirectories, getSkillEntrypointPath } = require('./adapters/shared.js');
   const allDirs = collectSkillDirectories({ exclude_skills: [] }, projectDir);
   for (const directory of allDirs) {
-      const skillMd = path.join(directory, 'SKILL.md');
+      const skillMd = getSkillEntrypointPath(directory);
       if (fs.existsSync(skillMd)) {
         skillCharMap.set(path.basename(directory), fs.readFileSync(skillMd, 'utf8').length);
       }

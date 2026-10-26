@@ -17,7 +17,7 @@ rules:
   - id: SEC-001
     level: must
     enforcement: prompt-guidance
-    summary: Always validate and sanitize all user input and untrusted external payloads before processing
+    summary: Validate untrusted boundary inputs against the operation schema before protected access; encode output for its destination
   - id: SEC-002
     level: must
     enforcement: runtime

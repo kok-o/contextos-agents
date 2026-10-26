@@ -32,7 +32,7 @@ function getStatus(projectDir = process.cwd()) {
   if (hasAgents) {
     try {
       skillsCount = require('../.agents/plugins.js').collectAllSkillDirs(projectDir)
-        .filter(dir => fs.existsSync(path.join(dir, 'SKILL.md'))).length;
+        .filter(dir => fs.existsSync(require('../.agents/adapters/shared.js').getSkillEntrypointPath(dir))).length;
     } catch {
       skillsCount = 0;
     }

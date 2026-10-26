@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectAlwaysRules, collectSkillDirectories, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectAlwaysRules, collectSkillDirectories, stripFrontmatter, relocateSkillLinks } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'zed@2';
@@ -19,13 +19,13 @@ function describe() {
   };
 }
 
-function buildSkillSection(skillDir) {
+function buildSkillSection(skillDir, context) {
   const skillName = path.basename(skillDir);
   const skillMdPath = getSkillEntrypointPath(skillDir);
 
   if (!fs.existsSync(skillMdPath)) return null;
   const raw = fs.readFileSync(skillMdPath, 'utf8');
-  const body = stripFrontmatter(raw);
+  const body = relocateSkillLinks(stripFrontmatter(raw), { skillDir, destination: `.zed/prompts/${skillName}.md`, projectRoot: context.projectRoot });
   // Preserve the existing body preview for skills without routing metadata.
   const fallbackDescription = body.split(/\r?\n/).map(line => line.trim()).find(line => line && !line.startsWith('#'));
   const { name: title, description } = readSkillMetadata(skillDir, { fallbackDescription });
@@ -68,7 +68,7 @@ function render(context) {
   }
 
   const allSkills = collectSkillDirectories(context?.profile, context?.projectRoot);
-  const alwaysRules = collectAlwaysRules(allSkills);
+  const alwaysRules = collectAlwaysRules(allSkills, { projectRoot: context.projectRoot, destination: '.zed/rules.md' });
   if (alwaysRules.length > 0) {
     rulesLines.push(`\n## Always-on Rules\n`);
     for (const rule of alwaysRules) rulesLines.push(`\n### ${rule.title}\n\n${rule.body}\n`);
@@ -82,7 +82,7 @@ function render(context) {
 
   const skills = allSkills;
   for (const skill of skills) {
-    const res = buildSkillSection(skill);
+    const res = buildSkillSection(skill, context);
     if (res) {
       rulesLines.push(res.section);
 

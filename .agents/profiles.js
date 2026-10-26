@@ -389,10 +389,10 @@ function getActiveProfile(projectDir = process.cwd(), targetFileOrScope = null) 
     if (!matchedProfileName) {
       for (const [scopeKey, profName] of Object.entries(lockData.overrides)) {
         const cleanScope = scopeKey.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/$/, '');
-        if (normalizedScope === cleanScope || normalizedScope.startsWith(cleanScope + '/')) {
+        if ((normalizedScope === cleanScope || normalizedScope.startsWith(cleanScope + '/')) &&
+            (!matchedProfileName || cleanScope.length > matchedScope.length)) {
           matchedProfileName = profName;
           matchedScope = cleanScope;
-          break;
         }
       }
     }

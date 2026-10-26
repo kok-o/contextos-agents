@@ -154,6 +154,9 @@ try {
   assert.equal(read('AGENTS.md'), userAgents);
   assert.ok(read('CLAUDE.md').startsWith(userClaude));
   assert.equal(read('.cursor/rules/team.mdc'), userCursor);
+  console.log(run(process.execPath, ['--test', path.join(root, 'tests/recovery-cli.test.js')], {
+    env: { ...env, CONTEXTOS_RECOVERY_TEST_PACKAGE_ROOT: path.join(consumer, 'node_modules/contextos-agents') },
+  }).trim());
   cli('uninstall', '--yes');
   assert.equal(read('AGENTS.md'), userAgents);
   assert.ok(read('CLAUDE.md').startsWith(userClaude));
@@ -168,7 +171,7 @@ try {
     sourceWorktreeDirty: !!execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim(),
     archives: archives.map(file => ({ file: path.basename(file), sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') })),
     coreOnly, mcpChecked: !coreOnly,
-    lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', ...(!coreOnly ? ['MCP handshake'] : []), 'uninstall'],
+    lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', ...(!coreOnly ? ['MCP handshake'] : []), 'crash recovery', 'uninstall'],
     userInstructionsPreserved: true, userOverridePreserved: true, quickstartFixture: 'PASS',
     manifestlessAndCustomEntrypoint: 'PASS', manifestlessRoutingMetadata: 'PASS', destructiveTaskRouting: 'PASS', consumerPath: consumer,
     productionOnlyInstall: true, typescriptResolution, outsideSourceTree: !consumer.startsWith(root + path.sep),

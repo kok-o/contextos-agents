@@ -12,6 +12,73 @@ const path = require('node:path');
 const os = require('node:os');
 const { ManifestCompiler, CODES, parseYaml } = require('../.agents/compiler/manifest-compiler.js');
 
+test('compiled registry honors its closed top-level schema without requiring a timestamp', () => {
+  const schema = require('../registry.v2.schema.json');
+  const result = new ManifestCompiler({ rootDir: path.resolve(__dirname, '..') }).compile();
+  assert.strictEqual(result.success, true);
+  for (const key of schema.required) assert.ok(Object.hasOwn(result.registry, key), `Missing schema-required field: ${key}`);
+  for (const key of Object.keys(result.registry)) assert.ok(Object.hasOwn(schema.properties, key), `Undeclared field in closed schema: ${key}`);
+});
+
+test('compiler and adapters share activation, glob and manifest precedence', t => {
+  const { resolveActivation } = require('../.agents/adapters/shared.js');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-activation-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team rule\nactivation: auto\n---\nTeam policy');
+  fs.writeFileSync(path.join(dir, 'skill.yaml'), 'id: team\nactivation: invalid\n');
+  const v2 = path.join(dir, 'skill.v2.yaml');
+  fs.writeFileSync(v2, 'id: team\nactivation: globs\nglobs: ["src/**/*.{ts,tsx}"]\n');
+  const result = new ManifestCompiler({ rootDir: root }).compile();
+  assert.strictEqual(result.success, true, JSON.stringify(result.diagnostics));
+  assert.deepStrictEqual(result.registry.skills.team.activation, resolveActivation(dir));
+  fs.writeFileSync(v2, 'id: team\nactivation: globs\n');
+  const invalid = new ManifestCompiler({ rootDir: root }).compile();
+  assert.strictEqual(invalid.success, false);
+  assert.ok(invalid.diagnostics.some(d => d.code === CODES.SCHEMA_ERROR));
+  fs.unlinkSync(v2);
+  fs.unlinkSync(path.join(dir, 'skill.yaml'));
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\nactivation: globs\nglobs: [false]\n---\nTeam policy');
+  assert.strictEqual(new ManifestCompiler({ rootDir: root }).compile().success, false);
+  assert.throws(() => resolveActivation(dir), /globs/);
+});
+
+test('compiler rejects entrypoint and resource junctions outside a skill before reading them', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-manifest-paths-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/team');
+  const sibling = dir + '-outside';
+  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(sibling);
+  fs.writeFileSync(path.join(sibling, 'outside.md'), '---\ninvalid: [\n---\nMust not be parsed');
+  fs.symlinkSync(sibling, path.join(dir, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
+  for (const manifest of ['id: team\nentrypoint: linked/outside.md\n', 'id: team\nresources: [linked/outside.md]\n']) {
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), manifest);
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Team policy');
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, false);
+    assert.ok(result.diagnostics.some(d => d.code === CODES.INVALID_PATH), JSON.stringify(result.diagnostics));
+  }
+});
+
+for (const upstreamManifest of [true, false]) {
+  test(`manifestless plugin duplicates fail compilation (upstream manifest: ${upstreamManifest})`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-manifest-duplicate-'));
+    t.after(() => { assert.strictEqual(path.dirname(root), os.tmpdir()); fs.rmSync(root, { recursive: true, force: true }); });
+    for (const rel of ['core/skills/team', 'plugins/thirdparty/skills/team']) {
+      const dir = path.join(root, '.agents', rel);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team rules\n---\nTeam policy');
+    }
+    if (upstreamManifest) fs.writeFileSync(path.join(root, '.agents/core/skills/team/skill.yaml'), 'id: team\nname: team\n');
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, false);
+    assert.ok(result.diagnostics.some(d => d.code === CODES.DUPLICATE_ID));
+    assert.strictEqual(result.registry, null);
+  });
+}
+
 test('ManifestCompiler — YAML Parser', async (t) => {
   await t.test('parses scalars and booleans correctly', () => {
     const yaml = `

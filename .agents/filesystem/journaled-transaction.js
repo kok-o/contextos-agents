@@ -85,6 +85,9 @@ class JournaledTransaction {
   constructor(projectRoot, txId = null) {
     this.projectRoot = path.resolve(projectRoot);
     this.txId = txId || `tx-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(this.txId)) {
+      throw new TransactionError(ERROR_CODES.INVALID_STATE, 'Invalid transaction ID');
+    }
     this.txDir = path.resolve(this.projectRoot, TX_BASE_SUBPATH, this.txId);
     this.journalPath = path.join(this.txDir, 'journal.json');
     this.stagingDir = path.join(this.txDir, 'staging');
@@ -195,6 +198,7 @@ class JournaledTransaction {
     // Write staged files
     for (let i = 0; i < this.operations.length; i++) {
       const op = this.operations[i];
+      if (op.type !== 'deleteDir' && !op.expectedBeforeHash) op.expectedBeforeHash = this.currentHash(op);
       if (op.type === 'write') {
         const stagedFilePath = path.join(this.stagingDir, `${i}-${path.basename(op.relativePath)}`);
         fs.writeFileSync(stagedFilePath, op.content);
@@ -215,57 +219,74 @@ class JournaledTransaction {
       this.prepare();
     }
 
-    if (this.state !== TX_STATES.PREPARED) {
+    if (this.state !== TX_STATES.PREPARED && this.state !== TX_STATES.APPLYING) {
       throw new TransactionError(
         ERROR_CODES.INVALID_STATE,
         `Cannot commit transaction in state '${this.state}'`
       );
     }
 
-    this.state = TX_STATES.APPLYING;
-    this.saveJournal();
-
-    // 1. Verify all preconditions before touching any file
+    // Check the entire remaining plan before resuming any mutations. A file
+    // changed after a crash must not be overwritten or lose its backup.
     for (const op of this.operations) {
-      if (op.expectedBeforeHash) {
-        if (fs.existsSync(op.resolvedPath)) {
-          const currentBuf = fs.readFileSync(op.resolvedPath);
-          const currentHash = computeExactHash(currentBuf);
-          if (currentHash !== op.expectedBeforeHash) {
-            this.rollback();
-            throw new TransactionError(
-              ERROR_CODES.PRECONDITION_FAILED,
-              `Precondition hash mismatch for '${op.relativePath}': expected ${op.expectedBeforeHash}, found ${currentHash}`,
-              { relativePath: op.relativePath, expected: op.expectedBeforeHash, actual: currentHash }
-            );
-          }
-        } else if (op.expectedBeforeHash !== 'NONE') {
-          this.rollback();
-          throw new TransactionError(
-            ERROR_CODES.PRECONDITION_FAILED,
-            `Precondition failed: target file '${op.relativePath}' does not exist on disk`,
-            { relativePath: op.relativePath }
-          );
+      if (op.progress) {
+        this.assertRecoverable(op);
+      } else if (op.expectedBeforeHash && this.currentHash(op) !== op.expectedBeforeHash) {
+        if (this.state === TX_STATES.PREPARED) this.rollback();
+        throw new TransactionError(
+          ERROR_CODES.PRECONDITION_FAILED,
+          `Precondition hash mismatch for '${op.relativePath}'`,
+          { relativePath: op.relativePath, expected: op.expectedBeforeHash }
+        );
+      }
+      if (op.type === 'write' && !this.isApplied(op)) {
+        if (!op.stagedFilePath || !fs.existsSync(op.stagedFilePath) || computeExactHash(fs.readFileSync(op.stagedFilePath)) !== op.afterHash) {
+          throw new TransactionError(ERROR_CODES.APPLY_FAILED, `Missing or modified staged file for '${op.relativePath}'`);
         }
+      }
+      if (op.type !== 'deleteDir' && !op.progress && !op.expectedBeforeHash) {
+        throw new TransactionError(
+          ERROR_CODES.PRECONDITION_FAILED,
+          `Missing original precondition for '${op.relativePath}'; manual recovery required, backups preserved`
+        );
       }
     }
 
-    // 2. Apply operations sequentially with backups
+    this.state = TX_STATES.APPLYING;
+    this.saveJournal();
+
     try {
       for (let i = 0; i < this.operations.length; i++) {
         const op = this.operations[i];
-        const backupFilePath = path.join(this.backupDir, `${i}-${path.basename(op.relativePath)}`);
+        if (op.progress && this.isApplied(op)) {
+          op.progress = 'applied';
+          continue;
+        }
 
-        if (fs.existsSync(op.resolvedPath)) {
-          if (op.type !== 'deleteDir') {
+        resolveManagedPath(this.projectRoot, op.relativePath);
+        if (!op.progress) {
+          op.beforeHash = this.currentHash(op);
+          if (op.expectedBeforeHash && op.beforeHash !== op.expectedBeforeHash) {
+            throw new TransactionError(ERROR_CODES.PRECONDITION_FAILED, `Precondition hash mismatch for '${op.relativePath}'`);
+          }
+          op.hadExisting = op.beforeHash !== 'NONE';
+          if (op.hadExisting && op.type !== 'deleteDir') {
+            const backupFilePath = path.join(this.backupDir, `${i}-${path.basename(op.relativePath)}`);
             fs.copyFileSync(op.resolvedPath, backupFilePath);
             op.backupFilePath = backupFilePath;
           }
-          op.hadExisting = true;
-        } else {
-          op.hadExisting = false;
+          // Persist the backup and intent BEFORE the mutation. If the process
+          // dies before its next journal write, disk hashes disambiguate it.
+          op.progress = 'applying';
+          this.appliedOperations.push(op);
+          this.saveJournal();
         }
 
+        // Writing the journal may take time. Recheck after it as well, before
+        // replacing or deleting a target that an editor could have changed.
+        if (op.type !== 'deleteDir' && this.currentHash(op) !== op.beforeHash) {
+          throw new TransactionError(ERROR_CODES.PRECONDITION_FAILED, `Precondition hash mismatch for '${op.relativePath}'`);
+        }
         if (op.type === 'write') {
           safeRenameSync(op.stagedFilePath, op.resolvedPath);
         } else if (op.type === 'delete') {
@@ -285,7 +306,8 @@ class JournaledTransaction {
           }
         }
 
-        this.appliedOperations.push(op);
+        op.progress = 'applied';
+        this.saveJournal();
       }
     } catch (applyErr) {
       // Automatic reverse-order rollback on failure
@@ -315,6 +337,10 @@ class JournaledTransaction {
    * Rolls back applied modifications in reverse order.
    */
   rollback() {
+    if (this.state === TX_STATES.COMMITTED) {
+      throw new TransactionError(ERROR_CODES.INVALID_STATE, 'Cannot roll back a committed transaction');
+    }
+    if (this.state === TX_STATES.ROLLED_BACK) return { txId: this.txId, status: 'ROLLED_BACK' };
     this.state = TX_STATES.ROLLING_BACK;
     this.saveJournal();
 
@@ -323,12 +349,26 @@ class JournaledTransaction {
 
     for (const op of toRevert) {
       try {
-        if (op.hadExisting && op.backupFilePath && fs.existsSync(op.backupFilePath)) {
-          safeRenameSync(op.backupFilePath, op.resolvedPath);
+        resolveManagedPath(this.projectRoot, op.relativePath);
+        if (op.progress === 'rolledBack') continue;
+        const beforeRestore = this.assertRecoverable(op);
+        if (beforeRestore === op.beforeHash) {
+          // Includes a rollback that reached disk just before another crash.
         } else if (op.hadExisting && op.type === 'deleteDir') {
           if (!fs.existsSync(op.resolvedPath)) {
             fs.mkdirSync(op.resolvedPath, { recursive: true });
           }
+        } else if (op.hadExisting) {
+          if (!op.backupFilePath || !fs.existsSync(op.backupFilePath) || computeExactHash(fs.readFileSync(op.backupFilePath)) !== op.beforeHash) {
+            throw new Error(`Missing or modified backup for '${op.relativePath}'`);
+          }
+          // Keep the original backup until the entire rollback has succeeded.
+          const restorePath = path.join(this.stagingDir, 'restore.tmp');
+          fs.copyFileSync(op.backupFilePath, restorePath);
+          if (this.currentHash(op) !== beforeRestore) {
+            throw new Error(`Refusing recovery: '${op.relativePath}' changed while preparing its restore; backups preserved`);
+          }
+          safeRenameSync(restorePath, op.resolvedPath);
         } else if (!op.hadExisting && fs.existsSync(op.resolvedPath)) {
           // File or dir was newly created by this tx, remove it
           if (op.type === 'write' || op.type === 'delete') {
@@ -338,6 +378,8 @@ class JournaledTransaction {
              fs.rmdirSync(op.resolvedPath);
           }
         }
+        op.progress = 'rolledBack';
+        this.saveJournal();
       } catch (err) {
         rollbackError = err;
       }
@@ -360,12 +402,35 @@ class JournaledTransaction {
     return { txId: this.txId, status: 'ROLLED_BACK' };
   }
 
+  currentHash(op) {
+    resolveManagedPath(this.projectRoot, op.relativePath);
+    if (!fs.existsSync(op.resolvedPath)) return 'NONE';
+    if (fs.statSync(op.resolvedPath).isDirectory()) return 'DIRECTORY';
+    return computeExactHash(fs.readFileSync(op.resolvedPath));
+  }
+
+  isApplied(op) {
+    if (op.type === 'deleteDir') return !fs.existsSync(op.resolvedPath);
+    return this.currentHash(op) === (op.type === 'write' ? op.afterHash : 'NONE');
+  }
+
+  assertRecoverable(op) {
+    const current = this.currentHash(op);
+    if (op.type === 'deleteDir' || current === op.beforeHash || current === (op.type === 'write' ? op.afterHash : 'NONE')) return current;
+    throw new TransactionError(
+      ERROR_CODES.PRECONDITION_FAILED,
+      `Refusing recovery: '${op.relativePath}' changed after the transaction; backups preserved`,
+      { relativePath: op.relativePath }
+    );
+  }
+
   saveJournal() {
     if (!fs.existsSync(this.txDir)) {
       fs.mkdirSync(this.txDir, { recursive: true });
     }
 
     const journalData = {
+      schemaVersion: 2,
       txId: this.txId,
       state: this.state,
       createdAt: this.createdAt,
@@ -376,13 +441,25 @@ class JournaledTransaction {
         relativePath: o.relativePath,
         afterHash: o.afterHash,
         expectedBeforeHash: o.expectedBeforeHash,
+        beforeHash: o.beforeHash,
+        progress: o.progress,
+        mode: o.mode,
         hadExisting: o.hadExisting,
         stagedFilePath: o.stagedFilePath || null,
         backupFilePath: o.backupFilePath || null,
       })),
     };
 
-    fs.writeFileSync(this.journalPath, JSON.stringify(journalData, null, 2), 'utf8');
+    const tmpPath = `${this.journalPath}.tmp`;
+    resolveManagedPath(this.projectRoot, path.relative(this.projectRoot, tmpPath));
+    const fd = fs.openSync(tmpPath, 'w');
+    try {
+      fs.writeFileSync(fd, JSON.stringify(journalData, null, 2), 'utf8');
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    safeRenameSync(tmpPath, this.journalPath);
   }
 
   cleanup() {
@@ -433,25 +510,49 @@ class JournaledTransaction {
    */
   static load(projectRoot, txId) {
     const tx = new JournaledTransaction(projectRoot, txId);
+    resolveManagedPath(tx.projectRoot, path.relative(tx.projectRoot, tx.journalPath));
     if (!fs.existsSync(tx.journalPath)) {
       throw new Error(`Transaction ${txId} not found`);
     }
 
     const data = JSON.parse(fs.readFileSync(tx.journalPath, 'utf8'));
+    if (!Object.values(TX_STATES).includes(data.state) || (data.schemaVersion !== undefined && data.schemaVersion !== 2)) {
+      throw new Error('Invalid transaction journal; backups preserved');
+    }
     tx.state = data.state;
     tx.createdAt = data.createdAt;
     tx.completedAt = data.completedAt;
 
-    tx.operations = data.operations.map(o => ({
-      type: o.type,
-      relativePath: o.relativePath,
-      resolvedPath: resolveManagedPath(projectRoot, o.relativePath).resolvedPath,
-      afterHash: o.afterHash,
-      expectedBeforeHash: o.expectedBeforeHash,
-      hadExisting: o.hadExisting,
-      stagedFilePath: o.stagedFilePath,
-      backupFilePath: o.backupFilePath,
-    }));
+    tx.operations = data.operations.map((o, i) => {
+      const op = { ...o, resolvedPath: resolveManagedPath(projectRoot, o.relativePath).resolvedPath };
+      if (!['write', 'delete', 'deleteDir'].includes(op.type)) throw new Error('Invalid transaction operation');
+      if (op.progress && (!['applying', 'applied', 'rolledBack'].includes(op.progress) || typeof op.beforeHash !== 'string' || typeof op.hadExisting !== 'boolean')) {
+        throw new Error('Invalid transaction progress; backups preserved');
+      }
+      const backup = path.join(tx.backupDir, `${i}-${path.basename(op.relativePath)}`);
+      const staged = path.join(tx.stagingDir, `${i}-${path.basename(op.relativePath)}`);
+      for (const file of [backup, staged]) resolveManagedPath(tx.projectRoot, path.relative(tx.projectRoot, file));
+      op.backupFilePath = fs.existsSync(backup) ? backup : null;
+      op.stagedFilePath = op.type === 'write' ? staged : null;
+      // Older journals did not record progress. Recover their deterministic
+      // backups and consumed staging files instead of discarding the evidence.
+      if (!op.progress && !data.schemaVersion) {
+        if (op.backupFilePath) {
+          op.beforeHash = computeExactHash(fs.readFileSync(backup));
+          op.hadExisting = true;
+          op.progress = 'applying';
+        } else if (op.type === 'write' && !fs.existsSync(staged) && tx.isApplied(op)) {
+          if (op.expectedBeforeHash !== 'NONE' && op.hadExisting !== false) {
+            throw new Error(`Missing original backup for '${op.relativePath}'; manual recovery required`);
+          }
+          op.beforeHash = 'NONE';
+          op.hadExisting = false;
+          op.progress = 'applied';
+        }
+      }
+      return op;
+    });
+    tx.appliedOperations = tx.operations.filter(op => op.progress === 'applying' || op.progress === 'applied');
 
     return tx;
   }

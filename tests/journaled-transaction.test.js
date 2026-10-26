@@ -114,6 +114,76 @@ describe('journaled-transaction.js — Crash-Resilient Multi-File Mutations', ()
 
     assert.strictEqual(fs.existsSync(toDelete), false);
   });
+
+  for (const operation of ['write', 'delete']) {
+    it(`preserves a concurrent edit before a later ${operation} and rolls back earlier writes`, () => {
+      fs.writeFileSync(path.join(tmpRoot, 'first.md'), 'BEFORE');
+      fs.writeFileSync(path.join(tmpRoot, 'second.md'), 'BEFORE');
+      const tx = new JournaledTransaction(tmpRoot);
+      tx.stageWrite('first.md', 'AFTER');
+      if (operation === 'delete') tx.stageDelete('second.md');
+      else tx.stageWrite('second.md', 'AFTER');
+      const rename = fs.renameSync;
+      fs.renameSync = function(...args) {
+        const result = rename.apply(fs, args);
+        if (args[1] === path.join(tmpRoot, 'first.md')) fs.writeFileSync(path.join(tmpRoot, 'second.md'), 'USER EDIT');
+        return result;
+      };
+      try { assert.throws(() => tx.commit(), /Precondition/); }
+      finally { fs.renameSync = rename; }
+      assert.strictEqual(fs.readFileSync(path.join(tmpRoot, 'first.md'), 'utf8'), 'BEFORE');
+      assert.strictEqual(fs.readFileSync(path.join(tmpRoot, 'second.md'), 'utf8'), 'USER EDIT');
+      assert.strictEqual(tx.state, TX_STATES.ROLLED_BACK);
+    });
+  }
+
+  it('preserves an edit made during journal persistence and retains the original backup', () => {
+    const file = path.join(tmpRoot, 'rule.md');
+    fs.writeFileSync(file, 'BEFORE');
+    const tx = new JournaledTransaction(tmpRoot);
+    tx.stageWrite('rule.md', 'AFTER');
+    const saveJournal = tx.saveJournal.bind(tx);
+    let edited = false;
+    tx.saveJournal = () => {
+      saveJournal();
+      if (!edited && tx.operations[0].progress === 'applying') {
+        edited = true;
+        fs.writeFileSync(file, 'USER EDIT');
+      }
+    };
+    assert.throws(() => tx.commit(), /Manual recovery required/);
+    assert.strictEqual(fs.readFileSync(file, 'utf8'), 'USER EDIT');
+    assert.strictEqual(fs.readFileSync(path.join(tx.backupDir, '0-rule.md'), 'utf8'), 'BEFORE');
+    assert.strictEqual(tx.state, TX_STATES.RECOVERY_REQUIRED);
+  });
+
+  it('preserves an edit made while preparing a rollback restore', () => {
+    const file = path.join(tmpRoot, 'rule.md');
+    fs.writeFileSync(file, 'BEFORE');
+    const tx = new JournaledTransaction(tmpRoot);
+    tx.stageWrite('rule.md', 'AFTER');
+    tx.prepare();
+    const op = tx.operations[0];
+    op.beforeHash = computeExactHash('BEFORE');
+    op.hadExisting = true;
+    op.progress = 'applied';
+    op.backupFilePath = path.join(tx.backupDir, '0-rule.md');
+    fs.writeFileSync(op.backupFilePath, 'BEFORE');
+    fs.writeFileSync(file, 'AFTER');
+    tx.appliedOperations = [op];
+    tx.state = TX_STATES.APPLYING;
+    const copy = fs.copyFileSync;
+    fs.copyFileSync = function(...args) {
+      const result = copy.apply(fs, args);
+      if (args[0] === op.backupFilePath) fs.writeFileSync(file, 'USER EDIT');
+      return result;
+    };
+    try { assert.throws(() => tx.rollback(), /Manual recovery required/); }
+    finally { fs.copyFileSync = copy; }
+    assert.strictEqual(fs.readFileSync(file, 'utf8'), 'USER EDIT');
+    assert.strictEqual(fs.readFileSync(op.backupFilePath, 'utf8'), 'BEFORE');
+    assert.strictEqual(tx.state, TX_STATES.RECOVERY_REQUIRED);
+  });
 });
 
 describe('lockfile-v2.js — Lockfile v2 Schema Manager & Dual Hashing', () => {

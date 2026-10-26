@@ -15,6 +15,19 @@ const os = require('os');
 const profiles = require('../.agents/profiles.js');
 const { CanonicalResolver } = require('../.agents/resolver/canonical-resolver.js');
 
+test('nested profile overrides use the most specific scope regardless of insertion order', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-profile-specific-'));
+  t.after(() => { assert.equal(path.dirname(root), os.tmpdir()); fs.rmSync(root, { recursive: true, force: true }); });
+  fs.mkdirSync(path.join(root, '.agents/profiles'), { recursive: true });
+  for (const id of ['broad', 'narrow']) fs.writeFileSync(path.join(root, `.agents/profiles/${id}.yaml`), `id: ${id}\nname: ${id}\n`);
+  for (const entries of [[['packages', 'broad'], ['packages/api', 'narrow']], [['packages/api', 'narrow'], ['packages', 'broad']]]) {
+    fs.writeFileSync(path.join(root, '.agents/profile.json'), JSON.stringify({ profile: 'default', overrides: Object.fromEntries(entries) }));
+    assert.equal(profiles.getActiveProfile(root, 'packages/api/src/auth.ts').profile, 'narrow');
+    assert.equal(profiles.getActiveProfile(root, 'packages/api').profile, 'narrow');
+    assert.equal(profiles.getActiveProfile(root, 'packages/api-other/src/index.ts').profile, 'broad');
+  }
+});
+
 describe('ProfileV2 — Schema, Validation & Monorepo Overrides', () => {
   let tmpDir;
 
