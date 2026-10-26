@@ -64,7 +64,7 @@ execution policy blocks the wrappers. For updates and removal, follow
 
 ### Activation: how a rule reaches an agent
 
-A rule's frontmatter (or `skill.yaml`) states how it should be delivered:
+A rule's frontmatter or selected manifest states how it should be delivered:
 
 ```yaml
 activation: always   # always | auto | globs  (default: auto)
@@ -78,6 +78,19 @@ agent selects from their description. The per-client mapping is in the
 [README](README.md#how-a-rule-reaches-each-agent) and the
 [compatibility matrix](docs/ADAPTER_COMPATIBILITY.md). `contextos validate`
 reports an unknown value, an empty body, or a `name` that differs from the folder.
+
+Manifests take precedence in this order: `skill.v2.yaml`, `skill.yaml`, then a
+manifestless `SKILL.md`. A manifest may declare a different Markdown `entrypoint`
+and resources relative to its skill directory. Compiler, validator and adapters
+use that same entrypoint. A missing entrypoint or a symlink/junction escape fails
+before export changes existing outputs. Exported Markdown links are adjusted
+for their destination; declared Markdown resources are copied for native skills.
+
+Manifest `activation` and `globs` override the corresponding entrypoint
+frontmatter. `globs` accepts a string or a list of non-empty strings; brace groups
+such as `**/*.{ts,tsx}` keep their inner commas. `fileGlobs` is a legacy manifest
+alias for adapter scopes. These fields do not replace resolver
+`signals.fileGlobs`, which score task recommendations.
 
 ### Updating and removing
 
@@ -126,6 +139,15 @@ them with `contextos skill add <name>` before using them. Resolver budgets are
 soft estimates of selected bodies and exclude client instructions, chat history,
 and tool output. Required safety guidance can overflow the budget with a warning.
 
+With `--installed-only`, a project with no installed skills returns an empty
+selection. If conflict resolution rejects a required dependency, its dependent
+skill is also omitted; an unsatisfiable explicit request is reported in
+`conflicts` with `resolution: "error"`.
+Missing required instructions produce `CTX_REQUIRED_SKILL_UNAVAILABLE`. A skill
+whose prerequisite is uninstalled under `--installed-only` or excluded by the
+profile is omitted with `CTX_RESOLVER_DEPENDENCY_UNAVAILABLE`. These warnings
+expose missing guidance; they do not install a replacement.
+
 ### Stack Detection & Workspace Graph (`detect`)
 
 ```bash
@@ -152,6 +174,9 @@ contextos profile apply frontend --scope apps/web        # Scope to package
 contextos profile apply backend                          # Focus on API and database
 contextos profile apply enterprise --no-export           # Suppress immediate adapter rewrite
 ```
+
+Nested overrides use the most specific matching directory: a rule for
+`packages/api` takes precedence over `packages`, regardless of application order.
 
 ### Skill & Catalog Management (`skill`)
 
@@ -205,6 +230,11 @@ does not depend on it, but `resolve` does). Ordinary exports do not use the last
 
 ### Diagnostics and Monitoring
 
+The public CLI's `--project <path>` targets diagnostics and mutations at that
+root, including `status`, `detect`, and `doctor --fix`. A missing path value is
+an error. Paths with spaces can be quoted. `export --target cursor,claude` and
+`export --check --target cursor,claude` render the same selected adapter set.
+
 ```bash
 # Run pre-flight health diagnostics (stack, installed skills, MCP, secrets):
 contextos doctor
@@ -215,6 +245,29 @@ contextos stats
 # Background daemon for continuous synchronization on file changes:
 contextos watch
 ```
+
+`watch` observes rule sources under `.agents/`, including project and vendor
+skills created after it starts, and excludes generated projections and caches.
+If another ContextOS command holds the project lock, it retries after a delay.
+Fallback directory watchers are replaced when source directories are recreated.
+
+After an interrupted export or update, inspect its journal and choose whether
+to finish the transaction or restore its original files:
+
+```bash
+contextos recover --list
+contextos recover --resume <transaction-id>
+# Or restore the state before the interrupted operation:
+contextos recover --rollback <transaction-id>
+```
+
+Recovery checks file hashes before changing them. If a file was edited after
+the interruption, recovery stops with an error and keeps the transaction's
+backups for manual reconciliation. Partially completed rollbacks can be retried
+with `--rollback`.
+If a legacy journal lacks original file preconditions, resume is refused rather
+than guessing from the current contents. Preserve the journal and backups for
+manual reconciliation or rollback of operations with known original state.
 
 ### Validation and Testing
 

@@ -43,10 +43,15 @@ memory. Applying them and checking them are separate steps over that list, so
 
 ### Sources and activation
 
-A rule is a folder with a `SKILL.md` (frontmatter `name`, `description`, optional
-`activation` and `globs`) and, optionally, a manifest. `activation` is resolved in
-one place (`adapters/shared.js`) and every adapter maps it to its client's native
-mechanism; see the [compatibility matrix](ADAPTER_COMPATIBILITY.md).
+A rule uses `skill.v2.yaml`, then `skill.yaml`, then a manifestless `SKILL.md`.
+Compiler, validator and adapters honor the selected manifest's `entrypoint` and
+contained file resources. Entrypoints, manifests and resources reject real-path
+escapes before reading. Manifest `activation` and `globs` override entrypoint
+frontmatter; `adapters/shared.js` resolves their contract for compilation and all
+exports. The compiled registry records the effective mode and scopes. Client
+mapping and its limits are in the [compatibility matrix](ADAPTER_COMPATIBILITY.md).
+Relative Markdown links are rebased when exported entrypoints or resources move;
+fenced examples retain literal links.
 
 ### Resolver
 
@@ -54,6 +59,9 @@ mechanism; see the [compatibility matrix](ADAPTER_COMPATIBILITY.md).
 workspace. Catalog skills use built-in signals; your own rules are matched on
 their name and description. It recommends; adapters do not consume its output:
 an export contains every installed rule that the profile allows.
+Resolver `signals.fileGlobs` match complete paths with globstars and brace groups;
+they are separate from adapter activation scopes. Missing mandatory guidance and
+unavailable prerequisites produce diagnostics, including with `--installed-only`.
 
 ### Adapters and the lockfile
 

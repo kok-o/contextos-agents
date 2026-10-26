@@ -1,8 +1,11 @@
 # ContextOS roadmap
 
-Updated 24 October 2026, after an independent audit of core 2.3.2 and the rework
-that followed it, now prepared as **3.0.0-rc.1 (unpublished, core only)**.
-Candidate instructions are in the [RC checklist](RELEASE_3.0.0-rc.1.md).
+Updated 26 October 2026. **3.0.0-rc.1 is published under npm's `next` tag**;
+`latest` remains 2.3.2. Release acceptance is recorded in the
+[RC checklist](RELEASE_3.0.0-rc.1.md) and its linked publication workflow.
+Subsequent recovery, manifest/export and
+watch fixes require verification of their own final tree; evidence for the
+earlier RC does not establish readiness of these changes.
 Earlier release records are in the
 [archive](archive/README.md).
 
@@ -25,6 +28,12 @@ Earlier release records are in the
 
 ## Next: find out whether anyone needs it
 
+First finish the current fixes: review recovery and preservation of user edits,
+confirm the shared manifest/export contract, and run the existing Windows,
+Linux and macOS / Node.js 22 and 24 matrix on the final revision. Include
+installed-package lifecycle, migration and recovery checks. Keep local results
+and hosted-platform evidence separate, and record the revision for each.
+
 The core is only worth more work if teams outside this repository use it. Run
 the [pilot protocol](PILOT_PROTOCOL.md) with three to five teams that have at
 least two coding agents and three developers, for three to four weeks, with the
@@ -39,9 +48,19 @@ if two or more are, spend the next effort on what they report.
 ## Open verification
 
 Live client behavior has not been verified for the new Claude Code layout or for
-Cursor, Copilot, Aider and Zed; see the
+Cursor, Copilot, Aider and Zed; track the separate client tasks
+[#30](https://github.com/kok-o/contextos-agents/issues/30),
+[#31](https://github.com/kok-o/contextos-agents/issues/31),
+[#32](https://github.com/kok-o/contextos-agents/issues/32),
+[#33](https://github.com/kok-o/contextos-agents/issues/33) and
+[#34](https://github.com/kok-o/contextos-agents/issues/34), the
 [verification record](ADAPTER_COMPATIBILITY.md#verification-record) and its
 protocol. Run it before relying on any client.
+
+Example verification currently covers all seven core skills and four of the
+36 catalog skills; the other 32 have structural validation only. See the
+[verification scope](product/catalog-quality.md). Choose further behavioral
+checks from the skills teams actually use and the failures they report.
 
 ## Frozen
 

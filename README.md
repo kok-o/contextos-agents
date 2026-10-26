@@ -88,6 +88,10 @@ activation: always
 session), `globs` (only for matching files, with a `globs:` list) or `auto`
 (the agent decides from the description; the default).
 
+Optional manifests use `skill.v2.yaml` before `skill.yaml` and can declare an
+entrypoint and resources. Their activation fields override entrypoint
+frontmatter; see the [source and activation contract](GUIDE.md#activation-how-a-rule-reaches-an-agent).
+
 **3. Compile, export, and check.**
 
 ```sh
