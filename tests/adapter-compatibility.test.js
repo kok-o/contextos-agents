@@ -224,17 +224,16 @@ describe('Phase 2: Adapter Compatibility & Technical Contracts', () => {
     assert.ok(updatedConf.includes('map-tokens'), 'Must preserve user map-tokens setting');
   });
 
-  test('Task 2.9: Antigravity IDE workspace rules isolation', () => {
+  test('Task 2.9: Antigravity rules share the directory without targeting internal engine files', () => {
     const rendered = renderAdapters(fixtureDir, 'all');
 
-    // Verify that NO adapter targets .agents/rules/
-    // (.agents/rules/ is ContextOS internal rule engine catalog and must never be overwritten)
-    for (const art of rendered.artifacts) {
-      assert.ok(
-        !art.path.startsWith('.agents/rules/'),
-        `Adapter must not overwrite ContextOS internal rule catalog (.agents/rules/): ${art.path}`
-      );
+    const rules = rendered.artifacts.filter(art => art.path.startsWith('.agents/rules/'));
+    assert.ok(rules.length > 0, 'Scoped skills must have native Antigravity rules');
+    for (const art of rules) {
+      assert.match(art.path, /^\.agents\/rules\/contextos-[^/]+\.md$/);
+      assert.equal(art.generator, 'gemini@2');
     }
+    assert.ok(!rendered.artifacts.some(art => art.path === '.agents/rules/rule-catalog.js'));
   });
 
   test('Task 2.11: User-created rules and prompts outside ContextOS are preserved on sync', () => {

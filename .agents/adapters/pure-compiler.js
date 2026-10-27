@@ -26,6 +26,7 @@ const {
   removeManagedBlock,
   extractManagedBlock,
   ownsDiskFile,
+  isStrictBoundedRule,
   isTextMedia,
   TEXT_EXTENSION,
   CONTEXTOS_BLOCK_START,
@@ -323,6 +324,11 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
       if (fs.existsSync(absPath)) {
         const diskBuf = fs.readFileSync(absPath);
         diskHash = computeExactHash(diskBuf);
+        if (art.requireOwnedExisting && !options.force) {
+          const owned = existingRecord?.generator === art.generator &&
+            (diskHash === existingRecord.exactSha256 || (textLike && computeSemanticHash(diskBuf) === existingRecord.semanticTextSha256));
+          if (!owned) throw ownershipError(art.path, 'overwrite');
+        }
         if (diskHash === exactSha256 || (textLike && computeSemanticHash(diskBuf) === semanticTextSha256)) {
           needsWrite = false;
         } else if (!art.preservesUserContent && !options.force) {
@@ -387,6 +393,7 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
             existing: meta,
             alternates: alternatesByPath[recordedPath] || [],
             legacyRecord: null,
+            strict: isStrictBoundedRule(recordedPath, meta),
           });
           if (!owned) throw ownershipError(recordedPath, 'prune');
           tx.stageDeleteWithParents(recordedPath, { expectedBeforeHash: beforeHash });

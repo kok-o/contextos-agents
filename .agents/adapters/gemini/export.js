@@ -5,16 +5,18 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, stripFrontmatter, collectSkillDirectories, renderSkillResources, relocateSkillLinks } = require('../shared.js');
+const crypto = require('crypto');
+const { getSkillEntrypointPath, readSkillMetadata, stripFrontmatter, collectSkillDirectories, renderSkillResources, relocateSkillLinks, resolveActivation } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
+const { antigravityGlobs, boundedWindowsGlobs } = require('./globs.js');
 
 const GENERATOR_ID = 'gemini@2';
 
 function describe() {
   return {
     name: 'gemini',
-    version: '2.0.0',
-    description: 'Compiles shared native skills and supporting resources for documented client discovery paths',
+    version: '2.2.0',
+    description: 'Compiles shared native skills, resources and Antigravity activation rules',
     targetPattern: '.agents/generated/gemini/skills/**/SKILL.md',
   };
 }
@@ -56,6 +58,55 @@ ${mergedContent.trim()}
       sourceSkillIds: [skillName],
     },
   ];
+
+  // Antigravity skills expose descriptions on demand; activation belongs to
+  // native rules. Keep the shared skill projection for Codex/Gemini clients.
+  const activation = resolveActivation(skillDir);
+  if (activation.mode !== 'auto') {
+    const destination = `.agents/rules/contextos-${skillName}.md`;
+    const ruleBody = relocateSkillLinks(mergedContent.trim(), {
+      skillDir, destination, projectRoot: context.projectRoot,
+      resourceRoot: `.agents/skills/${skillName}`,
+    });
+    const globs = antigravityGlobs(activation.globs, context.projectRoot).join(', ');
+    if (/[\r\n]/.test(globs)) throw new Error(`Skill '${skillName}': Antigravity globs must fit on one line`);
+    const ruleContent = field => `---\ntrigger: ${activation.mode === 'always' ? 'always_on' : 'glob'}\ndescription: ${JSON.stringify(description)}\n${field === null ? '' : `globs: ${JSON.stringify(field)}\n`}---\n\nSupporting resources are in \`.agents/skills/${skillName}/\` relative to the workspace root. Markdown links are relative to this rule file.\n\n${ruleBody}\n`.replace(/\r\n?/g, '\n');
+    const primaryContent = ruleContent(activation.mode === 'globs' ? globs : null);
+    if (Buffer.byteLength(primaryContent) > 24000) {
+      throw new Error(`Skill '${skillName}': Antigravity primary rule exceeds the 24000-byte limit`);
+    }
+    artifacts.push({
+      path: destination,
+      content: primaryContent,
+      mediaType: 'text/markdown',
+      kind: 'generated-adapter',
+      generator: GENERATOR_ID,
+      sourceSkillIds: [skillName],
+    });
+    if (activation.mode === 'globs') {
+      const bounded = boundedWindowsGlobs(activation.globs, context.projectRoot);
+      const chunks = [];
+      let chunk = [];
+      for (const pattern of bounded) {
+        const candidate = [...chunk, pattern].join(', ');
+        if (Buffer.byteLength(JSON.stringify(candidate)) > 23000 || Buffer.byteLength(ruleContent(candidate)) > 24000) {
+          if (!chunk.length) throw new Error(`Skill '${skillName}': Antigravity bounded rule exceeds the 24000-byte limit`);
+          chunks.push(chunk); chunk = [];
+          if (Buffer.byteLength(JSON.stringify(pattern)) > 23000 || Buffer.byteLength(ruleContent(pattern)) > 24000) throw new Error(`Skill '${skillName}': Antigravity bounded rule exceeds the 24000-byte limit`);
+        }
+        chunk.push(pattern);
+      }
+      if (chunk.length) chunks.push(chunk);
+      if (chunks.length > 128) throw new Error(`Skill '${skillName}': Antigravity bounded export exceeds 128 rule files`);
+      const id = crypto.createHash('sha256').update(skillName).digest('hex').slice(0, 24);
+      chunks.forEach((patterns, i) => artifacts.push({
+        path: `.agents/rules/contextos-bounded-${id}-${String(i).padStart(3, '0')}.md`,
+        content: ruleContent(patterns.join(', ')),
+        mediaType: 'text/markdown', kind: 'generated-adapter', generator: GENERATOR_ID,
+        sourceSkillIds: [skillName], requireOwnedExisting: true,
+      }));
+    }
+  }
 
   artifacts.push(...renderSkillResources(skillDir, [
     `.agents/generated/gemini/skills/${skillName}`, `.agents/skills/${skillName}`,

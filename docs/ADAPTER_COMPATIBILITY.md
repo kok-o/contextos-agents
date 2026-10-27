@@ -25,7 +25,8 @@ below are historical observations, not fresh RC acceptance. MCP is excluded.
 | Zed | `.zed/rules.md`, `.zed/prompts/*.md` | Tested | Manual import only | Not verified |
 | Codex CLI | `.agents/skills/*/SKILL.md` | Tested; published RC.1 isolated fixtures checked | CLI 0.164.0-alpha.11.1 / Sol: native metadata list 1/1; exported body read in explicit mention 5/5 and automatic naming review 5/5 without source-search confounds; exported sibling resource read 1/1. See [versioned report](gemini_COMPATIBILITY.md). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls. One additional confounded automatic attempt retained. Small sample; enforced always/glob activation unsupported. |
 | Codex Desktop | `.agents/skills/*/SKILL.md` | Published RC.1; four isolated fixtures and final checks passed | About 26.1021.31345, backend 0.164.0-alpha.11.1, Sol/high: visible picker 1/1; native body injection 5/5 explicit; exported-body reads 5/5 automatic; native sibling resource and reference update observed. See [desktop record](gemini_COMPATIBILITY.md#desktop-observation-27-october-2026). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls and the no-rule control. Resource/update confirmations observed. Small sample; always/glob enforcement unsupported. |
-| Gemini CLI, Antigravity | `.agents/skills/*/SKILL.md` | Tested | Not verified | Not verified |
+| Gemini CLI | `.agents/skills/*/SKILL.md` | Tested | Not verified | Not verified |
+| Antigravity IDE 2.5.5 | `.agents/skills/*/SKILL.md`, `.agents/rules/contextos-*.md` | Tested | Native skill discovery, auto and explicit selection observed in a local build; native rule activation tested separately | Small-sample [skill trials](ANTIGRAVITY_SKILL_TRIALS.md), [activation results](ANTIGRAVITY_ACTIVATION_RESULTS.md), and [bounded-glob results](ANTIGRAVITY_BOUNDED_ADAPTER_RESULTS.md); published RC was not tested live. |
 
 Earlier Codex records are in [docs/evidence/](evidence/) and the
 [archived release records](archive/README.md); those conditions ran once. The
@@ -39,9 +40,10 @@ recorded surface/version observations.
 ### How to verify a client yourself
 
 The always/globs procedure below applies only to adapters that preserve native
-rule activation. The shared `gemini` native-skills exporter emits only name and
-description frontmatter: its `always` and `globs` rules become agent-selected
-skills. For Codex, use the controls, separate explicit/automatic trials and
+rule activation. The shared native-skill projection of `gemini` emits only name
+and description frontmatter: `always` and `globs` sources become agent-selected
+skills in Codex and Gemini CLI. Antigravity additionally receives native rule
+files with activation triggers. For Codex, use the controls, separate explicit/automatic trials and
 activation-loss diagnostics in [issue #31](https://github.com/kok-o/contextos-agents/issues/31)
 and the [versioned record](gemini_COMPATIBILITY.md). An unrelated arithmetic
 prompt is not a required always-rule pass for that exporter.
@@ -68,6 +70,7 @@ prompt is not a required always-rule pass for that exporter.
 | **Aider** | Aider | `.aider.conf.yml`, `CONVENTIONS.md` | `read: CONVENTIONS.md`; `always` bodies are inlined | YAML values merged; `CONVENTIONS.md` refused unless ContextOS wrote it |
 | **Zed** | Manual templates | `.zed/rules.md`, `.zed/prompts/*.md` | Manual import; `always` bodies are inlined in `rules.md` | Generated files protected |
 | **Codex, Gemini CLI** | Native skill discovery | `.agents/skills/*/SKILL.md` | Skills selected from their description | Modified generated artifacts refuse overwrite; a root `AGENTS.md` or `GEMINI.md` is untouched |
+| **Antigravity IDE** | Native skills and rules via `gemini` export | `.agents/skills/`, `.agents/rules/contextos-*.md` | `always_on` and `glob`; path-pattern behavior remains client-dependent | Only unchanged managed rules are replaced or pruned |
 
 Export only ever replaces files that ContextOS wrote (recorded in the lockfile
 and unchanged since). `export --force` replaces a differing file at a generated
@@ -75,7 +78,8 @@ path explicitly.
 
 Bundled engineering rules (`.agents/AGENTS.md`, installed by `init --with-core`)
 are included in the Cursor, Aider, Zed and Copilot outputs only when the project
-has them. Antigravity compatibility has not been independently verified.
+has them. Antigravity has separate, limited live evidence in the record above;
+it is not certified for every path-glob pattern.
 
 ### Activation
 
@@ -131,6 +135,7 @@ export and names the rule.
   - `.agents/skills/<skill-name>/SKILL.md` (native skill directory loaded by Gemini CLI).
   - `.agents/generated/gemini/skills/<skill-name>/SKILL.md`.
   - Declared supporting resources alongside each skill. No root `GEMINI.md` is generated.
+  - For Antigravity, `.agents/rules/contextos-<skill-name>.md` when activation is `always` or `globs`.
 - **Contract**:
   - Clean YAML frontmatter (`name`, `description`); examples, troubleshooting and references remain separate resources loaded on demand.
   - In RC.1 this native-skills projection does not preserve `activation: always` or `globs` as native enforcement; every rule becomes an agent-selected skill. Codex CLI observations and their surface limits are recorded in [the versioned report](gemini_COMPATIBILITY.md).
@@ -183,13 +188,19 @@ IDE-extension behavior remains untested and enforced always/globs unsupported.
 - **Preservation Policy**:
   - User prompts in `.zed/prompts/` not originating from ContextOS are preserved.
 
-### 2.7 Google Antigravity IDE Assessment & Boundary Contract
+### 2.7 Google Antigravity IDE rules and skills
 
 - **Integration Architecture & Boundaries**:
-  - Antigravity IDE and CLI look for project customizations in `.gemini/` or workspace rules.
-  - Crucially, ContextOS internally reserves the `.agents/rules/` directory for its internal rule catalog engine (`.agents/rules/rule-catalog.js`).
-  - **Decision**: ContextOS does not generate external consumer files in `.agents/rules/`. It exports workspace skills to `.agents/skills/`; Antigravity's actual loader behavior requires separate verification.
-  - This avoids namespace collision and maintains zero ambiguity between ContextOS internals and IDE workspace rules.
+  - The shared `gemini` export retains `.agents/skills/` for native skill discovery by Antigravity, Codex and Gemini CLI.
+  - Antigravity activation uses its [documented native rules](https://antigravity.google/docs/rules/): `activation: always` emits `trigger: always_on`; `activation: globs` emits `trigger: glob` with comma-separated `globs`. `auto` remains an on-demand skill and emits no additional rule.
+  - Native activation rules contain the instruction body and live at `.agents/rules/contextos-<skill-name>.md`. The internal `.agents/rules/rule-catalog.js` is not an output target. Supporting Markdown links point to exported resources under `.agents/skills/<skill-name>/`.
+  - Rules use the same `gemini@2` ownership, transactions, drift detection and pruning as the existing skill projection. Existing user files and edited generated rules refuse replacement; switching activation to `auto` removes only an unchanged managed rule.
+  - Glob values use YAML string quoting, including patterns beginning with `*`. Multiline patterns fail before writing outputs. IDE 2.5.5's editor can display the surrounding YAML quotes literally; this UI behavior is not used as evidence of runtime matching.
+  - These native rule triggers apply to Antigravity. They do not add always/glob support to Codex or Gemini CLI. Client loading and instruction adherence still require separate live evidence; Antigravity's documented rule size/token limits also apply.
+  - Every generated native rule, including the primary `always_on` or `glob` file, must fit within 24,000 UTF-8 bytes after LF normalization, including frontmatter and relocated links. An oversized rule stops rendering before any managed output or lockfile is changed. Native skills remain separate from this rule-file limit; client-side includes can still exceed it after expansion.
+  - **Windows compatibility (27 October 2026):** IDE 2.5.5 matches an absolute Windows display path using a forward-slash matcher. The adapter adds escaped workspace-anchored equivalents for recursive trees, finite `?`/character-class components and `**/` branches. Retained portable forms also exclude backslashes from single-character wildcards. For a fixed directory and a filename containing one `*`, such as `src/api/*.js` or `src/api/**/test*.js`, the adapter also emits bounded native rules preserving folder depth and filename scope on NTFS. Other wildcard-directory and complex filename patterns are not covered by this workaround. Re-export after moving a project. See the [bounded adapter results](ANTIGRAVITY_BOUNDED_ADAPTER_RESULTS.md); this is not universal glob certification.
+  - **Bounded-rule cost and safety:** the NTFS workaround can emit dozens of `.agents/rules/contextos-bounded-<hash>-<number>.md` files per skill. Its serialized glob field is capped at 23,000 bytes and the complete raw rule at 24,000 bytes. They are managed by the existing `gemini@2` transaction and lockfile; unowned or modified chunks refuse overwrite or pruning. Exports fail before writing if a skill would exceed 2,048 bounded patterns, 128 bounded files, or the rule limit. The actual client limit also applies after file includes are expanded. Workspace paths containing commas cannot use this workaround and cause an error for covered patterns.
+  - **Grouped patterns:** nested `{a,b}` alternatives are expanded before Antigravity's unconditional comma split. Literal commas cannot be represented and fail before writing. Expansion is bounded to 128 patterns and a 16,000-byte field. Workspace paths containing commas receive no native alternative.
 
 ---
 
@@ -200,7 +211,7 @@ When multiple adapters are exported simultaneously (`contextos export all`):
 1. **Target Disjointness**: Each adapter generates files in distinct, isolated paths:
    - Cursor: `.cursor/rules/*.mdc`
    - Claude: `.claude/rules/`, `.claude/skills/`
-   - Gemini and Codex: `.agents/skills/`, `.agents/generated/gemini/`
+   - Gemini and Codex skills, plus Antigravity rules: `.agents/skills/`, `.agents/generated/gemini/`, `.agents/rules/contextos-*.md`
    - Copilot: `.github/copilot-instructions.md`
    - Aider: `.aider.conf.yml`, `CONVENTIONS.md`
    - Zed: `.zed/rules.md`, `.zed/prompts/*.md`

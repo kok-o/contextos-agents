@@ -27,6 +27,7 @@ const IGNORED_PREFIXES = [
   '.agents/generated',
   '.agents/compiled',
   '.agents/skills',
+  '.agents/rules',
   '.git',
   'node_modules',
   '.cursor',
