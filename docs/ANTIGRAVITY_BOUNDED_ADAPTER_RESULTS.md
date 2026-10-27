@@ -27,7 +27,7 @@ the existing export contract.
 The adapter bounds expansion to 2,048 generated patterns and 128 chunk files
 per skill. It checks the serialized glob field and entire raw rule file before
 writing; a rule exceeding 24,000 bytes fails rather than silently truncating.
-Client-side `@[...](...)` includes can expand the final body further and remain
+Client-side file includes can expand the final body further and remain
 subject to the client's own size limit. A comma in the workspace path cannot
 be represented for these patterns and causes an error before mutation.
 
