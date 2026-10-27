@@ -1,0 +1,1686 @@
+[
+  {
+    "runId": "codex-desktop-control-positive",
+    "date": "2026-10-27",
+    "packageVersion": null,
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer",
+      "isolatedProfile": false
+    },
+    "case": "control-positive",
+    "trial": 1,
+    "threadId": "01a17cdb-6120-74f2-89c5-c236a826de95",
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.\n",
+    "fileContract": null,
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": null,
+    "confirmationObserved": null,
+    "controlMarkerObserved": false,
+    "rawResponse": "In [src/api/invoice.js:1](/<DESKTOP_TEST_ROOT>/control/src/api/invoice.js:1), consider renaming `totalInvoice(lines)` to **`calculateInvoiceTotal(lines)`**. It more clearly describes the function’s action: summing the line amounts.\n\nNo files changed.",
+    "commentary": [
+      "I’ll read `src/api/invoice.js` and suggest clearer names where useful, without changing files.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Location; rg --files -g AGENTS.md -g invoice.js -g package.json",
+        "exitCode": 0
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath src/api/invoice.js; Get-ChildItem -Force -Name; $taskPath = Get-Item -LiteralPath .; while ($null -ne $taskPath) { $taskAgentFile = Join-Path $taskPath.FullName 'AGENTS.md'; if (Test-Path -LiteralPath $taskAgentFile) { Write-Output $taskAgentFile; Get-Content -LiteralPath $taskAgentFile }; $taskPath = $taskPath.Parent }",
+        "exitCode": 0
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 107782,
+      "cached_input_tokens": 83968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 318,
+      "reasoning_output_tokens": 28,
+      "total_tokens": 108100
+    },
+    "uiEvidence": "control-response",
+    "rawLogSha256": "2c97ab9773ef076a6e6b779708482ace0f2088f28c579db0863cb5a512a76851",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:15:16.657Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-explicit-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker click",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 1,
+    "threadId": "01a17cf3-149a-7961-9e0b-d01224a4a224",
+    "prompt": "[$compat-auto](<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md)  Review function names in src/api/invoice.js. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "[`totalInvoice(lines)`](<DESKTOP_TEST_ROOT>/auto/src/api/invoice.js:1) is understandable. Consider `calculateInvoiceTotal(lines)` to make the action and return value clearer.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review function names in `src/api/invoice.js` without changing files.\n"
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-auto</name>\n<path><DESKTOP_TEST_ROOT>\\auto\\.agents\\skills\\compat-auto\\SKILL.md</path>\n---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-03178a929fe8b878f0f80a5b\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents\\skills\\compat-auto\\SKILL.md'; Get-Content -LiteralPath 'src\\api\\invoice.js'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command rg --files -g AGENTS.md -g '*invoice*'",
+        "exitCode": 0
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72299,
+      "cached_input_tokens": 60032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 293,
+      "reasoning_output_tokens": 89,
+      "total_tokens": 72592
+    },
+    "uiEvidence": "explicit-1-picker-selected",
+    "rawLogSha256": "671397881810cea2acf83e4f88cbac77faca0cbfc80514044535ec8f862b5387",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-auto",
+        "path": "<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:41:09.568Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-positive-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 1,
+    "threadId": "01a17cf4-4a9d-7813-9cb6-db7c5f3d3ed5",
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "Consider renaming `totalInvoice(lines)` to **`calculateInvoiceTotal(lines)`**. The verb makes it clear that the function calculates and returns the sum of line amounts.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll read the naming-review guidance and inspect `src/api/invoice.js`, then suggest clearer names where useful without changing files.\n",
+      "I’m using the `compat-auto` skill for this review. The function sums line amounts, so `calculateInvoiceTotal` would make its purpose clearer.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '<DESKTOP_TEST_ROOT>/auto/.agents/skills/compat-auto/SKILL.md'; Get-Content -LiteralPath '<DESKTOP_TEST_ROOT>/auto/src/api/invoice.js'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71908,
+      "cached_input_tokens": 59904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 463,
+      "reasoning_output_tokens": 214,
+      "total_tokens": 72371
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "0bb69d33e9279eec1d3e883d141cb76c4f1d9e7cc0b576c17b17bb40435de264",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:42:29.060Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-negative-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 1,
+    "threadId": "01a17cf4-b3f3-72a3-a744-37a9b307ca40",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35800,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 35805
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "0f79e241593a75727f5026de269605c7da8a48f23443df46cd6a7aa2e07201b8",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:42:55.980Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-explicit-2",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker; Enter selection",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 2,
+    "threadId": "01a17cf5-bd90-7151-bfc1-5b92ef195d50",
+    "prompt": "[$compat-auto](<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md)  Review function names in src/api/invoice.js. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "`totalInvoice(lines)` is understandable, but `calculateInvoiceTotal(lines)` would more clearly describe its action and numeric return value.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names in `src/api/invoice.js` without changing files.\n"
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-auto</name>\n<path><DESKTOP_TEST_ROOT>\\auto\\.agents\\skills\\compat-auto\\SKILL.md</path>\n---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-03178a929fe8b878f0f80a5b\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath .agents\\skills\\compat-auto\\SKILL.md; Get-Content -LiteralPath src\\api\\invoice.js; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72248,
+      "cached_input_tokens": 48128,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 202,
+      "reasoning_output_tokens": 41,
+      "total_tokens": 72450
+    },
+    "uiEvidence": "explicit-2-picker-selected-text",
+    "rawLogSha256": "28884ab21333ab56ccbe4352104f035740abb5a1881a72838d282ac30869adb1",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-auto",
+        "path": "<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:44:03.980Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-positive-2",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 2,
+    "threadId": "01a17cf7-683f-7091-a03b-07aa2aae78c1",
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "Rename `totalInvoice(lines)` to `calculateInvoiceTotal(lines)` to make its action clearer: it sums the line amounts and returns the invoice total.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names and suggest any useful improvements without changing files.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content .agents/skills/compat-auto/SKILL.md; Get-Content src/api/invoice.js; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71898,
+      "cached_input_tokens": 59648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 260,
+      "reasoning_output_tokens": 105,
+      "total_tokens": 72158
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "6bf47a77051c8d91a785348d212ab0e8f2ad11d2554786e350fd96b2409b3ff7",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:45:53.407Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-negative-2",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 2,
+    "threadId": "01a17cf7-ae85-72f2-9fed-26a11d4a1195",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35801,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 35806
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "7aa21413f52d31f9833f8674c0149a5555076ea847e42525e247bc07d2fbfe86",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:46:11.308Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-explicit-3",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker; Enter selection",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 3,
+    "threadId": "01a17cf8-1a19-7193-b8d0-21a501289efd",
+    "prompt": "[$compat-auto](<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md)  Review function names in src/api/invoice.js. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "Reviewed [`totalInvoice(lines)`](<DESKTOP_TEST_ROOT>/auto/src/api/invoice.js:1). The name is understandable; `calculateInvoiceTotal` would make its purpose clearer. No naming defects found, and no files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names in `src/api/invoice.js` without changing files."
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-auto</name>\n<path><DESKTOP_TEST_ROOT>\\auto\\.agents\\skills\\compat-auto\\SKILL.md</path>\n---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-03178a929fe8b878f0f80a5b\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents/skills/compat-auto/SKILL.md'; Get-Content -LiteralPath 'src/api/invoice.js'; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72247,
+      "cached_input_tokens": 60032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 319,
+      "reasoning_output_tokens": 121,
+      "total_tokens": 72566
+    },
+    "uiEvidence": "explicit-3-picker-selected-text",
+    "rawLogSha256": "036e08b5c7d97378b5c10f8f0ecb161e364712c247f614c13fe4b2758fdfcfb6",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-auto",
+        "path": "<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:46:39.087Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-positive-3",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 3,
+    "threadId": "01a17cf8-e027-7f62-8b20-c1735dccdce3",
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "`totalInvoice(lines)` → **`calculateInvoiceTotal(lines)`** would be clearer: it explicitly describes calculating a total from the line amounts.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names and suggest clearer alternatives where useful, without changing files.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents/skills/compat-auto/SKILL.md'; Get-Content -LiteralPath 'src/api/invoice.js'; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71862,
+      "cached_input_tokens": 59776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 215,
+      "reasoning_output_tokens": 46,
+      "total_tokens": 72077
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "d85f768b09698072f60d05ff0ffda15908d0119ac45e03004c15de38fd39357c",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:47:29.513Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-negative-3",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 3,
+    "threadId": "01a17cf9-2320-7871-8efb-badd3990d018",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35798,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 35803
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "1202acb6af9334db996d867c488f294d6cabfdff7e155b60ecbbb32f9904f68f",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:47:46.854Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-explicit-4",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker; Enter selection",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 4,
+    "threadId": "01a17cf9-89ae-7911-a32e-f050c1bac5ab",
+    "prompt": "[$compat-auto](<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md)  Review function names in src/api/invoice.js. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "`totalInvoice(lines)` is understandable, though `calculateInvoiceTotal(lines)` would describe the action more explicitly. This is an optional clarity improvement; no naming defect found.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names in `src/api/invoice.js` without changing files.\n"
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-auto</name>\n<path><DESKTOP_TEST_ROOT>\\auto\\.agents\\skills\\compat-auto\\SKILL.md</path>\n---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-03178a929fe8b878f0f80a5b\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents\\skills\\compat-auto\\SKILL.md'; Get-Content -LiteralPath 'src\\api\\invoice.js'; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72247,
+      "cached_input_tokens": 70528,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 225,
+      "reasoning_output_tokens": 55,
+      "total_tokens": 72472
+    },
+    "uiEvidence": "explicit-4-picker-selected-text",
+    "rawLogSha256": "f982479c254f0ed0fff97ef6d893ec6b6c21b9a042902e978320f1a650712003",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-auto",
+        "path": "<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:48:13.151Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-positive-4",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 4,
+    "threadId": "01a17cf9-d136-73c2-a33a-ee88a285dbd5",
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "In [invoice.js](<DESKTOP_TEST_ROOT>/auto/src/api/invoice.js:1), rename `totalInvoice(lines)` to **`calculateInvoiceTotal(lines)`**. The verb makes the action clearer: it sums the line amounts and returns the total.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll review the function names and their usage without changing files. I’m using the compat-auto skill for this naming review.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content .agents/skills/compat-auto/SKILL.md; Get-Content src/api/invoice.js; rg --files -g AGENTS.md -g '*invoice*'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\nsrc\\api\\invoice.js\n"
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command $taskDir = Get-Item .; while ($null -ne $taskDir) { $taskInstructions = Join-Path $taskDir.FullName 'AGENTS.md'; if (Test-Path -LiteralPath $taskInstructions) { Write-Output $taskInstructions; Get-Content -LiteralPath $taskInstructions }; $taskDir = $taskDir.Parent }; rg -n 'totalInvoice|invoice' . --glob '!package-lock.json' --glob '!node_modules/**' --glob '!.git/**'; rg --files src -g AGENTS.md",
+        "exitCode": 1
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 108255,
+      "cached_input_tokens": 95616,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 361,
+      "reasoning_output_tokens": 25,
+      "total_tokens": 108616
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "f5e6230964f482373f2d87316616c383cb28feb687952649dc53817e5a2e9e19",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:48:31.210Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-negative-4",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 4,
+    "threadId": "01a17cfa-1788-7352-a28e-b44d12a618c3",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35799,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 35804
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "4774816337dd3799aad97a1374449d5bd53f3930df14b8afd7bdd89c8d8193de",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:48:49.576Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-explicit-5",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker; Enter selection",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 5,
+    "threadId": "01a17cfa-8000-7913-a1e3-ea59b2149a4b",
+    "prompt": "[$compat-auto](<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md)  Review function names in src/api/invoice.js. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "In [invoice.js:1](<DESKTOP_TEST_ROOT>/auto/src/api/invoice.js:1), `totalInvoice(lines)` is understandable, but `calculateInvoiceTotal(lines)` states the action and result more clearly.\n\nThis is an optional naming improvement. No files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names in `src/api/invoice.js` without changing files.\n"
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-auto</name>\n<path><DESKTOP_TEST_ROOT>\\auto\\.agents\\skills\\compat-auto\\SKILL.md</path>\n---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-03178a929fe8b878f0f80a5b\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents\\skills\\compat-auto\\SKILL.md'; Get-Content -LiteralPath 'src\\api\\invoice.js'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72305,
+      "cached_input_tokens": 59904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 259,
+      "reasoning_output_tokens": 34,
+      "total_tokens": 72564
+    },
+    "uiEvidence": "explicit-5-picker-selected",
+    "rawLogSha256": "416e6297aa953e5bbf9e7577892f8fd5dd64355943e0b1294806f8aee5687815",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-auto",
+        "path": "<DESKTOP_TEST_ROOT>\\auto\\\\.agents\\skills\\compat-auto\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:49:16.101Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-positive-5",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 5,
+    "threadId": "01a17cfb-32da-7942-90c4-33fc99dd6408",
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "`totalInvoice(lines)` sums line amounts. Consider `calculateInvoiceTotal(lines)` to make the action clearer.\n\nNo files changed.\n\nCTX-03178a929fe8b878f0f80a5b",
+    "commentary": [
+      "I’ll read the naming-review skill and inspect `src/api/invoice.js`, then suggest clearer names where useful.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content .agents/skills/compat-auto/SKILL.md; Get-Content src/api/invoice.js; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-03178a929fe8b878f0f80a5b\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71899,
+      "cached_input_tokens": 70400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 184,
+      "reasoning_output_tokens": 35,
+      "total_tokens": 72083
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "90bde697dd0ff4640197644f499d1973f492b6a6e25d6a334bd38cb3248f542c",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:50:01.933Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-negative-5",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 5,
+    "threadId": "01a17cfb-7b3a-7ba0-91e4-8ae6f3300670",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-03178a929fe8b878f0f80a5b",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35803,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 35808
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "250d183ab59eec39f84e558cf07b1c3fc7dfbb77c76547ee9faf944cc7e301d1",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:50:20.358Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-resources-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "resources",
+    "trial": 1,
+    "threadId": "01a17cfd-ccc0-7d01-9e16-d8e27a02ca07",
+    "prompt": "What is this project's invoice rounding policy? Inspect src/api/invoice.js as needed. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-resources/SKILL.md",
+    "resourceLoaded": true,
+    "expectedConfirmation": "Confirmation: CTX-d2e43f1d933c447e3929d64f",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "The policy is to **sum all line amounts, then round once to two decimal places**.\n\nCurrently, [src/api/invoice.js](<DESKTOP_TEST_ROOT>/resources/src/api/invoice.js:1) only sums the amounts; it does not implement rounding. No files were changed.\n\nConfirmation: CTX-d2e43f1d933c447e3929d64f",
+    "commentary": [
+      "I’ll read the invoice rounding guidance and inspect `src/api/invoice.js` without changing any files.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '<DESKTOP_TEST_ROOT>/resources/.agents/skills/compat-resources/SKILL.md'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-resources\r\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\r\n---\r\n# Invoice policy\r\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\r\n"
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath 'src/api/invoice.js'; rg --files -g AGENTS.md -g '*invoice*'",
+        "exitCode": 0
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents/skills/compat-resources/references/invoice-policy.md'",
+        "exitCode": 0,
+        "output": "# Invoice rounding\r\nRound once after summing all line amounts, to two decimal places.\r\nConfirmation: CTX-d2e43f1d933c447e3929d64f\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 108287,
+      "cached_input_tokens": 95872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 290,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 108577
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "cc9c1e32a0702dedc2e3e518bbfcc8ed290a5a5760e930e65c6c134151596df4",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:52:53.004Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-resources-explicit-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker; Enter selection",
+      "isolatedProfile": false
+    },
+    "case": "resources-explicit",
+    "trial": 1,
+    "threadId": "01a17cfe-7760-71a1-86d8-412a5cd38e75",
+    "prompt": "[$compat-resources](<DESKTOP_TEST_ROOT>\\resources\\\\.agents\\skills\\compat-resources\\SKILL.md)  What is this project's invoice rounding policy? Inspect src/api/invoice.js as needed. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-resources/SKILL.md",
+    "resourceLoaded": true,
+    "expectedConfirmation": "Confirmation: CTX-d2e43f1d933c447e3929d64f",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "The policy is to **sum all line amounts first, then round the total once to two decimal places**.\n\nHowever, [src/api/invoice.js](/<DESKTOP_TEST_ROOT>/resources/src/api/invoice.js:1) currently only sums the amounts; it does not apply rounding. No files were changed.\n\nConfirmation: CTX-d2e43f1d933c447e3929d64f",
+    "commentary": [
+      "I’ll use the compat-resources skill and check the policy reference against `src/api/invoice.js` without changing files.\n"
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-resources</name>\n<path><DESKTOP_TEST_ROOT>\\resources\\.agents\\skills\\compat-resources\\SKILL.md</path>\n---\nname: compat-resources\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\n---\n# Invoice policy\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents/skills/compat-resources/SKILL.md'; Get-Content -LiteralPath '.agents/skills/compat-resources/references/invoice-policy.md'; Get-Content -LiteralPath 'src/api/invoice.js'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-resources\r\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\r\n---\r\n# Invoice policy\r\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\r\n# Invoice rounding\r\nRound once after summing all line amounts, to two decimal places.\r\nConfirmation: CTX-d2e43f1d933c447e3929d64f\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72257,
+      "cached_input_tokens": 60032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 249,
+      "reasoning_output_tokens": 24,
+      "total_tokens": 72506
+    },
+    "uiEvidence": "resources-explicit-picker-selected",
+    "rawLogSha256": "e567606aa79a9f0c5279d12131f5057b4bd25d9ea5c1f26e90d8716ec979ba52",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-resources",
+        "path": "<DESKTOP_TEST_ROOT>\\resources\\\\.agents\\skills\\compat-resources\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:53:36.075Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-always-arithmetic",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "always-arithmetic",
+    "trial": 1,
+    "threadId": "01a17d00-1b61-7a52-975c-3c15b71b7ba5",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-dacf72ad2432fed084bb6768",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35785,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 120,
+      "reasoning_output_tokens": 113,
+      "total_tokens": 35905
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "aa71929569091756de2866b784b686a506e511140f0000723790d96f653bb0f0",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:55:23.574Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-always-api",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "always-api",
+    "trial": 1,
+    "threadId": "01a17d00-9ff7-7573-a28a-34e08795763a",
+    "prompt": "Read src/api/invoice.js and explain totalInvoice. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-always/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-dacf72ad2432fed084bb6768",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "[`totalInvoice(lines)`](<DESKTOP_TEST_ROOT>/always/src/api/invoice.js:1) uses `reduce` to sum every line’s `amount`, starting at `0`.\n\nFor example, `[{ amount: 10 }, { amount: 25 }]` returns `35`. An empty array returns `0`.\n\nIt assumes numeric amounts; it performs no validation, rounding, or tax calculations. No files were changed.\n\nCTX-dacf72ad2432fed084bb6768",
+    "commentary": [
+      "I’ll read `src/api/invoice.js` and explain how `totalInvoice` works without changing files.\n",
+      "The function adds each line’s `amount`, starting from zero. I’m also applying the workspace’s `compat-always` response convention.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath .agents/skills/compat-always/SKILL.md; Get-Content -LiteralPath src/api/invoice.js; rg --files -g AGENTS.md -g '!node_modules' -g '!.git'",
+        "exitCode": 1,
+        "output": "---\r\nname: compat-always\r\ndescription: \"General workspace response convention.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-dacf72ad2432fed084bb6768\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71834,
+      "cached_input_tokens": 59648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 452,
+      "reasoning_output_tokens": 187,
+      "total_tokens": 72286
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "96ffc8dd2ce0ea996c5b045113ea6b1c00742e85fc8df764c85b57cc2d0bc92c",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:55:57.743Z",
+    "readCommandNonzeroWithBody": 1
+  },
+  {
+    "runId": "codex-desktop-always-docs",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "always-docs",
+    "trial": 1,
+    "threadId": "01a17d00-da52-7222-b59b-26aa13d2dd07",
+    "prompt": "Read docs/note.md and summarize it. Do not inspect other files or change anything.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-dacf72ad2432fed084bb6768",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "`docs/note.md` states that this fixture contains a small invoice module.",
+    "commentary": [
+      "I’ll read only `docs/note.md` and summarize it.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath 'docs/note.md'",
+        "exitCode": 0
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71711,
+      "cached_input_tokens": 59776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 79,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 71790
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "c751d0d29ff5413adfde662d6c6fff3d93cb4823d83db9fc579b325e6f86a500",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:56:12.609Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-scoped-arithmetic",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "scoped-arithmetic",
+    "trial": 1,
+    "threadId": "01a17d02-6213-76b3-9cbc-3cd7c64aead6",
+    "prompt": "What is 7 + 5?\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-4281e011e593a20dc7342deb",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "12.",
+    "commentary": [],
+    "nativeBodyInjection": [],
+    "commands": [],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 35800,
+      "cached_input_tokens": 24064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 6,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 35806
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "4e3601f473c9f356fa7ed22de44e73a2423254468ee4c9d927880610fd6a0ad3",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:57:53.259Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-scoped-api",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "scoped-api",
+    "trial": 1,
+    "threadId": "01a17d02-b25c-7161-bc93-bfb65ed02f88",
+    "prompt": "Read src/api/invoice.js and explain totalInvoice. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-scoped/SKILL.md",
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-4281e011e593a20dc7342deb",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "[`totalInvoice(lines)`](<DESKTOP_TEST_ROOT>/scoped/src/api/invoice.js:1) adds every line’s `amount` using `reduce`, starting at `0`.\n\n- `[{ amount: 10 }, { amount: 25 }]` returns `35`.\n- An empty array returns `0`.\n- It assumes numeric amounts; it performs no validation, conversion, or rounding.\n\nNo files were changed.\n\nCTX-4281e011e593a20dc7342deb",
+    "commentary": [
+      "I’ll read the repository guidance and `src/api/invoice.js`, then explain `totalInvoice` without changing files.\n",
+      "I’m using the `compat-scoped` skill, which applies to inspecting `src/api` files.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Location; rg --files -g AGENTS.md -g invoice.js -g SKILL.md -g '!node_modules' -g '!.git'",
+        "exitCode": 0
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '<DESKTOP_TEST_ROOT>\\scoped\\.agents\\skills\\compat-scoped\\SKILL.md'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-scoped\r\ndescription: \"Conventions only for inspecting or changing src/api/**/*.js; do not use for documentation-only work.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-4281e011e593a20dc7342deb\r\n"
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command $taskLine = 0; Get-Content -LiteralPath 'src/api/invoice.js' | ForEach-Object { $taskLine++; '{0,4}: {1}' -f $taskLine, $_ }",
+        "exitCode": 0
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command $taskRoot = (Get-Location).Path; $taskCursor = Get-Item -LiteralPath $taskRoot; while ($null -ne $taskCursor) { $taskGuide = Join-Path $taskCursor.FullName 'AGENTS.md'; if (Test-Path -LiteralPath $taskGuide) { Write-Output $taskGuide; Get-Content -LiteralPath $taskGuide }; $taskCursor = $taskCursor.Parent }; rg --files --hidden -g AGENTS.md -g '!.git' -g '!node_modules' src",
+        "exitCode": 1
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 108586,
+      "cached_input_tokens": 96128,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 551,
+      "reasoning_output_tokens": 15,
+      "total_tokens": 109137
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "4a0761d9d36b2f44e60c33be7e6120e1a7f198253cd8aba74343a1e8fc2284c7",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:58:13.407Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-scoped-docs",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "desktop composer; no mention",
+      "isolatedProfile": false
+    },
+    "case": "scoped-docs",
+    "trial": 1,
+    "threadId": "01a17d02-fadd-7ae3-8373-ce191d54e3e6",
+    "prompt": "Read docs/note.md and summarize it. Do not inspect other files or change anything.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "expectedConfirmation": "CTX-4281e011e593a20dc7342deb",
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "rawResponse": "`docs/note.md` states that this fixture contains a small invoice module.",
+    "commentary": [
+      "I’ll read only `docs/note.md` and summarize it.\n"
+    ],
+    "nativeBodyInjection": [],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath 'docs/note.md'",
+        "exitCode": 0
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 71746,
+      "cached_input_tokens": 59776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 79,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 71825
+    },
+    "uiEvidence": null,
+    "rawLogSha256": "1a42ff6331a0c37ca7147c8ab2a2c548a5cf2fe545e1f8b98386d31c95e8cea1",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [],
+    "startedAt": "2026-10-27T10:58:32.106Z",
+    "readCommandNonzeroWithBody": 0
+  },
+  {
+    "runId": "codex-desktop-lifecycle-resources",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "ChatGPT in Codex mode",
+    "surface": "desktop",
+    "clientVersion": "26.1021.31345",
+    "backendVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "high",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "userTurnCount": 1,
+      "originator": "Codex Desktop",
+      "internalSource": "vscode",
+      "inputMethod": "native desktop picker; Enter selection",
+      "isolatedProfile": false
+    },
+    "case": "lifecycle-resources",
+    "trial": 1,
+    "threadId": "01a17d04-0a5a-7631-998a-ea78efac5d24",
+    "prompt": "[$compat-resources](<DESKTOP_TEST_ROOT>\\resources\\\\.agents\\skills\\compat-resources\\SKILL.md)  What is this project's invoice rounding policy? Inspect src/api/invoice.js as needed. Do not change files.\n",
+    "fileContract": "pass",
+    "metadataDiscovered": true,
+    "bodyLoaded": true,
+    "loadingEvidence": "native body injection in desktop transcript",
+    "loadedPath": ".agents/skills/compat-resources/SKILL.md",
+    "resourceLoaded": true,
+    "expectedConfirmation": "Confirmation: CTX-b638199b176ade8e0fa37778",
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "rawResponse": "The policy is to **sum all line amounts, then round the total once to two decimal places**.\n\n`src/api/invoice.js` currently only sums the amounts; it does not apply rounding. No files were changed.\n\nConfirmation: CTX-b638199b176ade8e0fa37778",
+    "commentary": [
+      "I’ll use the compat-resources skill and inspect the policy reference and invoice code without changing files.\n"
+    ],
+    "nativeBodyInjection": [
+      "<skill>\n<name>compat-resources</name>\n<path><DESKTOP_TEST_ROOT>\\resources\\.agents\\skills\\compat-resources\\SKILL.md</path>\n---\nname: compat-resources\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\n---\n# Invoice policy\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\n\n</skill>"
+    ],
+    "commands": [
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath '.agents\\skills\\compat-resources\\SKILL.md'; Get-Content -LiteralPath '.agents\\skills\\compat-resources\\references\\invoice-policy.md'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-resources\r\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\r\n---\r\n# Invoice policy\r\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\r\n# Invoice rounding\r\nRound once after summing all line amounts, to two decimal places.\r\nConfirmation: CTX-b638199b176ade8e0fa37778\r\n"
+      },
+      {
+        "command": "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -Command Get-Content -LiteralPath 'src\\api\\invoice.js'",
+        "exitCode": 0
+      }
+    ],
+    "confounded": false,
+    "sourceSearchObserved": false,
+    "otherConfirmationSourceObserved": false,
+    "completed": true,
+    "usage": {
+      "input_tokens": 72386,
+      "cached_input_tokens": 60032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 207,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 72593
+    },
+    "uiEvidence": "lifecycle-resources-response",
+    "rawLogSha256": "9896d24d23e5f2ad3d95cfb505f1d720c78763c047a72acbb1690a36a67dba85",
+    "notes": "Existing user skills/plugins/memory and full-access configuration retained. Fresh desktop chat; no expected marker or rule body typed into the prompt.",
+    "nativeMentionLinks": [
+      {
+        "name": "compat-resources",
+        "path": "<DESKTOP_TEST_ROOT>\\resources\\\\.agents\\skills\\compat-resources\\SKILL.md"
+      }
+    ],
+    "startedAt": "2026-10-27T10:59:41.395Z",
+    "readCommandNonzeroWithBody": 0
+  }
+]

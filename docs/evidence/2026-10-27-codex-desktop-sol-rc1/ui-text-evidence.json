@@ -1,0 +1,41 @@
+[
+  {
+    "trial": "explicit-2",
+    "capturedAt": "2026-10-27T10:43:57.659Z",
+    "focusedElement": "13 документ ChatGPT Value: app://-/index.html ID: RootWebArea",
+    "selectedComposerText": "￼\nCompat Auto  Review function names in src/api/invoice.js. Do not change files.",
+    "accessibilityExcerpt": [
+      "4430 кнопка Сменить проект: ContextOS desktop auto",
+      "4436 поле (settable, string) Поручите что угодно Value: Compat Auto Review function names in src/api/invoice.js. Do not change files.",
+      "4461 текстовый Compat Auto",
+      "4445 кнопка GPT-6.1 Sol Высокое ID: radix-_r_4pa_",
+      "Compat Auto  Review function names in src/api/invoice.js. Do not change files."
+    ]
+  },
+  {
+    "trial": "explicit-3",
+    "capturedAt": "2026-10-27T10:46:29.584Z",
+    "focusedElement": "8 документ ChatGPT Value: app://-/index.html ID: RootWebArea",
+    "selectedComposerText": "￼\nCompat Auto  Review function names in src/api/invoice.js. Do not change files.",
+    "accessibilityExcerpt": [
+      "796 кнопка Сменить проект: ContextOS desktop auto",
+      "802 поле (settable, string) Поручите что угодно Value: Compat Auto Review function names in src/api/invoice.js. Do not change files.",
+      "828 текстовый Compat Auto",
+      "811 кнопка GPT-6.1 Sol Высокое ID: radix-_r_pg_",
+      "Compat Auto  Review function names in src/api/invoice.js. Do not change files."
+    ]
+  },
+  {
+    "trial": "explicit-4",
+    "capturedAt": "2026-10-27T10:48:06.419Z",
+    "focusedElement": "8 документ ChatGPT Value: app://-/index.html ID: RootWebArea",
+    "selectedComposerText": "￼\nCompat Auto  Review function names in src/api/invoice.js. Do not change files.",
+    "accessibilityExcerpt": [
+      "1443 кнопка Сменить проект: ContextOS desktop auto",
+      "1449 поле (settable, string) Поручите что угодно Value: Compat Auto Review function names in src/api/invoice.js. Do not change files.",
+      "1474 текстовый Compat Auto",
+      "1458 кнопка GPT-6.1 Sol Высокое ID: radix-_r_1cq_",
+      "Compat Auto  Review function names in src/api/invoice.js. Do not change files."
+    ]
+  }
+]

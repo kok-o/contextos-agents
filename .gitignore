@@ -104,6 +104,7 @@ CONTEXTOS_FEEDBACK.md
 !/docs/evidence/release-2.3.2.json
 # Reviewed, sanitized Codex RC compatibility observations (issue #31)
 !/docs/evidence/2026-10-27-codex-sol-rc1/
+!/docs/evidence/2026-10-27-codex-desktop-sol-rc1/
 
 # Machine-specific API probes and one-off evidence collectors
 /benchmarks/analyze-sol.js

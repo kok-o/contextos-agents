@@ -119,6 +119,24 @@ test('release surface rejects credentials, local probes and raw evidence while r
   for (const file of ['benchmarks/luna/client.js', 'docs/ROADMAP.md', 'scratch/api.json', '.agents/state/session.json', '.agents/core/.env']) assert.ok(validatePackagePaths([...core, file], 'core').includes(file));
 });
 
+test('reviewed compatibility artifacts do not allow neighboring raw evidence or npm inclusion', () => {
+  const reviewed = [
+    'docs/evidence/2026-10-27-codex-sol-rc1/trials.json',
+    'docs/evidence/2026-10-27-codex-desktop-sol-rc1/auto-picker-discovery.png',
+  ];
+  const unreviewed = [
+    'docs/evidence/2026-10-27-codex-sol-rc1/private.json',
+    'docs/evidence/2026-10-27-codex-desktop-sol-rc1/raw/rollout.jsonl',
+    'docs/evidence/2026-10-27-codex-desktop-sol-rc1/auto-picker-discovery-original.png',
+    'docs/evidence/2026-10-27-codex-desktop-sol-rc1/.env',
+  ];
+  assert.deepEqual(validateGitPaths([...reviewed, ...unreviewed]), unreviewed);
+  for (const kind of ['core', 'mcp']) {
+    const violations = validatePackagePaths(reviewed, kind);
+    assert.ok(reviewed.every(file => violations.includes(file)));
+  }
+});
+
 test('secret gate permits ignored local credentials and detects their exact value in exempt fixtures', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-release-secret-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

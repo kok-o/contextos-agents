@@ -24,12 +24,14 @@ below are historical observations, not fresh RC acceptance. MCP is excluded.
 | Aider | `CONVENTIONS.md`, `.aider.conf.yml` | Tested | Not verified | Not verified |
 | Zed | `.zed/rules.md`, `.zed/prompts/*.md` | Tested | Manual import only | Not verified |
 | Codex CLI | `.agents/skills/*/SKILL.md` | Tested; published RC.1 isolated fixtures checked | CLI 0.164.0-alpha.11.1 / Sol: native metadata list 1/1; exported body read in explicit mention 5/5 and automatic naming review 5/5 without source-search confounds; exported sibling resource read 1/1. See [versioned report](gemini_COMPATIBILITY.md). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls. One additional confounded automatic attempt retained. Small sample; enforced always/glob activation unsupported. |
+| Codex Desktop | `.agents/skills/*/SKILL.md` | Published RC.1; four isolated fixtures and final checks passed | About 26.1021.31345, backend 0.164.0-alpha.11.1, Sol/high: visible picker 1/1; native body injection 5/5 explicit; exported-body reads 5/5 automatic; native sibling resource and reference update observed. See [desktop record](gemini_COMPATIBILITY.md#desktop-observation-27-october-2026). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls and the no-rule control. Resource/update confirmations observed. Small sample; always/glob enforcement unsupported. |
 | Gemini CLI, Antigravity | `.agents/skills/*/SKILL.md` | Tested | Not verified | Not verified |
 
 Earlier Codex records are in [docs/evidence/](evidence/) and the
 [archived release records](archive/README.md); those conditions ran once. The
 [27 October RC.1 record](gemini_COMPATIBILITY.md) adds repeated CLI observations,
-not a reliability guarantee or a desktop/IDE result. For the current Claude
+and a separate desktop group with actual picker selections and 25 fresh chats.
+Neither group is a reliability guarantee or an IDE-extension result. For the current Claude
 Code layout only skill discovery has been observed, once. Until the protocol
 below has been run, treat (b) and (c) as open for every client except these
 recorded surface/version observations.
@@ -142,6 +144,9 @@ Historical app-server/CLI probes, including explicit marker adherence in CLI
 automatic CLI observations for a skill defined by `SKILL.md` without a
 `skill.yaml`, plus exported sibling-resource and update diagnostics. These
 records do not establish desktop/IDE behavior or always/glob enforcement.
+The separate [desktop observation](gemini_COMPATIBILITY.md#desktop-observation-27-october-2026)
+records actual UI selection/body injection and reference refresh in new chats;
+IDE-extension behavior remains untested and enforced always/globs unsupported.
 
 ### 2.4 GitHub Copilot (.github/copilot-instructions.md)
 

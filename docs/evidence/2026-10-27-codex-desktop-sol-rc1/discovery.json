@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-10-27T10:40:37.136Z",
+  "surface": "desktop",
+  "query": "$compat",
+  "visibleName": "Compat Auto",
+  "description": "Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.",
+  "scope": "Проект",
+  "metadataDiscovered": true,
+  "visiblePath": null,
+  "bodyLoaded": null,
+  "confirmationObserved": null,
+  "selected": false,
+  "clientVersion": "26.1021.31345",
+  "backendVersion": "0.164.0-alpha.11.1",
+  "pathEvidence": "The visible picker did not expose a path. After selection, the serialized native mention and injected body independently identified the exported native path.",
+  "confirmedNativePath": ".agents/skills/compat-auto/SKILL.md",
+  "evidenceImage": "auto-picker-discovery.png"
+}
