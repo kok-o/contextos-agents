@@ -221,6 +221,7 @@ describe('Milestone 8 — Coalescing Watch Daemon', () => {
   test('shouldIgnorePath filters internal and transient files accurately', () => {
     assert.equal(shouldIgnorePath('.agents/.contextos/transactions/tx-1/journal.json'), true);
     assert.equal(shouldIgnorePath('.agents/generated/gemini/skills/react/SKILL.md'), true);
+    assert.equal(shouldIgnorePath('.agents/rules/contextos-team.md'), true);
     assert.equal(shouldIgnorePath('.git/index'), true);
     assert.equal(shouldIgnorePath('node_modules/react/index.js'), true);
     assert.equal(shouldIgnorePath('.cursor/rules/react.mdc'), true);

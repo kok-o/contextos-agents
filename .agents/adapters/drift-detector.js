@@ -164,6 +164,17 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
       const diskSemanticHash = computeSemanticHash(diskContent);
       const lockRecord = lockfile?.managedFiles?.[art.path];
 
+      if (art.requireOwnedExisting && (!lockRecord || lockRecord.generator !== art.generator || diskSemanticHash !== lockRecord.semanticTextSha256)) {
+        findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].push({
+          path: art.path,
+          reason: lockRecord ? 'Managed file was modified or belongs to another generator' : 'Projected file is not managed by ContextOS',
+          diskHash: diskSemanticHash,
+          lockHash: lockRecord?.semanticTextSha256,
+        });
+        diffs.push({path: art.path, type: 'modified', diff: 'Existing bounded rule is not owned or has been modified'});
+        continue;
+      }
+
       // Check if disk matches projected render and recorded lockfile
       const matchesProjection = diskSemanticHash === projectedSemanticHash;
       // Files that also hold user text are projected from their current content, so

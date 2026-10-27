@@ -282,11 +282,17 @@ function splitGlobs(value) {
   const result = [];
   for (const item of list) {
     let depth = 0;
+    let inClass = false;
+    let escaped = false;
     let current = '';
     for (const ch of item) {
-      if (ch === '{') depth++;
-      if (ch === '}') depth = Math.max(0, depth - 1);
-      if (ch === ',' && depth === 0) {
+      if (escaped) { current += ch; escaped = false; continue; }
+      if (ch === '\\') { current += ch; escaped = true; continue; }
+      if (ch === '[') inClass = true;
+      if (ch === ']') inClass = false;
+      if (!inClass && ch === '{') depth++;
+      if (!inClass && ch === '}') depth = Math.max(0, depth - 1);
+      if (ch === ',' && depth === 0 && !inClass) {
         result.push(current);
         current = '';
       } else {

@@ -105,6 +105,7 @@ for (const activation of ['always', 'auto', 'globs']) {
     const rendered = renderAdapters(root, 'all');
     applyArtifacts(root, rendered.artifacts, { context: rendered.context });
     const files = ['.agents/skills/team/SKILL.md', '.agents/generated/gemini/skills/team/SKILL.md', '.cursor/rules/team.mdc', '.zed/prompts/team.md', activation === 'auto' ? '.claude/skills/team/SKILL.md' : '.claude/rules/team.md'];
+    if (activation !== 'auto') files.push('.agents/rules/contextos-team.md');
     if (activation === 'always') files.push('.github/copilot-instructions.md', 'CONVENTIONS.md', '.zed/rules.md');
     for (const file of files) {
       const content = fs.readFileSync(path.join(root, file), 'utf8');

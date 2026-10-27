@@ -26,6 +26,177 @@ function apply(root, targets) {
   return applyArtifacts(root, rendered.artifacts, { context: rendered.context });
 }
 
+test('Gemini preserves Antigravity activation using the winning manifest and keeps shared native skills', t => {
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Fallback\nactivation: auto\n---\nSTALE_BODY\n');
+  fs.writeFileSync(path.join(dir, 'RULES.md'), '# Team\nCANONICAL_BODY\n');
+  fs.writeFileSync(path.join(dir, 'skill.yaml'), 'id: team\nactivation: auto\n');
+  const description = 'Policy: "quoted"\nsecond line';
+  const manifest = mode => fs.writeFileSync(path.join(dir, 'skill.v2.yaml'), `schemaVersion: 2\nid: team\nentrypoint: RULES.md\ndescription: ${JSON.stringify(description)}\nactivation: ${mode}\nglobs: ["src/**/*.ts", "test/**/*.js"]\n`);
+  const yaml = require('../.agents/compiler/vendor/yaml.js');
+  for (const mode of ['always', 'globs', 'auto']) {
+    manifest(mode);
+    const { artifacts } = renderAdapters(root, 'gemini');
+    const rule = artifacts.find(art => art.path === '.agents/rules/contextos-team.md');
+    assert.equal(Boolean(rule), mode !== 'auto');
+    if (rule) {
+      const text = rule.content.toString();
+      const metadata = yaml.parse(text.match(/^---\n([\s\S]*?)\n---/)[1]);
+      assert.equal(metadata.trigger, mode === 'always' ? 'always_on' : 'glob');
+      assert.equal(metadata.description, description);
+      if (mode === 'globs') assert.deepEqual(metadata.globs.split(', ').slice(0, 2), ['src/**/*.ts', 'test/**/*.js']);
+      else assert.equal(metadata.globs, undefined);
+      assert.match(text, /CANONICAL_BODY/);
+      assert.doesNotMatch(text, /STALE_BODY/);
+    }
+    const shared = artifacts.find(art => art.path === '.agents/skills/team/SKILL.md').content.toString();
+    assert.match(shared, /CANONICAL_BODY/);
+    assert.doesNotMatch(shared, /trigger:|activation:|globs:/);
+  }
+});
+
+test('Antigravity rules update, prune on auto activation and preserve neighboring user/internal files', t => {
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  const source = path.join(dir, 'SKILL.md');
+  const write = mode => fs.writeFileSync(source, `---\nname: team\ndescription: Team convention\nactivation: ${mode}\nglobs: ["src/**/*.js"]\n---\nMARKER_${mode}\n`);
+  const rulesDir = path.join(root, '.agents/rules');
+  fs.mkdirSync(rulesDir, { recursive: true });
+  fs.writeFileSync(path.join(rulesDir, 'custom.md'), 'USER_RULE');
+  fs.writeFileSync(path.join(rulesDir, 'rule-catalog.js'), 'INTERNAL_ENGINE');
+  write('always');
+  apply(root, 'gemini');
+  const output = path.join(rulesDir, 'contextos-team.md');
+  assert.match(fs.readFileSync(output, 'utf8'), /trigger: always_on/);
+  assert.equal(apply(root, 'gemini').skipped, true);
+  write('globs');
+  assert.equal(detectDrift(root, 'gemini').hasDrift, true);
+  apply(root, 'gemini');
+  assert.match(fs.readFileSync(output, 'utf8'), /trigger: glob\n/);
+  write('auto');
+  apply(root, 'gemini');
+  assert.equal(fs.existsSync(output), false);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.agents/lockfile.v2.json'))).managedFiles['.agents/rules/contextos-team.md'], undefined);
+  assert.equal(fs.readFileSync(path.join(rulesDir, 'custom.md'), 'utf8'), 'USER_RULE');
+  assert.equal(fs.readFileSync(path.join(rulesDir, 'rule-catalog.js'), 'utf8'), 'INTERNAL_ENGINE');
+  assert.equal(detectDrift(root, 'gemini').hasDrift, false);
+});
+
+test('Antigravity glob metadata remains valid YAML and rejects multiline patterns before writing', t => {
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  const manifest = path.join(dir, 'skill.yaml');
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Team\nTEAM_RULE\n');
+  fs.writeFileSync(manifest, 'id: team\nactivation: globs\nglobs: ["**/*.ts", "src/**/*.{js,jsx}"]\n');
+  const rule = renderAdapters(root, 'gemini').artifacts.find(art => art.path === '.agents/rules/contextos-team.md');
+  const yaml = require('../.agents/compiler/vendor/yaml.js');
+  const metadata = yaml.parse(rule.content.toString().match(/^---\n([\s\S]*?)\n---/)[1]);
+  assert.deepEqual(metadata.globs.split(', ').slice(0, 3), ['**/*.ts', 'src/**/*.js', 'src/**/*.jsx']);
+  fs.writeFileSync(manifest, `id: team\nactivation: globs\nglobs: ${JSON.stringify(['src/**/*.js\ntrigger: always_on'])}\n`);
+  assert.throws(() => apply(root, 'gemini'), /Antigravity globs must fit on one line/);
+  assert.equal(fs.existsSync(path.join(root, '.agents/lockfile.v2.json')), false);
+});
+
+test('Antigravity export expands grouped extensions and refuses literal class commas before writing', t => {
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, {recursive:true});
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Team\nTEAM_RULE\n');
+  const source = path.join(dir, 'skill.yaml');
+  fs.writeFileSync(source, 'id: team\nactivation: globs\nglobs: "src/{api,lib}/**/*.{test,spec}.{js,ts}, docs/**/*.md"\n');
+  const rule = renderAdapters(root, 'gemini').artifacts.find(art => art.path === '.agents/rules/contextos-team.md');
+  const yaml = require('../.agents/compiler/vendor/yaml.js');
+  const metadata = yaml.parse(rule.content.toString().match(/^---\n([\s\S]*?)\n---/)[1]);
+  const globs = metadata.globs.split(', ');
+  assert.ok(globs.includes('src/api/**/*.test.js'));
+  assert.ok(globs.includes('src/lib/**/*.spec.ts'));
+  assert.ok(globs.includes('docs/**/*.md'));
+  assert.ok(globs.every(glob => !/[{},]/.test(glob)));
+  fs.writeFileSync(source, 'id: team\nactivation: globs\nglobs: ["src/api/file[1,2].js"]\n');
+  assert.throws(() => apply(root, 'gemini'), /literal comma/);
+  assert.equal(fs.existsSync(path.join(root, '.agents/lockfile.v2.json')), false);
+  assert.equal(fs.existsSync(path.join(root, '.agents/rules/contextos-team.md')), false);
+});
+
+test('Antigravity exports refuse overwriting user-owned and locally modified rule files', t => {
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team convention\nactivation: always\n---\nTEAM_RULE\n');
+  const output = path.join(root, '.agents/rules/contextos-team.md');
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, 'USER_RULE');
+  assert.throws(() => apply(root, 'gemini'), { code: 'CTX_ADAPTER_OWNERSHIP_CONFLICT' });
+  assert.equal(fs.readFileSync(output, 'utf8'), 'USER_RULE');
+  assert.equal(fs.existsSync(path.join(root, '.agents/skills/team/SKILL.md')), false, 'Conflict must leave staged native skills unwritten');
+  fs.unlinkSync(output);
+  apply(root, 'gemini');
+  fs.appendFileSync(output, '\nUSER_EDIT');
+  assert.throws(() => apply(root, 'gemini'), { code: 'CTX_ADAPTER_OWNERSHIP_CONFLICT' });
+  assert.ok(fs.readFileSync(output, 'utf8').endsWith('USER_EDIT'));
+});
+
+test('bounded Antigravity chunks are transactional, idempotent and prune only unchanged managed files', t => {
+  if (process.platform !== 'win32') { t.skip('Windows-native paths are required for integration'); return; }
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, {recursive:true});
+  const source = path.join(dir, 'SKILL.md');
+  const write = mode => fs.writeFileSync(source, `---\nname: team\ndescription: Scoped instructions\nactivation: ${mode}\nglobs: ["src/api/*.js", "src/api/**/test*.js"]\n---\nTEAM_RULE\n`);
+  write('globs');
+  const rendered = renderAdapters(root, 'gemini');
+  const chunks = rendered.artifacts.filter(a => a.path.includes('/contextos-bounded-'));
+  assert.ok(chunks.length > 2);
+  assert.ok(chunks.every(a => Buffer.byteLength(a.content) <= 24000 && a.generator === 'gemini@2'));
+  assert.ok(chunks.some(a => Buffer.byteLength(a.content) > 16000), 'Chunks should use the larger rule budget');
+  assert.equal(new Set(chunks.map(a => a.path)).size, chunks.length);
+  const first = path.join(root, chunks[0].path), rulesDir = path.dirname(first);
+  fs.mkdirSync(rulesDir, {recursive:true});
+  fs.writeFileSync(first, 'USER_OWNED');
+  fs.writeFileSync(path.join(rulesDir, 'custom.md'), 'USER_CUSTOM');
+  assert.throws(() => apply(root, 'gemini'), {code:'CTX_ADAPTER_OWNERSHIP_CONFLICT'});
+  assert.equal(fs.readFileSync(first, 'utf8'), 'USER_OWNED');
+  assert.equal(fs.existsSync(path.join(root, '.agents/lockfile.v2.json')), false);
+  fs.writeFileSync(first, chunks[0].content);
+  const drift = detectDrift(root, 'gemini');
+  assert.ok(drift.findings.MODIFIED_MANAGED_OUTPUT.some(x => x.path === chunks[0].path), 'A byte-identical user file must not be claimed');
+  assert.throws(() => apply(root, 'gemini'), {code:'CTX_ADAPTER_OWNERSHIP_CONFLICT'});
+  assert.deepEqual(fs.readFileSync(first), chunks[0].content);
+  fs.unlinkSync(first);
+  apply(root, 'gemini');
+  assert.equal(apply(root, 'gemini').skipped, true);
+  const original = fs.readFileSync(first);
+  fs.appendFileSync(first, '\n<<<<<<< HEAD\nUSER_EDIT\n=======\nGENERATED\n>>>>>>> branch\n');
+  const {planUninstall} = require('../bin/commands/uninstall.js');
+  const uninstallPlan = planUninstall(root);
+  assert.ok(uninstallPlan.plans.some(p => p.relPath === chunks[0].path && p.action === 'SKIP' && p.reason === 'USER_MODIFIED_PRESERVED'));
+  write('auto');
+  assert.throws(() => apply(root, 'gemini'), {code:'CTX_ADAPTER_OWNERSHIP_CONFLICT'});
+  assert.match(fs.readFileSync(first, 'utf8'), /USER_EDIT/);
+  assert.ok(fs.existsSync(path.join(root, chunks.at(-1).path)));
+  assert.equal(fs.readFileSync(path.join(rulesDir, 'custom.md'), 'utf8'), 'USER_CUSTOM');
+  fs.writeFileSync(first, original);
+  apply(root, 'gemini');
+  assert.ok(chunks.every(a => !fs.existsSync(path.join(root, a.path))));
+  assert.equal(fs.readFileSync(path.join(rulesDir, 'custom.md'), 'utf8'), 'USER_CUSTOM');
+  assert.equal(detectDrift(root, 'gemini').hasDrift, false);
+});
+
+test('bounded Antigravity rules reject oversized bodies before creating managed files', t => {
+  if (process.platform !== 'win32') { t.skip('Windows-native paths are required for integration'); return; }
+  const root = fixture(t);
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, {recursive:true});
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: team\ndescription: Scoped instructions\nactivation: globs\nglobs: ["src/api/*.js"]\n---\n${'a'.repeat(24000)}\n`);
+  assert.throws(() => apply(root, 'gemini'), /bounded rule exceeds the 24000-byte limit/);
+  assert.equal(fs.existsSync(path.join(root, '.agents/lockfile.v2.json')), false);
+  assert.equal(fs.existsSync(path.join(root, '.agents/skills/team/SKILL.md')), false);
+});
+
 test('Copilot preserves user rules before and after two exports', t => {
   const root = fixture(t);
   const target = path.join(root, '.github/copilot-instructions.md');

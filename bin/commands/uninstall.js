@@ -32,6 +32,7 @@ const {
   removeManagedBlock,
   computeExactHash,
   ownsDiskFile,
+  isStrictBoundedRule,
   TEXT_EXTENSION,
   CONTEXTOS_BLOCK_START,
   CONTEXTOS_BLOCK_END,
@@ -115,6 +116,7 @@ function planGeneratedFile(projectDir, relPath, record, v2) {
     textLike: TEXT_EXTENSION.test(relPath),
     existing: record,
     alternates: v2?.recovered?.alternates?.[relPath] || [],
+    strict: isStrictBoundedRule(relPath, record),
   });
   return owned
     ? { action: 'DELETE', relPath, targetPath, beforeHash }
