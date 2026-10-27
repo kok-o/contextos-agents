@@ -1,0 +1,19 @@
+{
+  "method": "skills/list",
+  "surface": "Codex CLI app-server (native discovery API; no interactive picker screenshot)",
+  "clientVersion": "0.164.0-alpha.11.1",
+  "metadataDiscovered": true,
+  "bodyLoaded": null,
+  "confirmationObserved": null,
+  "skills": [
+    {
+      "name": "compat-auto",
+      "description": "Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.",
+      "path": "<TEST_ROOT>\\auto\\.agents\\skills\\compat-auto\\SKILL.md",
+      "scope": "repo",
+      "enabled": true,
+      "pluginId": null
+    }
+  ],
+  "errors": []
+}

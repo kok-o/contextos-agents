@@ -1,0 +1,265 @@
+[
+  {
+    "kind": "always",
+    "installedVersion": "3.0.0-rc.1",
+    "packageIntegrity": "sha512-zVMi3ys3H52qE8VgYNUErForri8Dl9JJU219mCLVhaUUtEGuOMVBKKRCgq4/ubQUZjE5RwcbUIX/aKRZB1JP+A==",
+    "initialDriftCheck": {
+      "schemaVersion": "2.0.0",
+      "status": "pass",
+      "hasDrift": false,
+      "hasError": false,
+      "code": 0,
+      "totalFindings": 0,
+      "findings": {
+        "STALE_INPUT": [],
+        "MISSING_OUTPUT": [],
+        "MODIFIED_MANAGED_OUTPUT": [],
+        "ORPHAN_MANAGED_OUTPUT": [],
+        "ADAPTER_VERSION_MISMATCH": [],
+        "PROFILE_MISMATCH": [],
+        "CORRUPT_LOCKFILE": [],
+        "EMPTY_PROJECTION": [],
+        "CONFIG_ERROR": []
+      },
+      "collisions": [],
+      "diffs": [],
+      "projectedCount": 2
+    },
+    "files": [
+      {
+        "relativePath": "package.json",
+        "sha256": "a6eee20d0e93f690df97fed0feee1884ec43bbacf73effb6dc40dcd9ca0a449a"
+      },
+      {
+        "relativePath": "package-lock.json",
+        "sha256": "b1cb202b692d26dccb305e3caf2b64e613454f51e603b63b5defc36629c3823b"
+      },
+      {
+        "relativePath": "src/api/invoice.js",
+        "sha256": "7b3232c517cd8ea95609b26b01541072d721c57c8aa5ea9b56ea873dc279d73c",
+        "content": "export function totalInvoice(lines) {\n  return lines.reduce((total, line) => total + line.amount, 0);\n}\n"
+      },
+      {
+        "relativePath": "docs/note.md",
+        "sha256": "85771e7e5e6054854b5526ae2492dcdf880c6ad3cef3e6a20ac2282a4f710035",
+        "content": "# Notes\n\nThis fixture contains a small invoice module.\n"
+      },
+      {
+        "relativePath": ".agents/project/skills/compat-always/SKILL.md",
+        "sha256": "3218c35c81deba2fc47735d80c609f4e0ef22a40ef3c0e24a1309c9b3d95e6c5",
+        "content": "---\nname: compat-always\ndescription: \"General workspace response convention.\"\nactivation: always\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-37cf7d2bbdf8710d6665af97\n"
+      },
+      {
+        "relativePath": ".agents/skills/compat-always/SKILL.md",
+        "sha256": "37f5b4469888970fec6e04c033f57fdd552d8980a4a075fba7b5719ab6acc9b7",
+        "content": "---\nname: compat-always\ndescription: \"General workspace response convention.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-37cf7d2bbdf8710d6665af97\n"
+      },
+      {
+        "relativePath": ".agents/generated/gemini/skills/compat-always/SKILL.md",
+        "sha256": "37f5b4469888970fec6e04c033f57fdd552d8980a4a075fba7b5719ab6acc9b7",
+        "content": "---\nname: compat-always\ndescription: \"General workspace response convention.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-37cf7d2bbdf8710d6665af97\n"
+      }
+    ]
+  },
+  {
+    "kind": "scoped",
+    "installedVersion": "3.0.0-rc.1",
+    "packageIntegrity": "sha512-zVMi3ys3H52qE8VgYNUErForri8Dl9JJU219mCLVhaUUtEGuOMVBKKRCgq4/ubQUZjE5RwcbUIX/aKRZB1JP+A==",
+    "initialDriftCheck": {
+      "schemaVersion": "2.0.0",
+      "status": "pass",
+      "hasDrift": false,
+      "hasError": false,
+      "code": 0,
+      "totalFindings": 0,
+      "findings": {
+        "STALE_INPUT": [],
+        "MISSING_OUTPUT": [],
+        "MODIFIED_MANAGED_OUTPUT": [],
+        "ORPHAN_MANAGED_OUTPUT": [],
+        "ADAPTER_VERSION_MISMATCH": [],
+        "PROFILE_MISMATCH": [],
+        "CORRUPT_LOCKFILE": [],
+        "EMPTY_PROJECTION": [],
+        "CONFIG_ERROR": []
+      },
+      "collisions": [],
+      "diffs": [],
+      "projectedCount": 2
+    },
+    "files": [
+      {
+        "relativePath": "package.json",
+        "sha256": "acdb0a5d3f9ad08440cb30fe636bd9323d0383cff01e0abd38bb43e4d435da2c"
+      },
+      {
+        "relativePath": "package-lock.json",
+        "sha256": "2458edf2a26617f377c672a59314be507c63c353380d8776d44ed5291bc90f6f"
+      },
+      {
+        "relativePath": "src/api/invoice.js",
+        "sha256": "7b3232c517cd8ea95609b26b01541072d721c57c8aa5ea9b56ea873dc279d73c",
+        "content": "export function totalInvoice(lines) {\n  return lines.reduce((total, line) => total + line.amount, 0);\n}\n"
+      },
+      {
+        "relativePath": "docs/note.md",
+        "sha256": "85771e7e5e6054854b5526ae2492dcdf880c6ad3cef3e6a20ac2282a4f710035",
+        "content": "# Notes\n\nThis fixture contains a small invoice module.\n"
+      },
+      {
+        "relativePath": ".agents/project/skills/compat-scoped/SKILL.md",
+        "sha256": "97d531290e4512495116bb5ba8c939083d5a99bd6062b79e81841835c415ab7e",
+        "content": "---\nname: compat-scoped\ndescription: \"Conventions only for inspecting or changing src/api/**/*.js; do not use for documentation-only work.\"\nactivation: globs\nglobs: [\"src/api/**/*.js\"]\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-9168ba9293d37f05699eeeb0\n"
+      },
+      {
+        "relativePath": ".agents/skills/compat-scoped/SKILL.md",
+        "sha256": "b262c425bd5649df9da0b6d139a08a3e4943893058a18f76b0fdb845d1b94bcd",
+        "content": "---\nname: compat-scoped\ndescription: \"Conventions only for inspecting or changing src/api/**/*.js; do not use for documentation-only work.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-9168ba9293d37f05699eeeb0\n"
+      },
+      {
+        "relativePath": ".agents/generated/gemini/skills/compat-scoped/SKILL.md",
+        "sha256": "b262c425bd5649df9da0b6d139a08a3e4943893058a18f76b0fdb845d1b94bcd",
+        "content": "---\nname: compat-scoped\ndescription: \"Conventions only for inspecting or changing src/api/**/*.js; do not use for documentation-only work.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-9168ba9293d37f05699eeeb0\n"
+      }
+    ]
+  },
+  {
+    "kind": "auto",
+    "installedVersion": "3.0.0-rc.1",
+    "packageIntegrity": "sha512-zVMi3ys3H52qE8VgYNUErForri8Dl9JJU219mCLVhaUUtEGuOMVBKKRCgq4/ubQUZjE5RwcbUIX/aKRZB1JP+A==",
+    "initialDriftCheck": {
+      "schemaVersion": "2.0.0",
+      "status": "pass",
+      "hasDrift": false,
+      "hasError": false,
+      "code": 0,
+      "totalFindings": 0,
+      "findings": {
+        "STALE_INPUT": [],
+        "MISSING_OUTPUT": [],
+        "MODIFIED_MANAGED_OUTPUT": [],
+        "ORPHAN_MANAGED_OUTPUT": [],
+        "ADAPTER_VERSION_MISMATCH": [],
+        "PROFILE_MISMATCH": [],
+        "CORRUPT_LOCKFILE": [],
+        "EMPTY_PROJECTION": [],
+        "CONFIG_ERROR": []
+      },
+      "collisions": [],
+      "diffs": [],
+      "projectedCount": 2
+    },
+    "files": [
+      {
+        "relativePath": "package.json",
+        "sha256": "371a9deadc90481ab2c58126b8e712799a63ceafde8c1aab522f0dbe85108b8d"
+      },
+      {
+        "relativePath": "package-lock.json",
+        "sha256": "6cfa826afb5598370b2b21a19b2a470439f6bb46634e492f9df5e60282d02ba1"
+      },
+      {
+        "relativePath": "src/api/invoice.js",
+        "sha256": "7b3232c517cd8ea95609b26b01541072d721c57c8aa5ea9b56ea873dc279d73c",
+        "content": "export function totalInvoice(lines) {\n  return lines.reduce((total, line) => total + line.amount, 0);\n}\n"
+      },
+      {
+        "relativePath": "docs/note.md",
+        "sha256": "85771e7e5e6054854b5526ae2492dcdf880c6ad3cef3e6a20ac2282a4f710035",
+        "content": "# Notes\n\nThis fixture contains a small invoice module.\n"
+      },
+      {
+        "relativePath": ".agents/project/skills/compat-auto/SKILL.md",
+        "sha256": "1c6ab9dc520200b6b033f986d88afa412c1b62ae2aa05892c69ca3e583313bfd",
+        "content": "---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\nactivation: auto\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-9eaa554fe148ec18891a48c6\n"
+      },
+      {
+        "relativePath": ".agents/skills/compat-auto/SKILL.md",
+        "sha256": "e2164afc6191385ae89600ae6f5ff941a06005d973c90ed09e8dc4152e327f7f",
+        "content": "---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-9eaa554fe148ec18891a48c6\n"
+      },
+      {
+        "relativePath": ".agents/generated/gemini/skills/compat-auto/SKILL.md",
+        "sha256": "e2164afc6191385ae89600ae6f5ff941a06005d973c90ed09e8dc4152e327f7f",
+        "content": "---\nname: compat-auto\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n---\n# Response convention\nAfter completing the requested task, end the final answer with this exact line:\nCTX-9eaa554fe148ec18891a48c6\n"
+      }
+    ]
+  },
+  {
+    "kind": "resources",
+    "installedVersion": "3.0.0-rc.1",
+    "packageIntegrity": "sha512-zVMi3ys3H52qE8VgYNUErForri8Dl9JJU219mCLVhaUUtEGuOMVBKKRCgq4/ubQUZjE5RwcbUIX/aKRZB1JP+A==",
+    "initialDriftCheck": {
+      "schemaVersion": "2.0.0",
+      "status": "pass",
+      "hasDrift": false,
+      "hasError": false,
+      "code": 0,
+      "totalFindings": 0,
+      "findings": {
+        "STALE_INPUT": [],
+        "MISSING_OUTPUT": [],
+        "MODIFIED_MANAGED_OUTPUT": [],
+        "ORPHAN_MANAGED_OUTPUT": [],
+        "ADAPTER_VERSION_MISMATCH": [],
+        "PROFILE_MISMATCH": [],
+        "CORRUPT_LOCKFILE": [],
+        "EMPTY_PROJECTION": [],
+        "CONFIG_ERROR": []
+      },
+      "collisions": [],
+      "diffs": [],
+      "projectedCount": 4
+    },
+    "files": [
+      {
+        "relativePath": "package.json",
+        "sha256": "cd58d776e8a554f31b2c7948d9e8889e4f88cb9debee42f249d046a9868d1824"
+      },
+      {
+        "relativePath": "package-lock.json",
+        "sha256": "9edd2babb27dabe403091808f3753bca745015f6c4b1d964664df54a8bbda675"
+      },
+      {
+        "relativePath": "src/api/invoice.js",
+        "sha256": "7b3232c517cd8ea95609b26b01541072d721c57c8aa5ea9b56ea873dc279d73c",
+        "content": "export function totalInvoice(lines) {\n  return lines.reduce((total, line) => total + line.amount, 0);\n}\n"
+      },
+      {
+        "relativePath": "docs/note.md",
+        "sha256": "85771e7e5e6054854b5526ae2492dcdf880c6ad3cef3e6a20ac2282a4f710035",
+        "content": "# Notes\n\nThis fixture contains a small invoice module.\n"
+      },
+      {
+        "relativePath": ".agents/project/skills/compat-resources/SKILL.md",
+        "sha256": "0a6887fa2cb2ee7101a3a183d5e7aa9b5db328619f00c16923b656993f822a20",
+        "content": "---\nname: compat-resources\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\nactivation: auto\n---\n# Invoice policy\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\n"
+      },
+      {
+        "relativePath": ".agents/skills/compat-resources/SKILL.md",
+        "sha256": "3e4298f134b72e2290758aa11c0538ef4d043d9960d76af27bd7f3149731d81c",
+        "content": "---\nname: compat-resources\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\n---\n# Invoice policy\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\n"
+      },
+      {
+        "relativePath": ".agents/generated/gemini/skills/compat-resources/SKILL.md",
+        "sha256": "3e4298f134b72e2290758aa11c0538ef4d043d9960d76af27bd7f3149731d81c",
+        "content": "---\nname: compat-resources\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\n---\n# Invoice policy\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\n"
+      },
+      {
+        "relativePath": ".agents/project/skills/compat-resources/skill.yaml",
+        "sha256": "cb51799ff4e0f5856162cd45d10dd16d87e3987095a757e879821811a08beb00",
+        "content": "schemaVersion: 2\nid: compat-resources\nentrypoint: SKILL.md\nresources:\n  - references/invoice-policy.md\n"
+      },
+      {
+        "relativePath": ".agents/project/skills/compat-resources/references/invoice-policy.md",
+        "sha256": "422ade26f31f7b5e2499299ade65dd9033529fcc271d896056b141f0d29e69da",
+        "content": "# Invoice rounding\nRound once after summing all line amounts, to two decimal places.\nConfirmation: CTX-10dbbd0726af7e91f1fa1d46\n"
+      },
+      {
+        "relativePath": ".agents/skills/compat-resources/references/invoice-policy.md",
+        "sha256": "422ade26f31f7b5e2499299ade65dd9033529fcc271d896056b141f0d29e69da",
+        "content": "# Invoice rounding\nRound once after summing all line amounts, to two decimal places.\nConfirmation: CTX-10dbbd0726af7e91f1fa1d46\n"
+      }
+    ]
+  }
+]

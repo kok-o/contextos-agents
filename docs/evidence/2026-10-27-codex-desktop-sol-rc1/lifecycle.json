@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-27",
+  "sourcePath": ".agents/project/skills/compat-resources/references/invoice-policy.md",
+  "nativePath": ".agents/skills/compat-resources/references/invoice-policy.md",
+  "beforeCheck": {
+    "args": [
+      "export",
+      "gemini",
+      "--check",
+      "--json"
+    ],
+    "exitCode": 0,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 4\n}\n",
+    "stderr": ""
+  },
+  "driftCheck": {
+    "args": [
+      "export",
+      "gemini",
+      "--check",
+      "--json"
+    ],
+    "exitCode": 1,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"drift\",\n  \"hasDrift\": true,\n  \"hasError\": false,\n  \"code\": 1,\n  \"totalFindings\": 2,\n  \"findings\": {\n    \"STALE_INPUT\": [\n      {\n        \"path\": \".agents/generated/gemini/skills/compat-resources/references/invoice-policy.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      },\n      {\n        \"path\": \".agents/skills/compat-resources/references/invoice-policy.md\",\n        \"reason\": \"Generated artifact differs from source skills projection\"\n      }\n    ],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [\n    {\n      \"path\": \".agents/generated/gemini/skills/compat-resources/references/invoice-policy.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Confirmation: CTX-d2e43f1d933c447e3929d64f\\n+ Confirmation: CTX-b638199b176ade8e0fa37778\"\n    },\n    {\n      \"path\": \".agents/skills/compat-resources/references/invoice-policy.md\",\n      \"type\": \"modified\",\n      \"diff\": \"- Confirmation: CTX-d2e43f1d933c447e3929d64f\\n+ Confirmation: CTX-b638199b176ade8e0fa37778\"\n    }\n  ],\n  \"projectedCount\": 4\n}\n",
+    "stderr": ""
+  },
+  "regeneration": {
+    "args": [
+      "export",
+      "gemini"
+    ],
+    "exitCode": 0,
+    "stdout": "✓ Gemini export complete: 4 files applied (tx: tx-1793098751068-6dfc38ae)\n",
+    "stderr": ""
+  },
+  "afterCheck": {
+    "args": [
+      "export",
+      "gemini",
+      "--check",
+      "--json"
+    ],
+    "exitCode": 0,
+    "stdout": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"status\": \"pass\",\n  \"hasDrift\": false,\n  \"hasError\": false,\n  \"code\": 0,\n  \"totalFindings\": 0,\n  \"findings\": {\n    \"STALE_INPUT\": [],\n    \"MISSING_OUTPUT\": [],\n    \"MODIFIED_MANAGED_OUTPUT\": [],\n    \"ORPHAN_MANAGED_OUTPUT\": [],\n    \"ADAPTER_VERSION_MISMATCH\": [],\n    \"PROFILE_MISMATCH\": [],\n    \"CORRUPT_LOCKFILE\": [],\n    \"EMPTY_PROJECTION\": [],\n    \"CONFIG_ERROR\": []\n  },\n  \"collisions\": [],\n  \"diffs\": [],\n  \"projectedCount\": 4\n}\n",
+    "stderr": ""
+  },
+  "expectedBefore": "Confirmation: CTX-d2e43f1d933c447e3929d64f",
+  "expectedAfter": "Confirmation: CTX-b638199b176ade8e0fa37778",
+  "beforeNative": "# Invoice rounding\nRound once after summing all line amounts, to two decimal places.\nConfirmation: CTX-d2e43f1d933c447e3929d64f\n",
+  "afterNative": "# Invoice rounding\nRound once after summing all line amounts, to two decimal places.\nConfirmation: CTX-b638199b176ade8e0fa37778\n",
+  "oldExportRemainedBeforeRegeneration": true,
+  "beforeSha256": "c40103331c689f9b3d66bee1692fe04230842842d85b5c17b243cec689801187",
+  "afterSha256": "73a261080429d4a88d334ccef1d2e0ac4169c2863e22526d92928d18c7cb00f2",
+  "onlySourceChange": "reference confirmation string; no rule or code changes"
+}

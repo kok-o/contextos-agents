@@ -1,0 +1,93 @@
+[
+  {
+    "artifact": "desktop-version.png",
+    "capturedAt": "2026-10-27T10:17:00.493Z",
+    "crop": {
+      "left": 555,
+      "top": 300,
+      "width": 370,
+      "height": 355
+    },
+    "originalSha256": "b77162c45127318460c88251b7722844de44f4620284f1339213eebeb993ff12",
+    "artifactSha256": "f5823e183591bccfb47558c083c9ec6c5e58b012069cd7baea91af68675ebea1",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  },
+  {
+    "artifact": "auto-picker-discovery.png",
+    "capturedAt": "2026-10-27T10:40:37.135Z",
+    "crop": {
+      "left": 520,
+      "top": 770,
+      "width": 820,
+      "height": 180
+    },
+    "originalSha256": "0b3415a29bc3aefdd1b42f478a806040845e53f8baf0ff772eca6642f0ac932e",
+    "artifactSha256": "4168a679f8a539d1aa97c9cd078c938fd8823edd441a699e9c130541f726a3d5",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  },
+  {
+    "artifact": "explicit-1-picker-selected.png",
+    "capturedAt": "2026-10-27T10:40:53.862Z",
+    "crop": {
+      "left": 520,
+      "top": 785,
+      "width": 820,
+      "height": 165
+    },
+    "originalSha256": "8ef0fe55db20eb2680cb539877fce90c8baf3f889046810ca760751f2bd1f558",
+    "artifactSha256": "a977ca8036ab26208e4e655bd9ddceb4a29d7c90b38ea4dd06014ca2c692127d",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  },
+  {
+    "artifact": "explicit-1-response.png",
+    "capturedAt": "2026-10-27T10:41:30.889Z",
+    "crop": {
+      "left": 510,
+      "top": 45,
+      "width": 950,
+      "height": 900
+    },
+    "originalSha256": "d6e135d13c116b1e07bfddc6806e25c4474f5d16657b1a23a308c7fcb5f11d74",
+    "artifactSha256": "01f9a4755e91a58643c91a1584cb8bc462701164a1bcfcdae39236c2b543adf8",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  },
+  {
+    "artifact": "explicit-5-picker-selected.png",
+    "capturedAt": "2026-10-27T10:49:08.692Z",
+    "crop": {
+      "left": 520,
+      "top": 785,
+      "width": 820,
+      "height": 165
+    },
+    "originalSha256": "cfe20ebad8c34441b44287035ffdac5e5d23ea6037f86bf19423dbfe901bebc2",
+    "artifactSha256": "906d6d31e2d8e96739a0b60c73797c62f7c998b7132b47fb24f4dcf888fbafee",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  },
+  {
+    "artifact": "resources-explicit-picker-selected.png",
+    "capturedAt": "2026-10-27T10:53:26.953Z",
+    "crop": {
+      "left": 520,
+      "top": 785,
+      "width": 820,
+      "height": 165
+    },
+    "originalSha256": "f95ac74d5530d4615b500d6c14f1165166256c67cbd328ac0073bdcba8d6c1e3",
+    "artifactSha256": "2526a383517ad31c9a3c738d345fbb127296e4e064a8d2561596fb3ed08806e0",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  },
+  {
+    "artifact": "lifecycle-resources-response.png",
+    "capturedAt": "2026-10-27T11:00:26.374Z",
+    "crop": {
+      "left": 510,
+      "top": 45,
+      "width": 950,
+      "height": 900
+    },
+    "originalSha256": "921fa7c0b6e76a4bfa985dcd3d08e5029851b547808222a2be64fc70928d24cb",
+    "artifactSha256": "287c6650a4c93729259f21cc77007674f44018ab81df9223a57cf93b7b04c590",
+    "transformation": "Rectangular crop only; original retained outside repository. No generated or reconstructed pixels."
+  }
+]

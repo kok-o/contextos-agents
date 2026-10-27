@@ -1,0 +1,178 @@
+[
+  {
+    "id": "cli-control-positive",
+    "clientVersion": "0.149.1",
+    "model": "gpt-6.1-terra",
+    "validTrial": false,
+    "case": "control",
+    "exitCode": 1,
+    "events": [
+      {
+        "type": "thread.started",
+        "thread_id": "01a17cb4-e521-76b2-a52e-e222ffa2a8ed"
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_0",
+          "type": "error",
+          "message": "Under-development features enabled: local_thread_store_compression. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in <USERPROFILE>\\.codex\\config.toml."
+        }
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_1",
+          "type": "error",
+          "message": "Model metadata for `gpt-6.1-terra` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+        }
+      },
+      {
+        "type": "turn.started"
+      },
+      {
+        "type": "error",
+        "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+      },
+      {
+        "type": "turn.failed",
+        "error": {
+          "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+        }
+      }
+    ],
+    "stderr": "Reading additional input from stdin...\r\n2026-10-27T09:33:11.632648Z ERROR codex_skills_extension::host_service: failed to install system skills: io error while remove existing system skills dir: Отказано в доступе. (os error 5)\r\n2026-10-27T09:33:12.353672Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:12.531689Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:33:12.531711Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:33:12.584947Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\r\n2026-10-27T09:33:12.781134Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:12.818562Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:13.959573Z  WARN codex_core::session_startup_prewarm: startup websocket prewarm setup failed: {\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}\r\n"
+  },
+  {
+    "id": "cli-auto-positive-1",
+    "clientVersion": "0.149.1",
+    "model": "gpt-6.1-terra",
+    "validTrial": false,
+    "case": "positive",
+    "exitCode": 1,
+    "events": [
+      {
+        "type": "thread.started",
+        "thread_id": "01a17cb4-e52b-73d3-bb47-9e3ae80879b7"
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_0",
+          "type": "error",
+          "message": "Under-development features enabled: local_thread_store_compression. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in <USERPROFILE>\\.codex\\config.toml."
+        }
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_1",
+          "type": "error",
+          "message": "Model metadata for `gpt-6.1-terra` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+        }
+      },
+      {
+        "type": "turn.started"
+      },
+      {
+        "type": "error",
+        "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+      },
+      {
+        "type": "turn.failed",
+        "error": {
+          "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+        }
+      }
+    ],
+    "stderr": "Reading additional input from stdin...\r\n2026-10-27T09:33:12.363350Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:12.531628Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:33:12.531654Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:33:12.584952Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\r\n2026-10-27T09:33:12.781122Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:12.818605Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:13.883491Z  WARN codex_core::session_startup_prewarm: startup websocket prewarm setup failed: {\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}\r\n"
+  },
+  {
+    "id": "cli-auto-negative-1",
+    "clientVersion": "0.149.1",
+    "model": "gpt-6.1-terra",
+    "validTrial": false,
+    "case": "negative",
+    "exitCode": 1,
+    "events": [
+      {
+        "type": "thread.started",
+        "thread_id": "01a17cb4-e500-7d11-a5ec-5c7dfb5585b1"
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_0",
+          "type": "error",
+          "message": "Under-development features enabled: local_thread_store_compression. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in <USERPROFILE>\\.codex\\config.toml."
+        }
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_1",
+          "type": "error",
+          "message": "Model metadata for `gpt-6.1-terra` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+        }
+      },
+      {
+        "type": "turn.started"
+      },
+      {
+        "type": "error",
+        "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+      },
+      {
+        "type": "turn.failed",
+        "error": {
+          "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+        }
+      }
+    ],
+    "stderr": "Reading additional input from stdin...\r\n2026-10-27T09:33:11.630039Z ERROR codex_skills_extension::host_service: failed to install system skills: io error while remove existing system skills dir: Отказано в доступе. (os error 5)\r\n2026-10-27T09:33:12.317561Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:12.531537Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:33:12.531571Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:33:12.584950Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\r\n2026-10-27T09:33:12.780820Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:12.818595Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-terra is used. This will use fallback model metadata.\r\n2026-10-27T09:33:13.770310Z  WARN codex_core::session_startup_prewarm: startup websocket prewarm setup failed: {\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-terra' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}\r\n"
+  },
+  {
+    "id": "sol-run/control-positive",
+    "clientVersion": "0.149.1",
+    "model": "gpt-6.1-sol",
+    "validTrial": false,
+    "case": "control",
+    "exitCode": 1,
+    "events": [
+      {
+        "type": "thread.started",
+        "thread_id": "01a17cb8-2b67-74d3-9284-3ccbacd9c6c7"
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_0",
+          "type": "error",
+          "message": "Under-development features enabled: local_thread_store_compression. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in <USERPROFILE>\\.codex\\config.toml."
+        }
+      },
+      {
+        "type": "item.completed",
+        "item": {
+          "id": "item_1",
+          "type": "error",
+          "message": "Model metadata for `gpt-6.1-sol` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+        }
+      },
+      {
+        "type": "turn.started"
+      },
+      {
+        "type": "error",
+        "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+      },
+      {
+        "type": "turn.failed",
+        "error": {
+          "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}"
+        }
+      }
+    ],
+    "stderr": "Reading additional input from stdin...\r\n2026-10-27T09:36:46.950860Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-sol is used. This will use fallback model metadata.\r\n2026-10-27T09:36:47.063530Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:36:47.063561Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/\r\n2026-10-27T09:36:47.080227Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\r\n2026-10-27T09:36:47.199663Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-sol is used. This will use fallback model metadata.\r\n2026-10-27T09:36:47.203196Z  WARN codex_models_manager::model_info: Unknown model gpt-6.1-sol is used. This will use fallback model metadata.\r\n2026-10-27T09:36:48.421599Z  WARN codex_core::session_startup_prewarm: startup websocket prewarm setup failed: {\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account.\",\"code\":\"model_not_found\"}}\r\n"
+  }
+]
