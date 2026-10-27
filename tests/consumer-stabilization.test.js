@@ -186,12 +186,44 @@ test('bounded Antigravity chunks are transactional, idempotent and prune only un
   assert.equal(detectDrift(root, 'gemini').hasDrift, false);
 });
 
-test('bounded Antigravity rules reject oversized bodies before creating managed files', t => {
+for (const mode of ['always', 'globs']) {
+  test(`Antigravity primary ${mode} rule enforces the complete UTF-8 byte limit atomically`, t => {
+    const root = fixture(t);
+    const dir = path.join(root, '.agents/project/skills/team');
+    fs.mkdirSync(dir, { recursive: true });
+    const source = path.join(dir, 'SKILL.md');
+    const header = `---\nname: team\ndescription: Team convention\nactivation: ${mode}\nglobs: ["src/**/*.js"]\n---\n`;
+    const write = body => fs.writeFileSync(source, header + body + '\n');
+    write('a');
+    const rulePath = '.agents/rules/contextos-team.md';
+    const initial = renderAdapters(root, 'gemini').artifacts.find(art => art.path === rulePath);
+    const body = 'a'.repeat(24000 - initial.content.length + 1);
+    write(body);
+    apply(root, 'gemini');
+    assert.equal(fs.readFileSync(path.join(root, rulePath)).length, 24000);
+    assert.equal(detectDrift(root, 'gemini').hasDrift, false);
+    const lockPath = path.join(root, '.agents/lockfile.v2.json');
+    const lockBefore = fs.readFileSync(lockPath);
+    const managedBefore = Object.keys(JSON.parse(lockBefore).managedFiles)
+      .map(file => [file, fs.readFileSync(path.join(root, file))]);
+    const transactions = path.join(root, '.agents/.contextos/transactions');
+    const transactionsBefore = fs.readdirSync(transactions);
+    for (const oversized of [body + 'a', body.slice(1) + 'я']) {
+      write(oversized);
+      assert.throws(() => apply(root, 'gemini'), /primary rule exceeds the 24000-byte limit/);
+      assert.deepEqual(fs.readFileSync(lockPath), lockBefore);
+      for (const [file, before] of managedBefore) assert.deepEqual(fs.readFileSync(path.join(root, file)), before, file);
+      assert.deepEqual(fs.readdirSync(transactions), transactionsBefore, 'Rejected render must not begin a transaction');
+    }
+  });
+}
+
+test('bounded Antigravity rules reject bodies that fit the primary rule but not every chunk', t => {
   if (process.platform !== 'win32') { t.skip('Windows-native paths are required for integration'); return; }
   const root = fixture(t);
   const dir = path.join(root, '.agents/project/skills/team');
   fs.mkdirSync(dir, {recursive:true});
-  fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: team\ndescription: Scoped instructions\nactivation: globs\nglobs: ["src/api/*.js"]\n---\n${'a'.repeat(24000)}\n`);
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: team\ndescription: Scoped instructions\nactivation: globs\nglobs: ["src/api/*.js"]\n---\n${'a'.repeat(23000)}\n`);
   assert.throws(() => apply(root, 'gemini'), /bounded rule exceeds the 24000-byte limit/);
   assert.equal(fs.existsSync(path.join(root, '.agents/lockfile.v2.json')), false);
   assert.equal(fs.existsSync(path.join(root, '.agents/skills/team/SKILL.md')), false);
