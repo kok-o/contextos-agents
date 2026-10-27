@@ -70,7 +70,7 @@ ${mergedContent.trim()}
     });
     const globs = antigravityGlobs(activation.globs, context.projectRoot).join(', ');
     if (/[\r\n]/.test(globs)) throw new Error(`Skill '${skillName}': Antigravity globs must fit on one line`);
-    const ruleContent = field => `---\ntrigger: ${activation.mode === 'always' ? 'always_on' : 'glob'}\ndescription: ${JSON.stringify(description)}\n${field === null ? '' : `globs: ${JSON.stringify(field)}\n`}---\n\nSupporting resources are in \`.agents/skills/${skillName}/\` relative to the workspace root. Markdown links are relative to this rule file.\n\n${ruleBody}\n`;
+    const ruleContent = field => `---\ntrigger: ${activation.mode === 'always' ? 'always_on' : 'glob'}\ndescription: ${JSON.stringify(description)}\n${field === null ? '' : `globs: ${JSON.stringify(field)}\n`}---\n\nSupporting resources are in \`.agents/skills/${skillName}/\` relative to the workspace root. Markdown links are relative to this rule file.\n\n${ruleBody}\n`.replace(/\r\n?/g, '\n');
     const primaryContent = ruleContent(activation.mode === 'globs' ? globs : null);
     if (Buffer.byteLength(primaryContent) > 24000) {
       throw new Error(`Skill '${skillName}': Antigravity primary rule exceeds the 24000-byte limit`);

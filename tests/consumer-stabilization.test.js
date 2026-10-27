@@ -197,10 +197,14 @@ for (const mode of ['always', 'globs']) {
     write('a');
     const rulePath = '.agents/rules/contextos-team.md';
     const initial = renderAdapters(root, 'gemini').artifacts.find(art => art.path === rulePath);
-    const body = 'a'.repeat(24000 - initial.content.length + 1);
+    const prefix = 'First line\n';
+    const body = prefix + 'a'.repeat(24000 - initial.content.length + 1 - prefix.length);
     write(body);
     apply(root, 'gemini');
     assert.equal(fs.readFileSync(path.join(root, rulePath)).length, 24000);
+    assert.equal(detectDrift(root, 'gemini').hasDrift, false);
+    fs.writeFileSync(source, (header + body + '\n').replace(/\n/g, '\r\n'));
+    assert.equal(apply(root, 'gemini').skipped, true, 'CRLF sources must obey the same output-byte boundary');
     assert.equal(detectDrift(root, 'gemini').hasDrift, false);
     const lockPath = path.join(root, '.agents/lockfile.v2.json');
     const lockBefore = fs.readFileSync(lockPath);
