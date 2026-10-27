@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { ProjectMutationLock } = require('../.agents/filesystem/project-lock.js');
 const {
   createLockfileData,
   recordManagedFile,
@@ -58,6 +59,36 @@ describe('Task 1.4a: Safe CLI update Command', () => {
     assert.equal(result.ok, false);
     assert.equal(result.error, 'NO_AGENTS_DIR');
   });
+
+  for (const action of ['UPDATE', 'CREATE', 'DELETE', 'CONFLICT']) {
+    test(`refuses a ${action} target edited after planning and preserves the installation lock`, () => {
+      fs.mkdirSync(path.join(tmpProject, '.agents'), { recursive: true });
+      const rel = action === 'DELETE' ? '.agents/core/removed.md' : '.agents/AGENTS.md';
+      const target = path.join(tmpProject, rel);
+      const lock = createLockfileData();
+      if (action === 'CREATE') fs.mkdirSync(path.join(tmpProject, '.agents/core'));
+      else {
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, action === 'CONFLICT' ? 'LOCAL RULE' : 'BEFORE\r\n');
+        recordManagedFile(lock, rel, 'BEFORE\r\n');
+      }
+      saveLockfile(tmpProject, lock);
+      const beforeLock = fs.readFileSync(path.join(tmpProject, '.agents/contextos.lock.json'), 'utf8');
+      const editTarget = action === 'CONFLICT' ? `${target}.contextos.new` : target;
+      const acquire = ProjectMutationLock.prototype.acquire;
+      ProjectMutationLock.prototype.acquire = function(...args) {
+        const token = acquire.apply(this, args);
+        if (args[0]?.command === 'update') fs.writeFileSync(editTarget, 'USER EDIT AFTER PLAN');
+        return token;
+      };
+      try {
+        assert.throws(() => runUpdate(tmpProject, { sourceAgentsDir: path.join(tmpSource, '.agents'), skipCompile: true }), /Precondition/);
+      } finally { ProjectMutationLock.prototype.acquire = acquire; }
+      assert.equal(fs.readFileSync(editTarget, 'utf8'), 'USER EDIT AFTER PLAN');
+      assert.equal(fs.readFileSync(path.join(tmpProject, '.agents/contextos.lock.json'), 'utf8'), beforeLock);
+      if (action === 'CONFLICT') assert.equal(fs.readFileSync(target, 'utf8'), 'LOCAL RULE');
+    });
+  }
 
   test('dry-run previews actions without modifying files or lockfile on disk', () => {
     const projAgents = path.join(tmpProject, '.agents');

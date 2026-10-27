@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillMetadata, stripFrontmatter, collectSkillDirectories, renderSkillResources } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillMetadata, stripFrontmatter, collectSkillDirectories, renderSkillResources, relocateSkillLinks } = require('../shared.js');
 const { registerAdapter, applyArtifacts } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'gemini@2';
@@ -41,7 +41,7 @@ ${mergedContent.trim()}
   const artifacts = [
     {
       path: `.agents/generated/gemini/skills/${skillName}/SKILL.md`,
-      content: outputContent,
+      content: relocateSkillLinks(outputContent, { skillDir, destination: `.agents/generated/gemini/skills/${skillName}/SKILL.md`, projectRoot: context.projectRoot, resourceRoot: `.agents/generated/gemini/skills/${skillName}` }),
       mediaType: 'text/markdown',
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
@@ -49,7 +49,7 @@ ${mergedContent.trim()}
     },
     {
       path: `.agents/skills/${skillName}/SKILL.md`,
-      content: outputContent,
+      content: relocateSkillLinks(outputContent, { skillDir, destination: `.agents/skills/${skillName}/SKILL.md`, projectRoot: context.projectRoot, resourceRoot: `.agents/skills/${skillName}` }),
       mediaType: 'text/markdown',
       kind: 'generated-adapter',
       generator: GENERATOR_ID,
@@ -59,7 +59,7 @@ ${mergedContent.trim()}
 
   artifacts.push(...renderSkillResources(skillDir, [
     `.agents/generated/gemini/skills/${skillName}`, `.agents/skills/${skillName}`,
-  ], { kind: 'generated-adapter', generator: GENERATOR_ID, sourceSkillIds: [skillName] }));
+  ], { kind: 'generated-adapter', generator: GENERATOR_ID, sourceSkillIds: [skillName] }, context.projectRoot));
   return artifacts;
 }
 
@@ -90,7 +90,7 @@ function run(options = {}) {
   const projectRoot = options.projectRoot || '.';
   const context = loadCompilerContext(projectRoot, options);
   const artifacts = render(context);
-  const result = applyArtifacts(projectRoot, artifacts, { command: 'export gemini', context, force: options.force });
+  const result = applyArtifacts(projectRoot, artifacts, { command: 'export gemini', context, enabledAdapters: ['gemini'], force: options.force });
   console.log(`✓ Gemini export complete: ${result.appliedCount} files applied (tx: ${result.txId})`);
   return result;
 }

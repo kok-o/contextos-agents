@@ -10,7 +10,7 @@ Deprecated compatibility identifier. Use [engineering-workflow](../engineering-w
 
 ## When to Use
 
-An existing configuration or user explicitly names gstack-roles.
+An existing configuration or user explicitly names gstack-roles. Skip loading this body if engineering-workflow is already available.
 
 ## Rules & Patterns
 
@@ -22,9 +22,8 @@ Explicit gstack-roles selection resolves to engineering-workflow; inspect the re
 
 ## Validation Checklist
 
-- [ ] Canonical guidance is used.
-- [ ] Alias resolution adds no duplicate body.
-- [ ] Evidence scope and limitations are stated.
+- [ ] Resolution selects engineering-workflow once and reports the alias redirect.
+- [ ] Any specialist perspective answers a concrete review concern; a role change is identified as self-review.
 
 ## Common Mistakes
 

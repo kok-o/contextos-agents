@@ -20,3 +20,14 @@ last unless the architecture or dependencies actually require that order.
 Inspect the code and callers, reproduce a failure when feasible, report an
 exploit or incorrect-result scenario and its scope. A review request by itself
 is not a request to publish, message others, or rewrite the feature.
+
+## Existing authority and unavailable checks
+
+After the user authorizes a migration, verify its target, backup and relevant
+data invariants, then carry out the agreed bounded work. A new plan is not a
+reason to ask for the same permission again. If inspection reveals a different
+database or a broader deletion, resolve that changed boundary first.
+
+If an integration service is unavailable, run the local success/failure checks
+that remain useful and identify the blocked integration case. Report the service
+check as unrun; a passing fixture does not establish production behavior.

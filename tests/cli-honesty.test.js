@@ -15,6 +15,81 @@ const { execFileSync, spawnSync } = require('child_process');
 const { runScan } = require('../bin/lib/scan.js');
 const { detectDrift } = require('../.agents/adapters/drift-detector.js');
 
+test('--project targets diagnostics, fixes, and proxied exports without touching cwd', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-target-project-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const cwd = path.join(root, 'current project');
+  const target = path.join(root, 'target project');
+  const bin = path.resolve(__dirname, '../bin/index.js');
+  for (const dir of [cwd, target]) {
+    fs.mkdirSync(path.join(dir, '.agents/project/skills'), { recursive: true });
+    fs.mkdirSync(path.join(dir, '.agents/.contextos'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.agents/.contextos/watch-error.json'), '{}');
+  }
+  fs.writeFileSync(path.join(target, 'package.json'), JSON.stringify({ name: 'target-project', dependencies: { react: '19.0.0' } }));
+  const run = (...args) => spawnSync(process.execPath, [bin, ...args, '--project', target, '--json'], { cwd, encoding: 'utf8' });
+  const status = run('status');
+  assert.equal(status.status, 0, status.stderr);
+  assert.equal(JSON.parse(status.stdout).projectDir, target);
+  const detect = run('detect');
+  assert.equal(detect.status, 0, detect.stderr);
+  assert.equal(fs.realpathSync(JSON.parse(detect.stdout).workspaceGraph.repositoryRoot), fs.realpathSync(target));
+  const doctor = run('doctor', '--fix');
+  assert.doesNotThrow(() => JSON.parse(doctor.stdout), doctor.stderr);
+  assert.equal(fs.existsSync(path.join(target, '.agents/.contextos/watch-error.json')), false);
+  assert.equal(fs.existsSync(path.join(cwd, '.agents/.contextos/watch-error.json')), true);
+  assert.equal(fs.existsSync(path.join(cwd, '.agents/lockfile.v2.json')), false);
+  const check = run('export', 'all', '--check');
+  assert.equal(check.status, 0, check.stdout + check.stderr);
+});
+
+test('--project without a value fails before diagnostics or mutations', t => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-missing-project-'));
+  t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
+  const bin = path.resolve(__dirname, '../bin/index.js');
+  const result = spawnSync(process.execPath, [bin, 'doctor', '--fix', '--project', '--json'], { cwd, encoding: 'utf8' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--project.*(?:path|value)/i);
+});
+
+test('export and export --check honor the same --target adapter set', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-export-target-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: team\ndescription: Team rules\n---\nTeam policy');
+  const bin = path.resolve(__dirname, '../bin/index.js');
+  const run = (...args) => spawnSync(process.execPath, [bin, ...args], { cwd: root, encoding: 'utf8' });
+  for (const target of ['cursor', 'cursor,claude']) {
+    const exported = run('export', '--target', target);
+    assert.equal(exported.status, 0, exported.stdout + exported.stderr);
+    assert.equal(fs.existsSync(path.join(root, '.agents/skills/team/SKILL.md')), false, 'unselected Gemini output');
+    const checked = run('export', '--target', target, '--check', '--json');
+    assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  }
+});
+
+test('comma-separated target checks detect orphans from an adapter with an empty projection', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-comma-orphan-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const source = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(source, { recursive: true });
+  fs.writeFileSync(path.join(root, '.agents/AGENTS.md'), '# Project rules');
+  fs.writeFileSync(path.join(source, 'SKILL.md'), '---\nname: team\ndescription: Team rules\nactivation: always\n---\nTeam policy');
+  const bin = path.resolve(__dirname, '../bin/index.js');
+  const run = (entrypoint, ...args) => spawnSync(process.execPath, [entrypoint, ...args], { cwd: root, encoding: 'utf8' });
+  assert.equal(run(bin, 'export', '--target', 'cursor,claude').status, 0);
+  fs.unlinkSync(path.join(source, 'SKILL.md'));
+  fs.rmdirSync(source);
+  assert.equal(run(bin, 'export', 'cursor').status, 0);
+  for (const entrypoint of [bin, path.resolve(__dirname, '../.agents/ctx.js')]) {
+    const checked = run(entrypoint, 'export', '--target', 'cursor,claude', '--check', '--json');
+    assert.equal(checked.status, 1, checked.stdout + checked.stderr);
+    const report = JSON.parse(checked.stdout);
+    assert.ok(report.findings.ORPHAN_MANAGED_OUTPUT.some(item => item.path === '.claude/rules/team.md'));
+  }
+});
+
 function gitProject(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-honesty-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

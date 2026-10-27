@@ -94,7 +94,7 @@ Each skill is also available as a slash-command prompt in `.zed/prompts/<skill>.
 *Prompt template: `.zed/prompts/context-manager.md` (Use via /context-manager)*
 
 ### Skill: context-os
-> Deterministic context compiler and policy engine for AI coding agents.
+> Configure and debug ContextOS manifests, resolver selection, profiles, budgets, and adapter exports.
 *Prompt template: `.zed/prompts/context-os.md` (Use via /context-os)*
 
 ### Skill: engineering-workflow

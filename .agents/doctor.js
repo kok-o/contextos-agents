@@ -743,7 +743,7 @@ function inspectSkills(projectDir, activeProfile) {
   // Everything the exporters would see: project rules, plugins, vendor skills and any bundled core.
   const { collectAllSkillDirs } = require('./plugins.js');
   const allSkills = collectAllSkillDirs(projectDir)
-    .filter(dir => fs.existsSync(path.join(dir, 'SKILL.md')))
+    .filter(dir => fs.existsSync(require('./adapters/shared.js').getSkillEntrypointPath(dir)))
     .map(dir => path.basename(dir));
   if (allSkills.length === 0) return { total: 0, active: 0, excluded: 0, byDomain: { frontend: [], backend: [], cross: [] } };
 
@@ -775,7 +775,7 @@ function applyDoctorFix(projectDir = process.cwd(), options = {}) {
   try {
     const { renderAdapters, applyArtifacts } = require('./adapters/pure-compiler.js');
     const rendered = renderAdapters(projectDir, 'all');
-    const applyRes = applyArtifacts(projectDir, rendered.artifacts, { command: 'doctor --fix' });
+    const applyRes = applyArtifacts(projectDir, rendered.artifacts, { command: 'doctor --fix', context: rendered.context });
     results.push(`✓ Recompiled all adapters (${applyRes.appliedCount} files updated, tx: ${applyRes.txId})`);
   } catch (err) {
     results.push(`✗ Could not recompile adapters: ${err.message}`);
@@ -793,8 +793,10 @@ function applyDoctorFix(projectDir = process.cwd(), options = {}) {
         if (fs.existsSync(journalPath)) {
           try {
             const journal = JSON.parse(fs.readFileSync(journalPath, 'utf8'));
-            if (journal.status === 'COMMITTED' || journal.status === 'ROLLED_BACK') {
-              const ageMs = now - (journal.committedAt || journal.startedAt || 0);
+            const state = journal.state || journal.status;
+            if (state === 'COMMITTED' || state === 'ROLLED_BACK') {
+              const timestamp = journal.completedAt || journal.committedAt || journal.startedAt;
+              const ageMs = now - (typeof timestamp === 'number' ? timestamp : Date.parse(timestamp));
               if (ageMs > 3600000) {
                 fs.rmSync(fullEntry, { recursive: true, force: true });
                 cleanedCount++;

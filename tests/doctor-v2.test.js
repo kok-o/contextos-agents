@@ -50,6 +50,22 @@ describe('Milestone 8 — Doctor v2 Diagnostics Engine', () => {
     assert.ok(res.version.startsWith('v'));
   });
 
+  test('doctor --fix prunes only old completed current-format journals', () => {
+    const { JournaledTransaction } = require('../.agents/filesystem/index.js');
+    const completed = new JournaledTransaction(tmpDir);
+    completed.stageWrite('generated.txt', 'generated');
+    completed.commit();
+    const journal = JSON.parse(fs.readFileSync(completed.journalPath, 'utf8'));
+    journal.completedAt = new Date(Date.now() - 7200000).toISOString();
+    fs.writeFileSync(completed.journalPath, JSON.stringify(journal));
+    const pending = new JournaledTransaction(tmpDir);
+    pending.stageWrite('pending.txt', 'pending');
+    pending.prepare();
+    applyDoctorFix(tmpDir);
+    assert.equal(fs.existsSync(completed.txDir), false);
+    assert.equal(fs.existsSync(pending.journalPath), true);
+  });
+
   test('checkGitVersion() verifies git availability', () => {
     const res = checkGitVersion();
 

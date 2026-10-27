@@ -99,7 +99,7 @@ Skills are loaded on demand. Use `/read .agents/skills/<skill>/SKILL.md` when ne
 
 
 ## Skill: context-os
-> Deterministic context compiler and policy engine for AI coding agents.
+> Configure and debug ContextOS manifests, resolver selection, profiles, budgets, and adapter exports.
 *Source: `.agents/core/skills/context-os/SKILL.md` - Load via `/read .agents/core/skills/context-os/SKILL.md`*
 
 

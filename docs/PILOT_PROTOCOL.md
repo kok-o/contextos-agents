@@ -4,8 +4,10 @@ Status: prepared; no participants recruited and no pilot data collected.
 
 This protocol has two parts. The **adoption pilot** asks the question that
 decides whether the project continues: does a real team keep using the tool?
-The **task comparison** below it asks whether the rules change model results; it
-is optional and costs model usage.
+The **optional two-week task comparison** below asks whether the rules change
+model results and costs model usage. It may run during the adoption pilot or
+separately; it does not shorten the three-to-four-week adoption period or
+replace its continued-use decision rule.
 
 ## Adoption pilot
 
@@ -38,14 +40,16 @@ period means the product is cut down to the check on top of existing formats, or
 stopped. Two or more means the next work is whatever those teams report as their
 most frequent problem. Report the numbers, including every team that quit.
 
-## Purpose and participants
+## Optional two-week task comparison
 
-Use 3–5 consenting teams for two weeks to test whether shared instructions are
-useful in existing repositories. Recruit only after the user authorizes contact.
+Use a consenting subset of the adoption teams, or a separate group of 3–5 teams,
+for two weeks to compare task outcomes in existing repositories. Participation
+is optional; an adoption pilot can be completed without this comparison.
+Recruit only after the user authorizes contact.
 Record the client, version, model, task type, repository revision, and ContextOS
 configuration. Keep private code and credentials out of shared reports.
 
-## Setup
+### Setup
 
 Install the candidate npm archive into a disposable checkout first. Check init,
 profile, export, drift detection, project overrides, updates, and uninstall.
@@ -56,7 +60,7 @@ Confirm native discovery and explicit skill activation separately. Record which
 file the client read and the expected marker or rule it applied. A generated file
 or skill metadata list alone does not prove body activation.
 
-## Task comparison
+### Comparison procedure
 
 Choose real maintenance and feature tasks before running any comparator. Use a
 plain baseline, all installed entrypoints, and task-selected ContextOS context.
@@ -69,7 +73,7 @@ Record failures, API errors, regressions, retries, instructions that were ignore
 and time spent repairing outputs. Check negative controls against the evaluator
 before using its success numbers.
 
-## Daily record
+### Daily record
 
 ```json
 {
@@ -98,10 +102,12 @@ Unavailable telemetry stays null. Reasoning tokens are included in output billin
 and must not be added a second time. Distinguish context estimates from provider
 usage and token cost from development time.
 
-## Decision after two weeks
+### Report after two weeks
 
 Report completion and regression counts with their denominators, paired task
 comparisons, observed costs, repair time, and qualitative onboarding problems.
 Discuss uncertainty and differences between teams. Do not generalize this small
-pilot to every model, client, or repository. Recommend continuing, revising, or
-stopping based on observed problems and benefit.
+comparison to every model, client, or repository. Recommend continuing,
+revising, or stopping the comparison based on observed problems and benefit.
+The product continuation decision still uses continued adoption by at least
+two teams after the full three-to-four-week adoption pilot.

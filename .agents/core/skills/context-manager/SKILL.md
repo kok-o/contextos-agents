@@ -11,7 +11,7 @@ Deprecated compatibility identifier. Use [context-os](../context-os/SKILL.md) fo
 
 ## When to Use
 
-An existing configuration or user explicitly names context-manager.
+An existing configuration or user explicitly names context-manager. Skip loading this body if context-os is already available.
 
 ## Rules & Patterns
 
@@ -23,9 +23,8 @@ Explicit context-manager selection resolves to context-os; inspect the resolver 
 
 ## Validation Checklist
 
-- [ ] Canonical guidance is used.
-- [ ] Alias resolution adds no duplicate body.
-- [ ] Evidence scope and limitations are stated.
+- [ ] Resolution selects context-os once and reports the alias redirect.
+- [ ] The canonical entrypoint and compatibility reference are accessible in the installed/exported tree.
 
 ## Common Mistakes
 

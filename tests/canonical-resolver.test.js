@@ -8,6 +8,42 @@ const os = require('os');
 const { execFileSync } = require('child_process');
 const { CanonicalResolver, DEFAULT_CONTEXT_BUDGET_TOKENS, WEIGHTS } = require('../.agents/resolver/canonical-resolver.js');
 
+for (const direction of ['dependency', 'root']) {
+  test(`required dependency conflicts (${direction}) are not silently reintroduced`, () => {
+    const skill = (id, requires = [], conflicts = []) => ({
+      displayName: id, estimatedTokens: 100,
+      signals: { aliases: [id] }, dependencies: { requires, conflicts },
+    });
+    const registry = {
+      dependencyGraph: { 'task-a': ['dep-b'], 'dep-b': [], 'task-c': [] },
+      skills: {
+        'task-a': skill('task-a', ['dep-b']),
+        'dep-b': skill('dep-b', [], direction === 'dependency' ? ['task-c'] : []),
+        'task-c': skill('task-c', [], direction === 'root' ? ['dep-b'] : []),
+      },
+    };
+    const result = new CanonicalResolver({ rootDir: __dirname, registry }).resolve({ task: 'Use @task-a and @task-c', installedOnly: true });
+    assert.ok(!(result.skills.includes('dep-b') && result.skills.includes('task-c')));
+    assert.ok(!result.skills.includes('task-a') || result.skills.includes('dep-b'), 'a selected root keeps all its prerequisites');
+    assert.ok(result.conflicts.some(conflict => conflict.resolution === 'error'), 'unsatisfiable explicit requests need a diagnostic');
+    assert.ok(!result.excluded.some(item => result.skills.includes(item.id)), 'a skill cannot be selected and excluded');
+  });
+}
+
+test('a transitive dependency conflict evicts the dependent chain without orphan skills', () => {
+  const skill = (id, requires = [], conflicts = []) => ({
+    displayName: id, estimatedTokens: 100,
+    signals: { aliases: [id] }, dependencies: { requires, conflicts },
+  });
+  const registry = {
+    dependencyGraph: { 'task-a': ['dep-b'], 'dep-b': ['dep-c'], 'dep-c': [], 'task-d': [] },
+    skills: { 'task-a': skill('task-a', ['dep-b']), 'dep-b': skill('dep-b', ['dep-c']), 'dep-c': skill('dep-c'), 'task-d': skill('task-d', [], ['dep-c']) },
+  };
+  const result = new CanonicalResolver({ rootDir: __dirname, registry }).resolve({ task: 'Use @task-a and @task-d', installedOnly: true });
+  assert.deepEqual(result.skills, ['task-d']);
+  assert.ok(result.conflicts.some(conflict => conflict.resolution === 'error'));
+});
+
 describe('canonical-resolver.js — Milestone 3 Canonical Resolver Engine', () => {
   const rootDir = path.resolve(__dirname, '..');
   const resolver = new CanonicalResolver({ rootDir });

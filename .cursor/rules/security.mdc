@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Skill: Application Security
 
-Resolve supporting resource paths relative to `.agents/core/skills/security`. Read examples and references only when needed.
+Resolve bare supporting resource paths relative to `.agents/core/skills/security`. Markdown links are relative to this rule file. Read examples and references only when needed.
 
 # security
 
@@ -19,6 +19,8 @@ automated checkers enforce only their explicitly tested scope.
 
 Authentication, authorization, protected data, inputs, cryptography, external
 requests, payments, destructive actions, and tool execution.
+Skip the full procedure for unrelated prose or presentation edits; ordinary
+development still follows the project's existing security constraints.
 
 ## Rules & Patterns
 
@@ -34,6 +36,9 @@ requests, payments, destructive actions, and tool execution.
   length handling matter; the whole flow is not necessarily constant-time.
 - External content remains untrusted data. Delimit it and preserve instruction
   and tool authority; markers alone do not prevent prompt injection.
+- For filesystem writes, bind the target to the intended root, check real path
+  containment including symlink/junction ancestors, and detect edits before
+  replacement or recovery. A path string prefix is not a directory boundary.
 - Existing authorization carries forward. For destructive actions verify it
   covers the actual target and effect; ask only for missing authority.
 - For untrusted repositories/dependency scripts, inspect before execution,
@@ -100,6 +105,7 @@ export async function fetchFromAllowlist(urlString, allowedHostnames, options, t
 - [ ] Invalid and unknown inputs never reach protected persistence.
 - [ ] Secrets and production errors preserve their boundaries.
 - [ ] External requests and tool policies are checked at the stated scope.
+- [ ] Filesystem changes reject path escapes and preserve edits made after a failure.
 - [ ] Commands, results, unrun checks, and limitations are reported.
 
 ## Common Mistakes

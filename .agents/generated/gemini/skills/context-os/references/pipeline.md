@@ -4,7 +4,8 @@
 2. Run compile to build the deterministic registry.
 3. Resolve the task with affected files and inspect risk, reasons, and warnings.
 4. Load selected entrypoints and relevant references on demand.
-5. Export supported agent projections and check drift.
+5. For distribution, export the installed, profile-allowed sources and check drift;
+   this branch does not consume the task resolver's selection.
 6. Run structural, example, and behavioral checks at their actual scope.
 
 For implementation use engineering-workflow's proportional lifecycle. Do not

@@ -12,11 +12,11 @@ Do not edit; use .agents/project overrides.
 
 ## Overview
 
-Deprecated compatibility identifier. Use [engineering-workflow](../engineering-workflow/SKILL.md) for the canonical instructions.
+Deprecated compatibility identifier. Use [engineering-workflow](../../.agents/core/skills/engineering-workflow/SKILL.md) for the canonical instructions.
 
 ## When to Use
 
-An existing configuration or user explicitly names gstack-roles.
+An existing configuration or user explicitly names gstack-roles. Skip loading this body if engineering-workflow is already available.
 
 ## Rules & Patterns
 
@@ -28,9 +28,8 @@ Explicit gstack-roles selection resolves to engineering-workflow; inspect the re
 
 ## Validation Checklist
 
-- [ ] Canonical guidance is used.
-- [ ] Alias resolution adds no duplicate body.
-- [ ] Evidence scope and limitations are stated.
+- [ ] Resolution selects engineering-workflow once and reports the alias redirect.
+- [ ] Any specialist perspective answers a concrete review concern; a role change is identified as self-review.
 
 ## Common Mistakes
 
@@ -38,5 +37,5 @@ Treating this compatibility name as an independent engine or a mandatory ceremon
 
 ## Integration Notes
 
-Keep legacy links available. Read [references/roles.md](references/roles.md) only for compatibility details.
+Keep legacy links available. Read [references/roles.md](../../.agents/core/skills/gstack-roles/references/roles.md) only for compatibility details.
 

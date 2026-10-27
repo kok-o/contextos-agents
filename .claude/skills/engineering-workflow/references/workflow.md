@@ -19,6 +19,10 @@ affected code/callers, dependencies, and relevant verification. Resolve only
 missing material decisions. Keep user authorization across phases; do not stop
 again merely because a spec or plan now exists.
 
+A short plan in the conversation is enough unless the project or task needs a
+durable document. Previously approved actions do not need a new approval at each
+phase. Recheck authority only when the actual target, effect, or scope changes.
+
 Prefer independently useful vertical slices when possible. For a referral
 feature, start with one minimal service/API/UI path, verify it, then add expiry
 and abuse controls. Infrastructure-only work can have infrastructure-only steps.
@@ -37,6 +41,9 @@ itself require a commit.
 Run relevant checks, examine failures, and repair introduced regressions. State
 pre-existing failures, unavailable environments, and unrun checks separately.
 Do not silently expand the feature or remove a check to obtain a green result.
+If a required service or platform is unavailable, run independent checks and
+state which acceptance case remains unverified. A mock can check an interface;
+it does not establish that the service works.
 
 ## Review and simplify
 

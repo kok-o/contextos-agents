@@ -16,11 +16,11 @@ Apply inspection and execution discipline when working with Gemini. Model-specif
 
 ## When to Use
 
-Gemini implementation and debugging tasks, or an explicit request for this guidance.
+Gemini implementation and debugging tasks, or an explicit request for this guidance. Skip for other models unless requested, and for routine prose edits.
 
 ## Rules & Patterns
 
-Inspect affected source, callers, symbols, runtime versions, and project checks. Implement the authorized behavior completely; never substitute stubs for a required integration. Preserve unrelated code. Choose checks by risk using engineering-workflow. Keep a persistent plan for substantial multi-file work when useful, not for every three tool calls. Explain meaningful decisions; role banners are optional.
+Before using an unfamiliar API, inspect its actual export, signature, installed version, and a caller. Distinguish a plausible example from an available project symbol. After a tool failure, inspect the exit result and affected files before retrying; avoid repeating a write whose outcome is unknown. Report a pure helper at its actual boundary, and verify persistence or an external effect separately when required. Use engineering-workflow for planning, authority, and check selection.
 
 Read EXAMPLES.md for a runnable validation example and its limits.
 
@@ -30,9 +30,9 @@ A validated calculation can be verified in isolation. It does not prove a paymen
 
 ## Validation Checklist
 
-- [ ] The requested outcome and applicable failure cases are checked.
-- [ ] Evidence names commands, results, scope, and limitations.
-- [ ] Unrelated changes and existing authorization are preserved.
+- [ ] Imports and API signatures come from inspected project code or installed documentation.
+- [ ] Failed tool calls have a known outcome before any retry that could duplicate a write.
+- [ ] Reported integration effects have evidence beyond a successful helper calculation.
 
 ## Common Mistakes
 

@@ -5,11 +5,216 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execFileSync } = require('child_process');
-const { JournaledTransaction, TX_STATES } = require('../.agents/filesystem/journaled-transaction.js');
+const { execFileSync, spawnSync } = require('child_process');
+// The installed-consumer gate reuses these crash scenarios against the archive's
+// own modules and executables, without copying runtime code from the checkout.
+const PACKAGE_ROOT = path.resolve(process.env.CONTEXTOS_RECOVERY_TEST_PACKAGE_ROOT || path.join(__dirname, '..'));
+const TX_MODULE = path.join(PACKAGE_ROOT, '.agents/filesystem/journaled-transaction.js');
+const { JournaledTransaction, TX_STATES } = require(TX_MODULE);
 
-const CTX_BIN = path.resolve(__dirname, '../bin/index.js');
+const CTX_BIN = path.join(PACKAGE_ROOT, 'bin/index.js');
 const NODE = process.execPath;
+
+function crashedTransaction(t, operation = 'write') {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-recovery-crash-'));
+  t.after(() => {
+    assert.ok(root.startsWith(path.join(os.tmpdir(), 'ctx-recovery-crash-')));
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+  if (operation !== 'create') fs.writeFileSync(path.join(root, 'first.md'), 'BEFORE');
+  fs.writeFileSync(path.join(root, 'second.md'), 'BEFORE');
+  const result = spawnSync(NODE, ['-e', `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const [modulePath, root, operation] = process.argv.slice(1);
+    const { JournaledTransaction } = require(modulePath);
+    const tx = new JournaledTransaction(root, 'tx-crash');
+    if (operation === 'delete') tx.stageDelete('first.md');
+    else tx.stageWrite('first.md', 'AFTER');
+    tx.stageWrite('second.md', 'AFTER');
+    const method = operation === 'delete' ? 'unlinkSync' : 'renameSync';
+    const original = fs[method];
+    fs[method] = function(...args) {
+      if (operation === 'write-before' && args[1] === path.join(root, 'first.md')) process.exit(73);
+      const value = original.apply(fs, args);
+      if (args[operation === 'delete' ? 0 : 1] === path.join(root, 'first.md')) process.exit(73);
+      return value;
+    };
+    tx.commit();
+  `, TX_MODULE, root, operation], { encoding: 'utf8', timeout: 10000 });
+  assert.strictEqual(result.status, 73, result.stderr);
+  assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'BEFORE');
+  return root;
+}
+
+for (const operation of ['write', 'create', 'delete', 'write-before']) {
+  test(`recover --rollback restores a process crash during ${operation}`, t => {
+    const root = crashedTransaction(t, operation);
+    const stdout = execFileSync(NODE, [CTX_BIN, 'recover', '--rollback', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+    assert.match(stdout, /successfully rolled back/);
+    if (operation === 'create') assert.strictEqual(fs.existsSync(path.join(root, 'first.md')), false);
+    else assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'BEFORE');
+    assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'BEFORE');
+    assert.deepStrictEqual(JournaledTransaction.listPending(root), []);
+  });
+
+  test(`recover --resume completes a process crash during ${operation}`, t => {
+    const root = crashedTransaction(t, operation);
+    const stdout = execFileSync(NODE, [CTX_BIN, 'recover', '--resume', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+    assert.match(stdout, /successfully resumed and committed/);
+    if (operation === 'delete') assert.strictEqual(fs.existsSync(path.join(root, 'first.md')), false);
+    else assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'AFTER');
+    assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'AFTER');
+    assert.deepStrictEqual(JournaledTransaction.listPending(root), []);
+  });
+}
+
+for (const action of ['--rollback', '--resume']) {
+  for (const operation of ['write', 'create', 'delete']) {
+    test(`${action} recovers a legacy RC1 journal after ${operation}`, t => {
+      const root = crashedTransaction(t, operation);
+      const journal = path.join(root, '.agents/.contextos/transactions/tx-crash/journal.json');
+      const data = JSON.parse(fs.readFileSync(journal, 'utf8'));
+      delete data.schemaVersion;
+      for (const op of data.operations) {
+        delete op.progress;
+        delete op.beforeHash;
+        delete op.hadExisting;
+        op.backupFilePath = null;
+      }
+      fs.writeFileSync(journal, JSON.stringify(data));
+      execFileSync(NODE, [CTX_BIN, 'recover', action, 'tx-crash'], { cwd: root, encoding: 'utf8' });
+      const exists = fs.existsSync(path.join(root, 'first.md'));
+      assert.strictEqual(exists, action === '--rollback' ? operation !== 'create' : operation !== 'delete');
+      if (exists) assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), action === '--rollback' ? 'BEFORE' : 'AFTER');
+      assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), action === '--rollback' ? 'BEFORE' : 'AFTER');
+    });
+  }
+}
+
+test('rollback can itself crash and be retried without losing the original backup', t => {
+  const root = crashedTransaction(t);
+  const result = spawnSync(NODE, ['-e', `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const [modulePath, root] = process.argv.slice(1);
+    const { JournaledTransaction } = require(modulePath);
+    const original = fs.renameSync;
+    fs.renameSync = function(...args) {
+      const value = original.apply(fs, args);
+      if (args[1] === path.join(root, 'first.md')) process.exit(74);
+      return value;
+    };
+    JournaledTransaction.load(root, 'tx-crash').rollback();
+  `, TX_MODULE, root], { encoding: 'utf8', timeout: 10000 });
+  assert.strictEqual(result.status, 74, result.stderr);
+  assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'BEFORE');
+  assert.strictEqual(fs.readFileSync(path.join(root, '.agents/.contextos/transactions/tx-crash/backup/0-first.md'), 'utf8'), 'BEFORE');
+  execFileSync(NODE, [CTX_BIN, 'recover', '--rollback', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+  assert.deepStrictEqual(JournaledTransaction.listPending(root), []);
+});
+
+test('resume followed by another crash retains both original backups for rollback', t => {
+  const root = crashedTransaction(t);
+  const result = spawnSync(NODE, ['-e', `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const [modulePath, root] = process.argv.slice(1);
+    const { JournaledTransaction } = require(modulePath);
+    const original = fs.renameSync;
+    fs.renameSync = function(...args) {
+      const value = original.apply(fs, args);
+      if (args[1] === path.join(root, 'second.md')) process.exit(74);
+      return value;
+    };
+    JournaledTransaction.load(root, 'tx-crash').commit();
+  `, TX_MODULE, root], { encoding: 'utf8', timeout: 10000 });
+  assert.strictEqual(result.status, 74, result.stderr);
+  execFileSync(NODE, [CTX_BIN, 'recover', '--rollback', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+  for (const file of ['first.md', 'second.md']) assert.strictEqual(fs.readFileSync(path.join(root, file), 'utf8'), 'BEFORE');
+});
+
+test('resume refuses to overwrite an unstarted file edited after a crash', t => {
+  const root = crashedTransaction(t);
+  fs.writeFileSync(path.join(root, 'second.md'), 'USER EDIT');
+  const result = spawnSync(NODE, [CTX_BIN, 'recover', '--resume', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(result.status, 1);
+  assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'USER EDIT');
+  assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'AFTER');
+});
+
+test('resume refuses an ambiguous legacy operation without a precondition', t => {
+  const root = crashedTransaction(t);
+  const journal = path.join(root, '.agents/.contextos/transactions/tx-crash/journal.json');
+  const data = JSON.parse(fs.readFileSync(journal, 'utf8'));
+  delete data.schemaVersion;
+  for (const op of data.operations) {
+    delete op.progress;
+    delete op.beforeHash;
+    delete op.hadExisting;
+    delete op.expectedBeforeHash;
+  }
+  fs.writeFileSync(journal, JSON.stringify(data));
+  fs.writeFileSync(path.join(root, 'second.md'), 'USER EDIT');
+  const result = spawnSync(NODE, [CTX_BIN, 'recover', '--resume', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(result.status, 1);
+  assert.match(result.stderr, /precondition|manual recovery/i);
+  assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'USER EDIT');
+  assert.strictEqual(fs.readFileSync(path.join(root, '.agents/.contextos/transactions/tx-crash/backup/0-first.md'), 'utf8'), 'BEFORE');
+  // A rollback can still restore the operations whose backups are known.
+  execFileSync(NODE, [CTX_BIN, 'recover', '--rollback', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'BEFORE');
+  assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'USER EDIT');
+});
+
+test('the source CLI uses the same locked crash recovery implementation', t => {
+  const root = crashedTransaction(t);
+  execFileSync(NODE, [path.join(PACKAGE_ROOT, '.agents/ctx.js'), 'recover', '--continue', 'tx-crash'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(fs.readFileSync(path.join(root, 'second.md'), 'utf8'), 'AFTER');
+  assert.deepStrictEqual(JournaledTransaction.listPending(root), []);
+});
+
+for (const action of ['commit', 'rollback']) {
+  for (const code of ['EPERM', 'EBUSY', 'EACCES']) {
+    test(`${action} preserves an edit during ${code} rename backoff`, t => {
+      const root = crashedTransaction(t, action === 'commit' ? 'write-before' : 'write');
+      const result = spawnSync(NODE, ['-e', `
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const [modulePath, root, action, code] = process.argv.slice(1);
+        const { JournaledTransaction } = require(modulePath);
+        const rename = fs.renameSync;
+        let failed = false;
+        fs.renameSync = function(...args) {
+          if (!failed && args[1] === path.join(root, 'first.md')) {
+            failed = true;
+            fs.writeFileSync(args[1], 'USER EDIT DURING BACKOFF');
+            throw Object.assign(new Error('Transient sharing violation'), { code });
+          }
+          return rename.apply(fs, args);
+        };
+        JournaledTransaction.load(root, 'tx-crash')[action]();
+      `, TX_MODULE, root, action, code], { encoding: 'utf8', timeout: 10000 });
+      assert.strictEqual(result.status, 1, result.stderr);
+      assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'USER EDIT DURING BACKOFF');
+      assert.strictEqual(fs.readFileSync(path.join(root, '.agents/.contextos/transactions/tx-crash/backup/0-first.md'), 'utf8'), 'BEFORE');
+      assert.strictEqual(JournaledTransaction.listPending(root).length, 1);
+    });
+  }
+}
+
+test('recovery preserves edits made after the crash and retains backups on refusal', t => {
+  const root = crashedTransaction(t);
+  fs.writeFileSync(path.join(root, 'first.md'), 'USER EDIT');
+  for (const action of ['--resume', '--rollback']) {
+    const result = spawnSync(NODE, [CTX_BIN, 'recover', action, 'tx-crash'], { cwd: root, encoding: 'utf8' });
+    assert.strictEqual(result.status, 1);
+    assert.strictEqual(fs.readFileSync(path.join(root, 'first.md'), 'utf8'), 'USER EDIT');
+    assert.strictEqual(fs.readFileSync(path.join(root, '.agents/.contextos/transactions/tx-crash/backup/0-first.md'), 'utf8'), 'BEFORE');
+    assert.strictEqual(fs.existsSync(path.join(root, '.agents/.contextos/locks/mutation.lock')), false);
+    assert.strictEqual(JournaledTransaction.listPending(root).length, 1);
+  }
+});
 
 test('Recovery CLI', async (t) => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-recover-test-'));

@@ -108,16 +108,17 @@ function parseFrontmatter(content) {
 
 // ── Parse skill.yaml ──────────────────────────────────────────────────────────
 function parseSkillYaml(yamlText) {
+  const parsed = require('./compiler/manifest-compiler.js').parseYaml(yamlText);
   return {
-    id:          yamlField(yamlText, 'id') || yamlField(yamlText, 'name'),
-    name:        yamlField(yamlText, 'name'),
-    description: yamlField(yamlText, 'description'),
-    version:     yamlField(yamlText, 'version'),
-    type:        yamlField(yamlText, 'type'),
-    resources:   yamlList(yamlText, 'resources').concat(yamlBlockList(yamlText, 'resources')),
-    requires:    yamlList(yamlText, 'requires').concat(yamlBlockList(yamlText, 'requires')),
-    conflicts:   yamlList(yamlText, 'conflicts').concat(yamlBlockList(yamlText, 'conflicts')),
-    optional:    yamlList(yamlText, 'optional').concat(yamlBlockList(yamlText, 'optional')),
+    id:          parsed.id || parsed.name,
+    name:        parsed.displayName || parsed.name || parsed.id,
+    description: parsed.description,
+    version:     parsed.version,
+    type:        parsed.type || 'instruction-only',
+    resources:   (parsed.resources || []).map(r => typeof r === 'string' ? r : r.path),
+    requires:    parsed.dependencies?.requires || parsed.requires || [],
+    conflicts:   parsed.dependencies?.conflicts || parsed.conflicts || [],
+    optional:    parsed.dependencies?.optional || parsed.optional || [],
   };
 }
 
@@ -129,8 +130,8 @@ function collectSourceSkills() {
   for (const dir of collectAllSkillDirs(ROOT)) {
     const name = path.basename(dir);
 
-    const skillMdPath = path.join(dir, 'SKILL.md');
-    const yamlPath    = path.join(dir, 'skill.yaml');
+    const skillMdPath = require('./adapters/shared.js').getSkillEntrypointPath(dir);
+    const yamlPath = ['skill.v2.yaml', 'skill.yaml'].map(file => path.join(dir, file)).find(file => fs.existsSync(file)) || path.join(dir, 'skill.yaml');
 
     skills[name] = {
       name,

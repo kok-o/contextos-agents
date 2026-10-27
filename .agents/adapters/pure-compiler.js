@@ -196,6 +196,7 @@ function renderAdapters(projectRoot, adapterNames = 'all', options = {}) {
     ? listAdapters()
     : (Array.isArray(adapterNames) ? adapterNames : [adapterNames]);
   const targets = rawTargets.flatMap(a => (typeof a === 'string' && a.includes(',') ? a.split(',').map(s => s.trim()).filter(Boolean) : a));
+  context.enabledAdapters = targets;
 
   const allArtifacts = [];
   const pathToArtifact = new Map();
@@ -353,6 +354,11 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
 
     const activePaths = new Set(artifacts.map(a => toPosix(a.path)));
     const activeGenerators = new Set(artifacts.map(a => a.generator));
+    // An explicitly selected adapter still owns its previous outputs when its
+    // new projection is empty (for example after deleting the final rule).
+    for (const adapter of options.enabledAdapters || options.context?.enabledAdapters || []) {
+      activeGenerators.add(`${adapter}@2`);
+    }
 
     // Support backward compatibility with Lockfile v1 (.agents/contextos.lock.json)
     const v1Data = readJsonIfPresent(legacyLockPath);

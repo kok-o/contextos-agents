@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Skill: ponytail-mindset
 
-Resolve supporting resource paths relative to `.agents/core/skills/ponytail-mindset`. Read examples and references only when needed.
+Resolve bare supporting resource paths relative to `.agents/core/skills/ponytail-mindset`. Markdown links are relative to this rule file. Read examples and references only when needed.
 
 # ponytail-mindset
 
@@ -16,13 +16,13 @@ Reduce unnecessary code and dependencies without weakening correctness or securi
 
 ## When to Use
 
-Substantive implementation, refactoring, and reviews of complexity.
+Substantive implementation, refactoring, and reviews of complexity. Skip for typos, direct questions, and diagnostics that need no implementation choice.
 
 ## Rules & Patterns
 
 Before adding code, consider YAGNI, project reuse, the standard library, native platform features, installed dependencies, a readable one-liner, then the minimum maintainable code. Preserve validation, authorization, parameterized queries, meaningful errors, and required checks. Single-use helpers are allowed when they clarify a concept or boundary.
 
-Read [references/minimalism.md](references/minimalism.md) when a tradeoff needs detail.
+Read [references/minimalism.md](../../.agents/core/skills/ponytail-mindset/references/minimalism.md) when a tradeoff needs detail.
 
 ## Code Examples
 
@@ -30,9 +30,9 @@ Reuse the installed date formatter. An update endpoint still validates its paylo
 
 ## Validation Checklist
 
-- [ ] The requested outcome and applicable failure cases are checked.
-- [ ] Evidence names commands, results, scope, and limitations.
-- [ ] Unrelated changes and existing authorization are preserved.
+- [ ] New code or dependencies solve an inspected requirement that existing facilities do not cover.
+- [ ] Simplification preserves error contracts, ownership checks, and meaningful failure tests.
+- [ ] A maintainer can follow the control flow without hidden side effects or speculative extension points.
 
 ## Common Mistakes
 

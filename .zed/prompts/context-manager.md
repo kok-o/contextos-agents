@@ -12,11 +12,11 @@ Do not edit; use .agents/project overrides.
 
 ## Overview
 
-Deprecated compatibility identifier. Use [context-os](../context-os/SKILL.md) for the canonical instructions.
+Deprecated compatibility identifier. Use [context-os](../../.agents/core/skills/context-os/SKILL.md) for the canonical instructions.
 
 ## When to Use
 
-An existing configuration or user explicitly names context-manager.
+An existing configuration or user explicitly names context-manager. Skip loading this body if context-os is already available.
 
 ## Rules & Patterns
 
@@ -28,9 +28,8 @@ Explicit context-manager selection resolves to context-os; inspect the resolver 
 
 ## Validation Checklist
 
-- [ ] Canonical guidance is used.
-- [ ] Alias resolution adds no duplicate body.
-- [ ] Evidence scope and limitations are stated.
+- [ ] Resolution selects context-os once and reports the alias redirect.
+- [ ] The canonical entrypoint and compatibility reference are accessible in the installed/exported tree.
 
 ## Common Mistakes
 
@@ -38,5 +37,5 @@ Treating this compatibility name as an independent engine or a mandatory ceremon
 
 ## Integration Notes
 
-Keep legacy links available. Read [references/context-rules.md](references/context-rules.md) only for compatibility details.
+Keep legacy links available. Read [references/context-rules.md](../../.agents/core/skills/context-manager/references/context-rules.md) only for compatibility details.
 
