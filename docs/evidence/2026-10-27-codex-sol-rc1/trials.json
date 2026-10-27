@@ -1,0 +1,1509 @@
+[
+  {
+    "runId": "codex-cli-sol-always-api",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "always-api",
+    "trial": 1,
+    "prompt": "Read src/api/invoice.js and explain totalInvoice. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-always/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-37cf7d2bbdf8710d6665af97",
+    "rawResponse": "[`totalInvoice(lines)`](<TEST_ROOT>/always/src/api/invoice.js:1) uses `reduce` to add each line’s `amount` to a running total, starting at `0`.\n\n- `[{ amount: 10 }, { amount: 25 }]` returns `35`.\n- An empty array returns `0`.\n- It expects numeric amounts without validating them: strings can cause concatenation, and missing amounts can produce `NaN`.\n\nIt does not modify the array. No files were changed.\n\nCTX-37cf7d2bbdf8710d6665af97",
+    "commentary": [
+      "I’ll read `src/api/invoice.js` and explain how `totalInvoice` works.",
+      "`totalInvoice` sums the `amount` values in `lines`, starting from `0`. I’m also applying the workspace’s `compat-always` response convention."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 90691,
+      "cached_input_tokens": 71680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1078,
+      "reasoning_output_tokens": 506
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\always\\\\.agents\\\\skills\\\\compat-always\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-always\r\ndescription: \"General workspace response convention.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-37cf7d2bbdf8710d6665af97\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src/api/invoice.js'; rg --files -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!vendor'\"'\"",
+        "exitCode": 1
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$taskDir = Get-Item -LiteralPath (Get-Location).Path\nwhile ($null -ne $taskDir) {\n  $instructionPath = Join-Path $taskDir.FullName '\"'AGENTS.md'\n  if (Test-Path -LiteralPath \"'$instructionPath) {\n    Write-Output $instructionPath\n    Get-Content -LiteralPath $instructionPath\n  }\n  $taskDir = $taskDir.Parent\n}'",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "7657640d9c498e7a755cf7db158137d1c77dfbdb230d11fda35485dffdaed7e3",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:43.363Z"
+  },
+  {
+    "runId": "codex-cli-sol-always-arithmetic",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "always-arithmetic",
+    "trial": 1,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-37cf7d2bbdf8710d6665af97",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 22042,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 20,
+      "reasoning_output_tokens": 13
+    },
+    "commands": [],
+    "rawLogSha256": "a227695378ddf77ccb67cd3af4141187286208aef2ed333411adcfa6669945ba",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:35.657Z"
+  },
+  {
+    "runId": "codex-cli-sol-always-docs",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "always-docs",
+    "trial": 1,
+    "prompt": "Read docs/note.md and summarize it. Do not inspect other files or change anything.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-37cf7d2bbdf8710d6665af97",
+    "rawResponse": "The note states that the fixture contains a small invoice module.",
+    "commentary": [
+      "I’ll read `docs/note.md` and summarize it without inspecting other files or making changes."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 44242,
+      "cached_input_tokens": 35328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 158,
+      "reasoning_output_tokens": 37
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'docs/note.md' -Raw\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "512b92a878ba0545073cc8a392d99773cc53d5408b2b0aed2c0b7f3f94319d87",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:41:25.258Z"
+  },
+  {
+    "runId": "codex-cli-sol-control-positive-retry",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "control-positive-retry",
+    "trial": 1,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": null,
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": null,
+    "controlMarkerObserved": false,
+    "expectedConfirmation": null,
+    "rawResponse": "Consider renaming [`totalInvoice(lines)`](/<TEST_ROOT>/control/src/api/invoice.js:1) to `calculateInvoiceTotal(lines)`. It sums the line amounts and returns a number; the suggested name makes that purpose clearer.\n\nNo files changed.",
+    "commentary": [
+      "I’ll read the functions and their call sites, then suggest clearer names where useful. I won’t change any files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 95640,
+      "cached_input_tokens": 84736,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 832,
+      "reasoning_output_tokens": 211
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n \\\"invoice|issue31|naming\\\" <USERPROFILE>\\\\.codex\\\\memories\\\\MEMORY.md\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Location; rg --files -g AGENTS.md -g invoice.js -g package.json -g '*invoice*' -g '*Invoice*'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$taskRoot = Get-Item -LiteralPath .; while ($null -ne $taskRoot) { $taskInstructions = Join-Path $taskRoot.FullName '\"'AGENTS.md'; if (Test-Path -LiteralPath \"'$taskInstructions) { Write-Output $taskInstructions; Get-Content -LiteralPath $taskInstructions }; $taskRoot = $taskRoot.Parent }; $taskLocalInstructions = @('\"'src\\\\AGENTS.md','src\\\\api\\\\AGENTS.md'); foreach (\"'$taskInstruction in $taskLocalInstructions) { if (Test-Path -LiteralPath $taskInstruction) { Write-Output $taskInstruction; Get-Content -LiteralPath $taskInstruction } }'",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$taskLine=0; Get-Content -LiteralPath src'\"\\\\api\\\\invoice.js | ForEach-Object { \"'$taskLine++; '\"'{0,4}: {1}' -f \"'$taskLine, $_ }; rg -n \"invoice|Invoice\" .'",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "8b6d49305a4e39a8e9397a2f844f936ea8ec84edc76bb96a316f6a086216debb",
+    "sourceSearchEvidence": [],
+    "startedAt": null
+  },
+  {
+    "runId": "codex-cli-sol-explicit-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 1,
+    "prompt": "$compat-auto\nReview function names in src/api/invoice.js. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "No actionable naming issues in [invoice.js](src/api/invoice.js). `totalInvoice` is reasonable; `calculateInvoiceTotal` would be an optional clarity improvement.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll use compat-auto to review the function names in `src/api/invoice.js` without changing any files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 97046,
+      "cached_input_tokens": 74880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 625,
+      "reasoning_output_tokens": 239
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src/api/invoice.js'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '.agents/skills/compat-auto/SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!.git'\"'; git status --short\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n --glob '\"'!node_modules/**'\"' --glob '\"'!package-lock.json'\"' --glob '\"'!.agents/**'\"' 'totalInvoice|function |=>|invoice' src package.json\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "3d17d7402465c92265f02e7e4d4f7a59159c7d93e5ad8a2d61b6a08eee982cc5",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:39:05.548Z"
+  },
+  {
+    "runId": "codex-cli-sol-explicit-2",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 2,
+    "prompt": "$compat-auto\nReview function names in src/api/invoice.js. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "`totalInvoice(lines)` is understandable. Optional improvement at [invoice.js:1](/<TEST_ROOT>/auto/src/api/invoice.js:1): `calculateInvoiceTotal(lines)` makes the computation clearer.\n\nNo naming defects found. No files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names without changing files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 92342,
+      "cached_input_tokens": 82304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 863,
+      "reasoning_output_tokens": 408
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '*invoice*' -g package.json\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content -LiteralPath src/api/invoice.js'",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content -LiteralPath .agents/skills/compat-auto/SKILL.md'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$taskDir = Get-Item -LiteralPath .; while ($null -ne $taskDir) { $instructionsPath = Join-Path $taskDir.FullName '\"'AGENTS.md'; if (Test-Path -LiteralPath \"'$instructionsPath) { Write-Output $instructionsPath; Get-Content -LiteralPath $instructionsPath }; $taskDir = $taskDir.Parent }'",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "dad6ce2e1e684995a1e13937ffc184b003fda87d9b7698609a35259c56fb105b",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:16.138Z"
+  },
+  {
+    "runId": "codex-cli-sol-explicit-3",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 3,
+    "prompt": "$compat-auto\nReview function names in src/api/invoice.js. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "No naming issues found in [invoice.js](<TEST_ROOT>/auto/src/api/invoice.js:1). `totalInvoice` accurately describes summing invoice line amounts. `calculateInvoiceTotal` is an optional, more explicit alternative.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names in `src/api/invoice.js` without changing files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 115154,
+      "cached_input_tokens": 95232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 676,
+      "reasoning_output_tokens": 240
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!.git'\"'\"",
+        "exitCode": 1
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '.agents\\\\skills\\\\compat-auto\\\\SKILL.md'; Get-Content -LiteralPath 'src\\\\api\\\\invoice.js'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n --glob '\"'!node_modules/**'\"' --glob '\"'!.git/**'\"' 'totalInvoice|export (async )?function|invoice' src; git status --short\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "67250ca9130d429c4b5a73c132ebb2b92d3a4ebe0c6f126f54b0178a1d04d380",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:41:36.444Z"
+  },
+  {
+    "runId": "codex-cli-sol-explicit-4",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 4,
+    "prompt": "$compat-auto\nReview function names in src/api/invoice.js. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "[`totalInvoice`](<TEST_ROOT>/auto/src/api/invoice.js:1) is understandable. Optional improvement: `calculateInvoiceTotal` makes its purpose clearer—calculating a total from line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll use the compat-auto skill to review the function names in `src/api/invoice.js`, without changing files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 91742,
+      "cached_input_tokens": 72320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 602,
+      "reasoning_output_tokens": 232
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content -LiteralPath .agents/skills/compat-auto/SKILL.md'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content -LiteralPath src/api/invoice.js'",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!.git'\"'\"",
+        "exitCode": 1
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n 'totalInvoice|function ' src/api\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "c32e4b401228bc5f81ba29201cddac5d96001bf1dde53141d8a8c5c11da5ce5a",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:42:53.969Z"
+  },
+  {
+    "runId": "codex-cli-sol-explicit-5",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "explicit",
+    "trial": 5,
+    "prompt": "$compat-auto\nReview function names in src/api/invoice.js. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "`totalInvoice` is understandable. Consider `calculateInvoiceTotal` to make the action more explicit; this is an optional style improvement.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’m using the compat-auto skill to review the function names in `src/api/invoice.js` without changing files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 68434,
+      "cached_input_tokens": 67584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 718,
+      "reasoning_output_tokens": 516
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '.agents/skills/compat-auto/SKILL.md'; Get-Content -LiteralPath 'src/api/invoice.js'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"if (Test-Path -LiteralPath 'AGENTS.md') { Get-Content -LiteralPath 'AGENTS.md' }\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "04b4144ce2ae95515bde75ac9fd48682c416a1aec1c304c2ead01adf88d39abe",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:44:06.479Z"
+  },
+  {
+    "runId": "codex-cli-sol-lifecycle-resources",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "lifecycle-resources",
+    "trial": 1,
+    "prompt": "$compat-resources\nWhat is this project's invoice rounding policy? Inspect src/api/invoice.js as needed. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-resources/SKILL.md",
+    "resourceLoaded": true,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "Confirmation: CTX-10dbbd0726af7e91f1fa1d46",
+    "rawResponse": "The policy is to sum all line amounts, then round once to two decimal places.\n\nCurrently, `src/api/invoice.js` sums the amounts but does not round the result.\n\nConfirmation: CTX-10dbbd0726af7e91f1fa1d46",
+    "commentary": [
+      "I’ll use the compat-resources skill to read the policy and check `src/api/invoice.js`, without changing files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 47308,
+      "cached_input_tokens": 26880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 311,
+      "reasoning_output_tokens": 121
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '.agents\\\\skills\\\\compat-resources\\\\SKILL.md'; Get-Content -LiteralPath '.agents\\\\skills\\\\compat-resources\\\\references\\\\invoice-policy.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-resources\r\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\r\n---\r\n# Invoice policy\r\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\r\n# Invoice rounding\r\nRound once after summing all line amounts, to two decimal places.\r\nConfirmation: CTX-10dbbd0726af7e91f1fa1d46\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src\\\\api\\\\invoice.js'\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "67665772c10fd62b255eac2f749ec43b6e35dae56ffc9fd7ea94a2ba0a6dbdde",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:46:25.742Z"
+  },
+  {
+    "runId": "codex-cli-sol-negative-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 1,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 23590,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 23,
+      "reasoning_output_tokens": 16
+    },
+    "commands": [],
+    "rawLogSha256": "5ed05043a772100082ffec8b517271631547be3759a03cc7502c52bdc012012c",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:01.192Z"
+  },
+  {
+    "runId": "codex-cli-sol-negative-2",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 2,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 22329,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 23,
+      "reasoning_output_tokens": 16
+    },
+    "commands": [],
+    "rawLogSha256": "4aaef29e2c4173313b629412810a365c33dd55e137139b50d62c43a500cb8a81",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:41:29.186Z"
+  },
+  {
+    "runId": "codex-cli-sol-negative-3",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 3,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 22329,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 23,
+      "reasoning_output_tokens": 16
+    },
+    "commands": [],
+    "rawLogSha256": "e7a308435e9449b3188ab82b5287cf51b501b283d361fed5e68b2c27bf2761e9",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:42:45.745Z"
+  },
+  {
+    "runId": "codex-cli-sol-negative-4",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 4,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 22329,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 23,
+      "reasoning_output_tokens": 16
+    },
+    "commands": [],
+    "rawLogSha256": "0eeead272659b6b0ea031af86c2ec4f8b47b8a016125650fac99bcad7705e091",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:43:58.837Z"
+  },
+  {
+    "runId": "codex-cli-sol-negative-5",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "negative",
+    "trial": 5,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 22329,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 27,
+      "reasoning_output_tokens": 20
+    },
+    "commands": [],
+    "rawLogSha256": "5e5eb15e9005c954bd63bbfbf75865d105bd083c451232be24e0e4e82f951d3d",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:45:10.017Z"
+  },
+  {
+    "runId": "codex-cli-sol-positive-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 1,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "In [src/api/invoice.js:1](src/api/invoice.js:1), consider renaming `totalInvoice` to `calculateInvoiceTotal`. It more clearly describes the action: summing line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll read the naming-review guidance and `src/api/invoice.js`, then suggest clearer names where useful without changing files.",
+      "I’m using the `compat-auto` naming-review skill. `totalInvoice` sums the line amounts; `calculateInvoiceTotal` would make that action clearer."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 68307,
+      "cached_input_tokens": 58752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 590,
+      "reasoning_output_tokens": 195
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src/api/invoice.js'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!.git'\"'\"",
+        "exitCode": 1
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\auto\\\\.agents\\\\skills\\\\compat-auto\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      }
+    ],
+    "rawLogSha256": "a1d5787c52e632720001a8e3837fae855ce670ba113804e8d179d3c05691aa67",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:39:38.647Z"
+  },
+  {
+    "runId": "codex-cli-sol-positive-2",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 2,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "In [invoice.js:1](/<TEST_ROOT>/auto/src/api/invoice.js:1), consider renaming `totalInvoice(lines)` to `calculateInvoiceTotal(lines)`. It more clearly describes the function’s action: summing line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll read the naming-review guidance and `src/api/invoice.js`, then suggest clearer names where useful without changing files.",
+      "I’m applying the `compat-auto` skill for this naming review."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 91642,
+      "cached_input_tokens": 81664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 898,
+      "reasoning_output_tokens": 274
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\auto\\\\.agents\\\\skills\\\\compat-auto\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Location; rg --files -g AGENTS.md -g invoice.js -g '\"'!node_modules'\"' -g '\"'!.git'\"'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$cursor = Get-Item -LiteralPath .; while ($null -ne $cursor) { $candidate = Join-Path $cursor.FullName '\"'AGENTS.md'; if (Test-Path -LiteralPath \"'$candidate) { Write-Output $candidate; Get-Content -LiteralPath $candidate }; $cursor = $cursor.Parent }; foreach ($folder in @('\"'src', 'src/api')) { \"'$candidate = Join-Path $folder '\"'AGENTS.md'; if (Test-Path -LiteralPath \"'$candidate) { Write-Output $candidate; Get-Content -LiteralPath $candidate } }'",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$line = 0; Get-Content -LiteralPath '\"'src/api/invoice.js' | ForEach-Object { \"'$line++; '\"'{0,4}: {1}' -f \"'$line, $_ }; rg -n '\"'invoice|calculateTotal|createInvoice|sendInvoice' src -g '\"'!node_modules'\"'\"",
+        "exitCode": 1
+      }
+    ],
+    "rawLogSha256": "c1fe31ec2bc051b0b445c06d6855b9df6559acf20cda72c2f96761f81871e413",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:54.960Z"
+  },
+  {
+    "runId": "codex-cli-sol-positive-3",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 3,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "In [src/api/invoice.js:1](<TEST_ROOT>/auto/src/api/invoice.js:1), consider renaming `totalInvoice` to `calculateInvoiceTotal`. It more clearly describes summing the invoice line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll review the function names and suggest clearer alternatives where useful, without changing files. I’m using the `compat-auto` skill for this naming review."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 120821,
+      "cached_input_tokens": 108928,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 564,
+      "reasoning_output_tokens": 128
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!.git'\"'\"",
+        "exitCode": 1
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src/api/invoice.js'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '.agents/skills/compat-auto/SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n 'totalInvoice|calculateInvoiceTotal' -g '\"'!node_modules'\"' -g '\"'!.git'\"' .\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "1d2d6ec59ee67666c12056a95206d669d3f87b7c74847421a32d1080010c27d1",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:42:09.137Z"
+  },
+  {
+    "runId": "codex-cli-sol-positive-4",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 4,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "In [invoice.js](/<TEST_ROOT>/auto/src/api/invoice.js:1), consider renaming `totalInvoice` to `calculateInvoiceTotal`. It more clearly describes the function’s action: summing line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll check the function names and their usage, then suggest clearer names where useful without changing any files. I’ll use the compat-auto naming review skill."
+    ],
+    "exitCode": 0,
+    "confounded": true,
+    "notes": "Broad content search encountered source skill metadata after an independently observed exported-body read. No confirmation was present in that search output. Conservatively excluded from the uncontaminated subset; retained as a completed attempt.",
+    "usage": {
+      "input_tokens": 115040,
+      "cached_input_tokens": 95360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 720,
+      "reasoning_output_tokens": 201
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\auto\\\\.agents\\\\skills\\\\compat-auto\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src/api/invoice.js'; Get-ChildItem -LiteralPath . -Filter AGENTS.md -Force; Get-ChildItem -LiteralPath src -Filter AGENTS.md -Force; Get-ChildItem -LiteralPath src/api -Filter AGENTS.md -Force\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n --hidden --glob '\"'!node_modules/**'\"' --glob '\"'!.git/**'\"' 'totalInvoice|invoice' .; rg --files --hidden -g AGENTS.md -g '\"'!node_modules/**'\"' -g '\"'!.git/**'\"'\"",
+        "exitCode": 1
+      }
+    ],
+    "rawLogSha256": "fb1320c368c1623cda50675f400d3333bad1f527e3a1abe134824148c327d6be",
+    "sourceSearchEvidence": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg -n --hidden --glob '\"'!node_modules/**'\"' --glob '\"'!.git/**'\"' 'totalInvoice|invoice' .; rg --files --hidden -g AGENTS.md -g '\"'!node_modules/**'\"' -g '\"'!.git/**'\"'\"",
+        "output": ".\\src\\api\\invoice.js:1:export function totalInvoice(lines) {\n.\\docs\\note.md:3:This fixture contains a small invoice module.\n.\\.agents\\skills\\compat-auto\\SKILL.md:3:description: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n.\\.agents\\project\\skills\\compat-auto\\SKILL.md:3:description: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n.\\.agents\\generated\\gemini\\skills\\compat-auto\\SKILL.md:3:description: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\n",
+        "markerInOutput": false
+      }
+    ],
+    "startedAt": "2026-10-27T09:43:25.057Z"
+  },
+  {
+    "runId": "codex-cli-sol-positive-5",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 5,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "`totalInvoice(lines)` is understandable, but `calculateInvoiceTotal(lines)` more clearly describes returning the sum of invoice line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll review the function names and suggest clearer alternatives where useful, without changing any files. I’ll use the repository’s naming-review skill.\n"
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 90995,
+      "cached_input_tokens": 87296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 625,
+      "reasoning_output_tokens": 323
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content .agents/skills/compat-auto/SKILL.md; Get-Content src/api/invoice.js'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files --hidden -g AGENTS.md -g '\"'!node_modules'\"' -g '\"'!.git'\"' -g '\"'!.agents'\"' -g '\"'!.codex'\"'\"",
+        "exitCode": 1
+      }
+    ],
+    "rawLogSha256": "de545cb27f32d794cd40423109f7afb8a86e4cb1894092dbf3ba9acef78e0623",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:44:40.955Z"
+  },
+  {
+    "runId": "codex-cli-sol-positive-6",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "positive",
+    "trial": 6,
+    "prompt": "Review function names in src/api/invoice.js and suggest a clearer name if useful. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-auto/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9eaa554fe148ec18891a48c6",
+    "rawResponse": "Consider renaming `totalInvoice(lines)` to `calculateInvoiceTotal(lines)`: it more clearly describes computing the sum of invoice line amounts.\n\nNo files changed.\n\nCTX-9eaa554fe148ec18891a48c6",
+    "commentary": [
+      "I’ll read the naming-review guidance and the invoice functions, then suggest any useful renames without changing files.",
+      "I’m using the `compat-auto` skill for this naming review."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 68146,
+      "cached_input_tokens": 58624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 789,
+      "reasoning_output_tokens": 492
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\auto\\\\.agents\\\\skills\\\\compat-auto\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-auto\r\ndescription: \"Review function names in src/api/invoice.js. Use for naming reviews; do not use for documentation-only work or arithmetic.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9eaa554fe148ec18891a48c6\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'src/api/invoice.js'\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "143d84c1d2e4042007275a0fd05add31d409c82b783f0609fe9ee520e6711d86",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:45:36.176Z"
+  },
+  {
+    "runId": "codex-cli-sol-resources-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "resources",
+    "trial": 1,
+    "prompt": "What is this project's invoice rounding policy? Inspect src/api/invoice.js as needed. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-resources/SKILL.md",
+    "resourceLoaded": true,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "Confirmation: CTX-c43f68d1b6972ae5b2a3f1e4",
+    "rawResponse": "The documented policy is to **sum all line amounts, then round once to two decimal places**.\n\nHowever, [src/api/invoice.js](<TEST_ROOT>/resources/src/api/invoice.js:1) currently only sums the amounts; it performs no rounding. No files were changed.\n\nConfirmation: CTX-c43f68d1b6972ae5b2a3f1e4",
+    "commentary": [
+      "I’ll read the invoice code and the project’s rounding guidance, without changing any files.",
+      "I’m using the project’s `compat-resources` skill to check its documented invoice policy."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 89758,
+      "cached_input_tokens": 57728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 638,
+      "reasoning_output_tokens": 251
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content .agents/skills/compat-resources/SKILL.md; Get-Content src/api/invoice.js'",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-resources\r\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\r\n---\r\n# Invoice policy\r\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\r\nexport function totalInvoice(lines) {\r\n  return lines.reduce((total, line) => total + line.amount, 0);\r\n}\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"rg --files -g AGENTS.md -g '*invoice*' -g '*round*'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Content .agents/skills/compat-resources/references/invoice-policy.md'",
+        "exitCode": 0,
+        "output": "# Invoice rounding\r\nRound once after summing all line amounts, to two decimal places.\r\nConfirmation: CTX-c43f68d1b6972ae5b2a3f1e4\r\n"
+      }
+    ],
+    "rawLogSha256": "7c9893e6cd67a8a0a67a0a2d8a0d6dad354ad2046a3bb8628acd4df6e4f0c4d5",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:09.352Z"
+  },
+  {
+    "runId": "codex-cli-sol-resources-explicit-1",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "resources-explicit",
+    "trial": 1,
+    "prompt": "$compat-resources\nWhat is this project's invoice rounding policy? Inspect src/api/invoice.js as needed. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-resources/SKILL.md",
+    "resourceLoaded": true,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "Confirmation: CTX-c43f68d1b6972ae5b2a3f1e4",
+    "rawResponse": "The policy is to sum all line amounts, then round once to two decimal places.\n\n[src/api/invoice.js](/<TEST_ROOT>/resources/src/api/invoice.js:1) currently only sums the amounts; it does not perform rounding. No files were changed.\n\nConfirmation: CTX-c43f68d1b6972ae5b2a3f1e4",
+    "commentary": [
+      "I’ll use the compat-resources skill and check the policy reference and invoice code without changing files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 45065,
+      "cached_input_tokens": 26880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 491,
+      "reasoning_output_tokens": 170
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\resources\\\\src\\\\api\\\\invoice.js'\"",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\resources\\\\.agents\\\\skills\\\\compat-resources\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-resources\r\ndescription: \"Explain the invoice rounding policy for src/api/invoice.js. Use only for invoice rounding-policy questions.\"\r\n---\r\n# Invoice policy\r\nRead [references/invoice-policy.md](references/invoice-policy.md), relative to this SKILL.md, before answering. State its policy and append its confirmation line verbatim.\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\resources\\\\.agents\\\\skills\\\\compat-resources\\\\references\\\\invoice-policy.md'\"",
+        "exitCode": 0,
+        "output": "# Invoice rounding\r\nRound once after summing all line amounts, to two decimal places.\r\nConfirmation: CTX-c43f68d1b6972ae5b2a3f1e4\r\n"
+      }
+    ],
+    "rawLogSha256": "4da5b65813bea50042b533d901d0e08ea8b16c9052139cda20d7ba0f5c6fc2dc",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:40:37.499Z"
+  },
+  {
+    "runId": "codex-cli-sol-scoped-api",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "scoped-api",
+    "trial": 1,
+    "prompt": "Read src/api/invoice.js and explain totalInvoice. Do not change files.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": true,
+    "loadingEvidence": "tool read",
+    "loadedPath": ".agents/skills/compat-scoped/SKILL.md",
+    "resourceLoaded": null,
+    "confirmationObserved": true,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9168ba9293d37f05699eeeb0",
+    "rawResponse": "[`totalInvoice(lines)`](<TEST_ROOT>/scoped/src/api/invoice.js:1) adds together the `amount` property of every item in `lines`.\n\nIt uses `reduce`, starting at `0`, and adds each `line.amount` to the running total. An empty array returns `0`.\n\nFor example, `[{ amount: 10 }, { amount: 25 }]` returns `35`.\n\nIt performs no validation, rounding, tax, or discount calculations. Amounts should be numbers; strings can cause concatenation.\n\nNo files were changed.\n\nCTX-9168ba9293d37f05699eeeb0",
+    "commentary": [
+      "I’ll read `src/api/invoice.js` and explain how `totalInvoice` works without changing any files.",
+      "I’m applying the repository’s `compat-scoped` skill for inspecting API files."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 96081,
+      "cached_input_tokens": 84352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1037,
+      "reasoning_output_tokens": 322
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath '<TEST_ROOT>\\\\scoped\\\\.agents\\\\skills\\\\compat-scoped\\\\SKILL.md'\"",
+        "exitCode": 0,
+        "output": "---\r\nname: compat-scoped\r\ndescription: \"Conventions only for inspecting or changing src/api/**/*.js; do not use for documentation-only work.\"\r\n---\r\n# Response convention\r\nAfter completing the requested task, end the final answer with this exact line:\r\nCTX-9168ba9293d37f05699eeeb0\r\n"
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command 'Get-Location; rg --files -g AGENTS.md -g invoice.js -g package.json'",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$scanDir = Get-Item -LiteralPath (Get-Location).Path\nwhile ($null -ne $scanDir) {\n  $agentPath = Join-Path $scanDir.FullName '\"'AGENTS.md'\n  if (Test-Path -LiteralPath \"'$agentPath) {\n    Write-Output $agentPath\n    Get-Content -LiteralPath $agentPath\n  }\n  $scanDir = $scanDir.Parent\n}\nforeach ($nestedDir in @('\"'src', 'src/api')) {\n  \"'$agentPath = Join-Path $nestedDir '\"'AGENTS.md'\n  if (Test-Path -LiteralPath \"'$agentPath) {\n    Write-Output $agentPath\n    Get-Content -LiteralPath $agentPath\n  }\n}'",
+        "exitCode": 0
+      },
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command '$n = 0\nGet-Content -LiteralPath '\"'src/api/invoice.js' | ForEach-Object { \"'$n++; '\"'{0,4}: {1}' -f \"'$n, $_ }'",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "c6dd0a21bb0b2dbd6e5041413d766a4ff3d49813c3d9d5dc4e9e0be4ce0dceb5",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:41:49.108Z"
+  },
+  {
+    "runId": "codex-cli-sol-scoped-arithmetic",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "scoped-arithmetic",
+    "trial": 1,
+    "prompt": "What is 7 + 5?",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9168ba9293d37f05699eeeb0",
+    "rawResponse": "12",
+    "commentary": [],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 23320,
+      "cached_input_tokens": 13440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 23,
+      "reasoning_output_tokens": 16
+    },
+    "commands": [],
+    "rawLogSha256": "e31aaf257e536b0b0725c46111b35d2b66588d2703bd0bd126aaa064e5e52417",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:41:40.064Z"
+  },
+  {
+    "runId": "codex-cli-sol-scoped-docs",
+    "date": "2026-10-27",
+    "packageVersion": "3.0.0-rc.1",
+    "client": "Codex",
+    "surface": "CLI",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "os": "Windows NT 10.0.26300.0",
+    "model": "gpt-6.1-sol",
+    "settings": {
+      "reasoningEffort": "ultra",
+      "freshInvocation": true,
+      "ephemeral": true,
+      "modelOverride": "user-authorized",
+      "permissions": "inherited; no overrides",
+      "isolatedProfile": false
+    },
+    "case": "scoped-docs",
+    "trial": 1,
+    "prompt": "Read docs/note.md and summarize it. Do not inspect other files or change anything.",
+    "fileContract": "pass",
+    "metadataDiscovered": null,
+    "bodyLoaded": null,
+    "loadingEvidence": "no body read observed; native injection unobservable",
+    "loadedPath": null,
+    "resourceLoaded": null,
+    "confirmationObserved": false,
+    "controlMarkerObserved": null,
+    "expectedConfirmation": "CTX-9168ba9293d37f05699eeeb0",
+    "rawResponse": "The note states that this fixture contains a small invoice module.",
+    "commentary": [
+      "I’ll read `docs/note.md` and summarize it without opening other files or making changes."
+    ],
+    "exitCode": 0,
+    "confounded": false,
+    "notes": "Personal skills/plugins/memory were available; no isolated-profile claim.",
+    "usage": {
+      "input_tokens": 44246,
+      "cached_input_tokens": 35456,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 113,
+      "reasoning_output_tokens": 22
+    },
+    "commands": [
+      {
+        "command": "\"<USERPROFILE>\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powershell\\\\pwsh.exe\" -Command \"Get-Content -LiteralPath 'docs/note.md' -Raw\"",
+        "exitCode": 0
+      }
+    ],
+    "rawLogSha256": "78c9f8466756e45aaf910653f6c7ab5da11ad5afb5f4cd52e3f8df60347b7120",
+    "sourceSearchEvidence": [],
+    "startedAt": "2026-10-27T09:42:28.409Z"
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "rootEntries": [
+    ".git",
+    "docs",
+    "src"
+  ],
+  "ancestorInstructionChecks": [
+    {
+      "path": "<DESKTOP_TEST_ROOT>\\control",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "<DESKTOP_TEST_ROOT>",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "<USERPROFILE>\\AppData\\Local\\Temp",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "<USERPROFILE>\\AppData\\Local",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "<USERPROFILE>\\AppData",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "<USERPROFILE>",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "C:\\Users",
+      "rootAgentsMdPresent": false
+    },
+    {
+      "path": "C:\\",
+      "rootAgentsMdPresent": false
+    }
+  ],
+  "files": [
+    {
+      "relativePath": "src/api/invoice.js",
+      "sha256": "7b3232c517cd8ea95609b26b01541072d721c57c8aa5ea9b56ea873dc279d73c",
+      "content": "export function totalInvoice(lines) {\n  return lines.reduce((total, line) => total + line.amount, 0);\n}\n"
+    },
+    {
+      "relativePath": "docs/note.md",
+      "sha256": "85771e7e5e6054854b5526ae2492dcdf880c6ad3cef3e6a20ac2282a4f710035",
+      "content": "# Notes\n\nThis fixture contains a small invoice module.\n"
+    }
+  ]
+}

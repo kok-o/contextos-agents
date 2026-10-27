@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Asia/Qyzylorda",
+  "clientVersion": "0.164.0-alpha.11.1",
+  "executable": "<USERPROFILE>\\AppData\\Local\\OpenAI\\Codex\\bin\\2993767bd1dfb009\\codex.exe",
+  "packageVersion": "3.0.0-rc.1",
+  "adapter": "gemini",
+  "os": "Windows NT 10.0.26300.0",
+  "node": "v24.19.0",
+  "npm": "11.2.0",
+  "git": "2.51.0.windows.2",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "auth": "existing ChatGPT login",
+  "permissionOverrides": [],
+  "profileIsolation": false,
+  "userSkillCount": 34,
+  "projectTrust": {
+    "auto": "trusted during earlier interactive attempt",
+    "others": null
+  },
+  "globalHooksTrust": null,
+  "implicitInvocationConfiguration": null,
+  "modelChange": "user authorized Sol after earlier model_not_found failures; global config retained Terra; successful runs explicitly passed --model gpt-6.1-sol",
+  "restart": "fresh process for each inference, native skills/list forceReload=true",
+  "usage": {
+    "input_tokens": 1730968,
+    "cached_input_tokens": 1400064,
+    "output_tokens": 12490,
+    "reasoning_output_tokens": 5001,
+    "monetaryCostUsd": null,
+    "notes": "CLI-reported aggregate token usage; reasoning is a subset of output, not additional. No credit purchase or paid API-key benchmark. Excludes failed/aborted attempts with unavailable usage."
+  },
+  "abortedStartup": {
+    "id": "sol-alpha-run/control-positive",
+    "clientVersion": "0.164.0-alpha.11.1",
+    "stdoutBytes": 4449,
+    "stderrBytes": 1057,
+    "outcome": "terminated during startup with no emitted events; retained outside repository; inference occurrence and usage unavailable"
+  },
+  "sanitization": "User profile and fixture-root paths replaced; exact prompts and response wording retained. Model reasoning summaries and unrelated tool outputs, including personal-memory contents, omitted. All command strings retained; native skill/reference reads and source-search evidence retain their outputs. Full original JSONL logs remain outside repository; hashes in trials.json identify them."
+}

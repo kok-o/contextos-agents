@@ -6,7 +6,27 @@ const { execFileSync } = require('node:child_process');
 const { parseEnv } = require('node:util');
 const { BLOCKED_EXACT_NAMES, BLOCKED_EXTENSIONS } = require('../bin/lib/scan');
 const root = path.resolve(__dirname, '..');
-const publicEvidence = new Set(['docs/evidence/ci-r2-accepted-2026-10-02.json', 'docs/evidence/release-2.3.json', 'docs/evidence/release-2.3.1.json', 'docs/evidence/release-2.3.2.json']);
+// These are reviewed, sanitized observations, not an exception for raw logs or
+// arbitrary files under their directories. Package inclusion stays disallowed.
+const publicEvidence = new Set([
+  'docs/evidence/ci-r2-accepted-2026-10-02.json', 'docs/evidence/release-2.3.json',
+  'docs/evidence/release-2.3.1.json', 'docs/evidence/release-2.3.2.json',
+  ...[
+    'README.md', 'control.json', 'discovery.json', 'environment.json',
+    'failed-attempts.json', 'final-checks.json', 'fixture.cjs', 'fixtures.json',
+    'lifecycle.json', 'model-availability.json', 'skill-inventory.json',
+    'trial-table.md', 'trials.json',
+  ].map(file => `docs/evidence/2026-10-27-codex-sol-rc1/${file}`),
+  ...[
+    'README.md', 'control.json', 'discovery.json', 'environment.json',
+    'final-checks.json', 'fixtures.json', 'lifecycle.json', 'skill-inventory.json',
+    'trial-table.md', 'trials.json', 'ui-evidence.json', 'ui-text-evidence.json',
+    'desktop-version.png', 'auto-picker-discovery.png',
+    'explicit-1-picker-selected.png', 'explicit-1-response.png',
+    'explicit-5-picker-selected.png', 'resources-explicit-picker-selected.png',
+    'lifecycle-resources-response.png',
+  ].map(file => `docs/evidence/2026-10-27-codex-desktop-sol-rc1/${file}`),
+]);
 const internalDocs = /^(?:CONTEXTOS_WORK_PLAN\.md|IMPROVEMENT_PLAN\.md|docs\/(?:PERSONAL_WORKFLOW_ROADMAP|AUDIT_.+|INDEPENDENT_REVIEW_.+|IMPLEMENTATION_STATUS_.+|STABILIZATION_.+|RELEASE_ACCEPTANCE_.+|API_BENCHMARK_.+|LUNA_BENCHMARK_.+|SOL_BENCHMARK_.+)\.md)$/;
 
 function privateFile(file) {

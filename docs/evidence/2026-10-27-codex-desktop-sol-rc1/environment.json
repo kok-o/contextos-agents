@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Asia/Qyzylorda",
+  "surface": "desktop",
+  "visibleProduct": "ChatGPT, Codex mode; About says Powered by Codex & OWL",
+  "visibleVersion": "26.1021.31345",
+  "installedWindowsPackageVersion": "26.1021.3705.0",
+  "backendVersion": "0.164.0-alpha.11.1",
+  "backendOriginator": "Codex Desktop",
+  "backendInternalSource": "vscode (internal label; this was not an IDE-extension run)",
+  "model": "gpt-6.1-sol",
+  "reasoning": "high",
+  "os": "Windows NT 10.0.26300.0",
+  "node": "v24.19.0",
+  "npm": "11.2.0",
+  "git": "2.51.0.windows.2",
+  "auth": "existing ChatGPT account",
+  "permissions": {
+    "approvalPolicy": "never",
+    "sandboxPolicy": "danger-full-access",
+    "source": "inherited configuration already visible as full access; not changed for this study"
+  },
+  "projectTrust": "The human clicked the native trust dialog for control, auto, resources, always and scoped; automation did not confirm any security prompt.",
+  "globalHooksTrust": "Earlier CLI dialog outcome uncertain; no hook-trust change made during this desktop group.",
+  "isolatedProfile": false,
+  "memorySummaryAvailable": true,
+  "availableGlobalSkillCount": 48,
+  "implicitInvocationConfiguration": null,
+  "implicitInvocationObservation": "No override added. Automatic selection observed in all five naming-review trials; global configuration was not independently enumerated.",
+  "restart": "No app/backend restart; new desktop chat for every trial. Initial exports preceded loading the respective project; lifecycle reference regenerated before its fresh chat.",
+  "usage": {
+    "input_tokens": 1692343,
+    "cached_input_tokens": 1387648,
+    "output_tokens": 5157,
+    "reasoning_output_tokens": 1132,
+    "monetaryCostUsd": null,
+    "notes": "Totals reported by the 25 completed desktop conversations; cached input and reasoning output are subsets, not extra tokens. No API-key benchmark or credit purchase."
+  },
+  "method": "All prompts and native skill selections entered through visible desktop UI using Computer Use. First picker selection used a mouse click; later ones used Enter on the visible native candidate. Backend transcript reads were read-only evidence collection, not substitute inference.",
+  "uiIsolation": "A second application window was opened after user navigation interrupted setup; it was closed after the lifecycle observation. No rejected input was submitted as an extra trial.",
+  "sanitization": "User-profile and fixture-root paths replaced. Full source rollouts, personal memory, unrelated tool outputs, reasoning and uncropped UI remain local. Native body-injection blocks and relevant tool output retained. Cropped screenshots omit the personal sidebar."
+}
