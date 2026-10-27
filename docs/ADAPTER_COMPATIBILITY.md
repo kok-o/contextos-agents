@@ -23,17 +23,26 @@ below are historical observations, not fresh RC acceptance. MCP is excluded.
 | GitHub Copilot | `.github/copilot-instructions.md` | Tested | Not verified | Not verified |
 | Aider | `CONVENTIONS.md`, `.aider.conf.yml` | Tested | Not verified | Not verified |
 | Zed | `.zed/rules.md`, `.zed/prompts/*.md` | Tested | Manual import only | Not verified |
-| Codex CLI | `.agents/skills/*/SKILL.md` | Tested | Explicit activation and automatic selection recorded once each (CLI 0.149.1 with a `skill.yaml` fixture; explicit activation again in 0.159.2). Earlier layout, same output path. | Marker adherence recorded once for explicit activation (0.159.2) |
+| Codex CLI | `.agents/skills/*/SKILL.md` | Tested; published RC.1 isolated fixtures checked | CLI 0.164.0-alpha.11.1 / Sol: native metadata list 1/1; exported body read in explicit mention 5/5 and automatic naming review 5/5 without source-search confounds; exported sibling resource read 1/1. See [versioned report](gemini_COMPATIBILITY.md). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls. One additional confounded automatic attempt retained. Small sample; enforced always/glob activation unsupported. |
 | Gemini CLI, Antigravity | `.agents/skills/*/SKILL.md` | Tested | Not verified | Not verified |
 
-The Codex records are in [docs/evidence/](evidence/) and the
-[archived release records](archive/README.md); each condition ran once, so they
-show that loading is possible, not that it is reliable. For the current Claude
+Earlier Codex records are in [docs/evidence/](evidence/) and the
+[archived release records](archive/README.md); those conditions ran once. The
+[27 October RC.1 record](gemini_COMPATIBILITY.md) adds repeated CLI observations,
+not a reliability guarantee or a desktop/IDE result. For the current Claude
 Code layout only skill discovery has been observed, once. Until the protocol
 below has been run, treat (b) and (c) as open for every client except these
-single records.
+recorded surface/version observations.
 
 ### How to verify a client yourself
+
+The always/globs procedure below applies only to adapters that preserve native
+rule activation. The shared `gemini` native-skills exporter emits only name and
+description frontmatter: its `always` and `globs` rules become agent-selected
+skills. For Codex, use the controls, separate explicit/automatic trials and
+activation-loss diagnostics in [issue #31](https://github.com/kok-o/contextos-agents/issues/31)
+and the [versioned record](gemini_COMPATIBILITY.md). An unrelated arithmetic
+prompt is not a required always-rule pass for that exporter.
 
 1. Add a rule whose body contains an unmistakable marker instruction, for example
    "end every answer with the word MAGENTA-7", with `activation: always`. Export.
@@ -122,17 +131,17 @@ export and names the rule.
   - Declared supporting resources alongside each skill. No root `GEMINI.md` is generated.
 - **Contract**:
   - Clean YAML frontmatter (`name`, `description`); examples, troubleshooting and references remain separate resources loaded on demand.
+  - In RC.1 this native-skills projection does not preserve `activation: always` or `globs` as native enforcement; every rule becomes an agent-selected skill. Codex CLI observations and their surface limits are recorded in [the versioned report](gemini_COMPATIBILITY.md).
 - **Preservation Policy**:
   - Existing root `GEMINI.md` is untouched. Generated skills are protected against overwriting local modifications; use project overrides for customization.
 
-The same `.agents/skills` projection is discovered natively by Codex. The local
-app-server `skills/list` check found all seven core skills without inference
-requests. A later controlled `codex exec` probe confirmed full selected bodies in
-the CLI payload without paid inference. These establish discovery and explicit
-injection. A subsequent Sol/high probe verified marker adherence for explicit
-activation in CLI 0.159.2. The later maintenance record at the top of this
-document adds one manifest-backed automatic scenario; Cursor activation and
-manifestless live routing remain unverified. See [recorded results](BENCHMARK_RESULTS.md).
+The same `.agents/skills` projection is used for Codex native skill discovery.
+Historical app-server/CLI probes, including explicit marker adherence in CLI
+0.159.2, remain in [recorded results](BENCHMARK_RESULTS.md). The
+[27 October RC.1 report](gemini_COMPATIBILITY.md) adds repeated explicit and
+automatic CLI observations for a skill defined by `SKILL.md` without a
+`skill.yaml`, plus exported sibling-resource and update diagnostics. These
+records do not establish desktop/IDE behavior or always/glob enforcement.
 
 ### 2.4 GitHub Copilot (.github/copilot-instructions.md)
 

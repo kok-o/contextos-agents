@@ -1,0 +1,212 @@
+[
+  {
+    "name": "compat-auto",
+    "scope": "repo",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "animate",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "animation-performance",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "computer-use:computer-use",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "computer-use@openai-bundled"
+  },
+  {
+    "name": "documents:documents",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "documents@openai-primary-runtime"
+  },
+  {
+    "name": "find-skills",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "frontend-design",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "gsap-core",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "gsap-performance",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "gsap-react",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "gsap-scrolltrigger",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "gsap-timeline",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "impeccable",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "next-best-practices",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "orca-cli",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "pdf:pdf",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "pdf@openai-primary-runtime"
+  },
+  {
+    "name": "pick-ui-library",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "pptx",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "presentations:Presentations",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "presentations@openai-primary-runtime"
+  },
+  {
+    "name": "resume-ats-optimizer",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "resume-bullet-writer",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "review-animations",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "spreadsheets:Spreadsheets",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "spreadsheets@openai-primary-runtime"
+  },
+  {
+    "name": "spreadsheets:excel-live-control",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "spreadsheets@openai-primary-runtime"
+  },
+  {
+    "name": "tech-resume-optimizer",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "template-creator:template-creator",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "template-creator@openai-primary-runtime"
+  },
+  {
+    "name": "vercel-react-best-practices",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "visualize:visualize",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": "visualize@openai-bundled"
+  },
+  {
+    "name": "web-design-guidelines",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "webapp-testing",
+    "scope": "user",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "imagegen",
+    "scope": "system",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "openai-docs",
+    "scope": "system",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "review-agent",
+    "scope": "system",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "skill-creator",
+    "scope": "system",
+    "enabled": true,
+    "pluginId": null
+  },
+  {
+    "name": "skill-installer",
+    "scope": "system",
+    "enabled": true,
+    "pluginId": null
+  }
+]

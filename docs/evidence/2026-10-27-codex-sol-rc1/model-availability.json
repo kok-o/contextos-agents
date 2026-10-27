@@ -1,0 +1,81 @@
+{
+  "0.149.1": [
+    {
+      "model": "gpt-reserve",
+      "displayName": "GPT-Reserve",
+      "hidden": true
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "displayName": "GPT-5.6-Sol",
+      "hidden": false
+    },
+    {
+      "model": "gpt-5.6-terra",
+      "displayName": "GPT-5.6-Terra",
+      "hidden": false
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "displayName": "GPT-5.6-Luna",
+      "hidden": false
+    },
+    {
+      "model": "codex-auto-review",
+      "displayName": "Codex Auto Review",
+      "hidden": true
+    }
+  ],
+  "0.164.0-alpha.11.1": [
+    {
+      "model": "gpt-6.1-sol",
+      "displayName": "GPT-6.1-Sol",
+      "hidden": false
+    },
+    {
+      "model": "gpt-6-astra",
+      "displayName": "GPT-6-Astra",
+      "hidden": false
+    },
+    {
+      "model": "gpt-6.1-terra",
+      "displayName": "GPT-6.1 Terra",
+      "hidden": false
+    },
+    {
+      "model": "gpt-6-sol",
+      "displayName": "GPT-6-Sol",
+      "hidden": false
+    },
+    {
+      "model": "gpt-reserve",
+      "displayName": "GPT-Reserve",
+      "hidden": true
+    },
+    {
+      "model": "gpt-6-luna",
+      "displayName": "GPT-6-Luna",
+      "hidden": false
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "displayName": "GPT-5.6-Sol",
+      "hidden": false
+    },
+    {
+      "model": "gpt-5.6-terra",
+      "displayName": "GPT-5.6-Terra",
+      "hidden": false
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "displayName": "GPT-5.6-Luna",
+      "hidden": false
+    },
+    {
+      "model": "codex-auto-review",
+      "displayName": "Codex Auto Review",
+      "hidden": true
+    }
+  ]
+}
