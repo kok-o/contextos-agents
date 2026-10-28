@@ -1,10 +1,12 @@
-# Independent core release preparation
+# Independent core release process
 
-Core stable and core RC have dedicated release paths. These instructions describe
-prepared automation, not a publication. MCP has its own package version; migrating
-it to an independent maintenance workflow and standalone shared-source manifest
-is separate work and is not included in this core preparation. MCP maintenance
-remains limited to security and compatibility and must not require a core release.
+Core stable and core RC have dedicated release paths. Core 3.0.0 has been
+published using its reviewed archive; see the [stable release record](RELEASE_3.0.0.md).
+The procedures below also apply to future core releases. MCP has its own package
+version; migrating it to an independent maintenance workflow and standalone
+shared-source manifest is separate work and is not included in the core 3.0.0
+release. MCP maintenance remains limited to security and compatibility and must
+not require a core release.
 
 | Path | GitHub release tag | npm dist-tag | Workflow |
 | --- | --- | --- | --- |

@@ -7,18 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0.0] - Unreleased
+## [3.0.0] - 2026-10-28
 
-**Stable core prepared on 28 October 2026; not published.** This entry records
-the prepared source changes. The [stable checklist](docs/RELEASE_3.0.0.md) and
-[reviewed-archive process](docs/RELEASE_PROCESS.md) govern acceptance and any
-separately authorized publication. MCP keeps its own version and release path.
+**Stable core published on 28 October 2026** as `contextos-agents@3.0.0` on npm
+with the `latest` tag and the GitHub Release `v3.0.0`. The
+[release record](docs/RELEASE_3.0.0.md) identifies the accepted archive and
+validation. MCP is unchanged and keeps its own version and release path.
 
 ### Changed
 
 - Promote core metadata, installation examples and the Action default to
-  `3.0.0`. Public registry and `v3.0.0` Action examples apply after publication;
-  preparation uses the reviewed local archive.
+  `3.0.0`. Publish the reviewed core archive to npm `latest`; `v3.0.0` pins the
+  source and Action, while RC versions retain the `next` path.
 - Make core build, test, package and release selection independent of the MCP
   checkout. Core uses its own reviewed archive identity and mandatory acceptance
   checks; the MCP maintenance workflow migration remains separate work.

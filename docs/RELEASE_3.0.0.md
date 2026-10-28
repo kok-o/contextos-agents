@@ -1,11 +1,11 @@
-# ContextOS Core 3.0.0 preparation
+# ContextOS Core 3.0.0 release
 
-Status: **stable core source tag `v3.0.0`; npm publication pending**. The source
-tag and reviewed archive identify `contextos-agents@3.0.0`. A Git tag is separate
-from a GitHub Release and an npm publication. Neither of those publications is
-part of source tagging; they require a separate decision.
+Status: **published on 28 October 2026**. npm `contextos-agents@3.0.0` is
+available on `latest`, with the
+[GitHub Release `v3.0.0`](https://github.com/kok-o/contextos-agents/releases/tag/v3.0.0).
+The source tag remains at commit `0ad9eeb7bf3bbe5d6c863fdf991c1f164edfc56f`.
 
-For installation directly from the source tag, follow the
+For installation from npm, follow the
 [README quickstart](../README.md#quickstart) or
 [русскую инструкцию](INSTALLATION_RU.md). The recipe includes every catalog skill
 and exports for Antigravity, Codex and Claude Code. The archive instructions
@@ -33,9 +33,34 @@ built, installed or tested by core-only acceptance.
   watchers, `recover --unlock --force` clears an abandoned claim and preserves
   transaction journals and backups.
 
-See the [changelog](../CHANGELOG.md#300---unreleased) for the prepared changes and
+See the [changelog](../CHANGELOG.md#300---2026-10-28) for the released changes and
 the [migration guide](MIGRATION.md#upgrading-from-2x-projects) for upgrade and
 checkpoint rollback.
+
+## Publication evidence
+
+The [release acceptance run](https://github.com/kok-o/contextos-agents/actions/runs/40746599298)
+verified one archive on Windows, Linux and macOS with Node.js 22 and 24. Upgrade
+from 2.3.2 and checkpoint rollback passed in every matrix cell. Its npm access
+preflight stopped before upload and was corrected in the publication tooling.
+
+The [publication recovery](https://github.com/kok-o/contextos-agents/actions/runs/40751830912)
+validated that original acceptance, source revision and artifact ZIP checksum,
+then published the same archive and passed registry download and consumer
+acceptance on all three operating systems. The source tag and archive were not
+rebuilt or replaced.
+
+Archive: `contextos-agents-3.0.0.tgz`. SHA-256:
+
+```text
+72840e7e40e0e13373a91470c9b6943d6866566bb9152236d107e5aad559dbfd
+```
+
+The GitHub Release asset and npm archive have this same hash, recorded in
+`docs/release-identities/core-stable-3.0.0.json`. The earlier
+[core preflight](https://github.com/kok-o/contextos-agents/actions/runs/40736760453)
+and [main CI](https://github.com/kok-o/contextos-agents/actions/runs/40738846072)
+also passed on the tagged source.
 
 ## Try the prepared archive
 
@@ -56,19 +81,20 @@ Continue with the [quickstart](../README.md#quickstart) to add a rule and exerci
 `pass → drift → pass`. A project with no rules exports no rule bodies; add a
 team rule or use `init --with-core` before expecting skill files.
 
-After a separately authorized publication has completed registry acceptance,
-the exact registry installation is:
+The exact npm installation is:
 
 ```sh
 npm install --save-dev --save-exact contextos-agents@3.0.0
 ```
 
 The stable registry path uses `latest`; RC versions retain their separate
-`next` path. No publication or distribution-tag change is claimed here.
+`next` path. MCP was not published as part of this release.
 
 ## Acceptance before publication
 
-From the repository root, with Node.js 22+:
+These are the checks used to accept the release. To reproduce its bytes, use
+a clean checkout of `v3.0.0`, with Node.js 22+. Documentation on `main` may
+advance after publication; the source tag and published archive remain fixed.
 
 ```sh
 npm ci --ignore-scripts

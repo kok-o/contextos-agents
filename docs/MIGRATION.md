@@ -2,8 +2,10 @@
 
 This document outlines how to upgrade to major versions of ContextOS and adapt to structural breaking changes.
 
-The current checkout prepares **core 3.0.0**, which is not published.
-Use the [reviewed local archive](RELEASE_3.0.0.md#try-the-prepared-archive); MCP is not part of this migration.
+The current stable core is **3.0.0**, published as `contextos-agents@3.0.0`.
+Install the pinned npm version below or use the
+[reviewed archive](RELEASE_3.0.0.md#try-the-prepared-archive); MCP is not part of
+this migration.
 
 For the historical core 2.2.0 / MCP 0.3.1 → core 2.3.0 / MCP 0.4.0 releases,
 use the [concrete upgrade and checkpoint rollback guide](COMPACT_CONTEXT_MIGRATION.md).
@@ -24,7 +26,7 @@ the seven bundled core skills. The current version runs the tool from
 the project. One command moves an existing project over:
 
 ```sh
-npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0.tgz
+npm install --save-dev --save-exact contextos-agents@3.0.0
 npx --no-install contextos update --dry-run   # review the plan
 npx --no-install contextos update
 npx --no-install contextos export all --check --json
@@ -127,10 +129,10 @@ Update your `.github/workflows/` workflow step:
     working-directory: '.'
 ```
 
-The example targets the future v3.0.0 tag and CLI package and becomes usable
-only after both are published. For this unpublished candidate, run
-`npx --no-install contextos gate --target all` locally instead. The older `v2.3.0`
-action tag defaults to CLI 2.2.0, so retain an explicit `version` when using it.
+The example pins the released `v3.0.0` source tag and CLI package 3.0.0. Retain
+the explicit `version` so the Action and CLI stay aligned. For a local check, run
+`npx --no-install contextos gate --target all`. The older `v2.3.0` Action tag
+defaults to CLI 2.2.0, so retain an explicit `version` when using it too.
 
 If you previously relied on ContextOS Gate for secret scanning, add a dedicated scanner action to your workflow:
 

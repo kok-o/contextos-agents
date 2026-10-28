@@ -12,11 +12,11 @@ Passing (a) says nothing about (b) or (c).
 
 ## Verification record
 
-The current checkout prepares **core 3.0.0**; see the
-[stable release checklist](RELEASE_3.0.0.md). File-contract tests are separate
-from real client loading and model adherence. Client records below retain their
-original RC or local-archive versions and do not establish fresh 3.0.0 client
-acceptance. MCP is excluded.
+Core **3.0.0** is published; see the
+[stable release record](RELEASE_3.0.0.md). Publication and archive acceptance do
+not establish fresh client loading or model adherence. Client records below
+retain their original RC or local-archive versions and do not establish fresh
+3.0.0 client acceptance. MCP is excluded.
 
 | Client | Output | (a) File contract | (b) Client loaded | (c) Model followed |
 | --- | --- | --- | --- | --- |

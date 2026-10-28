@@ -22,27 +22,30 @@ Key system principles:
 
 ## 2. CLI Commands (`contextos` / `ctx.js`)
 
-This guide targets the prepared **3.0.0** core. Run consumer commands from the
+This guide targets **core 3.0.0**. Run consumer commands from the
 project where you want the rules, using `npx --no-install contextos`. The compiler
 runs from the installed package; the project holds rules only, so there is no
 `.agents/ctx.js` to run.
 
 ### Install the CLI in your project
 
-Before npm publication, install from the `v3.0.0` source tag once that tag exists:
-
-```sh
-npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
-npx --no-install contextos --version
-```
-
-Alternatively, install the exact local archive described in the
-[stable release instructions](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
-After npm publication, the registry command is:
+Install the exact stable version from npm:
 
 ```sh
 npm install --save-dev --save-exact contextos-agents@3.0.0
+npx --no-install contextos --version
 ```
+
+If you prefer the source tag, use this alternative instead of the npm command
+above (Git is required):
+
+```sh
+npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
+```
+
+You can also install the exact archive described in the
+[stable release record](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
+The initialization and export commands below are the same for each installation.
 
 Commit the dependency lockfile. Use `npm.cmd` and `npx.cmd` in PowerShell if its
 execution policy blocks the wrappers.
@@ -390,8 +393,9 @@ that a model followed the instructions or wrote correct application code.
 The [README](README.md#check-rule-changes-in-ci) contains a complete workflow.
 Pin both the action and its CLI input to the version your repository uses:
 
-The prepared 3.0.0 package and tag are not published yet. Until then, run the local
-`npx --no-install contextos gate --target all`; the example below is for after publication.
+The example below pins the `v3.0.0` action and the published `3.0.0` CLI.
+Run `npx --no-install contextos gate --target all` locally to check the same
+exports before committing them.
 
 ```yaml
 - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0

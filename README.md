@@ -54,17 +54,16 @@ project in **Antigravity, Codex and Claude Code**. ContextOS installs the rules;
 install and sign in to your coding client separately. No model API key or MCP
 server is required by ContextOS.
 
-Requires **Node.js 22+**, **npm** and **Git**. Open a terminal in the root of the
+Requires **Node.js 22+** and **npm**. Open a terminal in the root of the
 project you want the agents to work on, not in the ContextOS repository.
 For a detailed walkthrough, see [установка на русском](docs/INSTALLATION_RU.md).
 
 **1. Install and export all skills.**
 
-The Git tag works independently of npm publication. The npm badge above shows
-the published registry version; **3.0.0 is not published to npm yet**.
+Install the exact stable version from npm:
 
 ```sh
-npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
+npm install --save-dev --save-exact contextos-agents@3.0.0
 npx --no-install contextos init --all
 npx --no-install contextos compile
 npx --no-install contextos export gemini,claude
@@ -104,9 +103,16 @@ profile. A profile can exclude installed skills. See
 [initialization options](GUIDE.md#initialization-options) for smaller installs
 and updating an existing setup.
 
-After a separately authorized npm publication, the registry alternative is
-`npm install --save-dev --save-exact contextos-agents@3.0.0`. Until then, use the
-Git tag above or the [reviewed archive](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
+If you prefer the Git source tag, install Git and use this alternative for the
+first command; initialization and exports stay the same:
+
+```sh
+npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
+```
+
+The [reviewed archive](docs/RELEASE_3.0.0.md#try-the-prepared-archive) is another
+installation option. See the [3.0.0 release](https://github.com/kok-o/contextos-agents/releases/tag/v3.0.0)
+for the accepted bytes and validation record.
 
 ### Add your own team rule
 
@@ -202,10 +208,8 @@ remain separate.
 <details>
 <summary>GitHub Actions example</summary>
 
-The following example becomes usable only after the 3.0.0 package and tag are
-published. During preparation, use `npx --no-install contextos gate --target all`
-with the reviewed local package installed.
-After publication, save as `.github/workflows/contextos.yml`:
+Save as `.github/workflows/contextos.yml`. The action and CLI version are both
+pinned to the stable 3.0.0 release:
 
 ```yaml
 name: Agent rule consistency

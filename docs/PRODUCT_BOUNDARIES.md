@@ -2,11 +2,12 @@
 
 To ensure stability and secure deployments, the ContextOS project is strictly separated into different maturity boundaries. Features in Experimental or Labs stages are not included in the default `contextos-agents` npm package.
 
-## Core (3.0.0 stable preparation)
+## Core (stable 3.0.0)
 
-Core 3.0.0 is prepared for a separate stable publication. The reviewed archive
-and mandatory acceptance checks are described in the [stable checklist](RELEASE_3.0.0.md).
-Preparation does not publish a package or create a release tag. MCP is excluded from core-only validation.
+Core 3.0.0 is published as `contextos-agents@3.0.0`. The reviewed archive and
+acceptance evidence are described in the [stable release record](RELEASE_3.0.0.md).
+MCP is excluded from core-only validation and publication; its maintenance scope
+is unchanged.
 
 These components form the versioned `contextos-agents` root package. Their contracts are checked by compiler and consumer tests; compatibility with a particular client loader requires client-specific verification.
 

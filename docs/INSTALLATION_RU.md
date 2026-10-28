@@ -7,7 +7,6 @@ ContextOS устанавливает инструкции и создаёт фа
 ## 1. Что нужно
 
 - **Node.js 22 или новее** вместе с npm: [nodejs.org](https://nodejs.org/).
-- **Git**: [git-scm.com](https://git-scm.com/downloads).
 - Папка проекта, над которым вы работаете: сайт, Python-проект, приложение и т. д.
 
 Проверьте в терминале:
@@ -15,7 +14,6 @@ ContextOS устанавливает инструкции и создаёт фа
 ```sh
 node --version
 npm --version
-git --version
 ```
 
 Откройте терминал **в корне своего проекта**, а не внутри скачанного ContextOS.
@@ -25,13 +23,14 @@ git --version
 
 ## 2. Установить со всеми навыками
 
-**3.0.0 пока не опубликован в npm.** Установка ниже берёт исходники из Git-тега
-`v3.0.0`; создавать GitHub Release или публиковать npm-пакет для неё не нужно.
+Установите точную опубликованную версию **contextos-agents@3.0.0** из npm.
+[Установка из Git-тега](#установка-из-git-тега-альтернатива-npm) остаётся
+альтернативой; для основного способа Git не требуется.
 
 В новом проекте без папки `.agents` выполните:
 
 ```sh
-npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
+npm install --save-dev --save-exact contextos-agents@3.0.0
 npx --no-install contextos init --all
 npx --no-install contextos compile
 npx --no-install contextos export gemini,claude
@@ -40,8 +39,8 @@ npx --no-install contextos export gemini,claude --check --json
 
 Что произойдёт:
 
-1. npm добавит ContextOS в зависимости разработки и запишет выбранный Git-коммит
-   в `package-lock.json`.
+1. npm добавит точную версию `3.0.0` в зависимости разработки и запишет её
+   вместе с данными целостности архива в `package-lock.json`.
 2. `init --all` установит **7 базовых навыков и весь каталог этой версии**.
 3. `compile` соберёт индекс правил.
 4. `export gemini,claude` подготовит файлы сразу для всех трёх клиентов.
@@ -153,16 +152,18 @@ npx --no-install contextos export gemini,claude --check --json
 
 Сохраните в Git `package.json`, `package-lock.json`, исходные правила,
 сгенерированные файлы и lockfile ContextOS. На другой машине выполните
-`npm ci --ignore-scripts`; Git понадобится и для установки зависимости из тега.
+`npm ci --ignore-scripts`. Для npm-зависимости Git не нужен; он требуется,
+если вы выбрали альтернативную установку из Git-тега.
 
-### Установка после будущей публикации npm
+### Установка из Git-тега (альтернатива npm)
 
-Когда `contextos-agents@3.0.0` будет отдельно опубликован, вместо Git-зависимости
-можно будет выполнить:
+Если нужна установка из исходников тега `v3.0.0`, сначала установите
+[Git](https://git-scm.com/downloads) и проверьте `git --version`. Затем вместо
+основной команды `npm install` выполните:
 
 ```sh
-npm install --save-dev --save-exact contextos-agents@3.0.0
+npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
 ```
 
-Команды `init`, `compile` и `export` останутся теми же. До публикации npm
-используйте Git-тег выше или [проверенный локальный архив](RELEASE_3.0.0.md#try-the-prepared-archive).
+Команды `init`, `compile` и `export` остаются теми же. Также можно установить
+[проверенный локальный архив](RELEASE_3.0.0.md#try-the-prepared-archive).
