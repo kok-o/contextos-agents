@@ -1,9 +1,15 @@
 # ContextOS Core 3.0.0 preparation
 
-Status: **prepared stable core, not published**. This document prepares the
-`contextos-agents@3.0.0` source and archive for review. A branch commit or a CI run
-does not create a `v3.0.0` tag, a GitHub Release or an npm publication. Those
-actions require a separate publication decision.
+Status: **stable core source tag `v3.0.0`; npm publication pending**. The source
+tag and reviewed archive identify `contextos-agents@3.0.0`. A Git tag is separate
+from a GitHub Release and an npm publication. Neither of those publications is
+part of source tagging; they require a separate decision.
+
+For installation directly from the source tag, follow the
+[README quickstart](../README.md#quickstart) or
+[русскую инструкцию](INSTALLATION_RU.md). The recipe includes every catalog skill
+and exports for Antigravity, Codex and Claude Code. The archive instructions
+below are an alternative with an explicitly reviewed SHA-256.
 
 The optional MCP package has an independent version and release path. It is not
 built, installed or tested by core-only acceptance.

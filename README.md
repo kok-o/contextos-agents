@@ -21,6 +21,7 @@
 
 <p align="center">
   <a href="#quickstart">Quickstart</a> ·
+  <a href="./docs/INSTALLATION_RU.md">Установка на русском</a> ·
   <a href="#supported-agents">Supported agents</a> ·
   <a href="./GUIDE.md">Guide</a> ·
   <a href="./CONTRIBUTING.md">Contributing</a>
@@ -48,30 +49,70 @@ see [alternatives](docs/ALTERNATIVES.md) for an honest comparison.
 
 ## Quickstart
 
-This checkout prepares **core 3.0.0**. Publication is a separate step; see the
-[stable release checklist](docs/RELEASE_3.0.0.md). The npm badge above describes
-the published package, not this checkout. MCP has its own release path.
+Install **core 3.0.0 with every bundled and catalog skill**, then use the same
+project in **Antigravity, Codex and Claude Code**. ContextOS installs the rules;
+install and sign in to your coding client separately. No model API key or MCP
+server is required by ContextOS.
 
-Requires **Node.js 22+** and npm. Run these commands in your project's root.
-This workflow does not call a model API.
+Requires **Node.js 22+**, **npm** and **Git**. Open a terminal in the root of the
+project you want the agents to work on, not in the ContextOS repository.
+For a detailed walkthrough, see [установка на русском](docs/INSTALLATION_RU.md).
 
-**1. Prepare the rule sources.**
+**1. Install and export all skills.**
 
-The registry install below is for after 3.0.0 is published. During preparation,
-install the [reviewed local archive](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
+The Git tag works independently of npm publication. The npm badge above shows
+the published registry version; **3.0.0 is not published to npm yet**.
 
 ```sh
-npm install --save-dev --save-exact contextos-agents@3.0.0
-npx --no-install contextos init
+npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
+npx --no-install contextos init --all
+npx --no-install contextos compile
+npx --no-install contextos export gemini,claude
+npx --no-install contextos export gemini,claude --check --json
 ```
 
-This creates `.agents/project/skills/` for your rules and adds a `.gitignore`
-block for derived caches. Nothing else is copied into your project: the compiler
-runs from the package, and the bundled engineering rules are opt-in
-(`--with-core`). See the [guide](GUIDE.md#initialization-options) for presets,
-previews and a pinned project dependency.
+Expect `"status": "pass"`, `"hasDrift": false` and exit code `0`. Open this
+same project folder in your client and start a fresh chat to check discovery.
+`init --all` installs the seven core skills and every skill in this version's
+catalog. Skill bodies are selected as needed by the client; installing them all
+does not mean every body is inserted into every prompt.
 
-**2. Add a rule your team wants to maintain.**
+In PowerShell, use `npm.cmd` and `npx.cmd` if execution policy blocks the `.ps1`
+wrappers. These instructions work for projects in any language, including a
+project without an existing `package.json`.
+
+**2. Choose your clients.**
+
+The combined export above covers all three. These are alternative export targets:
+
+| Client | Export command | Where the client finds skills |
+| --- | --- | --- |
+| Antigravity | `npx --no-install contextos export gemini` | `.agents/skills/*/SKILL.md`; activation rules in `.agents/rules/` |
+| Codex CLI / Desktop | `npx --no-install contextos export gemini` | `.agents/skills/*/SKILL.md` |
+| Claude Code | `npx --no-install contextos export claude` | `.claude/skills/*/SKILL.md` and `.claude/rules/*.md` |
+| All supported clients | `npx --no-install contextos export all` | Also exports Cursor, Copilot, Aider and Zed |
+
+`gemini` is the adapter name shared by Antigravity and Codex. There is no
+`export codex` or `export antigravity` command. **`init --all` installs all
+skills; `export all` selects all client formats.** Check the same target you
+exported, for example `npx --no-install contextos export all --check --json`.
+
+For an existing ContextOS project, add the remaining catalog skills with
+`npx --no-install contextos skill add --all`, then compile and export again.
+This adds catalog skills, not the seven core skills, and retains your active
+profile. A profile can exclude installed skills. See
+[initialization options](GUIDE.md#initialization-options) for smaller installs
+and updating an existing setup.
+
+After a separately authorized npm publication, the registry alternative is
+`npm install --save-dev --save-exact contextos-agents@3.0.0`. Until then, use the
+Git tag above or the [reviewed archive](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
+
+### Add your own team rule
+
+`init` prepares `.agents/project/skills/` for your own rules. For a smaller
+fresh setup, use `init --with-core` for just the seven core skills, or plain
+`init` for an empty rule folder. Run one initialization option per project.
 
 Save this as `.agents/project/skills/team-auth/SKILL.md`:
 
@@ -94,7 +135,7 @@ Optional manifests use `skill.v2.yaml` before `skill.yaml` and can declare an
 entrypoint and resources. Their activation fields override entrypoint
 frontmatter; see the [source and activation contract](GUIDE.md#activation-how-a-rule-reaches-an-agent).
 
-**3. Compile, export, and check.**
+Compile, export, and check after adding or editing a rule:
 
 ```sh
 npx --no-install contextos compile

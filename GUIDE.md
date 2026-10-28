@@ -2,6 +2,10 @@
 
 Practical guide to managing engineering context for AI coding agents: storing project rules, resolving them per task, and compiling for supported editors and agents.
 
+Start with the [README quickstart](README.md#quickstart) for a first rule, or the
+[Russian installation guide](docs/INSTALLATION_RU.md) for all skills and client-specific commands.
+This page is the command reference.
+
 ---
 
 ## 1. What is ContextOS in Practice?
@@ -18,15 +22,35 @@ Key system principles:
 
 ## 2. CLI Commands (`contextos` / `ctx.js`)
 
-This guide targets the prepared **3.0.0** core. Follow the
-[stable release instructions](docs/RELEASE_3.0.0.md) to install the reviewed local archive before publication, or a pinned registry version after publication,
-then use `npx --no-install contextos`. The compiler runs from the installed package;
-the project holds rules only, so there is no `.agents/ctx.js` to run.
+This guide targets the prepared **3.0.0** core. Run consumer commands from the
+project where you want the rules, using `npx --no-install contextos`. The compiler
+runs from the installed package; the project holds rules only, so there is no
+`.agents/ctx.js` to run.
+
+### Install the CLI in your project
+
+Before npm publication, install from the `v3.0.0` source tag once that tag exists:
+
+```sh
+npm install --save-dev --save-exact --ignore-scripts "git+https://github.com/kok-o/contextos-agents.git#v3.0.0"
+npx --no-install contextos --version
+```
+
+Alternatively, install the exact local archive described in the
+[stable release instructions](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
+After npm publication, the registry command is:
+
+```sh
+npm install --save-dev --save-exact contextos-agents@3.0.0
+```
+
+Commit the dependency lockfile. Use `npm.cmd` and `npx.cmd` in PowerShell if its
+execution policy blocks the wrappers.
 
 ### Initialization options
 
-The [README quickstart](README.md#quickstart) initializes the rule folder first
-and exports after you add a team rule.
+The [README quickstart](README.md#quickstart) installs every skill with `--all`
+and exports for Antigravity, Codex and Claude Code before adding optional team rules.
 
 ```sh
 npx --no-install contextos init                    # .agents/project/skills + .gitignore block, nothing else
@@ -48,18 +72,56 @@ nothing to export, so `--agent` exports only when rules exist (for example with
 refreshes the bundled files (core skills, `AGENTS.md`, profile definitions) and
 deletes nothing, so your rules under `.agents/project/` are always safe.
 
-For a reproducible project setup:
+### All skills for Antigravity, Codex and Claude Code
+
+For a fresh project, after installing the CLI:
 
 ```sh
-npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0.tgz
-npx --no-install contextos init
+npx --no-install contextos init --all
 npx --no-install contextos compile
-npx --no-install contextos export all
+npx --no-install contextos export gemini,claude
+npx --no-install contextos export gemini,claude --check --json
 ```
 
-Commit the dependency lockfile. Use `npm.cmd` and `npx.cmd` in PowerShell if its
-execution policy blocks the wrappers. For updates and removal, follow
-[onboarding](docs/product/onboarding.md) and the
+`init --all` installs the seven bundled core skills and every catalog skill.
+It does not export without an explicit `--agent`, so the commands above compile
+and export separately. The installed catalog is local to the package; this does
+not install skills globally into the client apps.
+
+| Client | Export target | Main generated files |
+| --- | --- | --- |
+| Antigravity | `gemini` | `.agents/skills/<name>/SKILL.md` and `.agents/rules/contextos-*.md` for `always` or `globs` activation |
+| Codex | `gemini` | `.agents/skills/<name>/SKILL.md` with declared resources |
+| Claude Code | `claude` | `.claude/skills/<name>/SKILL.md` for `auto`; `.claude/rules/<name>.md` for `always` or `globs` |
+
+There are no `codex` or `antigravity` adapter names. Use `export gemini` for
+Antigravity or Codex alone, `export claude` for Claude Code alone, or
+`export gemini,claude` for all three. `export all` writes every supported adapter,
+including Cursor, Copilot, Aider and Zed; it does not install additional skills.
+
+Installed skills become available for relevant tasks. This does not load every
+skill into every prompt. Codex receives native skills selected by description;
+the shared projection does not enforce `always` or `globs` activation in Codex.
+The bundled `.agents/AGENTS.md` is not a root `AGENTS.md`; existing root
+`AGENTS.md`, `GEMINI.md` and user-authored `CLAUDE.md` guidance remain separate.
+
+For an already initialized project, add missing catalog skills without rerunning
+initialization:
+
+```sh
+npx --no-install contextos skill add --all
+npx --no-install contextos compile
+npx --no-install contextos export gemini,claude
+npx --no-install contextos export gemini,claude --check --json
+npx --no-install contextos skill list --available
+```
+
+`skill add --all` adds catalog skills only and skips already installed names;
+it does not add the seven bundled core skills or overwrite them. Existing
+profile exclusions still filter exports. Inspect the installed list and the
+command output rather than assuming every source was exported.
+
+For updates and removal, follow [onboarding](docs/product/onboarding.md) and the
 [migration guide](docs/MIGRATION.md).
 
 ### Activation: how a rule reaches an agent
@@ -189,7 +251,7 @@ contextos skill list --available
 contextos skill add react
 contextos skill add fastapi
 
-# Install all 44 catalog skills at once:
+# Install all catalog skills at once:
 contextos skill add --all
 
 # Fork a built-in skill for local customization:
@@ -384,7 +446,7 @@ require a separate approval cycle or role declaration.
 
 ## 4. Key Core & Catalog Skills
 
-Your rules live in `.agents/project/skills/`. The package also carries seven core skills (copied into `.agents/core/skills/` by `init --with-core`) and `catalog/skills/` (44 on-demand domain skills installable via `contextos skill add <name>`):
+Your rules live in `.agents/project/skills/`. The package also carries seven core skills (copied into `.agents/core/skills/` by `init --with-core`) and `catalog/skills/` (46 on-demand skills, including compatibility names, installable via `contextos skill add <name>`):
 
 ### Core Skills (7)
 
@@ -396,7 +458,7 @@ Your rules live in `.agents/project/skills/`. The package also carries seven cor
 - **`context-manager`** - Compatibility alias for `context-os` selection and budgeting guidance.
 - **`gstack-roles`** - Compatibility alias for `engineering-workflow`, with optional specialist review perspectives.
 
-### Extended Catalog Skills (44)
+### Extended Catalog Skills (46)
 
 Installable into any project on demand via `contextos skill add <name>`, `contextos skill add --all`, or stack presets during `init`:
 
@@ -404,11 +466,11 @@ Installable into any project on demand via `contextos skill add <name>`, `contex
   - `frontend`: `react`, `nextjs`, `typescript`, `state-management`, and the eight focused frontend skills below. Legacy design packs and the deprecated `react-best-practices` alias remain available for individual installation; a new preset installation uses the focused skills.
   - `backend`: `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `database`, `ddd`
   - `devops`: `docker`, `ci-cd`, `terraform`, `security-audit`, `performance`
-  - `full` or `--all`: Installs all 44 catalog skills
+  - `full` or `--all`: Installs every catalog skill
 - **Frontend & Design:** `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `ui-design`, `ux-design`, `web-accessibility`, `brutalist-design`, `minimalist-design`, `soft-design`, `redesign-audit`.
 - **Backend & Systems:** `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `microservices`, `ddd`, `database`.
 - **DevOps & Cloud:** `docker`, `ci-cd`, `terraform`, `security-audit`.
-- **Cross-Cutting & Architecture:** `testing`, `performance`, `decisions`, `architecture-diagrams`, `interview-me`, `subagent-orchestrator`, `graphify`, `vercel-optimize`, `adapters`, `generators`.
+- **Cross-Cutting & Architecture:** `testing`, `performance`, `decisions`, `architecture-diagrams`, `interview-me`, `subagent-orchestrator`, `graphify`, `vercel-optimize`, `adapters`, `generators`, `humanizer`, `kill-ai-slop`.
 
 ### Focused frontend workflow
 
