@@ -9,6 +9,26 @@ const { validatePackagePaths } = require('./release-package-surface.cjs');
 const root = path.resolve(__dirname, '..');
 const registry = 'https://registry.npmjs.org';
 const digest = data => crypto.createHash('sha256').update(data).digest('hex');
+const SAFE_NPM_ERROR_CODES = new Set([
+  'E401', 'E403', 'E404', 'EUSAGE', 'ENEEDAUTH', 'EOTP',
+  'ETIMEDOUT', 'ESOCKETTIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN',
+  'E500', 'E502', 'E503', 'E504',
+]);
+function npmFailureCode(error) {
+  try {
+    const code = JSON.parse(String(error?.stdout || ''))?.error?.code;
+    if (SAFE_NPM_ERROR_CODES.has(code)) return code;
+  } catch { /* Non-JSON diagnostics remain private. */ }
+  const lines = String(error?.stderr || '').split(/\r?\n/);
+  for (const line of lines) {
+    const code = /^npm (?:ERR!|error) code ([A-Z0-9_]+)$/.exec(line)?.[1];
+    if (SAFE_NPM_ERROR_CODES.has(code)) return code;
+  }
+  return SAFE_NPM_ERROR_CODES.has(error?.code) ? error.code : null;
+}
+function npmCodeSuffix(error) {
+  return SAFE_NPM_ERROR_CODES.has(error?.npmErrorCode) ? ` [${error.npmErrorCode}]` : '';
+}
 function sameHash(actual, expected) {
   return /^[a-f0-9]{64}$/.test(actual) && /^[a-f0-9]{64}$/.test(expected)
     && crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expected, 'hex'));
@@ -22,9 +42,12 @@ function npm(args, cwd = root) {
   if (!cli) throw new Error('npm CLI not found; invoke through npm exec or use a standard Node installation');
   try {
     return execFileSync(process.execPath, [cli, ...args], { cwd, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 180000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-  } catch {
+  } catch (error) {
     // Do not forward credential-bearing npm diagnostics into public artifacts.
-    throw new Error(`npm ${args[0]} failed; check registry permissions, automation/2FA policy and connectivity`);
+    const code = npmFailureCode(error);
+    const failure = new Error(`npm ${args[0]} failed${code ? ` [${code}]` : ''}; check registry permissions, automation/2FA policy and connectivity`);
+    if (code) failure.npmErrorCode = code;
+    throw failure;
   }
 }
 function packages(directory, projectRoot = root) {
@@ -83,20 +106,31 @@ async function registryArchive(pkg, fetcher = fetch) {
   return bytes;
 }
 function authorize(pair, runNpm = npm) {
-  runNpm(['whoami', '--json', '--registry', registry]);
-  let permissions;
+  let username;
   try {
-    permissions = JSON.parse(runNpm(['access', 'list', 'packages', '--json', '--registry', registry]));
-  } catch {
-    // Unavailable checks cannot authorize a mutation. Keep npm diagnostics out
-    // of the report because they may contain registry credentials.
-    throw new Error('npm package access check unavailable; publication refused');
+    username = JSON.parse(runNpm(['whoami', '--json', '--registry', registry]));
+  } catch (error) {
+    throw new Error(`npm publisher identity check unavailable${npmCodeSuffix(error)}; publication refused`);
   }
-  if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions)) {
-    throw new Error('npm package access check returned an invalid result; publication refused');
+  if (typeof username !== 'string' || !username || username.trim() !== username || /[\r\n\0]/.test(username)) {
+    throw new Error('npm publisher identity check returned an invalid result; publication refused');
   }
   for (const pkg of pair) {
-    if (!Object.hasOwn(permissions, pkg.name) || permissions[pkg.name] !== 'read-write') {
+    let permissions;
+    try {
+      // Check the selected package, not the user's unrelated org inventory.
+      // npm's packages listing probes an org first and cannot recover from an
+      // org-policy 403 even when this personal package is writable.
+      permissions = JSON.parse(runNpm(['access', 'list', 'collaborators', pkg.name, '--json', '--registry', registry]));
+    } catch (error) {
+      // Unavailable checks cannot authorize a mutation. Keep npm diagnostics out
+      // of the report because they may contain registry credentials.
+      throw new Error(`npm package access check unavailable${npmCodeSuffix(error)}; publication refused`);
+    }
+    if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions)) {
+      throw new Error('npm package access check returned an invalid result; publication refused');
+    }
+    if (!Object.hasOwn(permissions, username) || permissions[username] !== 'read-write') {
       throw new Error(`${pkg.name}: read-write access not confirmed before publication`);
     }
   }

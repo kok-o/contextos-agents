@@ -1,0 +1,95 @@
+name: Recover reviewed Core 3.0.0 publication
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: npm-core-stable-v3.0.0
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: v3.0.0
+
+jobs:
+  publish:
+    if: ${{ github.repository == 'kok-o/contextos-agents' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out reviewed publication tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --ignore-scripts
+      - name: Test permission checks, recovery provenance and publication retries
+        env:
+          CONTEXTOS_CORE_ONLY_TESTS: "1"
+        run: node --test tests/release-publish.test.js
+      - name: Check out the immutable accepted source
+        uses: actions/checkout@v4
+        with:
+          ref: 0ad9eeb7bf3bbe5d6c863fdf991c1f164edfc56f
+          path: release-source
+          persist-credentials: false
+      - name: Verify original acceptance and download its exact artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/verify-core-release-recovery.cjs --download
+      - name: Extract the verified original artifact
+        run: unzip -q scratch/core-release-recovery.zip -d release-source/scratch
+      - name: Recheck archive bytes and identity against the original source
+        run: |
+          node -e "require('./scripts/publish-release.cjs').main('verify', 'core-stable', { projectRoot: require('node:path').resolve('release-source') }).catch(error => { console.error(error.message); process.exitCode = 1; });"
+      - name: Configure npm authentication for publication
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+      - name: Publish only the accepted core archive
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          node -e "require('./scripts/publish-release.cjs').main('publish', 'core-stable', { projectRoot: require('node:path').resolve('release-source') }).catch(error => { console.error(error.message); process.exitCode = 1; });"
+      - name: Retain recovery and publication evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-stable-recovery-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            scratch/core-release-recovery-evidence.json
+            release-source/scratch/release-publish-result.json
+
+  registry:
+    needs: publish
+    name: Recovered core registry acceptance (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0ad9eeb7bf3bbe5d6c863fdf991c1f164edfc56f
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/publish-release.cjs download core-stable
+      - run: npm run check:consumer:core -- scratch/registry-release-candidate
+      - name: Confirm stable npm distribution tag
+        run: node -e "fetch('https://registry.npmjs.org/-/package/contextos-agents/dist-tags').then(r => { if (!r.ok) throw new Error('Registry HTTP ' + r.status); return r.json(); }).then(tags => { if (tags.latest !== '3.0.0') throw new Error('latest tag mismatch'); }).catch(error => { console.error(error.message); process.exitCode = 1; });"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-stable-recovery-registry-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: scratch/release-core-install-result.json
