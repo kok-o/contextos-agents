@@ -33,6 +33,15 @@ describe('CI action bootstrap trust boundary', () => {
     : path.resolve(path.dirname(fs.realpathSync(execFileSync('which', ['npm'], { encoding: 'utf8' }).trim())), 'npm-cli.js');
   let base, workspace, runnerTemp, server, registry, requests, tarball;
 
+  function isWithinCanonicalRoot(root, candidate) {
+    // The bootstrap canonicalizes RUNNER_TEMP (for example /var -> /private/var
+    // on macOS), then removes the installed entrypoint before returning.
+    // Canonicalize the surviving root and compare directory components.
+    if (!path.isAbsolute(candidate)) return false;
+    const relative = path.relative(fs.realpathSync(root), candidate);
+    return relative !== '' && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+  }
+
   function runProcess(file, args, options) {
     return new Promise((resolve, reject) => {
       const child = spawn(file, args, { ...options, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -176,8 +185,8 @@ describe('CI action bootstrap trust boundary', () => {
     assert.equal(result.report?.trusted, true, `Action must run the trusted installed package, not local .bin: ${result.stdout}\n${result.stderr}`);
     assert.ok(!result.stderr.includes('ROGUE_LOCAL'));
     assert.ok(!result.stderr.includes('WORKSPACE_TOOL_EXECUTED'));
-    assert.ok(!path.relative(workspace, result.report.entrypoint).startsWith('node_modules'));
-    assert.ok(result.report.entrypoint.startsWith(runnerTemp));
+    assert.equal(isWithinCanonicalRoot(workspace, result.report.entrypoint), false);
+    assert.equal(isWithinCanonicalRoot(runnerTemp, result.report.entrypoint), true);
     assert.equal(result.report.execPath, fs.realpathSync(process.execPath));
     assert.ok(requests.includes(fixtureTarballPath));
     assert.equal(fs.existsSync(path.join(base, 'LIFECYCLE_RAN')), false);
@@ -188,6 +197,21 @@ describe('CI action bootstrap trust boundary', () => {
     assert.equal(result.report.env.PATH, path.dirname(fs.realpathSync(process.execPath)));
     assert.equal(result.output, 'status=pass\ncode=0\n');
     assert.deepEqual(fs.readdirSync(runnerTemp), [], 'Isolated installation must be cleaned up');
+  });
+
+  test('pinned bootstrap keeps its entrypoint inside a canonical symlinked runner-temp root', async t => {
+    const alias = path.join(base, 'runner temp alias');
+    try { fs.symlinkSync(runnerTemp, alias, process.platform === 'win32' ? 'junction' : 'dir'); }
+    catch (err) { if (err.code === 'EPERM') return t.skip('directory links unavailable'); throw err; }
+    const result = await runAction({}, { RUNNER_TEMP: alias });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(result.report?.trusted, true);
+    assert.equal(result.report.entrypoint.startsWith(alias), false, 'the fixture must exercise canonicalization of the alias');
+    assert.equal(isWithinCanonicalRoot(alias, result.report.entrypoint), true);
+    assert.equal(isWithinCanonicalRoot(workspace, result.report.entrypoint), false);
+    assert.equal(isWithinCanonicalRoot(alias, path.join(`${fs.realpathSync(runnerTemp)}-sibling`, 'bin/index.js')), false,
+      'a sibling with the same textual prefix must never satisfy containment');
+    assert.deepEqual(fs.readdirSync(runnerTemp), [], 'canonical installation must still be cleaned up');
   });
 
   test('F01: bootstrap clears case variants of Node preloads before the first native process', async () => {

@@ -20,6 +20,27 @@ maintenance change; its source-copy manifest, standalone build and scanner wirin
 must be reviewed in that change. They are not core acceptance requirements.
 Historical paired release evidence and tags remain historical records.
 
+## Core acceptance without publication
+
+After pushing a branch with the final core sources and reviewed stable identity,
+run the dedicated preflight on that branch:
+
+```sh
+gh workflow run validate-skills.yml --ref <branch> -f core_stable_preflight=true
+```
+
+This dispatch packs and verifies one archive, then tests those same bytes on
+Linux, Windows and macOS with Node.js 22 and 24. It runs core tests, consumer
+installation, migration from 2.3.2 and checkpoint rollback. MCP jobs are skipped;
+no tag, GitHub Release or npm publication is created.
+
+The run retains a candidate artifact named `core-stable-candidate-<commit>` and
+six platform evidence artifacts containing test logs and acceptance results.
+This preflight's candidate name is tied to the commit, so failed platform jobs
+may be retried against that same archive. A source fix requires a new commit and
+a new preflight run. Publication workflows use their own artifact retry rules
+described below.
+
 ## Reviewed identity and exact archive
 
 Prepare the candidate package locally and run its full acceptance suite before
