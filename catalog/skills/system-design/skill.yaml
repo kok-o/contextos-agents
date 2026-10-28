@@ -2,13 +2,17 @@ schemaVersion: 2
 name: system-design
 category: architecture
 type: instruction-only
-description: >
-  Architecture and system design skill based on donnemartin's System Design Primer.
-  Teaches scalable architecture thinking: load balancers, caching, DB partitioning,
-  microservices, CAP theorem, and trade-off analysis before writing backend code.
+description: Make proportionate architecture decisions using actual
+  requirements, boundaries, workloads and operational constraints.
 version: 1.0.0
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: system-design
+optional:
+  - decisions
+  - database
+  - api-design
+requires: []

@@ -66,6 +66,34 @@ describe('Milestone 8 — Doctor v2 Diagnostics Engine', () => {
     assert.equal(fs.existsSync(pending.journalPath), true);
   });
 
+  test('doctor --fix never unlinks a live lock based on an earlier stale observation', () => {
+    const { ProjectMutationLock } = require('../.agents/filesystem/index.js');
+    const compiler = require('../.agents/adapters/pure-compiler.js');
+    const lock = new ProjectMutationLock(tmpDir);
+    const token = lock.acquire({ command: 'live-replacement' });
+    const originalRender = compiler.renderAdapters;
+    const originalInspect = ProjectMutationLock.prototype.inspect;
+    let observedStale = false;
+    try {
+      // Isolate the independent stale-lock remediation from adapter repair.
+      compiler.renderAdapters = () => { throw new Error('No adapter repair in this regression'); };
+      ProjectMutationLock.prototype.inspect = function () {
+        if (!observedStale && this.projectRoot === tmpDir) {
+          observedStale = true;
+          return { token: 'previous-dead-owner', pid: 99999999 };
+        }
+        return originalInspect.call(this);
+      };
+      applyDoctorFix(tmpDir);
+    } finally {
+      compiler.renderAdapters = originalRender;
+      ProjectMutationLock.prototype.inspect = originalInspect;
+    }
+    assert.equal(observedStale, true);
+    assert.equal(lock.inspect()?.token, token);
+    lock.release(token);
+  });
+
   test('checkGitVersion() verifies git availability', () => {
     const res = checkGitVersion();
 

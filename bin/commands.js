@@ -171,12 +171,13 @@ const COMMAND_REGISTRY = {
   recover: {
     name: 'recover',
     description: 'List, rollback, or resume stuck filesystem transactions',
-    usage: 'contextos recover [--list] [--rollback <txId>] [--resume <txId>]',
+    usage: 'contextos recover --list | --rollback [txId] | --resume [txId] | --unlock --force',
     requiresProject: true,
     options: [
       { flag: '--list', desc: 'List pending or broken transactions requiring recovery' },
       { flag: '--rollback <txId>', desc: 'Rollback a broken transaction' },
       { flag: '--resume <txId>', desc: 'Resume and complete a stuck transaction' },
+      { flag: '--unlock --force', desc: 'Clear an abandoned lock after stopping every writer and watcher' },
     ],
   },
   compile: {
@@ -254,6 +255,13 @@ const COMMAND_REGISTRY = {
       { flag: '--json', desc: 'Output resolution in JSON format' },
     ],
   },
+  index: {
+    name: 'index',
+    description: 'Generate a progressive index of installed skills',
+    usage: 'contextos index',
+    requiresProject: true,
+    options: [],
+  },
   explain: {
     name: 'explain',
     description: 'Inspect rule catalog, enforcement levels, and automated checkers',
@@ -311,12 +319,13 @@ const COMMAND_REGISTRY = {
   recover: {
     name: 'recover',
     description: 'Recover from interrupted or failed multi-file transactions',
-    usage: 'contextos recover [--status] [--rollback [txId]] [--continue [txId]]',
+    usage: 'contextos recover --list | --rollback [txId] | --resume [txId] | --unlock --force',
     requiresProject: true,
     options: [
       { flag: '--status', desc: 'Inspect pending uncommitted transaction journals' },
       { flag: '--rollback [txId]', desc: 'Roll back uncommitted or failed transaction' },
       { flag: '--continue [txId]', desc: 'Attempt to resume and complete prepared transaction' },
+      { flag: '--unlock --force', desc: 'Clear an abandoned lock after stopping every writer and watcher' },
     ],
   },
   scan: {
@@ -353,9 +362,9 @@ const COMMAND_REGISTRY = {
 function getCommand(name) {
   if (!name) return null;
   const lower = name.toLowerCase().trim();
-  if (COMMAND_REGISTRY[lower]) {
+  if (Object.hasOwn(COMMAND_REGISTRY, lower)) {
     const cmd = COMMAND_REGISTRY[lower];
-    if (cmd.target && COMMAND_REGISTRY[cmd.target]) {
+    if (cmd.target && Object.hasOwn(COMMAND_REGISTRY, cmd.target)) {
       return COMMAND_REGISTRY[cmd.target];
     }
     return cmd;
@@ -363,7 +372,7 @@ function getCommand(name) {
   // Check aliases
   for (const cmd of Object.values(COMMAND_REGISTRY)) {
     if (cmd.aliases && cmd.aliases.includes(lower)) {
-      if (cmd.target && COMMAND_REGISTRY[cmd.target]) {
+      if (cmd.target && Object.hasOwn(COMMAND_REGISTRY, cmd.target)) {
         return COMMAND_REGISTRY[cmd.target];
       }
       return cmd;

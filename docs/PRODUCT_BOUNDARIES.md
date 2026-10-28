@@ -2,9 +2,11 @@
 
 To ensure stability and secure deployments, the ContextOS project is strictly separated into different maturity boundaries. Features in Experimental or Labs stages are not included in the default `contextos-agents` npm package.
 
-## Core (3.0.0-rc.1 release candidate)
+## Core (3.0.0 stable preparation)
 
-This core candidate uses npm's `next` tag. MCP is excluded from its core-only validation.
+Core 3.0.0 is prepared for a separate stable publication. The reviewed archive
+and mandatory acceptance checks are described in the [stable checklist](RELEASE_3.0.0.md).
+Preparation does not publish a package or create a release tag. MCP is excluded from core-only validation.
 
 These components form the versioned `contextos-agents` root package. Their contracts are checked by compiler and consumer tests; compatibility with a particular client loader requires client-specific verification.
 
@@ -12,13 +14,17 @@ These components form the versioned `contextos-agents` root package. Their contr
 * **Adapter Generation:** Compilers that produce Cursor MDC rules, native Claude rules and skills, Copilot instructions and other documented exports.
 * **Lockfile & Validation (Drift Detection):** Generation of deterministic lockfiles and CI quality gates (`contextos validate`, `contextos gate`).
 * **Staged Index Scanner & Safe Hooks:** Scanning Git index blobs for secrets and lazy stubs (`contextos scan`), and managing isolated pre-commit hooks (`contextos hook`).
-* **Core Commands:** `init`, `compile`, `export` (including `--check`), `resolve`, `update`, `uninstall`, `doctor`, `watch`, `scan`, `hook`, `gate`.
+* **Core Commands:** `init`, `compile`, `export` (including `--check`), `resolve`, `index`, `update`, `uninstall`, `doctor`, `watch`, `scan`, `hook`, `gate`, `recover`.
 
-## Beta (MCP Bridge)
+## Optional MCP package (frozen)
 
-These components are feature-complete but their APIs (specifically MCP schemas) may undergo minor changes. They are distributed via the separate `contextos-mcp` package.
+The optional `contextos-mcp` package has its own version and is not required to use core. Its supported bridge provides read-only inspection.
 
-**Frozen.** The read-only bridge is maintained for compatibility and security fixes only. No new MCP, runtime, swarm or labs features are developed until the core has recorded external users; the roadmap states the reason and the criteria for lifting the freeze.
+**Frozen.** Maintenance is limited to security and compatibility fixes. Existing experimental tools, runtime, swarm, orchestration and labs features are not expanded. Resuming MCP development requires a separate decision and a confirmed user scenario. Experimental runtime behavior is outside core's guarantees.
+
+The packages have independent versions. Core has its own stable and RC workflows;
+the standalone MCP maintenance workflow migration is separate work and does not
+publish core. See [release instructions](RELEASE_PROCESS.md).
 
 * **Read-Only MCP Server:** `contextos_status`, `contextos_compare`, and `contextos_diff` inspect existing session/thread state without initializing runtime worktrees. The bridge does not expose `contextos_resolve` or `contextos_explain`.
 * **Interactive CLI Framework:** Foundations for interactive shells, though not recommended for automated CI use.

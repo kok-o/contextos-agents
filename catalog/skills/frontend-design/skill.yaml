@@ -1,0 +1,35 @@
+schemaVersion: 2
+id: frontend-design
+name: frontend-design
+version: 1.0.0
+description: Design or reshape frontend composition, typography, color and
+  visual identity for a specific product and audience.
+category: ui
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: visual design
+      locale: en
+      weight: 40
+    - value: typography
+      locale: en
+      weight: 40
+    - value: composition
+      locale: en
+      weight: 40
+    - value: landing page
+      locale: en
+      weight: 40
+    - value: типограф
+      locale: ru
+      weight: 40
+    - value: композиц
+      locale: ru
+      weight: 40
+    - value: дизайн интерфейс
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json

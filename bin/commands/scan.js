@@ -47,10 +47,14 @@ function scanCommand(args, flags = {}) {
     process.exit(2);
   }
 
-  console.log(`  Staged Files Scanned : ${result.stats.stagedFilesCount}`);
+  console.log(`  Staged Files Inspected: ${result.stats.stagedFilesCount}`);
+  console.log(`  Content Files Scanned: ${result.stats.contentFilesScanned}`);
   console.log(`  Enforcement Mode     : ${enforce ? 'STRICT (fails on findings)' : 'ADVISORY (warnings only)'}`);
   console.log(`  Scope Containment    : ${result.scope.status.toUpperCase()}`);
   console.log(`  Violations Found     : ${result.stats.violationsCount}\n`);
+  for (const item of result.coverage.excluded) {
+    console.log(`  [EXCLUDED] ${item.file}${item.line ? ':' + item.line : ''}: ${item.reason}`);
+  }
 
   if (result.findings.length > 0) {
     console.log('  Findings:');

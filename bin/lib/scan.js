@@ -12,6 +12,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const syntheticFixtures = require('./secret-fixtures.json').entries;
 const {
   findGitRoot,
   getStagedFiles,
@@ -127,25 +129,22 @@ const PLACEHOLDER_PATTERNS = [
   },
 ];
 
-// Exempt path segments and exact files (e.g. test fixtures, test files)
+// Only dependency/Git internals are outside content coverage. Tests are scanned.
 const EXEMPT_SEGMENTS = new Set([
-  'tests',
   '.git',
   'node_modules',
 ]);
 
-const EXEMPT_EXACT_PATHS = new Set([
-  'scripts/check-secrets.js',
-  'bin/lib/scan.js',
-]);
-
 function isExempt(filePath) {
   const norm = filePath.replace(/\\/g, '/');
-  if (EXEMPT_EXACT_PATHS.has(norm)) {
-    return true;
-  }
   const segments = norm.split('/');
   return segments.some(seg => EXEMPT_SEGMENTS.has(seg));
+}
+
+function syntheticFixtureException(filePath, ruleId, line) {
+  const file = filePath.replace(/\\/g, '/');
+  const lineSha256 = crypto.createHash('sha256').update(line).digest('hex');
+  return syntheticFixtures.find(entry => entry.file === file && entry.ruleId === ruleId && entry.lineSha256 === lineSha256);
 }
 
 function redact(str) {
@@ -261,6 +260,8 @@ function runScan(options = {}) {
   }
 
   const findings = [];
+  const excluded = [];
+  let contentFilesScanned = 0;
   let addedLinesMap = new Map();
   if (checkPlaceholders) {
     try {
@@ -336,7 +337,10 @@ function runScan(options = {}) {
     }
 
     // Skip content scan for exempt paths
-    if (isExempt(relPath)) continue;
+    if (isExempt(relPath)) {
+      excluded.push({ file: relPath, reason: 'Git/dependency internals', checks: ['secrets', 'placeholders'] });
+      continue;
+    }
 
     // Read blob from index (fails closed with code 2 on read errors in any mode)
     let blob;
@@ -364,6 +368,7 @@ function runScan(options = {}) {
 
     // Large files (> 2MB): fail-closed in enforce mode
     if (blob.length > 2 * 1024 * 1024) {
+      excluded.push({ file: relPath, reason: 'Content exceeds 2MB limit', checks: ['secrets', 'placeholders'] });
       if (enforce) {
         findings.push({
           ruleId: 'SCAN-SKIP-001',
@@ -378,6 +383,7 @@ function runScan(options = {}) {
 
     const content = blob.toString('utf8');
     const lines = content.split(/\r?\n/);
+    contentFilesScanned++;
 
     // 4. Staged Content Secrets Check
     if (checkSecrets) {
@@ -386,6 +392,11 @@ function runScan(options = {}) {
         for (const { ruleId, name, pattern } of SECRET_PATTERNS) {
           const match = line.match(pattern);
           if (match) {
+            const exception = syntheticFixtureException(relPath, ruleId, line);
+            if (exception) {
+              excluded.push({ file: relPath, line: lineNum, ruleId, reason: exception.reason });
+              continue;
+            }
             findings.push({
               ruleId,
               file: relPath,
@@ -445,8 +456,10 @@ function runScan(options = {}) {
       status: scopeStatus,
     },
     findings,
+    coverage: { excluded },
     stats: {
       stagedFilesCount: stagedEntries.length,
+      contentFilesScanned,
       violationsCount: findings.length,
       errorsCount: findings.filter(f => f.severity === 'error').length,
       warningsCount: findings.filter(f => f.severity === 'warning').length,
@@ -462,4 +475,6 @@ module.exports = {
   PLACEHOLDER_PATTERNS,
   matchesScope,
   redact,
+  isExempt,
+  syntheticFixtureException,
 };

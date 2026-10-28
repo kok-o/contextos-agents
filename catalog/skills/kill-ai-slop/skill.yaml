@@ -1,0 +1,39 @@
+schemaVersion: 2
+id: kill-ai-slop
+name: kill-ai-slop
+version: 1.0.0
+description: Review or refine generic AI-styled interfaces and UI copy using
+  product intent, real content and observed usability.
+category: ui
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: kill-ai-slop
+      locale: en
+      weight: 50
+    - value: de-slop UI
+      locale: en
+      weight: 50
+    - value: remove the AI look
+      locale: en
+      weight: 50
+    - value: generic UI
+      locale: en
+      weight: 50
+    - value: убери ии слоп
+      locale: ru
+      weight: 50
+    - value: антислоп интерфейс
+      locale: ru
+      weight: 50
+    - value: убери шаблонность интерфейса
+      locale: ru
+      weight: 50
+    - value: выглядит как ии
+      locale: ru
+      weight: 50
+resources:
+  - LICENSE.txt
+  - SOURCES.json
+  - references/examples.md

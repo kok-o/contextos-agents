@@ -1,163 +1,46 @@
 ---
-name: Next.js
-description: >
-  ContextOS skill for Next.js App Router, Server Components, Server Actions, performance optimization, and Vercel best practices.
+name: nextjs
+description: Implement and review Next.js routes, server/client boundaries, data
+  loading, caching and application lifecycle behavior.
 ---
 
-# Next.js App Router Best Practices
+# nextjs
 
 ## Overview
 
-Enforces high-performance architectural patterns for Next.js App Router based on Vercel Engineering guidelines: React Server Components (RSC), zero-waterfall async pipelines, request deduplication via `React.cache()`, bundle optimization, and secure Server Actions.
+Implement and review Next.js routes, server/client boundaries, data loading, caching and application lifecycle behavior. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate whenever building, refactoring, or reviewing Next.js pages, layouts, Route Handlers (`app/api`), Server Actions, or components in the `app/` directory.
-
-## Negative Constraints (What NOT to Do)
-
-1. **NEVER use barrel imports for UI libraries**: Avoid `import { Button, Dialog } from '@/components'`. Import directly from the exact file (`import { Button } from '@/components/ui/button'`) to prevent bundler tree-shaking failures and trace bloat.
-2. **NEVER trust client-provided data or session state in Server Actions**: Always authenticate session and authorize tenant ownership inside the Server Action handler itself before mutating data.
-3. **NEVER introduce sequential `await` waterfalls for independent data**: Always use `Promise.all()` or parallel streaming `<Suspense>` boundaries.
-4. **NEVER pass large unneeded serialized data from Server to Client Components**: Only pass the specific primitive fields required by the client component (`server-dedup-props`).
-5. **NEVER use `useEffect` for data fetching**: Fetch directly in Server Components or use TanStack Query / SWR for client-side queries.
-6. **NEVER import server-only modules in client components**: Use the `server-only` package in data access layers to catch accidental client imports at build time.
+The project uses Next.js. Inspect whether the affected route uses App Router or Pages Router and the installed framework/React versions.
 
 ## Rules & Patterns
 
-### 1. Eliminating Async Waterfalls (Critical)
+Follow the actual routing and rendering model. Keep server-only code and secrets out of client imports, and place interactive boundaries where they serve the feature.
 
-- **Parallel Fetching**: Fetch independent data concurrently at the top of the route or component.
-- **Granular Streaming**: Wrap slow, non-critical subtrees in `<Suspense fallback={<Skeleton />}>` so critical above-the-fold content streams immediately.
-- **Defer Awaits**: Check cheap synchronous conditions before awaiting remote resources.
+Authenticate and authorize protected server reads and mutations at their authoritative boundary. A Server Action is callable input, not a trusted internal function simply because its UI is private.
 
-### 2. Request Deduplication & Caching (`server-cache-react`)
+Start independent authorized I/O together, while retaining real dependencies. Choose loading/error/streaming boundaries that keep useful content understandable.
 
-- Use `React.cache()` to deduplicate identical database or service calls across multiple components rendered in the same server request lifecycle.
+Check version-specific cache, revalidation and runtime APIs. Define data identity, freshness and invalidation; do not force static rendering, Edge runtime or shared caching onto personalized data.
 
-```tsx
-import { cache } from 'react';
-import { db } from '@/lib/db';
-
-export const getCurrentUser = cache(async (userId: string) => {
-  return await db.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, role: true, email: true }
-  });
-});
-```
-
-### 3. Secure Server Actions (`server-auth-actions`)
-
-- Treat every Server Action as a public HTTP endpoint. Always validate session, authorization, and input schema with Zod.
-
-```tsx
-'use server';
-
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { revalidatePath } from 'next/cache';
-
-const UpdateProfileSchema = z.object({
-  name: z.string().min(2).max(50),
-});
-
-export async function updateProfile(formData: FormData) {
-  const session = await auth();
-  if (!session?.userId) throw new Error('Unauthorized');
-
-  const result = UpdateProfileSchema.safeParse({ name: formData.get('name') });
-  if (!result.success) return { error: 'Invalid input', issues: result.error.flatten() };
-
-  await db.user.update({
-    where: { id: session.userId },
-    data: { name: result.data.name },
-  });
-
-  revalidatePath('/settings');
-  return { success: true };
-}
-```
-
-### 4. Bundle Optimization & Dynamic Imports (`bundle-dynamic-imports`)
-
-- Heavy interactive client components (charts, rich-text editors, video players) must be dynamically loaded with `next/dynamic`.
-
-```tsx
-import dynamic from 'next/dynamic';
-
-const AnalyticsChart = dynamic(
-  () => import('@/components/analytics/chart').then(mod => mod.AnalyticsChart),
-  {
-    loading: () => <div className="h-64 animate-pulse bg-muted rounded-lg" />,
-    ssr: false,
-  }
-);
-```
-
-### 5. Next.js 15+ Async Request APIs (`async-params`)
-
-In Next.js 15+, `params`, `searchParams`, `cookies()`, and `headers()` are asynchronous and must be awaited:
-
-```tsx
-// [GOOD] Next.js 15+ Page Component
-interface PageProps {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default async function UserPage({ params, searchParams }: PageProps) {
-  const { id } = await params;
-  const { tab } = await searchParams;
-  const user = await getUser(id);
-
-  return <UserProfile user={user} activeTab={tab as string} />;
-}
-```
-
-### 6. Non-Blocking Background Tasks with `after()`
-
-To execute logging, analytics, or cache priming without delaying the user's HTTP response:
-
-```typescript
-import { after } from 'next/server';
-
-export async function POST(request: Request) {
-  const data = await request.json();
-  const result = await processOrder(data);
-
-  // Executes asynchronously AFTER the response stream has completed
-  after(async () => {
-    await sendSlackNotification(result);
-    await indexOrderInSearch(result.id);
-  });
-
-  return Response.json({ success: true, orderId: result.id });
-}
-```
-
----
+Inspect production evidence before broad bundle changes. Barrel imports and package import optimizations depend on the package/framework; do not rewrite every import as a universal rule. Preserve navigation, metadata and hydration correctness.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples and component templates.
+A public catalog may support shared caching with explicit invalidation; an account page needs its own identity and authorization policy. Verify the actual installed API instead of copying a route configuration from a different version.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-- [ ] All database queries in RSC layers use `React.cache()` if called across multiple components.
-- [ ] No barrel imports (`from '@/components'`); all imports point to exact component modules.
-- [ ] Server Actions have explicit auth checks and Zod input validation.
-- [ ] Heavy client widgets (charts, editors) use `next/dynamic`.
-- [ ] Images use `next/image` with explicit `sizes` and `priority` on LCP elements.
+- [ ] Build the application and test the affected route, loading and error states.
+- [ ] Verify server/client isolation, authorization and cache invalidation.
 
 ## Common Mistakes
 
-- Using `'use client'` at page level instead of leaf components.
-- Relying on client-side authentication checks for Server Actions without server-side validation.
-- Chaining sequential awaits for independent data models.
+Using the wrong router convention; hiding hydration errors; treating framework caching defaults as permanent; changing runtimes without compatibility checks.
 
 ## Integration Notes
 
-- Pairs with `react` and `ui-ux-pro` for component design and state management.
-- Pairs with `security` for session authorization and input sanitization.
+Optional companion guidance: react, typescript, vercel-react-best-practices. Use it only when relevant and available; the skill does not install tools or authorize external actions.

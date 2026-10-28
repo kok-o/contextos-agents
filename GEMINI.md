@@ -12,10 +12,12 @@ inspection/execution guidance when useful; it does not promise measured model
 quality or speed gains.
 
 Inspect actual symbols, callers, versions, and tests before changing code.
-Implement required integrations completely. Run relevant checks according to
-risk, including applicable project gates. A typo does not require a full feature
-lifecycle or every test suite. Roles are optional; narrate meaningful decisions
-in ordinary language.
+Match the requested outcome: questions and plans do not authorize implementation;
+an implementation request needs changes and verification, not just a plan.
+Use engineering-workflow for completion and safe stopping conditions. Implement
+required integrations completely. Run relevant checks according to risk, including
+applicable project gates. A typo does not require a full feature lifecycle or every
+test suite. Roles are optional; narrate meaningful decisions in ordinary language.
 
 For this source checkout, source/sync validation is
 node .agents/ctx.js validate. Staged secret/placeholder checking is

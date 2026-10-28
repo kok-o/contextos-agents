@@ -1,14 +1,24 @@
 schemaVersion: 2
 id: fastapi
-name: FastAPI
+name: fastapi
 category: backend
 type: instruction-only
 requires: []
-optional: [postgres, redis, docker]
-conflicts: [nestjs, express]
+optional:
+  - postgres
+  - redis
+  - docker
+  - api-design
+  - security
+  - testing
+conflicts:
+  - nestjs
+  - express
 weight: 8
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Implement and review FastAPI endpoints, validation, dependencies,
+  lifecycle and Python I/O behavior.

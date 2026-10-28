@@ -1,35 +1,13 @@
-# decisions Examples - Anti-patterns vs ContextOS Standard
+# decisions scenarios
 
-## Example 1: Documenting Tech Choices
+## In scope
 
-### Anti-pattern: Tribal Knowledge & Undocumented Decisions
+A shared session store decision can compare the current deployment, consistency and failure requirements. Record added operational cost and invalidation concerns instead of promising zero session loss or unmeasured latency.
 
-```text
-"We switched to Redis for session storage last month because Dan said so on Slack."
-Three months later, Dan leaves and nobody knows why the config is set up this way.
-```
+## Verification
 
-### Best practice: ContextOS Standard (MADR Architecture Decision Record)
+Check links, status and consistency with the actual implementation.
 
-```markdown
-# ADR 0003: Use Redis for Distributed Session Storage
+Mark open assumptions, ownership and any required future measurement.
 
-## Context and Problem Statement
-Our application is transitioning from a single server to horizontally auto-scaled instances.
-Sticky sessions on load balancer cause uneven distribution and drop sessions on node recycling.
-
-## Considered Options
-1. PostgreSQL session table
-2. Redis cluster
-3. JWT stateless tokens in cookies
-
-## Decision Outcome
-Chosen option: "Redis cluster", because:
-- Sub-millisecond read/write latency compared to relational DB queries.
-- Built-in TTL automatically handles session expiration without cron cleanup.
-- Avoids security risks of client-stored JWT revocation.
-
-## Consequences
-- Positive: Stateless web tier, zero session drops on deployment.
-- Negative: Adds operational dependency on Redis cluster infrastructure.
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

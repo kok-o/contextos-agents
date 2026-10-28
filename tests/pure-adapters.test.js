@@ -19,6 +19,274 @@ const {
 } = require('../.agents/adapters/pure-compiler.js');
 const { detectDrift, computeDiffSnippet, DRIFT_STATES } = require('../.agents/adapters/drift-detector.js');
 
+it('CR05 adapter exclusions use canonical manifest identity without renaming directory outputs', t => {
+  const { ManifestCompiler } = require('../.agents/compiler/manifest-compiler.js');
+  const { collectSkillDirectories } = require('../.agents/adapters/shared.js');
+  for (const [manifest, winner, canonicalId] of [
+    [{ id: 'alpha', name: 'legacy' }, null, 'alpha'],
+    [{ name: 'alpha' }, null, 'alpha'],
+    [{}, null, 'policy'],
+    [{ id: 'stale' }, { schemaVersion: 2, id: 'alpha' }, 'alpha'],
+  ]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-canonical-exclusion-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/project/skills/policy');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), JSON.stringify(manifest));
+    if (winner) fs.writeFileSync(path.join(dir, 'skill.v2.yaml'), JSON.stringify(winner));
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# ALPHA_PRIVATE_POLICY\n');
+    const compiled = new ManifestCompiler({ rootDir: root }).compile();
+    assert.equal(compiled.success, true, JSON.stringify(compiled.diagnostics));
+    assert.ok(compiled.registry.skills[canonicalId]);
+    fs.writeFileSync(path.join(root, '.agents/profile.json'), JSON.stringify({ profile: 'custom', exclude_skills: [canonicalId] }));
+    assert.deepEqual(collectSkillDirectories(null, root), [], canonicalId);
+    const excluded = renderAdapters(root, 'all');
+    assert.ok(!excluded.artifacts.some(art => art.content.includes('ALPHA_PRIVATE_POLICY')));
+    assert.ok(!excluded.artifacts.some(art => art.sourceSkillIds.includes('policy')));
+    if (canonicalId !== 'policy') {
+      fs.writeFileSync(path.join(root, '.agents/profile.json'), JSON.stringify({ profile: 'custom', exclude_skills: ['policy'] }));
+      const included = renderAdapters(root, 'cursor');
+      assert.ok(included.artifacts.some(art => art.path === '.cursor/rules/policy.mdc'), 'directory names remain output identities, not exclusion aliases');
+    }
+  }
+});
+
+for (const [label, manifest, pointer] of [
+  ['string requires', { id: 'alpha', dependencies: { requires: 'missing-prerequisite' } }, '/dependencies/requires'],
+  ['numeric keyword', { id: 'alpha', signals: { keywords: [{ value: 42, weight: 40 }] } }, '/signals/keywords/0/value'],
+  ['false nested dependencies', { id: 'alpha', dependencies: false }, '/dependencies'],
+  ['null nested context', { id: 'alpha', context: null }, '/context'],
+  ['unknown nested field', { id: 'alpha', signals: { surprise: true } }, '/signals/surprise'],
+  ['false root', false, '/'], ['zero root', 0, '/'], ['null root', null, '/'],
+  ['array root', [], '/'], ['string root', 'not-a-manifest', '/'],
+]) {
+  it(`CR06 raw manifest validation rejects ${label} before export/apply/check success`, t => {
+    const { ManifestCompiler } = require('../.agents/compiler/manifest-compiler.js');
+    const { readSkillManifest } = require('../.agents/adapters/shared.js');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-raw-export-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/project/skills/policy');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Policy\n');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), '{"id":"alpha"}');
+    const valid = renderAdapters(root, 'all');
+    applyArtifacts(root, valid.artifacts, { context: valid.context });
+    const paths = [...valid.artifacts.map(art => art.path), '.agents/lockfile.v2.json'];
+    const before = paths.map(file => fs.readFileSync(path.join(root, file)));
+    for (const filename of ['skill.yaml', 'skill.v2.yaml']) {
+      fs.writeFileSync(path.join(dir, 'skill.yaml'), '{"id":"alpha"}');
+      fs.writeFileSync(path.join(dir, filename), JSON.stringify(manifest));
+      assert.equal(new ManifestCompiler({ rootDir: root }).compile().success, false, filename);
+      const invalid = err => {
+        assert.equal(err.code, 'CTX_ADAPTER_INVALID_MANIFEST');
+        assert.equal(err.path, pointer === '/' ? '' : pointer);
+        assert.equal(err.file, path.join(dir, filename));
+        assert.ok(err.message.includes(`${pointer}:`), err.message);
+        return true;
+      };
+      assert.throws(() => readSkillManifest(dir), invalid);
+      for (const adapter of listAdapters()) {
+        assert.throws(() => renderAdapters(root, adapter), invalid, adapter);
+        assert.throws(() => getAdapter(adapter).run({ projectRoot: root }), invalid, adapter);
+        const checked = detectDrift(root, adapter);
+        assert.equal(checked.status, 'error', adapter);
+        assert.equal(checked.code, 2, adapter);
+        assert.equal(checked.hasError, true, adapter);
+        assert.ok(checked.findings.CONFIG_ERROR.some(finding => finding.reason.includes(`${pointer}:`)));
+      }
+      paths.forEach((file, i) => assert.deepEqual(fs.readFileSync(path.join(root, file)), before[i], file));
+    }
+  });
+}
+
+it('CR06 validates only the winning v2 manifest with no external runtime dependencies', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-raw-export-vendor-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/policy');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '# WINNING_POLICY\n');
+  fs.writeFileSync(path.join(dir, 'skill.yaml'), 'false');
+  fs.writeFileSync(path.join(dir, 'skill.v2.yaml'), 'schemaVersion: 2\nid: alpha\n');
+  const compiler = path.resolve(__dirname, '../.agents/adapters/pure-compiler.js');
+  const reader = path.resolve(__dirname, '../.agents/adapters/shared.js');
+  execFileSync(process.execPath, ['-e', `
+    const assert = require('node:assert/strict');
+    const Module = require('module'), load = Module._load;
+    Module._load = function(id, ...args) {
+      if (/^(yaml|ajv|ajv-formats)(\\/|$)/.test(id)) throw new Error('external devDependency unavailable: ' + id);
+      return load.call(this, id, ...args);
+    };
+    const { renderAdapters } = require(${JSON.stringify(compiler)});
+    assert.ok(renderAdapters(${JSON.stringify(root)}, 'all').artifacts.some(art => art.content.includes('WINNING_POLICY')));
+    require('fs').writeFileSync(${JSON.stringify(path.join(dir, 'skill.v2.yaml'))}, 'false');
+    assert.throws(() => require(${JSON.stringify(reader)}).readSkillManifest(${JSON.stringify(dir)}), { code: 'CTX_ADAPTER_INVALID_MANIFEST' });
+  `]);
+});
+
+it('CR07 Cursor project-rule links resolve from the actual destination and preserve fenced examples', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-cursor-project-links-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, '.agents/docs'), { recursive: true });
+  fs.writeFileSync(path.join(root, '.agents/docs/team policy.md'), '# Policy\n');
+  fs.writeFileSync(path.join(root, '.agents/AGENTS.md'), '# Project rules\n[Policy](docs/team%20policy.md#policy)\n[Reference][team]\n\n[team]: docs/team%20policy.md#policy\n\n```md\n[Literal](leave.md)\n```\n\n~~~md\n[literal]: unchanged.md\n~~~\n[Web](https://example.com/policy)\n[Anchor](#local)\n');
+  const rendered = renderAdapters(root, 'cursor');
+  const output = rendered.artifacts.find(art => art.path === '.cursor/rules/00-project-rules.mdc');
+  applyArtifacts(root, rendered.artifacts, { context: rendered.context });
+  const text = fs.readFileSync(path.join(root, output.path), 'utf8');
+  const href = text.match(/\[Policy\]\(([^)]+)\)/)[1];
+  assert.ok(href.endsWith('#policy'));
+  assert.equal(fs.readFileSync(path.resolve(root, path.dirname(output.path), decodeURIComponent(href.split('#')[0])), 'utf8'), '# Policy\n');
+  assert.ok(text.includes(`[team]: ${href}`));
+  assert.ok(text.includes('```md\n[Literal](leave.md)\n```'));
+  assert.ok(text.includes('~~~md\n[literal]: unchanged.md\n~~~'));
+  assert.ok(text.includes('[Web](https://example.com/policy)'));
+  assert.ok(text.includes('[Anchor](#local)'));
+  assert.equal(detectDrift(root, 'cursor').hasDrift, false);
+});
+
+it('F10 Copilot exports project rules with usable links and detects source changes', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-copilot-project-rules-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, '.agents/docs'), { recursive: true });
+  fs.mkdirSync(path.join(root, '.github'));
+  fs.writeFileSync(path.join(root, '.github/copilot-instructions.md'), '# User instructions\nKeep me.\n');
+  fs.writeFileSync(path.join(root, '.agents/docs/team policy.md'), '# Policy\n');
+  const source = path.join(root, '.agents/AGENTS.md');
+  fs.writeFileSync(source, '# Project rules\nCOPILOT_POLICY_V1\n[Policy](docs/team%20policy.md#policy)\n[Reference][team]\n\n[team]: docs/team%20policy.md#policy\n\n```md\n[Literal](leave.md)\n```\n');
+  const rendered = renderAdapters(root, 'copilot');
+  const output = rendered.artifacts.find(art => art.path === '.github/copilot-instructions.md');
+  const text = output.content.toString('utf8');
+  assert.match(text, /COPILOT_POLICY_V1/);
+  assert.match(text, /# User instructions\nKeep me\./);
+  assert.match(text, /\[Literal\]\(leave\.md\)/);
+  const href = text.match(/\[Policy\]\(([^)]+)\)/)[1];
+  assert.equal(fs.readFileSync(path.resolve(root, '.github', decodeURIComponent(href.split('#')[0])), 'utf8'), '# Policy\n');
+  assert.ok(text.includes(`[team]: ${href}`));
+  applyArtifacts(root, rendered.artifacts, { context: rendered.context });
+  assert.equal(detectDrift(root, 'copilot').hasDrift, false);
+  fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replace('COPILOT_POLICY_V1', 'COPILOT_POLICY_V2'));
+  const report = detectDrift(root, 'copilot');
+  assert.equal(report.code, 1);
+  assert.ok(report.findings.STALE_INPUT.some(finding => finding.path === output.path));
+  const updated = renderAdapters(root, 'copilot');
+  applyArtifacts(root, updated.artifacts, { context: updated.context });
+  assert.match(fs.readFileSync(path.join(root, output.path), 'utf8'), /COPILOT_POLICY_V2/);
+  assert.equal(detectDrift(root, 'copilot').hasDrift, false);
+});
+
+it('F11 Cursor frontmatter round-trips YAML strings using the installed parser', t => {
+  const YAML = require('yaml');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-cursor-yaml-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Team policy\n');
+  const title = 'Team "quoted" policy';
+  const descriptions = [
+    'Release policy C:\\policies\\release',
+    'Preserve "double" and \'single\' quotes: # not a comment',
+    'First line\nSecond line\r\nThird line\tTabbed',
+    'Control \u0000 \u0001 \u0007 \u000b \u001b \u007f \u0085 \u2028 \u2029 emoji \ud83d\udd12',
+    'true', 'null', '[array]', '{object}', '---\nfrontmatter-like',
+  ];
+  for (const activation of ['auto', 'always', 'globs']) {
+    for (const description of descriptions) {
+      const globs = ['src/\\[literal\\]/**/*.ts', 'src/with\ttab/*.js', 'src/"quoted"/*.ts', "src/with'apostrophe/*.js", 'src/control\u0001/*.js'];
+      fs.writeFileSync(path.join(dir, 'skill.yaml'), YAML.stringify({ id: 'team', displayName: title, description, activation, globs }));
+      const rendered = renderAdapters(root, 'cursor');
+      const content = rendered.artifacts.find(art => art.path === '.cursor/rules/team.mdc').content.toString('utf8');
+      const frontmatter = content.match(/^---\n([\s\S]*?)\n---\n/)[1];
+      const parsed = YAML.parse(frontmatter);
+      assert.equal(parsed.description, activation === 'auto' ? `Agent-requested: invoke when working on ${title}. ${description}` : description);
+      assert.equal(parsed.globs, activation === 'globs' ? globs.join(',') : '');
+      assert.equal(parsed.alwaysApply, activation === 'always');
+    }
+  }
+  // Runtime serialization must use the shipped vendor, not a devDependency.
+  const compiler = path.resolve(__dirname, '../.agents/adapters/pure-compiler.js');
+  execFileSync(process.execPath, ['-e', `const Module = require('module'); const load = Module._load; Module._load = function(id, ...args) { if (id === 'yaml') throw new Error('devDependency unavailable'); return load.call(this, id, ...args); }; require(${JSON.stringify(compiler)}).renderAdapters(${JSON.stringify(root)}, 'cursor');`]);
+});
+
+it('F12 binary resources use exact bytes for rendering, drift and protected apply', t => {
+  const { computeExactHash } = require('../.agents/filesystem/index.js');
+  for (const [original, edited] of [
+    [Buffer.from('ff0041', 'hex'), Buffer.from('fe0041', 'hex')],
+    [Buffer.from('A\r\nB'), Buffer.from('A\nB')],
+  ]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-binary-resource-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/project/skills/team');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Team policy\n');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), 'id: team\nresources: [data.bin, notes.txt]\n');
+    fs.writeFileSync(path.join(dir, 'data.bin'), original);
+    fs.writeFileSync(path.join(dir, 'notes.txt'), 'Notes\nSecond line\n');
+    const rendered = renderAdapters(root, ['gemini', 'claude']);
+    const binaries = rendered.artifacts.filter(art => art.path.endsWith('/data.bin'));
+    assert.equal(binaries.length, 3);
+    for (const art of binaries) assert.deepEqual(art.content, original);
+    applyArtifacts(root, rendered.artifacts, { context: rendered.context });
+    assert.equal(detectDrift(root, ['gemini', 'claude']).hasDrift, false);
+    const output = binaries[0].path;
+    const disk = path.join(root, output);
+    assert.deepEqual(fs.readFileSync(disk), original);
+    fs.writeFileSync(disk, edited);
+    const report = detectDrift(root, ['gemini', 'claude']);
+    assert.equal(report.code, 1, `binary change ${original.toString('hex')} -> ${edited.toString('hex')}`);
+    assert.ok(report.findings.MODIFIED_MANAGED_OUTPUT.some(finding => finding.path === output));
+    assert.match(report.diffs.find(diff => diff.path === output).diff, /binary/i);
+    const lockPath = path.join(root, '.agents/lockfile.v2.json');
+    const beforeLock = fs.readFileSync(lockPath);
+    assert.throws(() => applyArtifacts(root, rendered.artifacts, { context: rendered.context }), { code: 'CTX_ADAPTER_OWNERSHIP_CONFLICT' });
+    assert.deepEqual(fs.readFileSync(disk), edited);
+    assert.deepEqual(fs.readFileSync(lockPath), beforeLock);
+    fs.writeFileSync(disk, original);
+    const record = JSON.parse(beforeLock).managedFiles[output];
+    assert.equal(record.exactSha256, computeExactHash(original));
+    assert.equal(record.semanticTextSha256, record.exactSha256, 'binary records must not use lossy UTF-8 hashing');
+    const note = rendered.artifacts.find(art => art.path.endsWith('/notes.txt'));
+    fs.writeFileSync(path.join(root, note.path), note.content.toString('utf8').replace(/\n/g, '\r\n'));
+    assert.equal(detectDrift(root, ['gemini', 'claude']).hasDrift, false, 'text CRLF remains semantic');
+    assert.equal(applyArtifacts(root, rendered.artifacts, { context: rendered.context }).skipped, true);
+    fs.writeFileSync(path.join(dir, 'data.bin'), Buffer.from('810042', 'hex'));
+    assert.ok(detectDrift(root, ['gemini', 'claude']).findings.STALE_INPUT.some(finding => finding.path === output));
+    const updated = renderAdapters(root, ['gemini', 'claude']);
+    applyArtifacts(root, updated.artifacts, { context: updated.context });
+    assert.deepEqual(fs.readFileSync(disk), Buffer.from('810042', 'hex'));
+    assert.equal(detectDrift(root, ['gemini', 'claude']).hasDrift, false);
+  }
+});
+
+it('F12 legacy binary ownership cannot authorize a lossy overwrite or prune', t => {
+  const { computeExactHash, computeSemanticHash } = require('../.agents/filesystem/index.js');
+  for (const operation of ['overwrite', 'prune', 'exact-upgrade']) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-binary-legacy-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const source = path.join(root, '.agents/project/skills/team');
+    fs.mkdirSync(source, { recursive: true });
+    fs.writeFileSync(path.join(source, 'SKILL.md'), '# Policy\n');
+    fs.writeFileSync(path.join(source, 'skill.yaml'), 'id: team\nresources: [data.bin]\n');
+    fs.writeFileSync(path.join(source, 'data.bin'), Buffer.from('810042', 'hex'));
+    const output = '.agents/generated/gemini/skills/team/data.bin';
+    const disk = path.join(root, output);
+    const original = Buffer.from('ff0041', 'hex');
+    const edited = operation === 'exact-upgrade' ? original : Buffer.from('fe0041', 'hex');
+    fs.mkdirSync(path.dirname(disk), { recursive: true });
+    fs.writeFileSync(disk, edited);
+    const legacyHash = operation === 'exact-upgrade' ? computeExactHash(original) : computeSemanticHash(original);
+    fs.writeFileSync(path.join(root, '.agents/contextos.lock.json'), JSON.stringify({ schemaVersion: 1, managedFiles: { [output]: { managed: true, sha256: legacyHash.slice(7) } } }));
+    if (operation === 'prune') fs.rmSync(source, { recursive: true });
+    const rendered = renderAdapters(root, 'gemini');
+    if (operation === 'exact-upgrade') {
+      applyArtifacts(root, rendered.artifacts, { context: rendered.context });
+      assert.deepEqual(fs.readFileSync(disk), Buffer.from('810042', 'hex'));
+    } else {
+      assert.throws(() => applyArtifacts(root, rendered.artifacts, { context: rendered.context }), { code: 'CTX_ADAPTER_OWNERSHIP_CONFLICT' }, operation);
+      assert.deepEqual(fs.readFileSync(disk), edited);
+    }
+  }
+});
+
 it('every adapter rejects invalid activation and a missing declared entrypoint before changing outputs', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-export-invalid-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

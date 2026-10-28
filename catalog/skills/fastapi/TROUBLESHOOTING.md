@@ -1,19 +1,3 @@
-# fastapi Troubleshooting & Common Mistakes
+# fastapi troubleshooting
 
-## 1. Pydantic v1 vs v2 Deprecations
-
-- **Symptom**: Warnings or crashes regarding @validator or .dict() methods.
-- **Root Cause**: FastAPI projects upgrading to Pydantic v2.
-- **Fix**: Use @field_validator instead of @validator, and .model_dump() instead of .dict().
-
-## 2. Database Session Leaks
-
-- **Symptom**: Database pool runs out of connections after a few requests.
-- **Root Cause**: Database sessions opened manually without proper try...finally or dependency injection.
-- **Fix**: Always provide database sessions via Depends(get_db) with a yield block.
-
-## 3. Unhandled Validation Errors Returning Inconsistent JSON
-
-- **Symptom**: Frontend receives raw 422 arrays without matching standard API error response envelope.
-- **Root Cause**: Missing custom RequestValidationError handler.
-- **Fix**: Register an app-level exception handler for RequestValidationError that normalizes error shapes.
+This supporting path is retained for existing links. Read the current [scope and failure guidance](SKILL.md#common-mistakes) and [scenarios](EXAMPLES.md) for this skill. Diagnose the actual version, input and caller before changing behavior; this file adds no separate mandatory workflow.

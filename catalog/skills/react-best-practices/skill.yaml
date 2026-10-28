@@ -2,7 +2,8 @@ schemaVersion: 2
 name: react-best-practices
 category: frontend
 type: instruction-only
-description: React and Next.js performance optimization guidelines from Vercel Engineering.
+description: Compatibility catalog name for react; use the canonical skill for
+  current guidance.
 version: 1.0.0
 deprecated: true
 canonical: react
@@ -11,3 +12,4 @@ requires:
 resources:
   - SKILL.md
   - VALIDATION.json
+id: react-best-practices

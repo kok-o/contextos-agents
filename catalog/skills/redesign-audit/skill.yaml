@@ -2,8 +2,19 @@ schemaVersion: 2
 name: redesign-audit
 category: design
 type: instruction-only
-description: Audits and upgrades existing web codebases with high-end typography, color, layout, and interaction polish.
+description: Assess and implement a requested redesign of an existing interface
+  while preserving its content and functional contracts.
 version: 1.0.0
 resources:
   - SKILL.md
   - VALIDATION.json
+id: redesign-audit
+optional:
+  - frontend-design
+  - ui-ux-pro
+  - webapp-testing
+requires: []
+activation: auto
+signals:
+  aliases:
+    - redesign-existing-projects

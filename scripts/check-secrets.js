@@ -16,29 +16,15 @@ const {
   BLOCKED_EXTENSIONS,
   SECRET_PATTERNS,
   redact,
+  isExempt,
+  syntheticFixtureException,
 } = require('../bin/lib/scan.js');
-
-// Exempt directories and files (test fixtures and validation suites)
-const EXEMPT_PATH_SUBSTRINGS = [
-  path.join('tests', ''),
-  path.join('contextos-mcp', 'tests', ''),
-  'node_modules',
-  path.join('.git', ''),
-  path.join('benchmarks', 'results', ''),
-  'check-secrets.js',
-  'secret-filter.ts',
-  'secret-filter.js',
-];
-
-function isExempt(filePath) {
-  const norm = path.normalize(filePath);
-  return EXEMPT_PATH_SUBSTRINGS.some(exempt => norm.includes(exempt));
-}
 
 function getFilesToScan(mode) {
   try {
     if (mode === '--staged') {
-      const output = execFileSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACM', '-z', '--no-ext-diff'], {
+      // Renames and type changes have new index blobs too; deletions do not.
+      const output = execFileSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACMRT', '-z', '--no-ext-diff'], {
         cwd: ROOT_DIR,
         encoding: 'utf8',
       });
@@ -62,7 +48,7 @@ function getFilesToScan(mode) {
 }
 
 
-function findLocalEnvFiles(dir = ROOT_DIR) {
+function findLocalEnvFiles(dir = ROOT_DIR, { coreOnly = false } = {}) {
   const envFiles = [];
   function walk(currentDir) {
     let entries;
@@ -76,6 +62,8 @@ function findLocalEnvFiles(dir = ROOT_DIR) {
         continue;
       }
       const fullPath = path.join(currentDir, entry.name);
+      const rel = path.relative(ROOT_DIR, fullPath).replace(/\\/g, '/');
+      if (coreOnly && (rel === 'contextos-mcp' || rel === '.agents/mcp')) continue;
       if (entry.isDirectory()) {
         walk(fullPath);
       } else if (entry.isFile()) {
@@ -90,7 +78,7 @@ function findLocalEnvFiles(dir = ROOT_DIR) {
   return envFiles;
 }
 
-function scanFile(relPath, { isLocalEnvOnly = false, snapshot } = {}) {
+function scanFile(relPath, { isLocalEnvOnly = false, snapshot, excluded = [] } = {}) {
   const fullPath = path.resolve(ROOT_DIR, relPath);
   if (!snapshot && !fs.existsSync(fullPath)) return [];
 
@@ -123,11 +111,13 @@ function scanFile(relPath, { isLocalEnvOnly = false, snapshot } = {}) {
 
   // Skip content checks for exempt paths
   if (isExempt(relPath)) {
+    excluded.push({ file: relPath, reason: 'Git/dependency internals' });
     return violations;
   }
 
   // Skip binary files or large files (> 2MB)
   if (stat.size > 2 * 1024 * 1024) {
+    excluded.push({ file: relPath, reason: 'Content exceeds 2MB limit' });
     return violations;
   }
 
@@ -141,9 +131,14 @@ function scanFile(relPath, { isLocalEnvOnly = false, snapshot } = {}) {
   const lines = content.split(/\r?\n/);
   for (let lineNum = 1; lineNum <= lines.length; lineNum++) {
     const line = lines[lineNum - 1];
-    for (const { name, pattern } of SECRET_PATTERNS) {
+    for (const { ruleId, name, pattern } of SECRET_PATTERNS) {
       const match = line.match(pattern);
       if (match) {
+        const exception = syntheticFixtureException(relPath, ruleId, line);
+        if (exception) {
+          excluded.push({ file: relPath, line: lineNum, ruleId, reason: exception.reason });
+          continue;
+        }
         violations.push({
           file: relPath,
           line: lineNum,
@@ -159,9 +154,17 @@ function scanFile(relPath, { isLocalEnvOnly = false, snapshot } = {}) {
 
 function main() {
   const mode = process.argv.includes('--staged') ? '--staged' : '--all';
-  const files = getFilesToScan(mode);
+  const coreOnly = process.argv.includes('--core-only');
+  const mcpOnly = process.argv.includes('--mcp-only');
+  if (coreOnly && mcpOnly) throw new Error('Select only one secret-scan scope');
+  if (mcpOnly && !fs.existsSync(path.join(ROOT_DIR, 'contextos-mcp/package.json'))) throw new Error('MCP package is unavailable for secret scanning');
+  const files = getFilesToScan(mode).filter(file => {
+    const normalized = file.replace(/\\/g, '/');
+    if (mcpOnly) return normalized.startsWith('contextos-mcp/');
+    return !coreOnly || !/^(?:contextos-mcp|\.agents\/mcp)\//.test(normalized);
+  });
 
-  const localEnvFiles = findLocalEnvFiles();
+  const localEnvFiles = findLocalEnvFiles(mcpOnly ? path.join(ROOT_DIR, 'contextos-mcp') : ROOT_DIR, { coreOnly });
   const knownSecrets = [];
   for (const file of localEnvFiles) {
     const values = parseEnv(fs.readFileSync(path.join(ROOT_DIR, file), 'utf8'));
@@ -173,16 +176,23 @@ function main() {
   // values against every exportable file, including normally exempt fixtures.
   const totalFilesCount = files.length;
   if (totalFilesCount === 0) {
+    if (coreOnly || mcpOnly) {
+      console.error('[check-secrets] Selected package scope has no files to scan.');
+      process.exit(2);
+    }
     console.log('[check-secrets] No files to scan.');
     process.exit(0);
   }
 
   console.log(`[check-secrets] Scanning ${totalFilesCount} file(s) for secrets and blocked credentials (${mode})...`);
+  if (coreOnly) console.log('[check-secrets] Core-only scope excludes contextos-mcp/ and .agents/mcp/.');
+  if (mcpOnly) console.log('[check-secrets] MCP-only scope includes contextos-mcp/ only.');
 
   const allViolations = [];
+  const excluded = [];
   for (const file of files) {
     const snapshot = mode === '--staged' ? getStagedBlob(file, ROOT_DIR) : undefined;
-    const v = scanFile(file, { snapshot });
+    const v = scanFile(file, { snapshot, excluded });
     if (v.length > 0) {
       allViolations.push(...v);
     }
@@ -192,6 +202,8 @@ function main() {
       allViolations.push({ file, type: 'Local credential copied into exportable file', details: 'Credential value redacted.' });
     }
   }
+
+  console.log(`[check-secrets] Content coverage exclusions: ${JSON.stringify(excluded)}`);
 
   if (allViolations.length > 0) {
     console.error('\n' + '='.repeat(70));

@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
-const { packRepository, extractArchive } = require('./helpers/pack.js');
+const { packRepository, extractArchive, runNpm } = require('./helpers/pack.js');
 
 describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => {
   let tmpBase;
@@ -81,6 +81,23 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
       ['context-manager', 'context-os', 'engineering-workflow', 'gemini-precision', 'gstack-roles', 'ponytail-mindset', 'security']
     );
     assert.ok(!fs.existsSync(path.join(coreAppDir, '.agents', 'ctx.js')), 'Tool code is still not copied');
+  });
+
+  test('installed AGENTS.md documents a working local consumer resolver command', () => {
+    const app = path.join(tmpBase, 'agents-command-consumer');
+    fs.mkdirSync(app, { recursive: true });
+    fs.writeFileSync(path.join(app, 'package.json'), JSON.stringify({ name: 'consumer-fixture', version: '1.0.0', private: true }));
+    const installed = runNpm(['install', '--ignore-scripts', '--no-audit', '--no-fund', '--save-dev', tarballPath], { cwd: app });
+    assert.equal(installed.status, 0, installed.stdout + installed.stderr);
+    const installedBin = path.join(app, 'node_modules/contextos-agents/bin/index.js');
+    require('node:child_process').execFileSync(process.execPath, [installedBin, 'init', '--with-core', '--skip-compile'], { cwd: app, encoding: 'utf8' });
+    const instructions = fs.readFileSync(path.join(app, '.agents/AGENTS.md'), 'utf8');
+    assert.match(instructions, /npx --no-install contextos resolve "task description" --files src\/example\.ts --json/);
+    assert.ok(!fs.existsSync(path.join(app, '.agents/ctx.js')));
+    // npm exec --no is the npm implementation of npx --no-install.
+    const resolved = runNpm(['exec', '--no', '--', 'contextos', 'resolve', 'task description', '--files', 'src/example.ts', '--json'], { cwd: app });
+    assert.equal(resolved.status, 0, resolved.stdout + resolved.stderr);
+    assert.ok(Array.isArray(JSON.parse(resolved.stdout).skills));
   });
 
   test('Task 3.1b: init --minimal installs only essential core skills', () => {
@@ -341,6 +358,10 @@ describe('Phase 3: Consumer CLI Init from Tarball (Tasks 3.1, 3.2, 3.3)', () => 
     assert.match(output, /Installing preset 'frontend' skills/);
     assert.ok(fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', 'react', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', 'typescript', 'SKILL.md')));
+    for (const id of ['frontend-design', 'vercel-react-best-practices', 'web-design-guidelines',
+      'animate', 'animation-performance', 'review-animations', 'pick-ui-library', 'webapp-testing']) {
+      assert.ok(fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', id, 'SKILL.md')), id);
+    }
     // Backend skills should not be installed
     assert.ok(!fs.existsSync(path.join(frontendAppDir, '.agents', 'plugins', 'fastapi')));
   });

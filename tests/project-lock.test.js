@@ -8,6 +8,7 @@ const assert = require('node:assert');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const { fork, spawnSync } = require('node:child_process');
 
 const {
   ProjectMutationLock,
@@ -110,6 +111,108 @@ describe('project-lock.js — Project-Wide Inter-Process Mutation Lock', () => {
     assert.strictEqual(inspected.pid, process.pid);
 
     lock.release(newToken);
+  });
+
+  it('a paused stale contender cannot unlink a live replacement acquired by another process', async () => {
+    const lock = new ProjectMutationLock(tmpRoot);
+    fs.mkdirSync(lock.lockDir, { recursive: true });
+    fs.writeFileSync(lock.lockPath, JSON.stringify({ token: 'dead-owner', pid: 99999999 }));
+    const childFile = path.join(tmpRoot, 'contender.cjs');
+    const gate = path.join(tmpRoot, 'proceed');
+    fs.writeFileSync(childFile, `
+      const fs = require('node:fs');
+      const { ProjectMutationLock } = require(${JSON.stringify(require.resolve('../.agents/filesystem/project-lock.js'))});
+      const lock = new ProjectMutationLock(${JSON.stringify(tmpRoot)});
+      const inspect = lock.inspect.bind(lock);
+      let first = true;
+      lock.inspect = () => {
+        const observed = inspect();
+        if (first) {
+          first = false;
+          process.send({ phase: 'observed-stale' });
+          const deadline = Date.now() + 10000;
+          while (!fs.existsSync(${JSON.stringify(gate)})) {
+            if (Date.now() > deadline) process.exit(74);
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+          }
+        }
+        return observed;
+      };
+      try { process.send({ phase: 'result', acquired: true, token: lock.acquire() }); }
+      catch (err) { process.send({ phase: 'result', acquired: false, code: err.code }); }
+      process.disconnect();
+    `);
+    const child = fork(childFile, { stdio: ['ignore', 'ignore', 'inherit', 'ipc'] });
+    let token;
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('stale contender timed out')), 15000);
+        child.on('error', error => { clearTimeout(timer); reject(error); });
+        child.on('message', message => {
+          if (message.phase === 'observed-stale') {
+            try {
+              token = lock.acquire({ command: 'replacement-writer' });
+              fs.writeFileSync(gate, 'go');
+            } catch (error) { clearTimeout(timer); reject(error); }
+          } else { clearTimeout(timer); resolve(message); }
+        });
+        child.on('exit', code => { if (code) { clearTimeout(timer); reject(new Error(`child exit ${code}`)); } });
+      });
+      assert.equal(result.acquired, false);
+      assert.equal(result.code, LOCK_ERRORS.BUSY);
+      assert.equal(lock.inspect().token, token, 'the live replacement must remain owned');
+      lock.release(token);
+    } finally {
+      child.kill();
+    }
+  });
+
+  it('a real crashed holder can be reaped without leaving an active recovery claim', () => {
+    const modulePath = require.resolve('../.agents/filesystem/project-lock.js');
+    const crashed = spawnSync(process.execPath, ['-e', `
+      const { ProjectMutationLock } = require(${JSON.stringify(modulePath)});
+      new ProjectMutationLock(${JSON.stringify(tmpRoot)}).acquire({ command: 'crashed-writer' });
+    `], { encoding: 'utf8' });
+    assert.equal(crashed.status, 0, crashed.stderr);
+    const lock = new ProjectMutationLock(tmpRoot);
+    const token = lock.acquire({ command: 'replacement' });
+    assert.deepEqual(fs.readdirSync(lock.lockDir), ['mutation.lock']);
+    lock.release(token);
+  });
+
+  it('a crash while claiming recovery fails closed until explicit administrative recovery', () => {
+    const lock = new ProjectMutationLock(tmpRoot);
+    fs.mkdirSync(lock.lockDir, { recursive: true });
+    fs.writeFileSync(lock.lockPath, JSON.stringify({ token: 'dead-before-claim', pid: 99999999 }));
+    const crashed = spawnSync(process.execPath, ['-e', `
+      const fs = require('node:fs');
+      const { ProjectMutationLock } = require(${JSON.stringify(require.resolve('../.agents/filesystem/project-lock.js'))});
+      const write = fs.writeFileSync;
+      fs.writeFileSync = (file, ...args) => {
+        const result = write(file, ...args);
+        if (String(file).includes('.reap-')) process.exit(73);
+        return result;
+      };
+      new ProjectMutationLock(${JSON.stringify(tmpRoot)}).acquire();
+    `], { encoding: 'utf8' });
+    assert.equal(crashed.status, 73, crashed.stderr);
+    assert.throws(() => lock.acquire(), error => error.code === LOCK_ERRORS.BUSY && Boolean(error.details.recoveryClaim));
+    assert.equal(lock.inspect().token, 'dead-before-claim');
+    lock.forceUnlock('Explicit recovery of crashed lock claimant');
+    const token = lock.acquire();
+    assert.deepEqual(fs.readdirSync(lock.lockDir), ['mutation.lock']);
+    lock.release(token);
+  });
+
+  it('does not auto-reap a foreign-host lock or a malformed owner identity', () => {
+    const lock = new ProjectMutationLock(tmpRoot);
+    fs.mkdirSync(lock.lockDir, { recursive: true });
+    for (const payload of [{ token: 'foreign', pid: 99999999, hostname: `${os.hostname()}-different` },
+      { token: 'invalid', pid: 'not-a-pid' }, { pid: 99999999 }]) {
+      fs.writeFileSync(lock.lockPath, JSON.stringify(payload));
+      assert.throws(() => lock.acquire(), error => error.code === LOCK_ERRORS.BUSY);
+      assert.deepEqual(lock.inspect(), payload);
+    }
   });
 
   it('supports forceUnlock administrative command', () => {

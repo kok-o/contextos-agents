@@ -1,14 +1,25 @@
 schemaVersion: 2
 id: nestjs
-name: NestJS
+name: nestjs
 category: backend
 type: instruction-only
-requires: [typescript, node]
-optional: [postgres, redis, docker, graphql]
-conflicts: [fastapi, express]
+requires: []
+optional:
+  - postgres
+  - redis
+  - docker
+  - graphql
+  - typescript
+  - node
+  - security
+conflicts:
+  - fastapi
+  - express
 weight: 8
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Implement and review NestJS modules, dependency injection, request
+  boundaries and service lifecycle behavior.

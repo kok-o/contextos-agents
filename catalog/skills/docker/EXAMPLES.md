@@ -1,56 +1,13 @@
-# Docker Examples - Anti-patterns vs ContextOS Standard
+# docker scenarios
 
-## Example 1: Multi-Stage Build & Layer Caching
+## In scope
 
-### Anti-pattern: Anti-pattern (Fat single-stage image running as root)
+For a Node service, install its real locked dependencies in a build stage, copy the required runtime output, and check startup, certificates and SIGTERM behavior under the selected user. Do not remove a runtime dependency solely to reduce image size.
 
-```dockerfile
-# BAD: 1.2GB image, runs as root, breaks caching on every file edit
-FROM node:latest
-WORKDIR /app
-COPY . .
-RUN npm install
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+## Verification
 
-### Best practice: ContextOS Standard (Slim multi-stage build with non-root user)
+Build and run the intended architecture and startup path when available.
 
-```dockerfile
-# GOOD: 95MB image, non-root user, optimized layer caching
-FROM node:20.12.2-alpine3.19 AS builder
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npm run build && npm prune --production
+Check user permissions, mounted data, secret handling and shutdown behavior.
 
-FROM node:20.12.2-alpine3.19 AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-RUN addgroup -S -g 1001 appgroup && adduser -S -u 1001 appuser -G appgroup
-COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
-COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
-USER appuser
-CMD ["node", "dist/main.js"]
-```
-
----
-
-## Example 2: Docker Ignore File (`.dockerignore`)
-
-### Best practice: ContextOS Standard `.dockerignore`
-
-```gitignore
-node_modules
-npm-debug.log
-.git
-.gitignore
-.env
-.env.*
-dist
-coverage
-.DS_Store
-*.md
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

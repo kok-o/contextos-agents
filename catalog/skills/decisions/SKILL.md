@@ -1,90 +1,44 @@
 ---
-name: decision-engine
-description: >
-  Architecture Decision Records (ADR) management. Creates, tracks, and queries
-  decisions so the AI agent understands WHY choices were made, not just WHAT was chosen.
+name: decisions
+description: Record or update significant engineering decisions with context,
+  alternatives, consequences and evidence.
 ---
 
-# decision-engine
+# decisions
 
 ## Overview
 
-Architecture Decision Record (ADR) system following Michael Nygard format. Captures context, options considered, tradeoffs, and consequences to prevent architectural regression and knowledge loss across AI sessions.
+Record or update significant engineering decisions with context, alternatives, consequences and evidence. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate when choosing or switching database engines, authentication strategies, state libraries, or significant architectural patterns.
+A consequential choice needs a durable rationale, or an existing decision must be reconciled with new evidence. Small routine edits need no ADR ceremony.
 
 ## Rules & Patterns
 
-You manage **Architecture Decision Records** (ADRs).
+Inspect existing decisions and their ownership. Record the problem, constraints, considered options, chosen outcome and consequences at the depth needed for future readers.
 
-## Why Decisions Matter
+Separate a proposed decision from one actually accepted or implemented. Cite observed constraints and measurements; do not invent agreement, performance results, cost savings or zero-risk outcomes.
 
-Without ADRs, the AI agent sees:
+Preserve historical records. When circumstances change, explain whether a decision is amended or superseded rather than silently rewriting its original rationale.
 
-- "Database: PostgreSQL" - but doesn't know WHY
-- "Auth: JWT" - but doesn't know what alternatives were considered
-- "Framework: Next.js" - but doesn't know the tradeoffs
-
-With ADRs, the agent understands the reasoning and won't accidentally contradict prior decisions.
-
-## Commands
-
-### Create a Decision
-
-When an architectural choice is made during any pipeline stage:
-
-1. Auto-increment the decision number
-2. Use the template from `generators/templates/DECISION.md`
-3. Save to `docs/decisions/NNNN-decision-name.md`
-4. Update the Project Graph if the decision affects modules
-
-**Naming convention:** `docs/decisions/0001-use-postgresql.md`
-
-### Query Decisions
-
-Before making changes that touch architecture:
-
-1. Check `docs/decisions/` for related decisions
-2. If a decision exists, follow it
-3. If a decision needs to change, create a new ADR that **supersedes** the old one
-
-### Decision Lifecycle
-
-```
-proposed → accepted → [deprecated | superseded]
-```
-
-- **proposed**: Under discussion, not yet committed
-- **accepted**: The team agreed, this is the standard
-- **deprecated**: No longer relevant (project evolved)
-- **superseded**: Replaced by a newer decision (link to it)
-
-## Auto-Detection
-
-The Decision Engine should suggest creating an ADR when it detects:
-
-- A new database/ORM is introduced
-- A new framework is added
-- Authentication strategy changes
-- API versioning approach is chosen
-- Deployment strategy is decided
-- A significant library is added (state management, testing framework, etc.)
-
+Use the repository's naming and format. An ADR documents a choice; it does not authorize deploying it or creating a new architecture outside the task.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+A shared session store decision can compare the current deployment, consistency and failure requirements. Record added operational cost and invalidation concerns instead of promising zero session loss or unmeasured latency.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Check links, status and consistency with the actual implementation.
+- [ ] Mark open assumptions, ownership and any required future measurement.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Writing an ADR for every edit; inventing stakeholder approval; replacing a historical decision without a supersession trail.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: system-design, engineering-workflow. Use it only when relevant and available; the skill does not install tools or authorize external actions.

@@ -2,9 +2,19 @@ schemaVersion: 2
 name: brutalist-design
 category: design
 type: instruction-only
-description: Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics.
+description: Apply an explicitly requested brutalist or industrial visual
+  direction while preserving readability and interaction quality.
 version: 1.0.0
 resources:
   - EXAMPLES.md
   - SKILL.md
   - VALIDATION.json
+id: brutalist-design
+optional:
+  - frontend-design
+  - web-design-guidelines
+requires: []
+activation: auto
+signals:
+  aliases:
+    - industrial-brutalist-ui

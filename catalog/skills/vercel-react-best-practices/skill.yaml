@@ -1,0 +1,33 @@
+schemaVersion: 2
+id: vercel-react-best-practices
+name: vercel-react-best-practices
+version: 1.0.0
+description: Implement and review React or Next.js performance improvements in
+  data fetching, bundles, rendering and client boundaries.
+category: frontend
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: React performance
+      locale: en
+      weight: 40
+    - value: Next.js performance
+      locale: en
+      weight: 40
+    - value: bundle size
+      locale: en
+      weight: 40
+    - value: network waterfall
+      locale: en
+      weight: 40
+    - value: оптимизация React
+      locale: ru
+      weight: 40
+    - value: производительность React
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json
+  - references/performance.md

@@ -1,14 +1,19 @@
 schemaVersion: 2
 name: api-design
-description: Contract-first API and interface design standard inspired by Addy Osmani. Enforces Hyrum's Law awareness, uniform error shapes, boundary validation, and idempotency keys.
+description: Design or review API contracts, compatibility, validation, errors,
+  pagination and retry-safe operations.
 version: 1.0.0
 category: backend
 type: instruction-only
-requires:
-  - engineering-workflow
-  - system-design
+requires: []
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: api-design
+optional:
+  - engineering-workflow
+  - system-design
+  - security
+  - testing

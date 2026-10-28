@@ -2,14 +2,17 @@ schemaVersion: 2
 name: impeccable-design
 category: design
 type: instruction-only
-description: >
-  Visual design quality skill based on pbakaus/impeccable.
-  46 deterministic anti-pattern rules that prevent AI design slop.
-  Bans overused fonts, pure black/gray, nested cards, bounce animations,
-  and all generic AI-generated design clichés.
+description: Review visual interface quality against the brief, including
+  hierarchy, alignment, density, typography and state consistency.
 version: 1.0.0
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: impeccable-design
+optional:
+  - frontend-design
+  - web-design-guidelines
+requires: []
+activation: auto

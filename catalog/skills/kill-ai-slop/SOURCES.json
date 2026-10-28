@@ -1,0 +1,13 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten as self-contained instruction-only guidance. Preserves user intent, language and supported claims; no universal style bans, authorship detection, runtime installation, or upstream executable scanner. Examples are ContextOS-authored.",
+  "license": "Apache-2.0",
+  "upstream": [
+    {
+      "url": "https://github.com/yetone/kill-ai-slop/blob/f6e2ae32b30443ec7bd0da4da971ee18d8f8ffcb/skill/SKILL.md",
+      "gitCommitSha": "f6e2ae32b30443ec7bd0da4da971ee18d8f8ffcb",
+      "licenseUrl": "https://github.com/yetone/kill-ai-slop/blob/f6e2ae32b30443ec7bd0da4da971ee18d8f8ffcb/LICENSE"
+    }
+  ]
+}

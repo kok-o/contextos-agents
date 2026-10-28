@@ -1,0 +1,29 @@
+schemaVersion: 2
+id: review-animations
+name: review-animations
+version: 1.0.0
+description: Review existing web motion for purpose, timing, continuity,
+  interruption, accessibility and performance evidence.
+category: ui
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: review animations
+      locale: en
+      weight: 40
+    - value: motion review
+      locale: en
+      weight: 40
+    - value: review motion
+      locale: en
+      weight: 40
+    - value: проверь анимации
+      locale: ru
+      weight: 40
+    - value: ревью анимаций
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json

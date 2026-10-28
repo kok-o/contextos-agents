@@ -1,13 +1,17 @@
 schemaVersion: 2
 name: docker
-description: Docker containerization, multi-stage builds, non-root security, layer caching optimization, and docker-compose standards.
+description: Build and diagnose container images and local container workflows
+  with appropriate caching, runtime permissions and secret handling.
 version: 1.0.0
 category: devops
 type: instruction-only
-requires:
-  - security
+requires: []
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: docker
+optional:
+  - security
+  - ci-cd

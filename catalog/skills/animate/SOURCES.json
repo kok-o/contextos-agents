@@ -1,0 +1,12 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten for ContextOS: user choices, existing tools, interruption, accessibility and conditional performance claims.",
+  "license": "MIT",
+  "upstream": [
+    {
+      "url": "https://github.com/emilkowalski/skills/blob/main/skills/animate/SKILL.md",
+      "gitBlobSha": "7c3b20c6ed681b2d47c9ca9e3ee0e659ed47d032"
+    }
+  ]
+}

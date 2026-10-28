@@ -1,40 +1,13 @@
-# nextjs Examples - Anti-patterns vs ContextOS Standard
+# nextjs scenarios
 
-## Example 1: Server Components vs Client Components
+## In scope
 
-### Anti-pattern: Marking the Entire Page as Client Component
+A public catalog may support shared caching with explicit invalidation; an account page needs its own identity and authorization policy. Verify the actual installed API instead of copying a route configuration from a different version.
 
-```tsx
-// BAD: app/dashboard/page.tsx with 'use client' at top
-// Bloats client bundle, loses SEO benefits, eliminates direct DB access
-'use client';
+## Verification
 
-export default function DashboardPage() {
-  const [data, setData] = useState(null);
-  useEffect(() => { fetch('/api/dashboard').then(...) }, []);
-  return <div>...</div>;
-}
-```
+Build the application and test the affected route, loading and error states.
 
-### Best practice: ContextOS Standard (RSC by Default, Client Leaf Nodes)
+Verify server/client isolation, authorization and cache invalidation.
 
-```tsx
-// GOOD: Server Component fetches data directly with zero bundle cost
-// app/dashboard/page.tsx (Server Component)
-import { Suspense } from 'react';
-import { db } from '@/lib/db';
-import { InteractiveChart } from './InteractiveChart'; // 'use client' leaf component
-
-export default async function DashboardPage() {
-  const stats = await db.analytics.getStats();
-  return (
-    <main>
-      <h1>Dashboard</h1>
-      <p>Total Revenue: {stats.revenue}</p>
-      <Suspense fallback={<ChartSkeleton />}>
-        <InteractiveChart initialData={stats.chartData} />
-      </Suspense>
-    </main>
-  );
-}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

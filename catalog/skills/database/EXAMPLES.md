@@ -1,74 +1,13 @@
-# Database Examples - Anti-patterns vs ContextOS Standard
+# database scenarios
 
-## Example 1: Solving the N+1 Query Problem
+## In scope
 
-### Anti-pattern: Anti-pattern (N+1 database queries in a loop)
+For a slow tenant-scoped list, preserve the tenant predicate, inspect the query plan and candidate composite index, then compare the same query/data before and after. A migration adding the index must account for the engine's build and locking behavior.
 
-```typescript
-// BAD: 1 query for users + N queries for posts!
-const users = await prisma.user.findMany();
-const usersWithPosts = [];
-for (const user of users) {
-  const posts = await prisma.post.findMany({ where: { userId: user.id } }); // N queries!
-  usersWithPosts.push({ ...user, posts });
-}
-```
+## Verification
 
-### Best practice: ContextOS Standard (Batch query or relational include)
+Verify authorization, empty results, concurrency and rollback/recovery cases relevant to the change.
 
-```typescript
-// GOOD: 1 single optimized batch query
-const usersWithPosts = await prisma.user.findMany({
-  where: { isActive: true },
-  select: {
-    id: true,
-    name: true,
-    email: true,
-    posts: {
-      where: { published: true },
-      select: { id: true, title: true, createdAt: true },
-      take: 5
-    }
-  }
-});
-```
+Measure query/locking behavior where performance is claimed; report untested production conditions.
 
----
-
-## Example 2: Safe Atomic Transactions with Locking
-
-### Anti-pattern: Anti-pattern (Unprotected read-modify-write race condition)
-
-```typescript
-// BAD: race condition between reading balance and updating
-const account = await prisma.account.findUnique({ where: { id } });
-if (account.balance >= amount) {
-  await prisma.account.update({
-    where: { id },
-    data: { balance: account.balance - amount }
-  });
-}
-```
-
-### Best practice: ContextOS Standard (Atomic conditional update in transaction)
-
-```typescript
-// GOOD: atomic database transaction with invariant check
-export async function deductBalance(accountId: string, amount: number) {
-  return await prisma.$transaction(async (tx) => {
-    const updated = await tx.account.updateMany({
-      where: {
-        id: accountId,
-        balance: { gte: amount }
-      },
-      data: {
-        balance: { decrement: amount }
-      }
-    });
-
-    if (updated.count === 0) {
-      throw new InsufficientFundsError(accountId);
-    }
-  });
-}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

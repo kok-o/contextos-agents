@@ -817,10 +817,11 @@ function applyDoctorFix(projectDir = process.cwd(), options = {}) {
     const lock = new ProjectMutationLock(projectDir);
     const payload = lock.inspect();
     if (payload && !isPidAlive(payload.pid)) {
-      if (fs.existsSync(lock.lockPath)) {
-        fs.unlinkSync(lock.lockPath);
-        results.push(`✓ Pruned stale project mutation lock (PID ${payload.pid})`);
-      }
+      // Share the token-bound recovery protocol with every mutation command;
+      // an earlier stale observation must not unlink a new live owner's lock.
+      const token = lock.acquire({ command: 'doctor:fix-stale-lock' });
+      lock.release(token);
+      results.push(`✓ Pruned stale project mutation lock (PID ${payload.pid})`);
     }
   } catch {}
 

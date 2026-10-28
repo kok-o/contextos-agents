@@ -58,7 +58,7 @@ Cursor, Copilot, Aider and Zed; track the separate client tasks
 protocol. Run it before relying on any client.
 
 Example verification currently covers all seven core skills and four of the
-36 catalog skills; the other 32 have structural validation only. See the
+44 catalog skills; the other 40 are outside that executable-example runner. See the
 [verification scope](product/catalog-quality.md). Choose further behavioral
 checks from the skills teams actually use and the failures they report.
 

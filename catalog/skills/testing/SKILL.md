@@ -1,70 +1,46 @@
 ---
 name: testing
-description: Vitest, React Testing Library, and Playwright testing standards. Enforces TDD/BDD, test pyramid, zero brittle mocks, and complete assertion coverage.
+description: Choose and implement proportionate tests for observable behavior,
+  important failures and integration boundaries.
 ---
 
-# Testing
+# testing
 
 ## Overview
 
-Testing strategy across unit, component, integration, and end-to-end testing suites using Vitest, React Testing Library, and Playwright.
+Choose and implement proportionate tests for observable behavior, important failures and integration boundaries. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate for any task involving unit tests, integration tests, E2E testing, TDD/BDD workflows, or fixing regression bugs.
+The task adds tests, fixes a regression or needs verification evidence. Reuse the project's language and runner rather than forcing a JavaScript testing stack.
 
 ## Rules & Patterns
 
-### ️ The ContextOS Testing Pyramid
+Identify the behavior that can fail and the cheapest reliable layer that observes it. Select unit, contract, integration or browser checks according to risk; no fixed percentage pyramid or whole-suite time limit applies to every project.
 
-```
-      /\
-     /E2E\       10% - Playwright (Critical user journeys, auth, checkout)
-    /-----\
-   / Integ \     20% - API & Component Integration (RTL + MSW / Supertest)
-  /---------\
- /   Unit    \   70% - Pure functions, Domain Entities, Utils (Vitest)
-/-------------\
-```
+Prefer assertions on behavior and relevant failures. Avoid tests that merely repeat an implementation, count instruction phrases or replace the behavior under test with a stub.
 
-### Negative Constraints (What NOT to Do)
+Use real small components where practical. Mock a boundary when isolation or unavailable infrastructure warrants it, and state what that mock does not verify. Dependency injection and controllable clocks can make nondeterministic cases testable.
 
-1. **NEVER mock internal implementation details**: Mock ONLY external I/O boundaries (HTTP network requests via MSW, Database via test containers or in-memory DB).
-2. **NEVER test implementation details**: In React Testing Library, query by user-facing roles (`getByRole`, `getByLabelText`), NEVER by CSS selectors or internal component state.
-3. **NEVER write assertions without an expected failure mode**: Each test must test a single logical behavior and fail if that behavior breaks.
-4. **NEVER leave flaky tests or arbitrary sleep (`await delay(1000)`)**: Always use `waitFor()` or explicit event triggers with timeouts.
-5. **NEVER share mutable state between tests**: Every test must have isolated state via `beforeEach()` setup and clean reset.
+Keep state isolated and readiness explicit. Use supported retrying assertions or events instead of arbitrary sleeps. Choose user-facing locators where suitable; a stable test ID or scoped selector can be appropriate when semantics do not uniquely identify the target.
 
-### AAA Standard Pattern
-
-```typescript
-describe('Feature / Unit', () => {
-  it('should achieve expected outcome when given specific condition', async () => {
-    // 1. ARRANGE
-    const user = createTestUser({ role: 'admin' });
-    // 2. ACT
-    const result = await processOrder(user, sampleCart);
-    // 3. ASSERT
-    expect(result.status).toBe('confirmed');
-  });
-});
-```
+Run the relevant checks and report failures, skips and environment limits. Coverage describes executed code, not proof of correctness; TDD is an available technique rather than mandatory ceremony for every change.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed anti-patterns and production testing code.
+For an authorization fix, verify an allowed caller and a denied caller through the real boundary. For a pure calculation, use focused cases rather than installing a browser runner. A mock API test does not establish real persistence.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-- [ ] Tests follow Arrange-Act-Assert (AAA) structure
-- [ ] No brittle CSS selectors or private state inspections
-- [ ] Mocks isolated strictly to network/IO boundaries (MSW)
-- [ ] Fast execution (< 5s for unit suite) with zero flaky sleeps
+- [ ] Confirm that the test fails for the targeted broken behavior when feasible.
+- [ ] Distinguish unit, integration, simulated and real-browser evidence.
 
 ## Common Mistakes
 
-- Over-mocking modules instead of running real pure logic. See `TROUBLESHOOTING.md`.
+Implementation-mirroring tests; arbitrary coverage goals; substituting a mock for the claimed integration; omitting a meaningful failure case.
 
 ## Integration Notes
 
-Interacts directly with `engineering-workflow` (Verify phase), `react`, and `typescript`.
+Optional companion guidance: engineering-workflow, webapp-testing. Use it only when relevant and available; the skill does not install tools or authorize external actions.

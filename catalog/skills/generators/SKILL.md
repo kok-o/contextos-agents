@@ -1,110 +1,44 @@
 ---
-name: document-generator
-description: >
-  Generates project documentation from a single idea. Creates PRD, Architecture,
-  Database, API, UI, Roadmap, Tasks, Decision Records, and Project Graph
-  using templates. Supports incremental updates.
+name: generators
+description: Draft or update requested project documents using relevant
+  templates and verified project facts.
 ---
 
-# document-generator
+# generators
 
 ## Overview
 
-Automated technical documentation generator. Transforms initial project ideas and specs into comprehensive PRDs, architecture schemas, API contracts, database ERDs, and roadmap task breakdowns.
+Draft or update requested project documents using relevant templates and verified project facts. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate during project kickoff (ctx init), new service scaffolding, or when generating baseline technical specs from high-level user requirements.
+The user requests a specification, architecture note, API document, plan or related project documentation. Loading this skill does not request an entire document suite.
 
 ## Rules & Patterns
 
-You generate project documentation from a user's idea. Use the templates in `templates/` as the structure for each document.
+Inspect existing documentation, the requested audience and the current implementation. Generate only documents that serve the task; preserve established filenames and ownership.
 
-## Workflows & CLI Commands
+Treat templates as optional structure. Replace placeholders with supported facts, or explicitly label an open question. Do not invent requirements, deployed services, completed tasks, estimates or stakeholder approval.
 
-### Project Initialization (`contextos init`)
+Separate current behavior, proposed work and acceptance evidence. A plan is not an implementation and a diagram is not runtime verification. Keep links and cross-document terminology consistent.
 
-Full project initialization. From one user prompt, generate foundational documentation:
-
-1. Ask clarifying questions (see context-os SKILL.md)
-2. Select profile and skill pack
-3. Generate documents in this order:
-   - `docs/PRD.md` - Product Requirements (from template)
-   - `docs/ARCHITECTURE.md` - System Architecture
-   - `docs/DATABASE.md` - Database Schema
-   - `docs/API.md` - API Specification (optional, when backend API layer is present)
-   - `docs/UI.md` - UI/UX Specification (optional, when UI layer is present)
-   - `docs/ROADMAP.md` - Development Roadmap
-   - `docs/TASKS.md` - Task Breakdown
-   - `docs/PROJECT_GRAPH.md` - Project Graph
-4. Create `docs/decisions/` directory for future ADRs
-5. Generate agent configuration via Adapters skill (`contextos export all`)
-
-### Incremental Updates
-
-When project requirements or schemas change:
-
-1. Identify which documents are affected
-2. Update only affected documents
-3. Show diff of changes to user
-4. Update Project Graph if structure changed
-
-### Task Breakdown & Planning (`contextos resolve` & `/plan`)
-
-Generate vertical development tasks from existing PRD and architecture:
-
-1. Read `docs/PRD.md` and `docs/ARCHITECTURE.md`
-2. Run `contextos resolve "<task description>"` to resolve minimal required skills
-3. Break modules into vertical features and tasks (< 2 hours each)
-4. Estimate complexity (S/M/L/XL)
-5. Output to `docs/TASKS.md` or task implementation plan
-
-## Template Usage
-
-Each template contains:
-
-- **Section headers** - required sections for the document
-- **Placeholder prompts** - `{{description}}` markers that guide content generation
-- **Examples** - sample content to illustrate the expected format
-- **Validation rules** - what must be present for the document to be valid
-
-When generating a document:
-
-1. Read the template
-2. Fill in each section based on the user's idea and clarifying answers
-3. Replace all `{{placeholders}}` with real content
-4. Remove the template comments (lines starting with `<!-- -->`)
-5. Validate: ensure all required sections are present
-
-## Document Dependencies
-
-```
-PRD.md
-  ├── ARCHITECTURE.md
-  │     ├── DATABASE.md
-  │     ├── API.md
-  │     └── DEPLOYMENT.md
-  ├── UI.md
-  ├── ROADMAP.md
-  │     └── TASKS.md
-  └── PROJECT_GRAPH.md
-```
-
-When updating a parent document, check if child documents need updates too.
-
+Ask only for missing decisions that materially affect the document. Continue useful work from available sources rather than forcing an interview or generating ten boilerplate files first.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+For a request to document an existing API, inspect routes and schemas and write the API reference. Reuse templates/API.md if useful; do not create a PRD, database migration and roadmap unless the task needs them.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Check links, source facts, unresolved placeholders and current/proposed status.
+- [ ] Verify generated structure with the project's existing documentation tooling.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Generating every template by default; presenting guesses as shipped behavior; marking placeholder tasks completed.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: decisions, architecture-diagrams. Use it only when relevant and available; the skill does not install tools or authorize external actions.

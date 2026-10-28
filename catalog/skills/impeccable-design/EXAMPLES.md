@@ -1,26 +1,13 @@
-# impeccable-design Examples - Anti-patterns vs ContextOS Standard
+# impeccable-design scenarios
 
-## Example 1: Dark Mode Surfaces & Elevation
+## In scope
 
-### Anti-pattern: Pure Black with Flat Cards
+If every card has equal visual weight and users cannot distinguish the primary action, adjust hierarchy using the existing design system. Do not replace the font or all native controls merely to satisfy a preferred premium aesthetic.
 
-```css
-/* BAD: Pure #000000 background with harsh pure white borders and flat cards */
-body { background-color: #000000; color: #ffffff; }
-.card { background-color: #111111; border: 1px solid #ffffff; }
-```
+## Verification
 
-### Best practice: ContextOS Standard (Atmospheric Depth & Tinted Surfaces)
+Compare relevant viewport/state captures to the brief.
 
-```css
-/* GOOD: Tinted dark background with layered elevation surfaces and subtle border */
-body {
-  background-color: #0B0D13; /* Tinted with subtle deep blue */
-  color: #E2E8F0;
-}
-.surface-1 {
-  background-color: #111522;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-}
-```
+Verify that polish preserves navigation, content and component behavior.
+
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

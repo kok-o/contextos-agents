@@ -1,0 +1,39 @@
+schemaVersion: 2
+id: humanizer
+name: humanizer
+version: 1.0.0
+description: Edit formulaic or AI-sounding prose while preserving facts,
+  meaning, language and the writer's voice.
+category: general
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: humanizer
+      locale: en
+      weight: 50
+    - value: humanize text
+      locale: en
+      weight: 50
+    - value: AI-sounding prose
+      locale: en
+      weight: 50
+    - value: remove AI wording
+      locale: en
+      weight: 50
+    - value: гуманизируй текст
+      locale: ru
+      weight: 50
+    - value: убери ии из текста
+      locale: ru
+      weight: 50
+    - value: убери шаблонность текста
+      locale: ru
+      weight: 50
+    - value: очеловечь текст
+      locale: ru
+      weight: 50
+resources:
+  - LICENSE.txt
+  - SOURCES.json
+  - references/examples.md

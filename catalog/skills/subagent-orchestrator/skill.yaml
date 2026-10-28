@@ -2,8 +2,13 @@ schemaVersion: 2
 name: subagent-orchestrator
 category: engineering
 type: runtime
-description: Subagent delegation and parallel coordination skill. Implements task decomposition, context hand-offs, blast-radius boundary isolation, and conflict-free merge synthesis.
+description: Coordinate authorized delegated work with clear scope, context,
+  ownership and integration checks when suitable tools are available.
 version: 1.0.0
 resources:
   - SKILL.md
   - VALIDATION.json
+id: subagent-orchestrator
+optional:
+  - engineering-workflow
+requires: []

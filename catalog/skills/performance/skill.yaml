@@ -1,10 +1,15 @@
 schemaVersion: 2
 id: performance
-name: Web Performance
+name: performance
 category: frontend
 type: instruction-only
 requires: []
-optional: [react, nextjs]
+optional:
+  - react
+  - nextjs
+  - vercel-react-best-practices
+  - animation-performance
+  - webapp-testing
 conflicts: []
 weight: 6
 resources:
@@ -12,3 +17,8 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Investigate web performance with representative measurements and
+  targeted changes to loading, rendering, assets and work scheduling.
+signals:
+  aliases:
+    - web-performance

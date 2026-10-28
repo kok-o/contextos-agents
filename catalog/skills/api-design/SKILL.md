@@ -1,63 +1,44 @@
 ---
 name: api-design
-description: Guides stable API and interface design. Enforces Hyrum's Law awareness, contract-first development, uniform error shapes, boundary validation, and idempotency patterns.
+description: Design or review API contracts, compatibility, validation, errors,
+  pagination and retry-safe operations.
 ---
 
-# API and Interface Design
+# api-design
 
-Design stable, self-documenting, and robust interfaces that are hard to misuse. Good interfaces make the right thing easy and the wrong thing difficult. This applies to REST APIs, GraphQL schemas, RPC services, and internal module contracts.
+## Overview
 
-## Core Principles
+Design or review API contracts, compatibility, validation, errors, pagination and retry-safe operations. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
-### 1. Hyrum's Law Awareness
+## When to Use
 
-> With a sufficient number of users of an API, all observable behaviors of your system will be depended on by somebody, regardless of what you promise in the contract.
+An API or interface contract is being introduced, changed or reviewed. A small endpoint fix does not require redesigning the whole service.
 
-Design implications:
-- **Never leak internal implementation details**: Database column names, raw ORM errors, stack traces, and internal IDs must never escape to clients.
-- **Lock down response shapes**: Undocumented extra fields or varying JSON key ordering become accidental dependencies.
-- **Design for evolution**: Additive changes are safe; removing, renaming, or changing types of fields requires a deprecation window.
+## Rules & Patterns
 
-### 2. Contract-First Development
+Inspect actual consumers, existing conventions, authentication and versioning before changing a contract. Preserve compatible behavior or describe the deliberate migration required by the task. REST, RPC, events and framework-native actions are choices tied to consumers.
 
-Define the interface and data types before implementing handlers or controllers:
-1. Specify TypeScript interfaces, JSON Schemas, or OpenAPI documents.
-2. Review the contract independently of database models.
-3. Generate server stubs and client SDK types from the unified contract.
+Define accepted input, output, ownership and failure cases. Validate untrusted fields at the boundary and authorize the requested object before protected reads or writes. Do not confuse a valid schema with permission. Use the project's established error envelope without exposing secrets or internal stack traces.
 
-### 3. Uniform Error Semantics
+Choose pagination and ordering that remain stable for the data and workload. Bound expensive requests. For retried mutations, define key scope, request identity, concurrency, persistence and replay behavior where duplicate effects matter; a check-then-write in memory is not a concurrency-safe idempotency design.
 
-All API error responses must adhere to a single predictable schema across the entire application:
+Keep public names and identifiers useful to clients; internal implementation details are exposed only when intentionally part of the contract. Do not change HTTP status codes, field names or error semantics just to match a preferred style.
 
-```typescript
-interface APIErrorResponse {
-  error: {
-    code: string;        // Machine-readable uppercase token (e.g., "VALIDATION_FAILED")
-    message: string;     // Clear, user-safe human-readable description
-    details?: unknown;   // Specific field errors or structured context
-  };
-}
-```
+## Code Examples
 
-Standard HTTP status mappings:
-- `400 Bad Request`: Malformed syntax or unparseable request body.
-- `401 Unauthorized`: Authentication credentials missing or invalid.
-- `403 Forbidden`: Authenticated, but lacks required permissions.
-- `404 Not Found`: Target resource does not exist.
-- `409 Conflict`: Resource state conflict (e.g., duplicate unique key).
-- `422 Unprocessable Entity`: Well-formed request failed semantic validation.
-- `429 Too Many Requests`: Rate limit exceeded.
-- `500 Internal Server Error`: Unhandled server condition (never leak stack details).
+For a retried payment request, scope the idempotency key to the authorized caller and operation, bind it to the request, and commit the effect and replay record atomically using the existing storage boundary. A read-only catalog endpoint needs pagination and cache semantics, not the same mutation protocol.
 
-### 4. Boundary Validation
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
-Trust internal services, but validate strictly at external boundaries:
-- Validate every query parameter, path variable, header, and request payload using schemas (e.g. Zod, Pydantic, TypeBox).
-- Sanitize inputs against injection attacks before passing them to services.
-- Return explicit validation errors pinpointing the exact field and issue.
+## Validation Checklist
 
-### 5. Idempotent State Mutations
+- [ ] Exercise allowed and denied callers, invalid input and the existing consumer contract.
+- [ ] Check ordering, pagination boundaries and duplicate/concurrent requests when relevant.
 
-Any non-safe HTTP mutation (`POST` creating resources, charging payments, or executing transfers) should support an `Idempotency-Key` header:
-- Store operation results indexed by `Idempotency-Key` with a TTL (e.g. 24 hours).
-- Subsequent requests with the same key immediately return the cached response without re-executing side effects.
+## Common Mistakes
+
+Inventing an API standard that breaks clients; trusting client tenant IDs; treating a local Map as durable idempotency; generating an unused schema without wiring its caller.
+
+## Integration Notes
+
+Optional companion guidance: security, testing, system-design. Use it only when relevant and available; the skill does not install tools or authorize external actions.

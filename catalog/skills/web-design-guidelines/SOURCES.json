@@ -1,0 +1,16 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Original ContextOS checklist referencing Vercel's guideline collection; no upstream guideline body is vendored.",
+  "license": "Apache-2.0",
+  "upstream": [
+    {
+      "url": "https://github.com/vercel-labs/agent-skills/blob/main/skills/web-design-guidelines/SKILL.md",
+      "gitBlobSha": "ceae92ab319216a68274168fba9b63b998b65997"
+    },
+    {
+      "url": "https://github.com/vercel-labs/web-interface-guidelines/blob/main/command.md",
+      "gitBlobSha": "3eb3a212b7b89493922ea418489d4c6f67ae8bd5"
+    }
+  ]
+}

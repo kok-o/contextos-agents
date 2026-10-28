@@ -1,19 +1,13 @@
-# generators Examples - Anti-patterns vs ContextOS Standard
+# generators scenarios
 
-## Example 1: Technical Documentation Generation
+## In scope
 
-### Anti-pattern: Scaffolding from Scratch Without Templates
+For a request to document an existing API, inspect routes and schemas and write the API reference. Reuse templates/API.md if useful; do not create a PRD, database migration and roadmap unless the task needs them.
 
-```text
-Agent drafts a 2-paragraph "architecture overview" missing databases, security, and hosting models.
-```
+## Verification
 
-### Best practice: ContextOS Standard (ctx init Template Generation)
+Check links, source facts, unresolved placeholders and current/proposed status.
 
-```text
-Generates complete engineering suite:
-- PRD.md (User personas, in-scope, out-of-scope, acceptance criteria)
-- ARCHITECTURE.md (C4 model, data flow, scaling boundaries)
-- DATABASE.md (ERD, indexing strategy, migration plans)
-- API.md (OpenAPI 3.1 endpoints, error codes, authentication)
-```
+Verify generated structure with the project's existing documentation tooling.
+
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

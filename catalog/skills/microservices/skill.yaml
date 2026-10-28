@@ -1,10 +1,15 @@
 schemaVersion: 2
 id: microservices
-name: Microservices
+name: microservices
 category: architecture
 type: instruction-only
-requires: [system-design]
-optional: [docker, security]
+requires: []
+optional:
+  - docker
+  - security
+  - system-design
+  - api-design
+  - database
 conflicts: []
 weight: 6
 resources:
@@ -12,3 +17,5 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Design or diagnose service boundaries, distributed consistency,
+  contracts and failure handling when a distributed architecture is justified.

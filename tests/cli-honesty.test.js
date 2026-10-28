@@ -166,6 +166,73 @@ test('skill add passes --allow-floating to the pinning check instead of ignoring
   assert.match(output, /Fetching: https:\/\/raw\.githubusercontent\.com\/someone\/somerepo/);
 });
 
+test('F20: real mutating export stdout is JSON for all, combined and single adapters', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-export-json-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const source = path.join(root, '.agents/project/skills/team');
+  fs.mkdirSync(source, { recursive: true });
+  fs.writeFileSync(path.join(source, 'SKILL.md'), '---\nname: team\ndescription: Team JSON export fixture\n---\n# Team policy\n');
+  const bin = path.resolve(__dirname, '../bin/index.js');
+  const ctx = path.resolve(__dirname, '../.agents/ctx.js');
+  for (const entrypoint of [bin, ctx]) {
+    for (const target of ['all', 'cursor,claude', 'cursor']) {
+      fs.appendFileSync(path.join(source, 'SKILL.md'), `\nExported by ${path.basename(entrypoint)} to ${target}\n`);
+      const result = spawnSync(process.execPath, [entrypoint, 'export', target, '--json'], { cwd: root, encoding: 'utf8' });
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      const report = JSON.parse(result.stdout);
+      assert.ok(report.appliedCount > 0);
+      assert.ok(report.txId);
+    }
+  }
+  fs.appendFileSync(path.join(source, 'SKILL.md'), '\nCHANGED_SOURCE\n');
+  const drift = spawnSync(process.execPath, [bin, 'export', 'all', '--check', '--json'], { cwd: root, encoding: 'utf8' });
+  assert.equal(drift.status, 1, drift.stdout + drift.stderr);
+  assert.equal(JSON.parse(drift.stdout).hasDrift, true);
+  const invalid = spawnSync(process.execPath, [bin, 'export', 'unknown-adapter', '--json'], { cwd: root, encoding: 'utf8' });
+  assert.notEqual(invalid.status, 0);
+  assert.equal(invalid.stdout, '');
+});
+
+for (const failing of [false, true]) {
+  test(`F19: interactive installer uses the package entrypoint, --project and ${failing ? 'failure' : 'success'} exit status`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-interactive-install-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const current = path.join(root, 'current project');
+    const target = path.join(root, 'target project');
+    fs.mkdirSync(current);
+    fs.mkdirSync(target);
+    const localSkill = path.join(root, 'fixture-skill');
+    fs.mkdirSync(localSkill);
+    fs.writeFileSync(path.join(localSkill, 'SKILL.md'), '---\nname: fixture-skill\ndescription: Controlled local installer fixture\n---\n# Installed fixture\nINTERACTIVE_TARGET_MARKER\n');
+    const ref = `local:${(failing ? path.join(root, 'absent-skill') : localSkill).replace(/\\/g, '/')}`;
+    const registry = { skills: [{ name: 'fixture-skill', description: 'Controlled local fixture', npm: ref }] };
+    const preload = path.join(root, 'offline-menu.cjs');
+    fs.writeFileSync(preload, `
+      const { EventEmitter } = require('events');
+      require('https').get = (url, callback) => {
+        const request = new EventEmitter();
+        process.nextTick(() => {
+          const response = new EventEmitter(); response.statusCode = 200;
+          callback(response);
+          response.emit('data', ${JSON.stringify(JSON.stringify(registry))});
+          response.emit('end');
+        });
+        return request;
+      };
+      require('readline').createInterface = () => ({ question(prompt, callback) { callback('1'); }, close() {} });
+    `);
+    const bin = path.resolve(__dirname, '../bin/index.js');
+    const result = spawnSync(process.execPath, ['--require', preload, bin, 'install-skill', '--project', target], {
+      cwd: current, encoding: 'utf8', timeout: 60000,
+    });
+    assert.equal(result.status, failing ? 1 : 0, result.stdout + result.stderr);
+    const installed = path.join(target, '.agents/plugins/fixture-skill/SKILL.md');
+    assert.equal(fs.existsSync(installed), !failing, result.stdout + result.stderr);
+    if (!failing) assert.match(fs.readFileSync(installed, 'utf8'), /INTERACTIVE_TARGET_MARKER/);
+    assert.equal(fs.existsSync(path.join(current, '.agents')), false, 'current project must remain untouched');
+  });
+}
+
 test('doctor verifies the installed package and never executes modules found in the project', t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-honesty-doctor-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

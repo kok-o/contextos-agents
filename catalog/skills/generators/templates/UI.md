@@ -1,5 +1,8 @@
 # {{Project Name}} - UI/UX Specification
 
+Draft scaffold: record the existing design system or an explicitly proposed
+direction. Example dimensions below are optional starting values, not rules.
+
 ## Design System
 
 ### Colors
@@ -63,11 +66,11 @@
 | Tablet | 640-1024px | Two columns |
 | Desktop | > 1024px | Full layout |
 
-## Anti-Patterns (avoid these)
+## Usability and Accessibility Checks
 
-- No gray text on colored backgrounds
-- No pure black - always tint with brand color
-- No bounce/elastic easing - use ease-out
-- No cards nested inside cards
-- No generic color palettes (plain red, blue, green)
-- No default browser fonts - use curated typography
+- Measure text/control contrast on the actual background; do not ban colors.
+- Verify keyboard focus, labels, errors, target sizes and content reflow.
+- Use the product's typography; native and system fonts are valid choices.
+- Give motion a purpose, support interruption and honor reduced motion.
+- Check nested containers and hierarchy against actual content and tasks.
+- Record tested states and unresolved issues; a filled template proves no test ran.

@@ -1,101 +1,109 @@
 ---
 name: adapters
 description: >
-  Generates agent-specific configuration files from the unified ContextOS format.
-  One internal system, multiple output formats for Claude, Gemini, Copilot, 
-  Cursor, Aider, Continue, OpenHands, and others.
+  Configure and verify ContextOS exports for Gemini/Antigravity, Claude Code,
+  Cursor, GitHub Copilot, Aider, and Zed without editing generated projections.
 ---
 
-# agent-adapters
+# adapters
 
 ## Overview
 
-Unified cross-agent configuration engine. Translates single ContextOS source rules into optimized native formats for Claude Code (CLAUDE.md), Gemini (.agents/skills), Cursor (.cursorrules, .cursor/rules/*.mdc), GitHub Copilot, Zed, Aider, and Continue.
+Export installed ContextOS rules into six supported client formats. This skill
+documents the exporters; the CLI performs compilation and filesystem changes.
+Generated files prove delivery, not client loading or model adherence.
 
 ## When to Use
 
-Activate when configuring, synchronizing, or exporting agent rules and skills across multiple IDEs and AI programming assistants.
+Configure, synchronize, or diagnose agent rules across the supported clients.
+Do not assume a catalog skill is installed just because it exists in the catalog.
 
 ## Rules & Patterns
 
-ContextOS is agent-agnostic. This skill generates the right config format for any AI agent.
+Inspect the target project, winning manifest, declared entrypoint, resources,
+and active profile first. Canonical built-ins live in `.agents/core/skills/`;
+project additions and overrides belong in `.agents/project/skills/`. Plugins
+provide additional sources. Never edit native projections to change source rules.
 
 ## Supported Agents
 
-| Agent | Config Target | Format |
+The table shows the default `auto` outputs. Replace `<skill>` with the installed
+skill ID. Declared resources are also copied beside Gemini and Claude auto skills.
+
+| Agent | Config Target | Delivery |
 | --- | --- | --- |
-| **Gemini / Antigravity** | `.agents/generated/gemini/skills/` | Native modular skills |
-| **Claude Code** | `.agents/generated/claude/skills/` | Aggregated markdown skills |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | Single instructions file with on-demand skill references |
-| **Cursor** | `.cursor/rules/*.mdc` + `.cursorrules` | MDC modular glob rules + fallback |
-| **Aider** | `.aider.conf.yml` + `CONVENTIONS.md` | YAML config + conventions markdown |
-| **Zed IDE** | `.zed/rules.md` + `.zed/prompts/*.md` | Native rules and prompt templates |
+| **Gemini / Antigravity** | `.agents/skills/<skill>/SKILL.md`, `.agents/generated/gemini/skills/<skill>/SKILL.md` | Shared native skill and generated copy |
+| **Claude Code** | `.claude/skills/<skill>/SKILL.md` | Native on-demand skill |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | Managed block with source paths and routing descriptions |
+| **Cursor** | `.cursor/rules/<skill>.mdc` | MDC rule with description, globs, and alwaysApply |
+| **Aider** | `.aider.conf.yml`, `CONVENTIONS.md` | YAML read entry for conventions; on-demand source references |
+| **Zed IDE** | `.zed/rules.md`, `.zed/prompts/<skill>.md` | Rule index and separate prompt body |
+
+When `.agents/AGENTS.md` exists, Cursor also emits
+`.cursor/rules/00-project-rules.mdc`, Zed emits `.zed/prompts/contextos.md`,
+and Copilot, Aider, and Zed include project rules in their instruction files.
+Claude does not generate `CLAUDE.md` or `.agents/generated/claude/`;
+Cursor does not generate a legacy `.cursorrules` fallback.
+
+## Activation
+
+Set `activation` and `globs` in the winning manifest or entrypoint frontmatter.
+Absent both, known catalog path scopes apply; otherwise the default is `auto`.
+The resolver's `signals.fileGlobs` affects recommendations, not adapter activation.
+
+| Target | Activation | Native artifacts | Metadata / behavior |
+| --- | --- | --- | --- |
+| `gemini` | `auto` | `.agents/skills/<skill>/SKILL.md`, `.agents/generated/gemini/skills/<skill>/SKILL.md` | Description-based discovery; no activation rule |
+| `gemini` | `always` | `.agents/skills/<skill>/SKILL.md`, `.agents/generated/gemini/skills/<skill>/SKILL.md`, `.agents/rules/contextos-<skill>.md` | Rule trigger is always_on |
+| `gemini` | `globs` | `.agents/skills/<skill>/SKILL.md`, `.agents/generated/gemini/skills/<skill>/SKILL.md`, `.agents/rules/contextos-<skill>.md` | Rule trigger is glob; additional bounded Windows rule files may be emitted |
+| `claude` | `auto` | `.claude/skills/<skill>/SKILL.md` | Name and description frontmatter; body on demand |
+| `claude` | `always` | `.claude/rules/<skill>.md` | Full body without paths frontmatter |
+| `claude` | `globs` | `.claude/rules/<skill>.md` | Full body with paths list |
+| `cursor` | `auto` | `.cursor/rules/<skill>.mdc` | Agent-requested description, empty globs, alwaysApply false |
+| `cursor` | `always` | `.cursor/rules/<skill>.mdc` | Empty globs, alwaysApply true |
+| `cursor` | `globs` | `.cursor/rules/<skill>.mdc` | Declared globs, alwaysApply false |
+
+Copilot, Aider, and Zed inline `always` skill bodies in their instruction files.
+Other skills remain routing references there; Zed also emits every skill's prompt
+body. These three adapters do not enforce per-file glob activation. Markdown
+resource links are relocated when entrypoints move; load supporting files only
+when needed. Export selects installed skills allowed by the profile, not just the
+resolver's recommendation for the current task.
 
 ## Generation Commands
 
-- `contextos export <agent>` (or `node .agents/ctx.js export <agent>`) - Generate config for a specific agent (`gemini`, `claude`, `cursor`, `copilot`, `aider`, `zed`).
-- `contextos export all` - Generate configs for all supported agents in a single transaction.
+- `contextos compile` validates manifests and rebuilds the registry.
+- `contextos export <agent>` renders and applies one of the six targets above.
+- `contextos export all` applies all adapters in one transaction.
+- `contextos export all --check --json` checks drift without writing outputs.
+- `contextos export all --dry-run --json` inspects planned artifacts.
 
-## Adapter Logic
-
-### For Claude Code (`CLAUDE.md`)
-
-Compile into a single markdown file:
-
-1. Project overview from `docs/PRD.md` (summary only)
-2. Architecture summary from `docs/ARCHITECTURE.md`
-3. Coding rules from loaded skills
-4. Active Decision Records
-5. Current tasks from `docs/TASKS.md`
-
-### For Gemini (`.agents/AGENTS.md`)
-
-Already native format. Just ensure:
-
-1. `AGENTS.md` references the skill directory
-2. Skills have proper SKILL.md with frontmatter
-3. Context Manager rules are in AGENTS.md
-
-### For Cursor (`.cursorrules`)
-
-Compile into a flat text file:
-
-1. Project context (condensed)
-2. Coding style rules
-3. Framework-specific instructions
-4. Anti-patterns to avoid
-
-### For Aider (`.aider.conf.yml`)
-
-```yaml
-read:
-  - docs/ARCHITECTURE.md
-  - docs/API.md
-  - docs/PROJECT_GRAPH.md
-conventions:
-  - {{coding rules from skills}}
-```
-
-## Sync Rules
-
-- Adapters read from the canonical ContextOS documents
-- Never edit adapter output files directly
-- Re-run `contextos export all` after any skill or rule change
-- Each adapter file includes a header: `# Generated by ContextOS - do not edit directly`
-
+In this source checkout, use `node .agents/ctx.js` instead of `contextos`.
+After source edits, compile, export, then check. A successful check means the
+selected projections match their sources and recorded ownership; it does not
+prove that a live client loaded them. Review ownership conflicts instead of
+automatically forcing replacement. Aider merges its YAML read list and preserves
+existing settings; inspect new defaults before running the client.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+See [EXAMPLES.md](EXAMPLES.md) for the default adapters skill outputs and a
+path-scoped activation example.
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Correct project root, winning manifest, entrypoint, resources, and profile.
+- [ ] Expected native path and activation metadata for each selected client.
+- [ ] Compile succeeds, export preserves user changes, and check reports no drift.
+- [ ] Generated-file evidence and any live-client testing are reported separately.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Editing outputs, confusing resolver selection with export scope, assuming every
+adapter implements file globs, or treating a generated file as model-quality proof.
+Do not expect Continue or OpenHands exports; they are not registered targets.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Use context-os for manifest, resolver, profile, and budget configuration;
+engineering-workflow owns proportional implementation and verification.

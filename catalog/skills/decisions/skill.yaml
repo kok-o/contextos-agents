@@ -2,12 +2,19 @@ schemaVersion: 2
 name: decisions
 category: architecture
 type: instruction-only
-description: >
-  Architecture Decision Records (ADR) management. Creates, tracks, and queries
-  architectural decisions so AI assistants understand why choices were made.
+description: Record or update significant engineering decisions with context,
+  alternatives, consequences and evidence.
 version: 1.0.0
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: decisions
+optional:
+  - system-design
+  - engineering-workflow
+requires: []
+signals:
+  aliases:
+    - decision-engine

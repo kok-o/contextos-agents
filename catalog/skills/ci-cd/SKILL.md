@@ -1,69 +1,44 @@
 ---
 name: ci-cd
-description: Automates CI/CD pipeline setup. Enforces unskippable quality gates, shift-left static analysis, secret scanning, and hardened GitHub Actions workflows.
+description: Create or repair CI/CD workflows using relevant checks,
+  reproducible dependencies and explicit trust boundaries.
 ---
 
-# CI/CD and Automation
+# ci-cd
 
-Automate quality gates so no change reaches production without passing tests, lint, type checking, security scans, and build verification.
+## Overview
 
-## Core Philosophy
+Create or repair CI/CD workflows using relevant checks, reproducible dependencies and explicit trust boundaries. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
-- **Shift Left**: Catch problems as early in the delivery lifecycle as possible. A defect caught during static analysis or linting takes seconds to fix; the same defect discovered in production takes hours and damages reliability.
-- **Faster is Safer**: Small, frequent, automated releases drastically lower blast radius and risk compared to infrequent bulk deployments.
-- **Unskippable Gates Invariant**: Never disable a failing rule or skip a test suite just to make a pipeline green. Fix the root cause in the code.
+## When to Use
 
-## The Quality Gate Pipeline
+A build/test/deployment workflow needs implementation, debugging or review. Match checks to the repository and changed behavior.
 
-Every Pull Request must successfully traverse these automated stages before merge approval:
+## Rules & Patterns
 
-```
-Pull Request Opened
-       │
-       ▼
- 1. Secret Scanning    (prevent credential leaks before running untrusted steps)
-       │
-       ▼
- 2. Lint & Formatting  (eslint, prettier, markdownlint)
-       │
-       ▼
- 3. Type Checking      (tsc --noEmit, pyright, mypy)
-       │
-       ▼
- 4. Unit Tests         (vitest, jest, pytest with coverage thresholds)
-       │
-       ▼
- 5. Production Build   (bundling, tree-shaking, static generation)
-       │
-       ▼
- 6. Integration Tests  (API contracts, database migrations)
-       │
-       ▼
- 7. Security Audit     (npm audit, trivy, dependency vulnerability checks)
-       │
-       ▼
- 8. Bundle Budget      (bundle size checks against baseline thresholds)
-       │
-       ▼
-   Merge Allowed
-```
+Inspect the real scripts, supported runtimes, lockfile, trigger and deployment path. Reuse the project's checks; do not invent npm scripts, require a coverage percentage for every change, or add a language matrix the project does not support.
 
-## Hardened Pipeline Standards
+Separate trusted workflow/tool code from untrusted pull-request content. Use least-privilege tokens, appropriate secret availability and safe argv/environment boundaries. Avoid interpolating untrusted inputs into shell source or executing a consumer-controlled bootstrap as trusted tooling.
 
-1. **Least-Privilege Token Permissions**:
-   Explicitly declare workflow and job permissions at the top of the workflow file. Default to read-only access:
-   ```yaml
-   permissions:
-     contents: read
-   ```
-2. **Deterministic Dependency Installation**:
-   Always use frozen lockfiles (`npm ci` instead of `npm install`, `uv sync --frozen` instead of `pip install`).
-3. **Concurrency Cancellation**:
-   Automatically cancel in-progress runs when a newer commit is pushed to the same Pull Request branch:
-   ```yaml
-   concurrency:
-     group: ${{ github.workflow }}-${{ github.ref }}
-     cancel-in-progress: true
-   ```
-4. **Action Pinning**:
-   Reference trusted actions using verified release tags (e.g. `actions/checkout@v4`) or full commit SHAs.
+Use reproducible installs appropriate to the package manager and trust model. Decide how lifecycle scripts are handled without silently disabling a required build step. Validate workflow syntax and actual commands, not just the appearance of a YAML file.
+
+Keep required checks meaningful. Repair a failing implementation or test rather than weakening a gate to obtain green. Deployment, publishing and credential changes follow existing user authorization; a passing local build does not establish hosted CI or deployment success.
+
+## Code Examples
+
+A forked pull request can run lint and tests with read-only access while an authorized release job consumes the reviewed artifact separately. Reproduce the failing local command before changing cache keys or deleting workflow steps.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
+
+## Validation Checklist
+
+- [ ] Exercise the relevant success and failure paths and report local versus hosted evidence.
+- [ ] Check workflow triggers, permissions, quoting and artifact identity where relevant.
+
+## Common Mistakes
+
+Passing secrets to untrusted PR code; downloading a floating tool as a trusted bootstrap; treating skipped checks as success.
+
+## Integration Notes
+
+Optional companion guidance: engineering-workflow, security. Use it only when relevant and available; the skill does not install tools or authorize external actions.

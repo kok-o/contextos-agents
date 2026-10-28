@@ -1,5 +1,8 @@
 # {{Project Name}} - Roadmap
 
+Proposed milestones: confirm scope, dependencies and dates. These example version
+labels and checkboxes are neither commitments nor evidence of completion.
+
 ## Vision
 
 {{one_sentence_vision}}

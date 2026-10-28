@@ -1,32 +1,34 @@
 ---
-name: TypeScript
-description: >
-  ContextOS skill for TypeScript
+name: typescript
+description: Use TypeScript types, narrowing and compiler checks to express real
+  contracts without hiding runtime uncertainty.
 ---
 
-# TypeScript
+# typescript
 
 ## Overview
 
-Strict TypeScript engineering standard. Enforces noImplicitAny, discriminated unions, branded types, immutability, exhaustive switch checks, and zero unsafe any or as unknown as T casts.
+Use TypeScript types, narrowing and compiler checks to express real contracts without hiding runtime uncertainty. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate on all TypeScript and JavaScript codebases to ensure compile-time type safety, robust domain modeling, and foolproof function contracts.
-
-## Negative Constraints (What NOT to Do)
-
-1. **NEVER use `any`**: Use `unknown` with type guards, discriminated unions, or Zod schemas.
-2. **NEVER use type assertions (`as Type` or `as unknown as Type`) to bypass safety**: Fix the underlying type signature or use runtime narrowing (`instanceof`, `typeof`, `in`).
-3. **NEVER use non-null assertions (`foo!.bar`)**: Handle `null` and `undefined` with optional chaining (`?.`) or explicit error guards.
-4. **NEVER export mutable global arrays or object constants**: Always mark constant objects and arrays with `as const` and `readonly`.
-5. **NEVER omit explicit return types on exported functions**: Exported public APIs must declare explicit return types to protect consumers.
+The task affects TypeScript or explicitly asks for typed JavaScript tooling. A JavaScript-only project need not be migrated to TypeScript.
 
 ## Rules & Patterns
 
-## Strict Mode
+Inspect compiler version, configuration and library types. Strengthen checks proportionately and account for migration cost rather than enabling every strict option during an unrelated edit.
 
-Always use strict TypeScript configuration:
+Use unknown at untrusted boundaries and validate the required shape before narrowing. Types disappear at runtime; a valid role field does not establish caller identity or authorization.
+
+Prefer useful inference and clear domain contracts. Explicit public return types, discriminated unions and readonly types help when they protect a real boundary. Choose interface or type according to the existing code and the construct needed.
+
+Avoid assertions that conceal a missing invariant. A justified assertion, non-null assertion or localized any may be needed for an inspected API or interop boundary; contain it and explain the invariant instead of applying a universal ban.
+
+Keep compiler guarantees distinct from runtime behavior. Readonly/as const do not deeply freeze arbitrary runtime objects. Run the project's typecheck and relevant behavior tests.
+
+## Code Examples
+
+The original isUser block below validates every required field and rejects arrays. It checks data shape; separately authorize any protected operation. The other snippets are illustrative typing patterns, not a complete service.
 
 ```json
 {
@@ -38,13 +40,6 @@ Always use strict TypeScript configuration:
   }
 }
 ```
-
-## Types
-
-- **Prefer `interface`** for object shapes, `type` for unions/intersections
-- **No `any`** - use `unknown` if type is truly unknown, then narrow
-- **Explicit return types** for exported functions
-- **Const assertions** - `as const` for literal types
 
 ```typescript
 // Good
@@ -58,21 +53,7 @@ interface User {
 type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 ```
 
-## Utility Types
-
-- `Partial<T>` - all properties optional
-- `Required<T>` - all properties required
-- `Pick<T, K>` - select specific properties
-- `Omit<T, K>` - remove specific properties
-- `Record<K, V>` - key-value map
-
-## Type Guards
-
-A type guard must validate every required property before narrowing. This checks
-the data shape; a supplied `role` does not establish authorization.
-
 <!-- example: typescript-user-guard -->
-
 ```typescript
 export interface User {
   id: string;
@@ -88,8 +69,6 @@ export function isUser(value: unknown): value is User {
 }
 ```
 
-## Generic Patterns
-
 ```typescript
 // Repository pattern
 interface Repository<T extends { id: string }> {
@@ -100,27 +79,15 @@ interface Repository<T extends { id: string }> {
 }
 ```
 
-## Anti-Patterns
-
-- [FAIL] `any` - use `unknown` + type guards
-- [FAIL] Type assertions (`as`) - prefer type guards
-- [FAIL] Non-null assertions (`!`) - handle null explicitly
-- [FAIL] Enums - prefer union types or `as const` objects
-- [FAIL] Complex generics without JSDoc - document intent
-
-
-## Code Examples
-
-See `EXAMPLES.md` for detailed code examples.
-
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Typecheck against the installed configuration and dependencies.
+- [ ] Exercise runtime input validation and meaningful invalid cases where relevant.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Using as to hide unvalidated input; claiming typechecking proves authorization; rewriting valid types solely for stylistic uniformity.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: testing, security. Use it only when relevant and available; the skill does not install tools or authorize external actions.

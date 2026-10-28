@@ -1,11 +1,11 @@
-name: Installed package acceptance
+name: Installed core package acceptance
 
 on:
   workflow_dispatch:
   workflow_call:
     inputs:
       ref:
-        description: Exact commit or release tag to verify
+        description: Exact commit or tag to verify
         required: false
         type: string
 
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   consumer:
-    name: Tarball lifecycle (${{ matrix.os }})
+    name: Core archive lifecycle (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -30,73 +30,28 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm ci --ignore-scripts
-        working-directory: ./contextos-mcp
-      - name: Build core and retain log
+      - run: npm run build
+      - run: npm run check:release-surface:core
+      - name: Pack and verify core lifecycle and checkpoint rollback
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force scratch | Out-Null
-          npm run build 2>&1 | Tee-Object -FilePath scratch/core-build.log
-          exit $LASTEXITCODE
-      - name: Build MCP and retain log
-        shell: pwsh
-        run: |
-          npm run build 2>&1 | Tee-Object -FilePath ../scratch/mcp-build.log
-          exit $LASTEXITCODE
-        working-directory: ./contextos-mcp
-      - name: Verify Git and npm release surfaces
-        run: npm run check:release-surface
-      - name: Pack release archives against reviewed hashes
-        if: inputs.ref != ''
-        run: node scripts/publish-release-pair.cjs prepare
-      - name: Pack development archives for consumer regression
-        if: inputs.ref == ''
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force scratch/release-candidate | Out-Null
+          New-Item -ItemType Directory -Force scratch/release-candidate, scratch/previous-core | Out-Null
           npm pack --ignore-scripts --pack-destination scratch/release-candidate
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Push-Location contextos-mcp
-          try {
-            npm pack --ignore-scripts --pack-destination ../scratch/release-candidate
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          } finally {
-            Pop-Location
-          }
-      - name: Check installed archives and checkpoint rollback
-        shell: pwsh
-        run: |
-          npm run check:consumer 2>&1 | Tee-Object -FilePath scratch/consumer-install.log
+          npm run check:consumer:core -- scratch/release-candidate
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          New-Item -ItemType Directory -Force scratch/r2-previous | Out-Null
-          npm pack contextos-agents@2.2.0 --ignore-scripts --pack-destination scratch/r2-previous 2>&1 | Tee-Object -FilePath scratch/previous-pack.log
+          npm pack contextos-agents@2.3.2 --ignore-scripts --pack-destination scratch/previous-core
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm pack @contextos/mcp@0.3.1 --ignore-scripts --pack-destination scratch/r2-previous 2>&1 | Tee-Object -FilePath scratch/previous-mcp-pack.log
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm run check:migration 2>&1 | Tee-Object -FilePath scratch/migration.log
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Copy-Item scratch/release-migration-result.json scratch/release-migration-legacy-result.json
-          New-Item -ItemType Directory -Force scratch/current-previous | Out-Null
-          npm pack contextos-agents@2.3.1 --ignore-scripts --pack-destination scratch/current-previous 2>&1 | Tee-Object -FilePath scratch/current-core-pack.log
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm pack contextos-mcp@0.4.1 --ignore-scripts --pack-destination scratch/current-previous 2>&1 | Tee-Object -FilePath scratch/current-mcp-pack.log
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $candidateVersion = node -p "require('./package.json').version"
-          npm run check:migration -- scratch/current-previous/contextos-agents-2.3.1.tgz "scratch/release-candidate/contextos-agents-$candidateVersion.tgz" scratch/current-previous/contextos-mcp-0.4.1.tgz 2>&1 | Tee-Object -FilePath scratch/current-migration.log
+          $version = node -p "require('./package.json').version"
+          npm run check:migration:core -- scratch/previous-core/contextos-agents-2.3.2.tgz "scratch/release-candidate/contextos-agents-$version.tgz"
           exit $LASTEXITCODE
-      - name: Retain package verification evidence
+      - name: Retain core archive and acceptance results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: consumer-evidence-${{ matrix.os }}
+          name: core-consumer-${{ matrix.os }}
           path: |
-            scratch/release-install-result.json
-            scratch/release-migration-result.json
-            scratch/release-migration-legacy-result.json
-            scratch/release-surface.json
-            scratch/*.log
             scratch/release-candidate/*.tgz
-            scratch/r2-previous/*.tgz
-            scratch/current-previous/*.tgz
-            scratch/installed-mcp-handshake.json
-          if-no-files-found: warn
+            scratch/release-core-install-result.json
+            scratch/release-core-migration-result.json
+            scratch/release-core-surface.json

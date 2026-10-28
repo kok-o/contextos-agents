@@ -1,10 +1,10 @@
 schemaVersion: 2
 name: adapters
-category: engineering
+category: cross-cutting
 type: compiler
 description: >
-  Generates agent-specific configuration files from unified ContextOS format.
-  Produces configs for Claude, Gemini, Copilot, Cursor, Aider, Continue, and Zed.
+  Configure and verify ContextOS exports for Gemini/Antigravity, Claude Code,
+  Cursor, GitHub Copilot, Aider, and Zed without editing generated projections.
 version: 1.0.0
 resources:
   - EXAMPLES.md

@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - Unreleased
+
+**Stable core prepared on 28 October 2026; not published.** This entry records
+the prepared source changes. The [stable checklist](docs/RELEASE_3.0.0.md) and
+[reviewed-archive process](docs/RELEASE_PROCESS.md) govern acceptance and any
+separately authorized publication. MCP keeps its own version and release path.
+
+### Changed
+
+- Promote core metadata, installation examples and the Action default to
+  `3.0.0`. Public registry and `v3.0.0` Action examples apply after publication;
+  preparation uses the reviewed local archive.
+- Make core build, test, package and release selection independent of the MCP
+  checkout. Core uses its own reviewed archive identity and mandatory acceptance
+  checks; the MCP maintenance workflow migration remains separate work.
+- Preserve historical RC and client observations with their original versions;
+  file-contract checks do not establish current client loading or model adherence.
+
+### Fixed
+
+- Keep edited and unowned files during export and uninstall, including incomplete
+  managed markers, merge conflicts and unrecorded diff3 base content.
+- Serialize stale mutation-lock reclamation and provide explicit
+  `recover --unlock --force` recovery after stopping every writer and watcher.
+  Recovery preserves journals and backups and refuses live or foreign-host owners
+  and claimants.
+- Check local and catalog entrypoint checksums before staging. Pin npm sources
+  to exact versions, verify archive SHA-512 and package identity, and install the
+  verified bytes with lifecycle scripts disabled.
+- Preserve stable GitHub skill names across commit updates and handle split
+  UTF-8 download chunks without corrupting entrypoints. Entry checksums bind to
+  the bytes that are installed.
+- Retain required security guidance and explicit conflict diagnostics. Reject
+  inherited prototype properties in alias, dependency, package and command lookups.
+- Resolve project-only rules against the consumer project. Generate usable index
+  paths for manifestless, v1, v2 and custom entrypoints through the public guarded
+  `index` command.
+- Update development dependencies and the scoped math-renderer override following
+  the core dependency audit.
+
 ## [3.0.0-rc.1] - 2026-10-25
 
 **Core release candidate on `next`.** MCP is excluded; its version is unchanged.

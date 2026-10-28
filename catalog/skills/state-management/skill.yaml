@@ -1,14 +1,18 @@
 schemaVersion: 2
 name: state-management
-description: Client and server state management standards using Zustand and TanStack Query. Enforces minimal global state, optimistic updates, and clean query invalidation.
+description: Choose and implement state ownership, synchronization,
+  subscriptions and mutation recovery in frontend applications.
 version: 1.0.0
 category: frontend
 type: instruction-only
-requires:
-  - react
-  - typescript
+requires: []
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: state-management
+optional:
+  - react
+  - typescript
+  - webapp-testing

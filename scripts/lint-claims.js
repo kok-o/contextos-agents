@@ -14,17 +14,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');
-const CLAIMS_FILE = path.join(ROOT, 'benchmarks', 'claims.json');
-
 const SUSPICIOUS_UNLINKED_PATTERNS = [
-  /(?:saves|reduces|improves)\s+\d+(?:\.\d+)?%/i,
+  /\b(?:saves|reduces|improves)\b[^\n.!?]{0,80}?\d+(?:\.\d+)?%/i,
   /\b\d+x\s+faster\b/i,
   /\bguaranteed\s+(?:success|security)\b/i,
   /\b100%\s+secure\b/i,
 ];
 
-function lintClaims() {
+function lintClaims(options = {}) {
+  const ROOT = path.resolve(options.rootDir || path.join(__dirname, '..'));
+  const CLAIMS_FILE = path.join(ROOT, 'benchmarks', 'claims.json');
   console.log('[lint-claims] Validating claims registry and documentation claims...');
 
   if (!fs.existsSync(CLAIMS_FILE)) {
@@ -57,6 +56,9 @@ function lintClaims() {
   ]);
 
   const claimIds = new Set();
+  const supportedClaimIds = new Set();
+  const supportedStatuses = new Set(['deterministic', 'measured', 'observed', 'supported']);
+  const supportedEvidenceStatuses = new Set([...supportedStatuses, 'pass', 'passed', 'accepted', 'success', 'complete', 'completed', 'ok']);
   let errors = 0;
 
   for (const claim of claimsData.claims) {
@@ -66,6 +68,8 @@ function lintClaims() {
       continue;
     }
 
+    const errorsBeforeClaim = errors;
+    let canSupport = supportedStatuses.has(claim.status);
     if (claimIds.has(claim.id)) {
       console.error(`[ERROR] Duplicate claim id: "${claim.id}"`);
       errors++;
@@ -97,6 +101,11 @@ function lintClaims() {
       } else if (evidencePath.endsWith('.json')) {
         try {
           const evidenceContent = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+          if (evidenceContent.status !== undefined &&
+              (typeof evidenceContent.status !== 'string' || !supportedEvidenceStatuses.has(evidenceContent.status.toLowerCase()))) {
+            canSupport = false;
+          }
+          if (evidenceContent.validUntil && !(Date.parse(evidenceContent.validUntil) > Date.now())) canSupport = false;
           if (evidenceContent.status === 'invalidated' && claim.status !== 'invalidated') {
             console.error(
               `[ERROR] Claim "${claim.id}" has status "${claim.status}" but its evidence artifact status is "invalidated".`
@@ -114,6 +123,8 @@ function lintClaims() {
       console.error(`[ERROR] Claim "${claim.id}" has invalid validUntil date: ${claim.validUntil}`);
       errors++;
     }
+    if (claim.validUntil && !(Date.parse(claim.validUntil) > Date.now())) canSupport = false;
+    if (canSupport && errors === errorsBeforeClaim) supportedClaimIds.add(claim.id);
   }
 
   console.log(`[lint-claims] Verified ${claimIds.size} registered claim(s) in registry.`);
@@ -136,6 +147,30 @@ function lintClaims() {
   }
 
   let unlinkedWarnings = 0;
+  // These JSON files are distributed to consumers. Inspect each string field,
+  // not the serialized document, so a citation in another entry cannot cover it.
+  for (const relative of ['package.json', 'registry.json', '.agents/skills.json', '.agents/skills-index.json', '.agents/compiled/registry.v2.json']) {
+    const file = path.join(ROOT, relative);
+    if (!fs.existsSync(file)) continue;
+    try {
+      const visit = (value, pointer) => {
+        if (typeof value === 'string') {
+          if (!SUSPICIOUS_UNLINKED_PATTERNS.some(pattern => pattern.test(value))) return;
+          const citations = value.match(/claim-[a-z0-9-]+/gi) || [];
+          if (!citations.some(id => supportedClaimIds.has(id))) {
+            console.error(`[ERROR] ${relative}:${pointer}: Quantitative claim in public metadata requires current supported evidence (not an invalidated, stale, deprecated or aspirational citation).`);
+            errors++;
+          }
+        } else if (value && typeof value === 'object') {
+          for (const [key, child] of Object.entries(value)) visit(child, `${pointer}/${key}`);
+        }
+      };
+      visit(JSON.parse(fs.readFileSync(file, 'utf8')), '');
+    } catch (error) {
+      console.error(`[ERROR] ${relative}: Invalid public JSON: ${error.message}`);
+      errors++;
+    }
+  }
   for (const relDoc of docsToScan) {
     const fullPath = path.join(ROOT, relDoc);
     if (!fs.existsSync(fullPath)) continue;

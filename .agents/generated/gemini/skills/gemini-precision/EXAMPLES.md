@@ -6,6 +6,16 @@ Before calling a password helper, read its export and signature. Do not infer a
 package, import path, or return type from an example. Name the checked files and
 run the relevant authentication regression.
 
+## Recovery decisions
+
+These are procedure examples, not recorded tool results or model evaluations.
+
+| Situation | Do not | Instead |
+| --- | --- | --- |
+| A write returns an error after it may have reached the target | Repeat it immediately and risk a duplicate | Read the exact record or operation status; if it exists, verify it and report the failed command separately. If the outcome is unknown, stop that write and state the blocker. |
+| The same command fails again | Resubmit it without new information | Inspect the failure and affected state, then test a different cause or approach. A bounded retry needs evidence of a transient failure. |
+| A response prints a tool call, or a helper returns a proposed balance | Report that files changed or a payment completed | Check the actual file or required external effect; report only what was observed. |
+
 ## Complete pure calculation with an explicit boundary
 
 This block validates integer minor-unit amounts and computes a proposed balance.

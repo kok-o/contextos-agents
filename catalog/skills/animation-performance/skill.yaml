@@ -1,0 +1,32 @@
+schemaVersion: 2
+id: animation-performance
+name: animation-performance
+version: 1.0.0
+description: Diagnose web animation stutter, dropped frames and expensive
+  rendering using traces, then verify a targeted fix.
+category: frontend
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: jank
+      locale: en
+      weight: 40
+    - value: stutter
+      locale: en
+      weight: 40
+    - value: dropped frames
+      locale: en
+      weight: 40
+    - value: animation performance
+      locale: en
+      weight: 40
+    - value: рывки анимации
+      locale: ru
+      weight: 40
+    - value: дергается анимация
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json

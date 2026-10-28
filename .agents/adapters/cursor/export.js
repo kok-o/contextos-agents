@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { getSkillEntrypointPath, readSkillMetadata, readCoreRules, collectSkillDirectories, stripFrontmatter, resolveActivation, relocateSkillLinks } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
+const YAML = require('../../compiler/vendor/yaml.js');
 
 const GENERATOR_ID = 'cursor@2';
 
@@ -44,15 +45,15 @@ function generateCursorMdc(skillDir, context) {
   const globs = activation.globs.join(',');
   const alwaysApply = activation.mode === 'always';
 
-  let cleanDescription = description.replace(/\r?\n+/g, ' ').replace(/"/g, "'").trim();
+  let cleanDescription = description.trim();
   if (activation.mode === 'auto') {
     cleanDescription = `Agent-requested: invoke when working on ${title}. ${cleanDescription}`.trim();
   }
+  const frontmatter = YAML.stringify({ description: cleanDescription, globs, alwaysApply }, {
+    defaultStringType: 'QUOTE_DOUBLE', defaultKeyType: 'PLAIN', doubleQuotedAsJSON: true, lineWidth: 0,
+  });
   const mdcContent = `---
-description: "${cleanDescription}"
-globs: ${globs ? `"${globs}"` : '""'}
-alwaysApply: ${alwaysApply}
----
+${frontmatter}---
 
 # Skill: ${title}
 
@@ -76,6 +77,13 @@ function render(context) {
 
   // 1. 00-project-rules.mdc
   if (agentsMd !== null) {
+    const skillDir = path.resolve(context.projectRoot, '.agents');
+    const body = relocateSkillLinks(agentsMd, {
+      skillDir,
+      sourceFile: path.join(skillDir, 'AGENTS.md'),
+      destination: '.cursor/rules/00-project-rules.mdc',
+      projectRoot: context.projectRoot,
+    });
     const projectMdc = `---
 description: "ContextOS core project rules and role orchestration"
 globs: ""
@@ -85,7 +93,7 @@ alwaysApply: true
 ${prov}
 # ContextOS — Project Operating System Rules
 
-${agentsMd}
+${body}
 `;
     artifacts.push({
       path: '.cursor/rules/00-project-rules.mdc',

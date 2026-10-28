@@ -128,7 +128,7 @@ function loadRegistry(agentsDir) {
   // Fallback: try compiling via ManifestCompiler
   try {
     const { ManifestCompiler } = require('../compiler/manifest-compiler.js');
-    const compiler = new ManifestCompiler({ agentsDir });
+    const compiler = new ManifestCompiler({ rootDir: path.dirname(agentsDir), agentsDir });
     const res = compiler.compile();
     if (res.success && res.registry) {
       return res.registry;
@@ -147,7 +147,11 @@ function findAgentsDir(startDir = process.cwd()) {
   let curr = path.resolve(startDir);
   while (curr) {
     const candidate = path.join(curr, '.agents');
-    if (fs.existsSync(path.join(candidate, 'compiled', 'registry.v2.json')) || fs.existsSync(path.join(candidate, 'core', 'skills'))) {
+    // The default consumer installation has project sources, without bundled
+    // core skills or a persisted registry. It must not inherit package rules.
+    if (fs.existsSync(path.join(candidate, 'compiled', 'registry.v2.json')) ||
+        ['core', 'project', 'vendor'].some(tier => fs.existsSync(path.join(candidate, tier, 'skills'))) ||
+        fs.existsSync(path.join(candidate, 'plugins'))) {
       return candidate;
     }
     const parent = path.dirname(curr);
@@ -255,8 +259,6 @@ function analyzeImportGraph(projectDir = process.cwd()) {
     { file: 'Dockerfile', skill: 'docker', weight: 15 },
     { file: 'docker-compose.yml', skill: 'docker', weight: 15 },
     { file: 'docker-compose.yaml', skill: 'docker', weight: 15 },
-    { file: 'requirements.txt', skill: 'fastapi', weight: 15 },
-    { file: 'pyproject.toml', skill: 'fastapi', weight: 15 },
     { file: 'vitest.config.ts', skill: 'testing', weight: 15 },
     { file: 'vitest.config.js', skill: 'testing', weight: 15 },
     { file: 'playwright.config.ts', skill: 'testing', weight: 15 },
@@ -365,8 +367,6 @@ function collectWorkspaceEvidence(projectRoot, registry) {
     { file: 'Dockerfile', skill: 'docker' },
     { file: 'docker-compose.yml', skill: 'docker' },
     { file: 'docker-compose.yaml', skill: 'docker' },
-    { file: 'requirements.txt', skill: 'fastapi' },
-    { file: 'pyproject.toml', skill: 'fastapi' },
     { file: 'vitest.config.ts', skill: 'testing' },
     { file: 'vitest.config.js', skill: 'testing' },
     { file: 'playwright.config.ts', skill: 'testing' },
@@ -587,7 +587,7 @@ function getTransitiveDeps(skillId, depGraph, excludedSet) {
 
   while (queue.length > 0) {
     const curr = queue.shift();
-    const reqs = depGraph[curr] || [];
+    const reqs = Object.hasOwn(depGraph, curr) ? depGraph[curr] : [];
     for (const req of reqs) {
       if (excludedSet.has(req)) continue;
       if (!visited.has(req)) {
@@ -628,9 +628,9 @@ class CanonicalResolver {
     const clean = target.toLowerCase();
 
     const packageMap = registry?.packageMap || {};
-    if (packageMap[`npm:${clean}`]) return packageMap[`npm:${clean}`];
-    if (packageMap[`pypi:${clean}`]) return packageMap[`pypi:${clean}`];
-    if (packageMap[clean]) return packageMap[clean];
+    if (Object.hasOwn(packageMap, `npm:${clean}`)) return packageMap[`npm:${clean}`];
+    if (Object.hasOwn(packageMap, `pypi:${clean}`)) return packageMap[`pypi:${clean}`];
+    if (Object.hasOwn(packageMap, clean)) return packageMap[clean];
 
     const PKG_MAP = {
       'next': 'nextjs',
@@ -660,7 +660,7 @@ class CanonicalResolver {
       'amqplib': 'microservices',
       'zod': 'typescript',
     };
-    if (PKG_MAP[clean]) return PKG_MAP[clean];
+    if (Object.hasOwn(PKG_MAP, clean)) return PKG_MAP[clean];
 
     const base = path.basename(clean);
     if (base.startsWith('next.config.')) return 'nextjs';
@@ -670,7 +670,6 @@ class CanonicalResolver {
     if (base === 'nest-cli.json') return 'nestjs';
     if (base.includes('docker-compose') || base === 'dockerfile') return 'docker';
     if (base === 'schema.prisma' || base.startsWith('drizzle.config.')) return 'database';
-    if (base === 'requirements.txt' || base === 'pyproject.toml') return 'fastapi';
 
     return null;
   }
@@ -722,14 +721,15 @@ class CanonicalResolver {
 
     // 2. Collect Evidence
     const evidenceBySkill = new Map(); // skillId -> Evidence[]
-    const deprecatedMap = { ...DEPRECATED_ALIASES, ...(this.registry?.deprecatedAliases || {}) };
+    const deprecatedMap = Object.assign(Object.create(null), DEPRECATED_ALIASES, this.registry?.deprecatedAliases || {});
 
     // With installedOnly, only skills present in this project's registry can be selected; a skill whose
     // body is not installed cannot be exported, so recommending it would be a dead end.
     const installedIds = new Set(Object.keys(this.registry?.skills || {}));
     const installedOnly = Boolean(request.installedOnly);
     const addEvidence = (id, kind, weight, reason) => {
-      const registeredId = this.registry?.aliases?.[id] || id;
+      const aliases = this.registry?.aliases || {};
+      const registeredId = installedIds.has(id) ? id : (Object.hasOwn(aliases, id) ? aliases[id] : id);
       let resolvedId = registeredId;
       if (deprecatedMap[registeredId]) {
         resolvedId = deprecatedMap[registeredId];
@@ -743,11 +743,12 @@ class CanonicalResolver {
         }
       }
 
-      if (resolvedId === 'security' && ['keyword', 'file_glob', 'explicit', 'safety_required'].includes(kind)) {
+      const requiresSafety = resolvedId === 'security' && ['keyword', 'file_glob', 'explicit', 'safety_required'].includes(kind);
+      if (requiresSafety) {
         if (profileExcluded.delete(resolvedId)) {
           warnings.push({ code: 'CTX_REQUIRED_SECURITY_PROFILE_CONFLICT', message: 'Task safety guidance overrides the profile exclusion of security.' });
         }
-        kind = 'safety_required';
+        if (kind !== 'explicit') kind = 'safety_required';
       }
       if (profileExcluded.has(resolvedId)) return;
       if (installedOnly && !installedIds.has(resolvedId)) {
@@ -759,6 +760,10 @@ class CanonicalResolver {
       }
       if (!evidenceBySkill.has(resolvedId)) evidenceBySkill.set(resolvedId, []);
       evidenceBySkill.get(resolvedId).push({ kind, weight, reason });
+      if (requiresSafety && kind === 'explicit') {
+        // Keep explicit intent for conflict diagnostics without double scoring.
+        evidenceBySkill.get(resolvedId).push({ kind: 'safety_required', weight: 0, reason: 'Required safety guidance for explicitly requested security skill' });
+      }
     };
 
     // Workspace Evidence Graph
@@ -837,7 +842,7 @@ class CanonicalResolver {
     }
 
     // Scan registry skills signals (or built-in fallback)
-    const skillsDict = this.registry?.skills || {};
+    const skillsDict = Object.assign(Object.create(null), this.registry?.skills || {});
     const skillIds = Object.keys(skillsDict);
 
     for (const id of skillIds) {
@@ -851,6 +856,7 @@ class CanonicalResolver {
 
       // Exact alias match
       for (const alias of signals.aliases || []) {
+        if (installedIds.has(alias.toLowerCase()) && alias.toLowerCase() !== id) continue;
         const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         if (matchesTaskPhrase(taskLower, escaped)) {
           addEvidence(id, 'alias', WEIGHTS.EXACT_ALIAS, `Exact alias match "${alias}" in task description`);
@@ -892,7 +898,7 @@ class CanonicalResolver {
       { id: 'testing', re: /\b(vitest|jest|playwright|tdd|bdd|e2e)\b|тестирован|покрыти|юнит|тест/i, w: 40, kw: 'testing' },
       { id: 'performance', re: /\b(performance|latency|lcp|cls|inp|core\s*web\s*vitals)\b|производительн|ускор|быстр|throughput/i, w: 40, kw: 'performance' },
       { id: 'docker', re: /\b(docker|dockerfile|compose)\b|докер/i, w: 40, kw: 'docker' },
-      { id: 'fastapi', re: /\b(fastapi|pydantic|uvicorn)\b|питон/i, w: 40, kw: 'fastapi' },
+      { id: 'fastapi', re: /\b(fastapi|pydantic|uvicorn)\b/i, w: 40, kw: 'fastapi' },
       { id: 'nestjs', re: /\b(nestjs|@nestjs)\b|нест/i, w: 40, kw: 'nestjs' },
       { id: 'node', re: /\b(node|node\.js|nodejs|express|fastify)\b|бэкенд|эндпоинт/i, w: 35, kw: 'node' },
       { id: 'ddd', re: /\b(ddd|domain-?driven|bounded\s*context)\b|агрегат|домен/i, w: 40, kw: 'ddd' },
@@ -927,7 +933,6 @@ class CanonicalResolver {
       { id: 'security', re: /\bauth\b|\bsecurity\b/i, w: 60 },
       { id: 'testing', re: /\.(test|spec)\.(ts|js|tsx|jsx|py)$|vitest\.config\.|playwright\.config\./i, w: 70 },
       { id: 'docker', re: /Dockerfile|docker-compose\./i, w: 70 },
-      { id: 'fastapi', re: /\.py$|requirements\.txt$|pyproject\.toml$/i, w: 60 },
       { id: 'nestjs', re: /nest-cli\.json$/i, w: 70 },
       { id: 'graphify', re: /graph\.json$|GRAPH_REPORT\.md$/i, w: 70 },
       { id: 'vercel-optimize', re: /vercel\.json$/i, w: 70 },
@@ -1027,6 +1032,19 @@ class CanonicalResolver {
       }
     }
 
+    // Foundations are roots, not a late append: apply exactly the same profile,
+    // prerequisite and conflict rules before planning their budget clusters.
+    const plannedPhase = resolvePhaseAndRole(explicitPhase, task, []).phase.value;
+    const baseSkills = ['engineering-workflow'];
+    if (risk.value !== 'routine' && plannedPhase === 'Build') baseSkills.push('ponytail-mindset');
+    for (const id of baseSkills) {
+      if (!skillsDict[id] || profileExcluded.has(id)) continue;
+      const reason = { kind: 'foundation', weight: 100, reason: 'Core skill' };
+      const existing = initialSelection.find(c => c.id === id);
+      if (existing) existing.reasons.push(reason);
+      else initialSelection.push({ id, score: 100, priorityScore: 1000, reasons: [reason] });
+    }
+
     // 5. Dependency Graph Setup
     const depGraph = this.registry?.dependencyGraph || {
       react: ['typescript'],
@@ -1054,19 +1072,23 @@ class CanonicalResolver {
         displayName: skillsDict[item.id]?.displayName || item.id,
         score: item.score,
         priorityScore: item.priorityScore,
-        reasons: item.reasons,
+        reasons: [...item.reasons],
         requiredBy: [],
         estimatedTokens: estTokens,
       });
     }
 
-    // Populate required dependencies in closureMap
+    // Keep independently qualified roots distinct from dependency-only entries.
+    const selectionRoots = new Map(initialSelection.filter(cand => closureMap.has(cand.id)).map(cand => [cand.id, cand]));
+
+    // Populate required dependencies in closureMap, inheriting root precedence.
     for (const cand of initialSelection) {
       if (!closureMap.has(cand.id)) continue;
       const reqs = requiredBy(cand.id);
       for (const reqId of reqs) {
         if (closureMap.has(reqId)) {
           const entry = closureMap.get(reqId);
+          entry.priorityScore = Math.max(entry.priorityScore, cand.priorityScore);
           if (!entry.requiredBy.includes(cand.id)) {
             entry.requiredBy.push(cand.id);
             entry.reasons.push({ kind: 'dependency', weight: 100, reason: `Required by "${cand.id}"` });
@@ -1078,7 +1100,7 @@ class CanonicalResolver {
             id: reqId,
             displayName: skillsDict[reqId]?.displayName || reqId,
             score: 100,
-            priorityScore: 800,
+            priorityScore: cand.priorityScore,
             reasons: [{ kind: 'dependency', weight: 100, reason: `Required by "${cand.id}"` }],
             requiredBy: [cand.id],
             estimatedTokens: estTokens,
@@ -1089,16 +1111,29 @@ class CanonicalResolver {
 
     // 6. Conflict Resolution Policy
     const conflicts = [];
+    const hasExplicitRoot = item => [item.id, ...item.requiredBy].some(rootId =>
+      selectionRoots.get(rootId)?.reasons.some(r => r.kind === 'explicit'));
     for (const [id, item] of closureMap.entries()) {
       const skillConflicts = skillsDict[id]?.dependencies?.conflicts || [];
       for (const confId of skillConflicts) {
+        if (!closureMap.has(id)) break;
         if (closureMap.has(confId)) {
           const other = closureMap.get(confId);
           const itemExplicit = item.reasons.some(r => r.kind === 'explicit');
           const otherExplicit = other.reasons.some(r => r.kind === 'explicit');
+          const itemSafety = item.reasons.some(r => r.kind === 'safety_required');
+          const otherSafety = other.reasons.some(r => r.kind === 'safety_required');
 
           if (itemExplicit && otherExplicit) {
             conflicts.push({ skillA: id, skillB: confId, resolution: 'error', reason: `Both conflicting skills "${id}" and "${confId}" were explicitly requested` });
+          } else if ((itemSafety && otherExplicit) || (otherSafety && itemExplicit)) {
+            conflicts.push({ skillA: id, skillB: confId, resolution: 'error', reason: `Required safety guidance conflicts with explicitly requested skill "${itemExplicit ? id : confId}"` });
+          } else if (itemSafety && !otherSafety) {
+            closureMap.delete(confId);
+            excluded.push({ id: confId, reasonCode: 'conflict', details: `Conflicted with required safety skill "${id}"` });
+          } else if (!itemSafety && otherSafety) {
+            closureMap.delete(id);
+            excluded.push({ id, reasonCode: 'conflict', details: `Conflicted with required safety skill "${confId}"` });
           } else if (itemExplicit && !otherExplicit) {
             closureMap.delete(confId);
             excluded.push({ id: confId, reasonCode: 'conflict', details: `Conflicted with explicitly requested skill "${id}"` });
@@ -1106,8 +1141,11 @@ class CanonicalResolver {
             closureMap.delete(id);
             excluded.push({ id, reasonCode: 'conflict', details: `Conflicted with explicitly requested skill "${confId}"` });
           } else {
-            // Compare priority/score
-            if (item.priorityScore >= other.priorityScore) {
+            // Prerequisites carry their roots' intent, without pretending the
+            // prerequisite itself was explicitly requested (diagnostics above).
+            const itemRootExplicit = hasExplicitRoot(item);
+            const otherRootExplicit = hasExplicitRoot(other);
+            if (itemRootExplicit !== otherRootExplicit ? itemRootExplicit : item.priorityScore >= other.priorityScore) {
               closureMap.delete(confId);
               excluded.push({ id: confId, reasonCode: 'conflict', details: `Conflicted with higher-priority skill "${id}"` });
             } else {
@@ -1122,6 +1160,7 @@ class CanonicalResolver {
     // Evict dependents of a rejected prerequisite as well. Budget admission
     // must never reconstruct a dependency that conflict resolution removed.
     const conflictExcluded = new Set(excluded.filter(item => item.reasonCode === 'conflict').map(item => item.id));
+    const blockedRoots = new Map();
     for (const [id, item] of closureMap) {
       const blocked = requiredBy(id).find(dep => conflictExcluded.has(dep));
       if (!blocked) continue;
@@ -1129,7 +1168,7 @@ class CanonicalResolver {
       conflictExcluded.add(id);
       excluded.push({ id, reasonCode: 'conflict', details: `Required dependency "${blocked}" was excluded by conflict resolution` });
       if (item.reasons.some(r => ['explicit', 'profile_required', 'safety_required'].includes(r.kind))) {
-        conflicts.push({ skillA: id, skillB: blocked, resolution: 'error', reason: `Required skill "${id}" cannot be selected without conflicting dependency "${blocked}"` });
+        blockedRoots.set(id, blocked);
       }
     }
     const neededIds = new Set();
@@ -1142,31 +1181,72 @@ class CanonicalResolver {
       if (!neededIds.has(id)) closureMap.delete(id);
     }
 
-    // 7. Token Budget Planner & Capability Clustering
-    const plannedPhase = resolvePhaseAndRole(explicitPhase, task, []).phase.value;
-    const BASE_SKILLS = ['engineering-workflow'];
-    if (risk.value !== 'routine' && plannedPhase === 'Build') BASE_SKILLS.push('ponytail-mindset');
-    for (let i = BASE_SKILLS.length - 1; i >= 0; i--) {
-      if (!skillsDict[BASE_SKILLS[i]]) BASE_SKILLS.splice(i, 1);
+    // A rejected root can leave prerequisites that evicted other roots before
+    // becoming orphans. Reconsider those roots against the surviving clusters,
+    // restoring only complete, mutually compatible dependency closures.
+    const explicitRoot = root => Number(root.reasons.some(reason => reason.kind === 'explicit'));
+    const rejectedRoots = [...selectionRoots.values()].filter(root => !closureMap.has(root.id))
+      .sort((a, b) => explicitRoot(b) - explicitRoot(a) || b.priorityScore - a.priorityScore || b.score - a.score || a.id.localeCompare(b.id));
+    for (const root of rejectedRoots) {
+      const cluster = [root.id, ...requiredBy(root.id)];
+      const combined = new Set([...closureMap.keys(), ...cluster]);
+      const clusterIds = new Set(cluster);
+      const incompatible = [...combined].some(id =>
+        (skillsDict[id]?.dependencies?.conflicts || []).some(other =>
+          combined.has(other) && (clusterIds.has(id) || clusterIds.has(other))));
+      if (incompatible) continue;
+      for (const id of cluster) {
+        if (!closureMap.has(id)) {
+          closureMap.set(id, {
+            id, displayName: skillsDict[id]?.displayName || id,
+            estimatedTokens: skillsDict[id]?.estimatedTokens || 1000,
+          });
+        }
+      }
+      for (let i = excluded.length - 1; i >= 0; i--) {
+        if (clusterIds.has(excluded[i].id)) excluded.splice(i, 1);
+      }
     }
-    let baseTokens = 0;
-
-    for (const baseId of BASE_SKILLS) {
-      if (!profileExcluded.has(baseId)) {
-        baseTokens += skillsDict[baseId]?.estimatedTokens || 800;
+    for (const [id, blocked] of blockedRoots) {
+      if (!closureMap.has(id)) {
+        conflicts.push({ skillA: id, skillB: blocked, resolution: 'error', reason: `Required skill "${id}" cannot be selected without conflicting dependency "${blocked}"` });
       }
     }
 
-    // Foundation bodies occupy the same budget as task-specific skills.
-    let allocatedDynamicTokens = baseTokens;
+    // Remove inherited intent from rejected roots, including when a shared
+    // prerequisite also qualifies independently. Budget ordering uses only
+    // surviving roots' scores and reasons.
+    const survivingRoots = [...closureMap.keys()].filter(id => selectionRoots.has(id));
+    for (const [id, item] of closureMap) {
+      const root = selectionRoots.get(id);
+      item.score = root?.score ?? 100;
+      item.priorityScore = root?.priorityScore ?? 0;
+      item.reasons = [...(root?.reasons || [])];
+      item.requiredBy = [];
+    }
+    for (const id of survivingRoots) {
+      for (const dep of requiredBy(id)) {
+        const entry = closureMap.get(dep);
+        entry.priorityScore = Math.max(entry.priorityScore, selectionRoots.get(id).priorityScore);
+        entry.requiredBy.push(id);
+        entry.reasons.push({ kind: 'dependency', weight: 100, reason: `Required by "${id}"` });
+      }
+    }
+
+    // 7. Token Budget Planner & Capability Clustering
+    // Count each admitted body once, including foundations and prerequisites.
+    let allocatedDynamicTokens = 0;
     const admitted = new Map(); // id -> candidate entry
 
     // Separate mandatory vs optional candidates
     const mandatoryCandidates = [];
     const optionalCandidates = [];
 
+    // Only qualified roots are admission candidates. Dependency-only entries
+    // are admitted atomically with a surviving root, never on their own.
     for (const cand of closureMap.values()) {
-      const isMandatory = cand.reasons.some(r => r.kind === 'explicit' || r.kind === 'profile_required' || r.kind === 'safety_required');
+      if (!selectionRoots.has(cand.id)) continue;
+      const isMandatory = cand.reasons.some(r => ['explicit', 'profile_required', 'safety_required', 'foundation'].includes(r.kind));
       if (isMandatory) {
         mandatoryCandidates.push(cand);
       } else {
@@ -1195,9 +1275,7 @@ class CanonicalResolver {
           estimatedTokens: closureMap.get(sId)?.estimatedTokens || Math.min(skillsDict[sId]?.estimatedTokens || 1000, BUDGET_TIERS.SKILL_BODY),
         };
         admitted.set(sId, entry);
-        if (!BASE_SKILLS.includes(sId)) {
-          allocatedDynamicTokens += entry.estimatedTokens;
-        }
+        allocatedDynamicTokens += entry.estimatedTokens;
       }
 
       if (allocatedDynamicTokens > budgetTokens) {
@@ -1234,7 +1312,6 @@ class CanonicalResolver {
       }
 
       const clusterCost = unadmittedCluster.reduce((sum, sId) => {
-        if (BASE_SKILLS.includes(sId)) return sum;
         return sum + (closureMap.get(sId)?.estimatedTokens || Math.min(skillsDict[sId]?.estimatedTokens || 1000, BUDGET_TIERS.SKILL_BODY));
       }, 0);
 
@@ -1261,24 +1338,9 @@ class CanonicalResolver {
       }
     }
 
-    // 8. Foundational skills integration
+    // 8. Final set: never reintroduce a root rejected by closure or conflicts.
     const finalSelected = Array.from(admitted.values());
     const allSelectedIds = finalSelected.map(s => s.id);
-
-    for (const baseId of BASE_SKILLS) {
-      if (!profileExcluded.has(baseId) && !allSelectedIds.includes(baseId)) {
-        allSelectedIds.unshift(baseId);
-        finalSelected.unshift({
-          id: baseId,
-          displayName: skillsDict[baseId]?.displayName || baseId,
-          score: 100,
-          priorityScore: 1000,
-          reasons: [{ kind: 'foundation', weight: 100, reason: 'Core skill' }],
-          requiredBy: [],
-          estimatedTokens: skillsDict[baseId]?.estimatedTokens || 800,
-        });
-      }
-    }
 
     const totalSelectedTokens = finalSelected.reduce((sum, skill) => sum + skill.estimatedTokens, 0);
     for (const skill of finalSelected) {
@@ -1476,7 +1538,7 @@ class CanonicalResolver {
         skills.push({
           name: id,
           description: s.description || `ContextOS skill for ${s.displayName || id}`,
-          path: s.source ? `${s.source.replace(/\\/g, '/')}/${s.entrypoint || 'SKILL.md'}` : `.agents/core/skills/${id}/SKILL.md`,
+          path: s.source ? path.posix.join(path.posix.dirname(s.source.replace(/\\/g, '/')), s.entrypoint || 'SKILL.md') : `.agents/core/skills/${id}/SKILL.md`,
         });
       }
       return skills.sort((a, b) => a.name.localeCompare(b.name));

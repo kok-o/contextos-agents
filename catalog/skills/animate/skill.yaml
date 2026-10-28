@@ -1,0 +1,33 @@
+schemaVersion: 2
+id: animate
+name: animate
+version: 1.0.0
+description: Implement purposeful web animations and transitions, including
+  interruption, exit behavior and reduced-motion support.
+category: ui
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: animate
+      locale: en
+      weight: 40
+    - value: animation
+      locale: en
+      weight: 40
+    - value: transition
+      locale: en
+      weight: 40
+    - value: анимация
+      locale: ru
+      weight: 40
+    - value: анимацию
+      locale: ru
+      weight: 40
+    - value: переход
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json
+  - references/motion.md

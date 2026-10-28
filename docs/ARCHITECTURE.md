@@ -6,9 +6,10 @@ The stable `contextos-agents` package manages version-controlled engineering
 rules for supported AI coding agents. It validates rule sources, renders
 agent-native files, and detects when those files no longer match their sources.
 
-The MCP server is a separate beta package, frozen at read-only inspection. Agent
-orchestration and code-execution runtime features are experimental and are not
-part of the stable core contract.
+The MCP server is an optional separate package, maintained only for security and
+compatibility. Existing orchestration and execution features are experimental;
+they are not expanded during the freeze or covered by the core contract. Resuming
+development requires a separate decision and a confirmed user scenario.
 
 ## What lives where
 
@@ -87,9 +88,14 @@ separate; passing this gate does not establish application correctness.
 
 ## Separate packages and experimental features
 
-The read-only MCP server is maintained in `contextos-mcp`. Task routing, subagent
+The read-only MCP server is maintained in `contextos-mcp`. Core stable and core
+RC releases have dedicated identities, tags and workflows. Migration of MCP to
+its own maintenance workflow and checked standalone source copies is separate
+work; this core preparation does not change MCP. Task routing, subagent
 orchestration and execution sandboxes are experimental; they carry separate
-requirements and guarantees from the stable core. The core's plugin supply-chain
-check is built from `contextos-mcp/src/plugins` into a single committed file,
-`.agents/transaction-core/plugin-supply-chain-bundle.js`; regenerate it with
-`npm run build:supply-chain` in `contextos-mcp` (see [CONTRIBUTING](../CONTRIBUTING.md)).
+requirements and guarantees from the stable core. Core builds its plugin
+supply-chain check from `.agents/transaction-core/supply-chain-src` into
+`.agents/transaction-core/plugin-supply-chain-bundle.js` without reading or
+building the MCP checkout. Companion source synchronization and IPC lock copies
+are optional tooling for a separately reviewed MCP maintenance change.
+See [CONTRIBUTING](../CONTRIBUTING.md) and [release instructions](RELEASE_PROCESS.md).

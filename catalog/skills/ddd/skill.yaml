@@ -1,10 +1,13 @@
 schemaVersion: 2
 id: ddd
-name: Domain-Driven Design
+name: ddd
 category: architecture
 type: instruction-only
 requires: []
-optional: [microservices, system-design]
+optional:
+  - microservices
+  - system-design
+  - database
 conflicts: []
 weight: 6
 resources:
@@ -12,3 +15,8 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Use domain modeling, aggregate boundaries and explicit invariants
+  where business complexity justifies them.
+signals:
+  aliases:
+    - domain-driven-design

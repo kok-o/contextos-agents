@@ -1,39 +1,13 @@
-# web-accessibility Examples - Anti-patterns vs ContextOS Standard
+# web-accessibility scenarios
 
-## Example 1: Semantic Buttons vs Clickable Divs
+## In scope
 
-### Anti-pattern: Clickable Div
+The dialog, focus CSS and form blocks below are partial implementation patterns. The local fixture simulates selected transitions and parses syntax; it does not certify real keyboard focus or assistive-technology behavior.
 
-```tsx
-// BAD: Cannot be focused with Tab, does not respond to Enter or Space, silent to screen readers
-<div className="button" onClick={handleSubmit}>Submit</div>
-```
+## Verification
 
-### Best practice: ContextOS Standard (Semantic Button Element)
+Check names, labels, focus order/restoration, relevant contrast and reflow.
 
-```tsx
-// GOOD: Keyboard focusable, native Enter/Space handling, properly announced by assistive tech
-<button type="button" onClick={handleSubmit} className="btn btn-primary">
-  Submit
-</button>
-```
+Separate static checks, simulated transitions, real-browser and assistive-technology evidence.
 
----
-
-## Example 2: Icon-only Buttons
-
-### Anti-pattern: Unlabelled Icon Button
-
-```tsx
-// BAD: Screen reader announces "button", user has zero idea what it does
-<button onClick={onClose}><XIcon /></button>
-```
-
-### Best practice: ContextOS Standard (Accessible Label)
-
-```tsx
-// GOOD: Explicit aria-label and hidden decorative icon
-<button type="button" onClick={onClose} aria-label="Close modal window">
-  <XIcon aria-hidden="true" />
-</button>
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

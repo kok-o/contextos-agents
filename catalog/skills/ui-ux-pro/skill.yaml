@@ -2,13 +2,18 @@ schemaVersion: 2
 name: ui-ux-pro
 category: design
 type: instruction-only
-description: >
-  Professional UI/UX design skill with strict anti-pattern enforcement.
-  Prevents AI slop design, enforces accessibility standards, semantic
-  color palettes, proper spacing, and bans overused design clichés.
+description: Design or review product interaction flows, information structure,
+  interface states and usable task completion.
 version: 1.0.0
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: ui-ux-pro
+optional:
+  - frontend-design
+  - web-design-guidelines
+  - webapp-testing
+requires: []
+activation: auto

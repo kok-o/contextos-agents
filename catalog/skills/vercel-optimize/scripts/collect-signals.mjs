@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 /**
  * collect-signals.mjs
- * Collects or simulates 14-day production telemetry signals for Vercel projects.
+ * Imports supplied observations or generates explicitly labeled demonstration data.
+ * Live telemetry collection is not implemented.
  *
  * Usage:
  *   node scripts/collect-signals.mjs [projectId] [--window <days>] [--out <file>] [--help]
  */
 
-import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { normalizeSignals, readJson } from './signals-format.mjs';
 
 function printHelp() {
   console.log(`
@@ -18,10 +20,12 @@ Usage:
   node scripts/collect-signals.mjs [projectId] [options]
 
 Arguments:
-  projectId              Optional Vercel project ID or slug (default: auto-detected from .vercel/project.json)
+  projectId              Optional expected project ID; imported observations must match it
 
 Options:
-  --window <days>        Window in days for metric collection (default: 14)
+  --input <file>         Import supplied observations; does not fetch live telemetry
+  --demo                 Explicitly generate synthetic demonstration data
+  --window <days>        Positive integer window for demo data only (default: 14)
   --out <file>           Output file path (default: stdout)
   --help, -h             Show this help message
 `);
@@ -36,37 +40,51 @@ if (args.includes('--help') || args.includes('-h')) {
 let projectId = null;
 let windowDays = 14;
 let outFile = null;
-
-for (let i = 0; i < args.length; i++) {
-  const arg = args[i];
-  if (arg === '--window' && i + 1 < args.length) {
-    windowDays = parseInt(args[++i], 10) || 14;
-  } else if (arg === '--out' && i + 1 < args.length) {
-    outFile = args[++i];
-  } else if (!arg.startsWith('-') && !projectId) {
-    projectId = arg;
-  }
-}
-
-if (!projectId) {
-  const localProjectJson = resolve(process.cwd(), '.vercel', 'project.json');
-  if (existsSync(localProjectJson)) {
-    try {
-      const parsed = JSON.parse(readFileSync(localProjectJson, 'utf8'));
-      projectId = parsed.projectId || parsed.name || 'local-vercel-project';
-    } catch {
-      projectId = 'local-vercel-project';
+let inputFile = null;
+let demo = false;
+try {
+  const seen = new Set();
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('-')) {
+      if (seen.has(arg)) throw new Error('Duplicate option: ' + arg);
+      seen.add(arg);
+      if (arg === '--demo') { demo = true; continue; }
+      if (!['--window', '--out', '--input'].includes(arg)) throw new Error('Unknown option: ' + arg);
+      const value = args[++i];
+      if (!value || value.startsWith('--')) throw new Error('Missing value for ' + arg);
+      if (arg === '--window') {
+        if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) {
+          throw new Error('--window must be a positive integer');
+        }
+        windowDays = Number(value);
+      } else if (arg === '--input') inputFile = value;
+      else outFile = value;
+    } else {
+      if (projectId) throw new Error('Only one project ID is supported');
+      projectId = arg;
     }
-  } else {
-    projectId = 'local-vercel-project';
   }
-}
+  if (inputFile) {
+    if (demo || seen.has('--window')) throw new Error('Do not combine imported observations with demo/window relabeling');
+    const supplied = normalizeSignals(readJson(inputFile));
+    if (projectId && projectId !== supplied.projectId) throw new Error('Supplied projectId does not match the requested project');
+    const output = JSON.stringify({ timestamp: new Date().toISOString(), ...supplied }, null, 2);
+    if (outFile) writeFileSync(outFile, output, 'utf8');
+    else console.log(output);
+    process.exit(0);
+  }
+  if (!demo) throw new Error('Provide --input FILE or explicit --demo; live telemetry collection is not implemented.');
+} catch (error) { console.error(error.message); process.exit(1); }
+projectId ||= 'demo-project';
 
 const signals = {
   timestamp: new Date().toISOString(),
   projectId,
   windowDays,
-  telemetrySource: 'vercel-metrics-v1',
+  telemetrySource: 'synthetic-demo',
+  synthetic: true,
+  provenanceVerified: false,
   metrics: {
     totalInvocations: 1250400,
     averageDurationMs: 245,

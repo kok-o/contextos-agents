@@ -51,6 +51,7 @@ function printHelp() {
   console.log('  validate                        Validate skill sources, frontmatter, deps & sync');
   console.log('  clean-worktrees                 Clean up lingering .swarm-worktrees and swarm/* branches');
   console.log('  recover [--status|--rollback|--resume] [id] Inspect or recover an interrupted transaction');
+  console.log('  recover --unlock --force        Clear an abandoned lock after stopping all writers and watchers');
   console.log('  doctor                          Run project diagnostic health check');
   console.log('  stats                           Estimate the installed rule payload size');
   console.log('  watch                           Start continuous file watcher and auto-sync daemon');
@@ -68,8 +69,8 @@ function printHelp() {
   console.log('  username/repo                    GitHub repo root SKILL.md');
   console.log('  username/repo@commit             GitHub repo pinned to a commit');
   console.log('  username/repo/path/to/skill      GitHub subpath skill');
-  console.log('  npm-package-name                 npm package');
-  console.log('  @scope/npm-package               scoped npm package');
+  console.log('  npm-package-name@1.2.3           npm package pinned to an exact version');
+  console.log('  @scope/npm-package@1.2.3         scoped npm package pinned to an exact version');
   console.log('');
   console.log('Examples:');
   console.log('  node .agents/ctx.js resolve "Build an accessible modal component"');
@@ -118,7 +119,7 @@ if (command === 'export') {
       }
       if (!isCheck && !isDryRun && !isDiff) {
         profiles.applyProfile(overrideProfile);
-        console.log(`[PROFILE] Applied profile '${overrideProfile}' for this export.\n`);
+        if (!asJson) console.log(`[PROFILE] Applied profile '${overrideProfile}' for this export.\n`);
       }
     } catch (err) {
       console.error(`[ERROR] ${err.message}`);
@@ -208,8 +209,8 @@ if (command === 'export') {
   }
 
   // 4. Live Export Execution
-  if (rawTarget === 'all' || rawTarget.includes(',')) {
-    console.log(`Starting pure compiler export for ${rawTarget} adapters...`);
+  if (rawTarget === 'all' || rawTarget.includes(',') || (asJson && pureCompiler.getAdapter(rawTarget))) {
+    if (!asJson) console.log(`Starting pure compiler export for ${rawTarget} adapters...`);
     const rendered = pureCompiler.renderAdapters(process.cwd(), rawTarget, { profile: overrideProfile });
 
     if (rendered.collisions.length > 0) {
@@ -473,11 +474,23 @@ if (command === 'export') {
 // ── index ─────────────────────────────────────────────────────────────────────
 } else if (command === 'index') {
   const resolver = require('./resolver.js');
-  const index = resolver.buildSkillIndex(process.cwd());
   const fs = require('fs');
-  const indexPath = path.join(process.cwd(), '.agents', 'skills-index.json');
-  fs.writeFileSync(indexPath, JSON.stringify({ version: '1.0.0', skills: index }, null, 2) + '\n');
-  console.log(`\nGenerated progressive skills index with ${index.length} skills → .agents/skills-index.json\n`);
+  const { resolveManagedPath, ProjectMutationLock, JournaledTransaction, computeExactHash } = require('./filesystem/index.js');
+  const root = process.cwd();
+  const relativePath = '.agents/skills-index.json';
+  const { resolvedPath } = resolveManagedPath(root, relativePath);
+  const lock = new ProjectMutationLock(root);
+  const token = lock.acquire({ command: 'index' });
+  try {
+    const expectedBeforeHash = fs.existsSync(resolvedPath) ? computeExactHash(fs.readFileSync(resolvedPath)) : 'NONE';
+    const index = resolver.buildSkillIndex(root);
+    const tx = new JournaledTransaction(root);
+    tx.stageWrite(relativePath, JSON.stringify({ version: '1.0.0', skills: index }, null, 2) + '\n', { expectedBeforeHash });
+    tx.commit();
+    console.log(`\nGenerated progressive skills index with ${index.length} skills → .agents/skills-index.json\n`);
+  } finally {
+    lock.release(token);
+  }
 
 // ── detect ────────────────────────────────────────────────────────────────────
 } else if (command === 'detect') {
@@ -653,12 +666,12 @@ if (command === 'export') {
   if (subcommand === 'add') {
     const isAll = args.includes('--all') || ref === '--all' || ref === 'all';
     const forceUnsafe = args.includes('--force-unsafe-prompts') || args.includes('--force-unsafe');
-    plugins.add(isAll ? '--all' : ref, { dryRun, checksum, forceUnsafe, allowFloating: args.includes('--allow-floating'), all: isAll }).catch(err => {
+    plugins.add(isAll ? '--all' : ref, { dryRun, checksum, forceUnsafe, force: args.includes('--force'), allowFloating: args.includes('--allow-floating'), all: isAll }).catch(err => {
       console.error(`[ERROR] ${err.message}`);
       process.exit(1);
     });
   } else if (subcommand === 'remove') {
-    plugins.remove(ref);
+    plugins.remove(ref, { force: args.includes('--force') });
   } else if (subcommand === 'list') {
     const available = args.includes('--available') || args.includes('-a') || args.includes('--all');
     plugins.list({ available });

@@ -1,38 +1,13 @@
-# microservices Examples - Anti-patterns vs ContextOS Standard
+# microservices scenarios
 
-## Example 1: Inter-service Communication
+## In scope
 
-### Anti-pattern: Synchronous HTTP Call Chains (The Distributed Monolith)
+An order/payment flow records which component owns each state transition and what happens if payment succeeds but notification fails. Verify replay and compensation behavior; do not claim exactly-once effects from a message ID alone.
 
-```text
-User -> OrderService (HTTP) -> InventoryService (HTTP) -> PaymentService (HTTP) -> EmailService (HTTP)
-Problem: High latency, 99.9% availability compounding to 96% overall availability, cascading failure.
-```
+## Verification
 
-### Best practice: ContextOS Standard (Asynchronous Event Choreography)
+Exercise relevant timeout, duplicate, partial-failure and recovery paths.
 
-```text
-User -> OrderService (creates order with status 'PENDING')
-OrderService publishes 'OrderPlaced' event to Event Broker (Kafka/RabbitMQ)
-  ├── InventoryService consumes 'OrderPlaced' -> Reserves stock
-  ├── PaymentService consumes 'OrderPlaced' -> Charges customer
-  └── NotificationService consumes 'PaymentProcessed' -> Sends confirmation email
-```
+Verify contract compatibility and authorization across the actual boundary.
 
----
-
-## Example 2: Database Architecture
-
-### Anti-pattern: Shared Database Across Multiple Microservices
-
-```text
-BAD: OrderService and UserService both directly read and write to the same 'users' table.
-Schema migrations in UserService immediately break OrderService.
-```
-
-### Best practice: ContextOS Standard (Database-per-Service)
-
-```text
-GOOD: UserService owns user data. OrderService maintains a local read-model (denormalized user info)
-synchronized via 'UserUpdated' events. Each service can migrate and scale independently.
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

@@ -22,6 +22,8 @@ Substantive implementation, refactoring, and reviews of complexity. Skip for typ
 
 Before adding code, consider YAGNI, project reuse, the standard library, native platform features, installed dependencies, a readable one-liner, then the minimum maintainable code. Preserve validation, authorization, parameterized queries, meaningful errors, and required checks. Single-use helpers are allowed when they clarify a concept or boundary.
 
+Minimize implementation complexity, not the requested behavior. Include the caller wiring, configuration, and failure handling actually needed for the change to work; an unused helper or placeholder is not a completed integration. Do not add layers the task does not need.
+
 Read [references/minimalism.md](../../.agents/core/skills/ponytail-mindset/references/minimalism.md) when a tradeoff needs detail.
 
 ## Code Examples

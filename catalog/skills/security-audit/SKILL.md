@@ -1,91 +1,46 @@
 ---
 name: security-audit
-description: Security guidance and vulnerability review for codebases, APIs, and services. Orchestrates adversarial hunting and independent verification with sandbox write isolation and evidence ledgers.
+description: Review concrete security boundaries and validate findings with
+  scoped evidence, using an expanded audit workflow only when appropriate.
 ---
 
-# Security Audit
+# security-audit
 
-Find vulnerabilities that violate a real trust boundary, then give owners source evidence, safe reproduction, priority, and the smallest effective fix. This is a defensive, source-first workflow inspired by Cloudflare's security audit architecture.
+## Overview
 
-## Operating Modes
+Review concrete security boundaries and validate findings with scoped evidence, using an expanded audit workflow only when appropriate. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
-This skill operates in two distinct modes:
+## When to Use
 
-- **Guidance Mode**: For security questions, focused reviews, threat modeling, or triage of specific components, use only the relevant parts of this skill. Do not automatically create audit directories or write audit artifacts.
-- **Full Audit Mode**: Use the complete workflow when explicitly requested to audit, pen-test, or perform an end-to-end security review of a repository. Run all phases and generate structured artifacts.
+Security questions, threat modeling, focused vulnerability review or an explicitly requested broader audit. A routine fix does not automatically require a multi-agent audit.
 
-## Adversarial Multi-Agent Audit Protocol
+## Rules & Patterns
 
-A core invariant of rigorous security auditing is adversarial verification:
+Define the assets, trust boundaries, authorized target and relevant threat model. Trace identity, ownership, untrusted inputs and sensitive operations. Distinguish a candidate concern from a demonstrated defect.
 
-1. **Separation of Hunter and Verifier**:
-   - The agent that discovers a candidate vulnerability (**Hunter**) must never be the same agent that validates it.
-   - The verifying agent (**Verifier**) starts with a fresh context and explicitly attempts to disprove each finding.
-2. **Evidence-Based Standard**:
-   - A candidate vulnerability is confirmed only if it has a complete source trace from untrusted input to a sensitive sink, along with a bounded, observable defect.
-   - If an issue cannot be definitively reproduced or disproven locally, mark it as `needs_validation` rather than creating speculative findings.
+For a finding, record the entry point, transformations, authorization decision, sink and bounded consequence. Use disposable data for reproduction. Check real filesystem containment, including link ancestors; a string prefix is not a directory boundary.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SECURITY AUDIT PIPELINE                  │
-│                                                             │
-│  Phase 1: Reconnaissance (Map trust boundaries & inputs)    │
-│                     ↓                                       │
-│  Phase 2: Coverage Hunting (Hunter agents search surfaces)  │
-│                     ↓                                       │
-│  Phase 3: Candidate Validation (Verifier agents disprove)   │
-│                     ↓                                       │
-│  Phase 4: Structured Output (findings.json & ledger)        │
-│                     ↓                                       │
-│  Phase 5: Record Verification (Final attestation review)    │
-│                     ↓                                       │
-│  Phase 6: Target-Neutral Reporting (REPORT.md)              │
-└─────────────────────────────────────────────────────────────┘
-```
+For untrusted target execution, use actual available isolation, remove credentials, limit writes and constrain network access as appropriate. A scratch directory alone is not an OS sandbox. Existing authorized development checks remain governed by the task and environment.
 
-## Universal Execution Safety & Sandbox Write Isolation
+Use independent verification when available and authorized for a consequential audit; a second role label in one model is self-review. If tools, isolation, live services or independent review are unavailable, state the resulting evidence limit and continue useful in-scope work.
 
-Target repositories must be audited without risking supply-chain compromise or data exfiltration:
+Produce artifacts proportionate to the request. A focused review can report a concise source trace and reproduction; do not create a fixed report bundle, numerical risk score or false attestation for every security question.
 
-- **Read-Only Target Code**: Source inspection is read-only. Target code must never be executed with write access to its own repository.
-- **Dedicated Scratch Root**: All target-controlled builds, tests, or reproduction scripts execute inside an isolated sandbox writing strictly to `scratch/`.
-- **Zero External Network**: Sandboxed processes must have no outbound internet access. Use isolated loopback namespaces if local client/server communication is needed.
-- **Sanitized Environment**: Clear credentials, SSH keys, cloud tokens, and parent process environments before spawning reproduction commands.
-- **Promotion to Artifacts**: Only trusted parent-side code may inspect and promote non-secret results from `scratch/` to retained `artifacts/`.
+## Code Examples
 
-## Audit Artifacts & Findings Schema
+See EXAMPLES.md for an executable existing-file containment check, its symlink/prefix regressions and its concurrency/authorization limits. The example is not a substitute for a maintained race-safe filesystem boundary.
 
-Full audits produce machine-readable and human-readable artifacts:
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
-### findings.json
-```json
-{
-  "audit_version": "1.0.0",
-  "target_repository": "example-repo",
-  "commit_hash": "a1b2c3d",
-  "findings": [
-    {
-      "id": "SEC-001",
-      "title": "Path Traversal in File Download Handler",
-      "severity": "HIGH",
-      "cwe": "CWE-22",
-      "source_trace": {
-        "source_file": "src/controllers/download.ts",
-        "source_line": 42,
-        "entry_point": "req.query.filename",
-        "sink_file": "src/services/storage.ts",
-        "sink_line": 88,
-        "sink_function": "fs.promises.readFile"
-      },
-      "verification_status": "CONFIRMED",
-      "verifier_notes": "Reproduction script proved escape from base directory using %2e%2e%2f traversal.",
-      "remediation": "Apply path.normalize and verify path.resolve starts with the designated root directory."
-    }
-  ]
-}
-```
+## Validation Checklist
 
-### Required Reports
-- `REPORT.md`: Executive summary, risk score, vulnerability distribution, and remediation priorities.
-- `FINDINGS-DETAIL.md`: Detailed technical breakdown of each confirmed finding with step-by-step reproduction and surgical diff recommendations.
-- `NEEDS-VALIDATION.md`: Potential leads that could not be conclusively verified without live cloud infrastructure or out-of-scope permissions.
+- [ ] Verify allowed and denied cases and attempt to disprove a candidate finding.
+- [ ] Separate static reasoning, local reproduction, independent review and unavailable deployment checks.
+
+## Common Mistakes
+
+Prefix-only containment; executing untrusted code with ambient credentials; presenting unverified hypotheses as confirmed vulnerabilities; claiming isolation the tools do not provide.
+
+## Integration Notes
+
+Optional companion guidance: security, engineering-workflow. Use it only when relevant and available; the skill does not install tools or authorize external actions.

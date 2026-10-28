@@ -13,7 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { LockfileV2Manager, computeExactHash, computeSemanticHash } = require('../filesystem/index.js');
+const { LockfileV2Manager, computeExactHash, computeSemanticHash, isTextMedia } = require('../filesystem/index.js');
 const { renderAdapters } = require('./pure-compiler.js');
 
 const DRIFT_STATES = {
@@ -145,9 +145,10 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
   // 5. Inspect each projected artifact against disk and lockfile
   for (const art of artifacts) {
     const fullPath = path.resolve(absRoot, art.path);
-    const projectedContent = art.content.toString('utf8');
-    const projectedExactHash = computeExactHash(art.content);
-    const projectedSemanticHash = computeSemanticHash(art.content);
+    const textLike = isTextMedia(art.mediaType);
+    const hashContent = textLike ? computeSemanticHash : computeExactHash;
+    const hashField = textLike ? 'semanticTextSha256' : 'exactSha256';
+    const projectedHash = hashContent(art.content);
 
     if (!fs.existsSync(fullPath)) {
       findings[DRIFT_STATES.MISSING_OUTPUT].push({
@@ -157,39 +158,39 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
       diffs.push({
         path: art.path,
         type: 'missing',
-        diff: `+ (new file, ${projectedContent.length} bytes)`,
+        diff: `+ (new file, ${art.content.length} bytes)`,
       });
     } else {
-      const diskContent = fs.readFileSync(fullPath, 'utf8');
-      const diskSemanticHash = computeSemanticHash(diskContent);
+      const diskContent = fs.readFileSync(fullPath);
+      const diskHash = hashContent(diskContent);
       const lockRecord = lockfile?.managedFiles?.[art.path];
 
-      if (art.requireOwnedExisting && (!lockRecord || lockRecord.generator !== art.generator || diskSemanticHash !== lockRecord.semanticTextSha256)) {
+      if (art.requireOwnedExisting && (!lockRecord || lockRecord.generator !== art.generator || diskHash !== lockRecord[hashField])) {
         findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].push({
           path: art.path,
           reason: lockRecord ? 'Managed file was modified or belongs to another generator' : 'Projected file is not managed by ContextOS',
-          diskHash: diskSemanticHash,
-          lockHash: lockRecord?.semanticTextSha256,
+          diskHash,
+          lockHash: lockRecord?.[hashField],
         });
         diffs.push({path: art.path, type: 'modified', diff: 'Existing bounded rule is not owned or has been modified'});
         continue;
       }
 
       // Check if disk matches projected render and recorded lockfile
-      const matchesProjection = diskSemanticHash === projectedSemanticHash;
+      const matchesProjection = diskHash === projectedHash;
       // Files that also hold user text are projected from their current content, so
       // the projection alone decides: the user's own lines are not part of the contract.
       const matchesLock = art.preservesUserContent || !lockRecord
         ? matchesProjection
-        : diskSemanticHash === lockRecord.semanticTextSha256;
+        : diskHash === lockRecord[hashField];
 
       if (!matchesProjection || !matchesLock) {
-        if (!art.preservesUserContent && lockRecord && lockRecord.semanticTextSha256 !== diskSemanticHash) {
+        if (!art.preservesUserContent && lockRecord && lockRecord[hashField] !== diskHash) {
           findings[DRIFT_STATES.MODIFIED_MANAGED_OUTPUT].push({
             path: art.path,
             reason: 'Managed file was modified by user on disk',
-            diskHash: diskSemanticHash,
-            lockHash: lockRecord.semanticTextSha256,
+            diskHash,
+            lockHash: lockRecord[hashField],
           });
         } else {
           findings[DRIFT_STATES.STALE_INPUT].push({
@@ -201,7 +202,9 @@ function detectDrift(projectRoot, adapters = 'all', options = {}) {
         diffs.push({
           path: art.path,
           type: 'modified',
-          diff: computeDiffSnippet(diskContent, projectedContent),
+          diff: textLike
+            ? computeDiffSnippet(diskContent.toString('utf8'), art.content.toString('utf8'))
+            : `Binary content differs\n- ${computeExactHash(diskContent)}\n+ ${computeExactHash(art.content)}`,
         });
       }
     }

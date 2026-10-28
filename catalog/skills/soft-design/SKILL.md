@@ -1,108 +1,44 @@
 ---
-name: high-end-visual-design
-description: Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.
+name: soft-design
+description: Apply a requested soft, tactile visual direction with restrained
+  surfaces, typography and motion.
 ---
 
-# Agent Skill: Principal UI/UX Architect & Motion Choreographer (Awwwards-Tier)
+# soft-design
 
 ## Overview
 
-Engineers high-end, agency-level digital experiences characterized by tactile haptic depth, cinematic spatial rhythm, obsessive micro-interactions, and fluid spring physics. Rejects generic commodity SaaS templates in favor of bespoke layout archetypes, nested double-bezel enclosures, and purposeful motion dynamics.
+Apply a requested soft, tactile visual direction with restrained surfaces, typography and motion. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-- When tasked with creating luxury, premium, Awwwards-tier landing pages, portfolio showpieces, or editorial SaaS interfaces.
-- When explicitly prompted for "soft UI", "expensive design", "Apple-level polish", or "calm aesthetics".
-- When standard component libraries feel too clinical or generic.
+The brief asks for soft, tactile or similarly expressive styling. It is not a general definition of an expensive or high-quality interface.
 
 ## Rules & Patterns
 
-### 1. Absolute Zero Directive (Strict Anti-Patterns)
+Interpret the brand and real content first. Soft surfaces, gentle depth and rounded forms can support the direction without making every component a card or reducing information hierarchy.
 
-- **Banned Fonts:** Inter, Roboto, Arial, Open Sans, Helvetica. (Use `Geist`, `Clash Display`, `PP Editorial New`, or `Plus Jakarta Sans`).
-- **Banned Icons:** Thick-stroked Lucide, FontAwesome, or Material Icons. Use ultra-light, precise line icons (Phosphor Light, Remix Line).
-- **Banned Borders & Shadows:** Generic 1px solid gray borders. Harsh dark drop shadows (`rgba(0,0,0,0.3)`).
-- **Banned Layouts:** Edge-to-edge sticky navbars glued to the top. Symmetrical 3-column Bootstrap-style grids without massive whitespace.
-- **Banned Motion:** Standard `linear` or `ease-in-out` transitions. Instant state changes without interpolation.
+Reuse suitable typography and tokens. Imported web fonts, fixed colors, blur and shadows are optional tools; consider language coverage, loading behavior and the existing product.
 
-### 2. The Creative Variance Engine
+Keep text and controls readable against layered surfaces. Test focus and state differences rather than assuming decorative depth provides an affordance or accessible contrast.
 
-Before writing code, consciously pick ONE combination:
-
-#### Vibe & Texture Archetypes
-
-1. **Ethereal Glass (SaaS / AI / Tech):** Deep OLED black (`#050505`), subtle radial mesh gradients, vantablack cards with `backdrop-blur-2xl` and white/10 hairlines.
-2. **Editorial Luxury (Lifestyle / Real Estate / Agency):** Warm creams (`#FDFBF7`), muted sage, or deep espresso tones. Variable serif headings with subtle CSS noise overlay (`opacity-[0.03]`).
-3. **Soft Structuralism (Consumer / Health / Portfolio):** Silver-grey or pure white backgrounds, bold grotesk typography, airy floating components with ultra-diffuse ambient shadows.
-
-#### Layout Archetypes
-
-1. **The Asymmetrical Bento:** Masonry CSS Grid of varying card spans. (Collapses to single-column `grid-cols-1 gap-6` on mobile).
-2. **The Z-Axis Cascade:** Stacked cards with varying depth of field and subtle `-2deg` or `3deg` rotations. (Rotations removed on mobile).
-3. **The Editorial Split:** Massive typography on the left half (`w-1/2`), with horizontal interactive card ribbons on the right.
-
-### 3. Haptic Micro-Aesthetics
-
-- **The Double-Bezel (Doppelrand):**
-  - **Outer Shell:** Wrapper `div` with subtle background (`bg-black/5` or `bg-white/5`), hairline border (`border border-white/10`), padding (`p-2`), and large outer radius (`rounded-[2rem]`).
-  - **Inner Core:** Nested card inside shell with distinct background, inner highlight (`shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]`), and mathematically concentric smaller radius (`rounded-[calc(2rem-0.5rem)]`).
-- **Button-in-Button Trailing Icon:** Pill-shaped primary buttons (`rounded-full px-6 py-3`) with trailing arrows nested inside their own dedicated circular badge (`w-8 h-8 rounded-full bg-black/5 flex items-center justify-center`).
-- **Macro-Whitespace:** Minimum `py-24` to `py-40` for section padding.
-
-### 4. Motion Choreography & Performance Guardrails
-
-- **Custom Physics:** All transitions use custom cubic-beziers: `transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]`.
-- **GPU-Safe Animation:** Animate exclusively via `transform` and `opacity`. Never animate `top`, `left`, `width`, or `height`.
-- **Blur Discipline:** Restrict `backdrop-blur` to fixed or sticky elements (navbars, modals). Never apply to scrolling containers.
+Limit costly effects to places where they help, measure when performance is in scope, and provide reduced-motion behavior. Preserve standard component semantics and useful native controls.
 
 ## Code Examples
 
-```tsx
-export function DoubleBezelCard({ title, subtitle, tag }: { title: string; subtitle: string; tag: string }) {
-  return (
-    // Outer Shell
-    <div className="p-2 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-2xl">
-      // Inner Core
-      <div className="p-8 rounded-[calc(2rem-0.5rem)] bg-[#FFFFFF] dark:bg-[#0E0E0E] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] flex flex-col justify-between min-h-[320px]">
-        <div>
-          <span className="inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] font-medium bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 mb-4">
-            {tag}
-          </span>
-          <h3 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white mb-2">{title}</h3>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">{subtitle}</p>
-        </div>
-        <button 
-          type="button" 
-          className="group mt-6 inline-flex items-center justify-between pl-6 pr-2 py-2 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-950 font-medium text-sm active:scale-[0.98] transition-all duration-300"
-        >
-          <span>Explore Experience</span>
-          <span className="w-8 h-8 rounded-full bg-white/10 dark:bg-black/10 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-            ↗
-          </span>
-        </button>
-      </div>
-    </div>
-  );
-}
-```
+A tactile settings panel can use a small amount of depth while keeping labels, selected state and error feedback clear. A chart or dense table may need flatter treatment even within the same brand.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-- [ ] All major cards and interactive modules use the Double-Bezel concentric architecture.
-- [ ] Primary buttons feature the nested button-in-button trailing icon pattern.
-- [ ] Section vertical padding is at minimum `py-24`.
-- [ ] Transitions use spring or custom cubic-bezier curves (no default linear transitions).
-- [ ] Layout collapses gracefully to single-column on mobile viewports (<768px).
-- [ ] Animations use only `transform` and `opacity`.
+- [ ] Inspect actual content, contrast, focus and narrow layouts.
+- [ ] Check that decorative effects preserve interaction and do not distract from the task.
 
 ## Common Mistakes
 
-- Using standard `shadow-md` or harsh dark drop shadows instead of soft ambient shadows.
-- Failing to recalculate concentric inner border-radii (`calc(outer - padding)`).
-- Applying `backdrop-blur` on large scrolling sections, triggering GPU repaints.
-- Sticking to generic 3-column Bootstrap grids.
+Equating shadows/blur with quality; forcing font downloads; making all content low-contrast; adding motion everywhere.
 
 ## Integration Notes
 
-- Complements `impeccable-design` for QA and anti-pattern enforcement.
-- Pairs with `ui-ux-pro` for color palette harmony and accessibility compliance.
+Optional companion guidance: frontend-design, web-design-guidelines. Use it only when relevant and available; the skill does not install tools or authorize external actions.

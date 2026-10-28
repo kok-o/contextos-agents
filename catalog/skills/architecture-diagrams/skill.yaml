@@ -2,8 +2,14 @@ schemaVersion: 2
 name: architecture-diagrams
 category: architecture
 type: instruction-only
-description: Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows.
+description: Explain observed system structure or flows with an appropriate
+  architecture, sequence or data-flow diagram.
 version: 1.0.0
 resources:
   - SKILL.md
   - VALIDATION.json
+id: architecture-diagrams
+optional:
+  - system-design
+  - graphify
+requires: []

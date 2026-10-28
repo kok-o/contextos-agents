@@ -493,6 +493,24 @@ describe('removal and path safety', () => {
     assert.ok(!exists(project, '.zed/prompts/team-auth.md'), 'untouched output must be removed');
   });
 
+  test('Markdown underlines and unowned conflict sides or bases preserve edits during export and uninstall', () => {
+    for (const edit of [original => `${original}\nMy local heading\n=======\nKeep my work.\n`,
+      original => `${original}\n<<<<<<< HEAD\nMy local edits.\n=======\nOther unrecorded edits.\n>>>>>>> other\n`,
+      original => `<<<<<<< HEAD\n${original}||||||| original\nMY_UNOWNED_NOTES\n=======\n${original}>>>>>>> other\n`]) {
+      const project = newProject();
+      initWithRule(project);
+      const rel = '.cursor/rules/team-auth.mdc';
+      writeUserFile(project, rel, edit(read(project, rel)));
+      const edited = read(project, rel);
+      const exported = cli(project, ['export', 'cursor']);
+      assert.notEqual(exported.status, 0, exported.output);
+      assert.equal(read(project, rel), edited, 'export must preserve the exact user bytes');
+      const removed = cli(project, ['uninstall', '--yes']);
+      assert.equal(removed.status, 0, removed.output);
+      assert.equal(read(project, rel), edited, 'uninstall must keep the changed file');
+    }
+  });
+
   test('uninstall removes the core files that init --with-core copied, and nothing else', () => {
     const project = newProject();
     assert.equal(cli(project, ['init', '--with-core', '--skip-compile']).status, 0);

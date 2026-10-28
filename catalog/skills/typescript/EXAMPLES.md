@@ -1,64 +1,13 @@
-# TypeScript Examples - Anti-patterns vs ContextOS Standard
+# typescript scenarios
 
-## Example 1: Type-Safe Parsing with Zod (No `any`)
+## In scope
 
-### Anti-pattern: Anti-pattern (Blind type assertion with `as`)
+The original isUser block below validates every required field and rejects arrays. It checks data shape; separately authorize any protected operation. The other snippets are illustrative typing patterns, not a complete service.
 
-```typescript
-// BAD: using 'as User' bypasses runtime validation completely
-async function fetchUser(id: string): Promise<User> {
-  const res = await fetch(`/api/users/${id}`);
-  const data = await res.json();
-  return data as User; // Runtime crash if payload changes!
-}
-```
+## Verification
 
-### Best practice: ContextOS Standard (Runtime schema validation with Zod)
+Typecheck against the installed configuration and dependencies.
 
-```typescript
-// GOOD: guaranteed runtime and compile-time type safety
-import { z } from 'zod';
+Exercise runtime input validation and meaningful invalid cases where relevant.
 
-export const UserSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-  email: z.string().email(),
-  role: z.enum(['admin', 'member', 'guest']),
-  createdAt: z.string().datetime(),
-});
-
-export type User = z.infer<typeof UserSchema>;
-
-export async function fetchUser(id: string): Promise<User> {
-  const res = await fetch(`/api/users/${id}`);
-  if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`);
-  const raw: unknown = await res.json();
-  return UserSchema.parse(raw);
-}
-```
-
----
-
-## Example 2: Discriminated Unions for State Handling
-
-### Anti-pattern: Anti-pattern (Optional soup with boolean flags)
-
-```typescript
-// BAD: impossible states can be represented (e.g. isLoading: true AND error: 'Failed')
-interface AsyncState<T> {
-  data?: T;
-  isLoading: boolean;
-  error?: string;
-}
-```
-
-### Best practice: ContextOS Standard (Discriminated Union)
-
-```typescript
-// GOOD: impossible states are impossible at compile-time
-export type AsyncState<T> =
-  | { readonly status: 'idle' }
-  | { readonly status: 'loading' }
-  | { readonly status: 'success'; readonly data: T }
-  | { readonly status: 'error'; readonly error: Error };
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

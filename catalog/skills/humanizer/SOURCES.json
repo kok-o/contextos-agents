@@ -1,0 +1,13 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten as self-contained instruction-only guidance. Preserves user intent, language and supported claims; no universal style bans, authorship detection, runtime installation, or upstream executable scanner. Examples are ContextOS-authored.",
+  "license": "MIT",
+  "upstream": [
+    {
+      "url": "https://github.com/blader/humanizer/blob/0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0/SKILL.md",
+      "gitCommitSha": "0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0",
+      "licenseUrl": "https://github.com/blader/humanizer/blob/0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0/LICENSE"
+    }
+  ]
+}

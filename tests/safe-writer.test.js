@@ -119,6 +119,26 @@ describe('bin/lib/safe-writer.js — conflict planning', () => {
     assert.equal(fs.readFileSync(fullPath, 'utf8'), userContent);
   });
 
+  test('F09 chooses an unused sidecar without overwriting existing files, directories or dangling links', () => {
+    const lock = createLockfileData();
+    const relPath = '.agents/core/skills/demo/SKILL.md';
+    const fullPath = path.join(tmpDir, relPath);
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.writeFileSync(fullPath, 'LOCAL');
+    recordManagedFile(lock, relPath, 'ORIGINAL');
+    fs.writeFileSync(`${fullPath}.contextos.new`, 'USER MERGE');
+    fs.writeFileSync(`${fullPath}.contextos.new.1`, 'OLDER SIDECAR');
+    fs.mkdirSync(`${fullPath}.contextos.new.2`);
+    fs.symlinkSync(path.join(tmpDir, 'missing-target'), `${fullPath}.contextos.new.3`, process.platform === 'win32' ? 'junction' : 'dir');
+    const plan = planFileWrite({ projectDir: tmpDir, relPath, content: 'UPSTREAM', lockData: lock });
+    assert.equal(plan.action, 'CONFLICT');
+    assert.equal(plan.conflictPath, `${relPath}.contextos.new.4`);
+    assert.equal(plan.expectedBeforeHash, 'NONE');
+    assert.equal(fs.existsSync(plan.conflictFullPath), false, 'planning never creates files');
+    assert.equal(fs.readFileSync(`${fullPath}.contextos.new`, 'utf8'), 'USER MERGE');
+    assert.equal(fs.lstatSync(`${fullPath}.contextos.new.3`).isSymbolicLink(), true);
+  });
+
   test('planFileDelete plans DELETE for clean managed files, and refuses to delete user-modified or unmanaged files', () => {
     const lock = createLockfileData();
     const cleanRel = '.agents/clean.txt';

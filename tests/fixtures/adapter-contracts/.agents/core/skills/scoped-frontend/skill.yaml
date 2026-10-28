@@ -2,4 +2,8 @@ name: scoped-frontend
 version: 2.0.0
 description: Frontend component design and React guidelines
 globs: "src/components/**/*.{tsx,jsx},src/views/**/*.{tsx,jsx}"
-tags: [frontend, react, ui]
+signals:
+  keywords:
+    - { value: frontend, weight: 1 }
+    - { value: react, weight: 1 }
+    - { value: ui, weight: 1 }

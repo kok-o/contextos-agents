@@ -1,0 +1,12 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten for ContextOS: evidence-based findings, optional taste suggestions and proportional review scope.",
+  "license": "MIT",
+  "upstream": [
+    {
+      "url": "https://github.com/emilkowalski/skills/blob/main/skills/review-animations/SKILL.md",
+      "gitBlobSha": "577a64397267ce20960de2202950594d5bd6f9b6"
+    }
+  ]
+}

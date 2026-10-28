@@ -17,6 +17,8 @@ Implementation, debugging, reviews, and release preparation. Use targeted checks
 
 Establish acceptance criteria for substantial or ambiguous work. Ask only for missing decisions affecting scope, safety, or external actions. An implementation request authorizes ordinary reversible work. Inspect affected code and callers, preserve unrelated changes, and verify behavior before reporting completion. Roles are optional.
 
+Match the requested outcome: a question, review, or plan does not itself authorize implementation. For an implementation request, a plan or suggested patch alone is not completion; perform the available authorized work and relevant checks. Stop when the acceptance criteria are met or a concrete blocker needs unavailable access, a user decision, or an action outside existing authority. Complete independent in-scope work before handing off a blocker; do not bypass safety boundaries or retry indefinitely.
+
 Read [references/workflow.md](references/workflow.md) for procedures when needed.
 
 ## Code Examples

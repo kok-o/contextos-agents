@@ -42,8 +42,10 @@ const CORE_SKILLS = [
 
 const PRESETS = {
   frontend: [
-    'react', 'react-best-practices', 'nextjs', 'typescript',
-    'ui-ux-pro', 'impeccable-design', 'state-management', 'web-accessibility',
+    'react', 'vercel-react-best-practices', 'nextjs', 'typescript',
+    'state-management',
+    'frontend-design', 'web-design-guidelines', 'animate',
+    'animation-performance', 'review-animations', 'pick-ui-library', 'webapp-testing',
   ],
   backend: [
     'node', 'fastapi', 'nestjs', 'system-design',

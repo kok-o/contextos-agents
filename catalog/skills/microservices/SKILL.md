@@ -1,164 +1,44 @@
 ---
-name: Microservices
-description: >
-  ContextOS skill for Microservices
+name: microservices
+description: Design or diagnose service boundaries, distributed consistency,
+  contracts and failure handling when a distributed architecture is justified.
 ---
 
-# Microservices
+# microservices
 
 ## Overview
 
-Distributed systems architecture standard. Enforces bounded context isolation, asynchronous event-driven messaging (Kafka, RabbitMQ), Saga distributed transactions, API gateways, and outbox patterns.
+Design or diagnose service boundaries, distributed consistency, contracts and failure handling when a distributed architecture is justified. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate when decomposing monoliths into independent services, designing inter-service communications, or building scalable distributed systems.
+Existing services interact, or the user is evaluating a concrete service split. A backend feature alone is not a reason to introduce microservices.
 
 ## Rules & Patterns
-<!-- Source: microservices.md -->
 
-## Microservices - Architecture Guide
+Identify independent ownership, deployment, scaling and data requirements. Compare the proposed split with the current architecture, including a modular monolith when suitable.
 
-## When to Use Microservices
+Define contract versions, identity/authorization propagation, timeouts and bounded retries. Delivery guarantees depend on the broker and configuration; consumers still need a plan for duplicate, delayed and out-of-order messages.
 
-**Use when:**
+Choose consistency boundaries and recovery before selecting sagas, orchestration or choreography. These patterns are options, not mandatory ceremony for every multi-step flow.
 
-- Team > 10 engineers working on the same product
-- Independent deployment of components is critical
-- Different components have different scaling needs
-- Different components need different tech stacks
-
-**Don't use when:**
-
-- Small team (< 5 engineers)
-- MVP or prototype
-- No operational expertise (monitoring, tracing, deployment)
-- Tight coupling between components
-
-## Core Principles
-
-### 1. Single Responsibility
-
-Each service does ONE thing well.
-
-### 2. Own Your Data
-
-Each service has its own database. No shared databases.
-
-### 3. API Contracts
-
-Services communicate through well-defined APIs. Internal implementation is hidden.
-
-### 4. Autonomous Deployment
-
-Each service can be deployed independently.
-
-## Communication Patterns
-
-### Synchronous (REST/gRPC)
-
-- **When**: Request needs immediate response
-- **Tools**: REST (HTTP), gRPC (high-performance)
-- **Risk**: Cascading failures, latency accumulation
-
-### Asynchronous (Events/Messages)
-
-- **When**: Eventual consistency is acceptable
-- **Tools**: Kafka, RabbitMQ, Redis Streams, AWS SQS
-- **Benefit**: Loose coupling, resilience
-
-### Saga Pattern (Distributed Transactions)
-
-```
-Order Service → Payment Service → Inventory Service → Shipping Service
-      ↓ (failure)
-Compensating transactions reverse each step
-```
-
-1. **Choreography (Event-Driven)**: Each service emits events, downstream services listen and react. Best for simple flows (≤ 3 steps) where a central coordinator adds unnecessary coupling.
-2. **Orchestration (State Machine)**: A dedicated Saga Orchestrator controls the flow and explicitly triggers compensating transactions on failure (e.g., `RefundPayment`, `ReleaseInventoryReservation`). Mandatory for complex multi-step workflows.
-
-### Dead Letter Queues (DLQ) & Poison Pill Handling
-
-- **Never retry infinitely**: Set max retries (e.g. 3) with exponential backoff and jitter.
-- After max retries, route failed messages to a **Dead Letter Queue (DLQ)** with error metadata.
-- Provide alerting on DLQ depth and an admin CLI/script to replay DLQ messages.
-
-## CQRS (Command Query Responsibility Segregation)
-
-Separate read and write models:
-
-```
-Command (Write) → Write Model → Event Store → Projections → Read Model → Query (Read)
-```
-
-**When**: Read patterns differ significantly from write patterns.
-
-## Event Sourcing
-
-Store events, not state:
-
-```
-UserCreated → EmailUpdated → RoleChanged → PasswordReset
-```
-
-Current state = replay all events. Full audit trail.
-
-## Service Boundaries
-
-### Bounded Contexts (from DDD)
-
-- Identify domain boundaries
-- Each service maps to a bounded context
-- Shared language within the context, translation at boundaries
-
-### Anti-Corruption Layer
-
-When integrating with legacy or external systems, create an adapter that translates between models.
-
-## Operational Concerns
-
-### Observability (The Three Pillars)
-
-1. **Logs** - structured JSON, correlated by request ID
-2. **Metrics** - latency, error rate, throughput (RED)
-3. **Traces** - distributed tracing across services (Jaeger, Zipkin)
-
-### Resilience
-
-- **Circuit Breaker** - stop calling failing services
-- **Retry with Backoff** - exponential backoff + jitter
-- **Timeout** - every call has a timeout
-- **Bulkhead** - isolate failures
-
-### Deployment
-
-- **Containers** - Docker for consistency
-- **Orchestration** - Kubernetes for production
-- **CI/CD** - independent pipelines per service
-- **Blue-Green / Canary** - safe rollouts
-
-## Anti-Patterns
-
-- [FAIL] Distributed monolith - services that can't deploy independently
-- [FAIL] Shared database - defeats the purpose
-- [FAIL] Synchronous chains - A calls B calls C calls D
-- [FAIL] No versioning - breaking API changes
-- [FAIL] Premature microservices - start with a modular monolith
-
+Use observability and failure scenarios to diagnose a distributed issue. Account for partial completion, external side effects and how operators identify and repair stuck work.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+An order/payment flow records which component owns each state transition and what happens if payment succeeds but notification fails. Verify replay and compensation behavior; do not claim exactly-once effects from a message ID alone.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Exercise relevant timeout, duplicate, partial-failure and recovery paths.
+- [ ] Verify contract compatibility and authorization across the actual boundary.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Splitting services for fashion; assuming all brokers provide the same delivery mode; unbounded retries; inventing a saga without a recovery owner.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: system-design, api-design, database. Use it only when relevant and available; the skill does not install tools or authorize external actions.

@@ -1,14 +1,19 @@
 schemaVersion: 2
 name: database
-description: Database architecture, schema design, Prisma, Drizzle ORM, indexing strategies, migrations, and N+1 query resolution.
+description: Design and diagnose database queries, schema changes, transactions,
+  indexes and migration safety for the actual database.
 version: 1.0.0
 category: backend
 type: instruction-only
-requires:
-  - system-design
-  - typescript
+requires: []
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: database
+optional:
+  - system-design
+  - typescript
+  - security
+  - testing

@@ -1,128 +1,46 @@
 ---
-name: Node.js
-description: >
-  ContextOS skill for Node.js
+name: node
+description: Implement and diagnose Node.js services and tools using appropriate
+  asynchronous work, errors, resources and process lifecycle handling.
 ---
 
-# Node.js
+# node
 
 ## Overview
 
-Production-grade Node.js runtime and server standard. Enforces async event loop non-blocking hygiene, graceful shutdown, structured JSON logging with correlation IDs, and unhandled rejection guards.
+Implement and diagnose Node.js services and tools using appropriate asynchronous work, errors, resources and process lifecycle handling. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate when developing Node.js HTTP servers, Express/Fastify APIs, background workers, CLI tools, or stream-based data pipelines.
-
-## Negative Constraints (What NOT to Do)
-
-1. **NEVER execute synchronous filesystem/crypto calls in request handlers (`fs.readFileSync`)**: Always use async promises (`fs.promises.*`) to avoid blocking the event loop.
-2. **NEVER leave uncaught promise rejections**: Every async route must use `express-async-errors` or wrap operations in try/catch calling `next(err)`.
-3. **NEVER buffer large files/payloads entirely in memory (`fs.readFile`)**: Always use Streams or Pipelines (`stream.pipeline`) for processing large files.
-4. **NEVER store in-memory session or user state on a single process instance**: Use Redis or an external state store to allow multi-instance scaling.
-5. **NEVER ignore `SIGTERM` / `SIGINT` shutdown signals**: Always implement graceful shutdown to close open DB pools and drain active HTTP connections.
+The task affects a Node.js service, CLI or library. JavaScript projects need not become TypeScript or Express applications.
 
 ## Rules & Patterns
 
-## Architecture
+Inspect Node/framework versions, module format and existing conventions. Use the actual supported API rather than inventing a helper or requiring a preferred framework.
 
-- **Layered architecture**: Routes → Controllers → Services → Repositories
-- **Dependency injection** - don't import dependencies directly in services
-- **Config from environment** - never hardcode secrets, use env variables
-- **Graceful shutdown** - handle SIGTERM, close connections, drain requests
+Avoid blocking latency-sensitive request work with expensive synchronous operations. Synchronous operations may be appropriate in startup, build tools or small CLIs; async does not make CPU work free. Stream large payloads when that matches memory and backpressure requirements.
 
-## Error Handling
+Handle async failures according to the framework. Express 5 forwards rejected returned promises from handlers; older versions or callback APIs may need explicit forwarding. Do not install express-async-errors for every async route by default.
 
-- **Never swallow errors** - always handle or re-throw
-- **Custom error classes** - extend Error with HTTP status codes
-- **Global error handler** - catch unhandled rejections and uncaught exceptions
-- **Structured logging** - JSON logs with request ID, timestamp, level
+Own connections, timers, streams and background work deliberately. Implement shutdown/draining where the process model requires it. Keep request-specific identity out of shared mutable module state.
 
-```typescript
-class AppError extends Error {
-  constructor(
-    public message: string,
-    public statusCode: number = 500,
-    public code: string = 'INTERNAL_ERROR'
-  ) {
-    super(message);
-    this.name = 'AppError';
-  }
-}
-```
-
-## API Design
-
-- **RESTful conventions** - GET (read), POST (create), PUT (full update), PATCH (partial), DELETE
-- **Consistent response format** - `{ data, error, pagination }`
-- **Validation at the edge** - validate request body/params with Zod or Joi
-- **Rate limiting** - protect against abuse
-- **CORS** - configure explicitly, never use `*` in production
-
-## Security
-
-- **Helmet.js** - security headers
-- **Input validation** - never trust client input
-- **SQL injection** - always use parameterized queries
-- **XSS** - sanitize output, use Content-Security-Policy
-- **Authentication** - JWT with short expiry + refresh tokens
-- **Secrets** - environment variables, never in code
-
-## Database
-
-- **Connection pooling** - don't create connections per request
-- **Migrations** - version-controlled schema changes
-- **Transactions** - for multi-step operations
-- **Indexes** - add indexes for frequently queried columns
-
-## Performance
-
-- **Async/await** - never block the event loop
-- **Streaming** - for large files and data sets
-- **Caching** - Redis for frequently accessed data
-- **Clustering** - use PM2 or cluster module for multi-core
-
-## Testing
-
-- **Unit tests** - services and utilities
-- **Integration tests** - API endpoints with test database
-- **Test isolation** - each test should be independent
-- **Fixtures** - use factories, not shared state
-
-## File Structure
-
-```
-src/
-├── config/          # Configuration
-├── modules/         # Feature modules
-│   └── users/
-│       ├── users.controller.ts
-│       ├── users.service.ts
-│       ├── users.repository.ts
-│       ├── users.routes.ts
-│       ├── users.types.ts
-│       └── users.test.ts
-├── shared/          # Shared utilities
-│   ├── middleware/
-│   ├── errors/
-│   └── utils/
-├── types/           # Global types
-└── app.ts           # App entry point
-```
-
+Choose session/cache storage for durability and deployment needs; Redis is not mandatory for every application. Parameterize queries, validate inputs and use the project's established secret/configuration handling.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+For a failing Express route, reproduce the rejected promise under the installed version and verify the actual error middleware response. A maintenance CLI reading one small config file may reasonably use synchronous I/O.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Run the affected success/failure path under a supported Node version.
+- [ ] Check cleanup, input validation and persistence/external effects separately when required.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Applying Express-specific advice to every Node tool; blanket async or Redis rules; swallowing rejections; claiming process safety from a pure helper test.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: typescript, security, testing. Use it only when relevant and available; the skill does not install tools or authorize external actions.

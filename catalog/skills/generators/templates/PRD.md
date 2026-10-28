@@ -1,5 +1,8 @@
 # {{Project Name}} - Product Requirements Document
 
+Draft scaffold: agree targets with the user, identify assumptions and remove
+irrelevant sections. Example targets do not describe measured behavior.
+
 ## Overview
 <!-- One paragraph describing what this product does and who it's for -->
 {{project_description}}
@@ -47,8 +50,8 @@ Step 3: {{action}}
 | --- | --- |
 | Performance | {{e.g., page load < 2s}} |
 | Availability | {{e.g., 99.9%}} |
-| Security | {{e.g., OWASP Top 10 compliance}} |
-| Accessibility | {{e.g., WCAG 2.1 AA}} |
+| Security | {{threat-specific requirements and verification criteria}} |
+| Accessibility | {{agreed standard, scope and verification approach}} |
 | Scalability | {{e.g., 10K concurrent users}} |
 
 ## Constraints

@@ -1,83 +1,46 @@
 ---
 name: vercel-optimize
-description: "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps. Collect Vercel metrics, usage, project config, and code scan results first; investigate only metric-backed candidates; produce ranked recommendations grounded in verified files and version-aware Vercel/framework docs. Trigger for Vercel bill reduction, slow or expensive routes, caching opportunities, Function Invocations, Build Minutes, Fast Data Transfer, Core Web Vitals, Bot Management, Fluid compute, or cost breakdown requests."
+description: Investigate Vercel hosting performance or cost using supplied
+  observations, scoped source inspection and version-aware platform guidance.
 metadata:
-  version: "1.2.0"
+  version: 1.2.0
 ---
 
-# Vercel Optimize
+# vercel-optimize
 
 ## Overview
 
-Observability-first Vercel performance and cost reduction optimization skill. Evaluates deployed Next.js, SvelteKit, Nuxt, and Astro projects using production telemetry signals (`signals.json`), deterministic candidate gating, and code scanning to deliver ranked, verified architectural recommendations.
+Investigate Vercel hosting performance or cost using supplied observations, scoped source inspection and version-aware platform guidance. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-- When tasked with reducing Vercel bills, Function Invocations, Fast Data Transfer, or Build Minutes.
-- When diagnosing slow serverless routes, cold starts, or Edge vs Node runtime mismatches.
-- When evaluating caching opportunities (`stale-while-revalidate`, ISR, CDN edge caching) or Core Web Vitals degradation.
+The task concerns a Vercel deployment, slow/expensive routes or hosting usage. It may use Next.js or another supported framework; no Next.js instruction dependency is required.
 
 ## Rules & Patterns
 
-### 1. Prerequisites & Framework Support
+Inspect project/framework versions and available authenticated tooling. Read-only telemetry access and configuration/deployment changes have different authorization boundaries. Do not expose tokens in commands, examples or logs.
 
-- Vercel CLI v53+ with `vercel metrics`, `vercel usage`, `vercel contract`, and `vercel api`.
-- Authenticated CLI session (`vercel login`) and linked app directory (`vercel link`).
-- Framework support: Next.js App Router (Full), Pages Router (Supported), SvelteKit (Supported), Nuxt (Supported), Astro (Limited).
-- Security rule: Never put auth tokens in shell commands (`VERCEL_TOKEN=...` is banned in chat/logs).
+Use real supplied/exported observations for production conclusions. The bundled collect-signals script imports JSON with --input or emits explicitly labeled --demo fixtures; it does not fetch live telemetry. Provenance labels are not source authentication.
 
-### 2. Core Doctrine & Gating Pipeline
+The gate generates investigation candidates, not verified recommendations or savings. Synthetic input is rejected unless --allow-demo is explicit and remains labeled through merge. Code-only routes have missing measurements rather than invented zero traffic.
 
-- **Metrics First:** Recommendations start from Vercel production signals (14-day window), not repo-wide grep.
-- **Deterministic Gates:** `scripts/gate-investigations.mjs` selects code-scope and platform-scope candidates.
-- **Candidate-Bound Scope:** Inspect only files named by a candidate or a route-local import chain.
-- **Version-Aware Citations:** Use only verified citations matching the target framework version.
-- **Specific Cache Policies:** When recommending caching, state the exact cache policy and headers; keep auth-sensitive and error responses dynamic.
+Inspect the relevant route and imports even when telemetry is unavailable, but label conclusions as static hypotheses. The scanner uses textual heuristics; confirm framework routing, matcher and runtime behavior from source and versioned documentation.
 
-### 3. Recommendation Rules
-
-- Every recommendation must trace to a launched candidate and include observed metric evidence.
-- Cite verified files with line numbers when code changes are proposed.
-- Use precise observed performance numbers; avoid customer-facing speculative `$N` savings formulas.
-- Do not recommend duration reductions for Vercel Workflow runtime endpoints (`/.well-known/workflow/v1/*`).
+Caching needs an affirmative public-data policy, correct key identity, freshness and invalidation. Do not propose shared caching for private/auth-sensitive data or shorten long-lived workflow execution based on its duration alone.
 
 ## Code Examples
 
-```typescript
-// [GOOD] Next.js Route Segment Config for Caching & Edge Runtime
-export const dynamic = 'force-static';
-export const revalidate = 3600; // Cache at Edge for 1 hour
-
-export default async function CachedCatalogPage() {
-  const products = await getCatalogData();
-  return <CatalogGrid items={products} />;
-}
-```
-
-```bash
-# Running the signals collection and gate
-node scripts/collect-signals.mjs [projectId] > "$RUN_DIR/vercel-signals.json"
-node scripts/scan-codebase.mjs <repo-root> > "$RUN_DIR/codebase.json"
-node scripts/merge-signals.mjs "$RUN_DIR/vercel-signals.json" "$RUN_DIR/codebase.json" --out "$RUN_DIR/signals.json"
-node scripts/gate-investigations.mjs "$RUN_DIR/signals.json" > "$RUN_DIR/gate.json"
-```
+Import a reviewed telemetry JSON file, optionally correlate it with a code scan, then inspect the candidate's actual boundary. A --demo run can test the pipeline but cannot justify a production cost or latency claim.
 
 ## Validation Checklist
 
-- [ ] Project is properly linked with valid team/personal scope (`vercel link`).
-- [ ] Production metrics signals collected across 14-day window before inspecting code.
-- [ ] No secrets or tokens passed in command line arguments.
-- [ ] Recommendations grounded in specific verified file paths and line numbers.
-- [ ] Unsafe or auth-sensitive paths kept strictly dynamic.
+- [ ] Verify project scope, observation window, provenance and the actual changed route.
+- [ ] Measure relevant results under comparable conditions and preserve authorization/cache correctness.
 
 ## Common Mistakes
 
-- Inspecting repository source code before metric signals exist.
-- Hardcoding `VERCEL_TOKEN` into terminal commands or prompt logs.
-- Recommending duration reductions on long-lived streaming routes or workflow runners.
-- Applying static caching to user-specific or authenticated routes.
+Presenting fixture numbers as production telemetry; claiming savings from a text scan; forcing a cache/runtime choice from another framework version.
 
 ## Integration Notes
 
-- Complements `nextjs` and `react-best-practices` for server-side optimization.
-- Pairs with `performance` and `security` skills.
+Optional companion guidance: performance, security, vercel-react-best-practices. Use it only when relevant and available; the skill does not install tools or authorize external actions.

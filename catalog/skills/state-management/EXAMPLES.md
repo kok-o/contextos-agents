@@ -1,56 +1,13 @@
-# State Management Examples - Anti-patterns vs ContextOS Standard
+# state-management scenarios
 
-## Example 1: Selecting State from Zustand
+## In scope
 
-### Anti-pattern: Anti-pattern (Subscribing to full store causes unnecessary renders)
+For a filterable catalog, determine which filters belong in the URL, which state is local and which results come from the server. For optimistic editing, test overlapping updates and failure recovery rather than only a successful click.
 
-```typescript
-// BAD: component re-renders whenever ANY property in the store changes!
-function CartBadge() {
-  const store = useCartStore(); // subscribes to entire object!
-  return <span>{store.items.length}</span>;
-}
-```
+## Verification
 
-### Best practice: ContextOS Standard (Atomic granular selector)
+Exercise stale responses, relevant concurrency, invalidation and reset/session boundaries.
 
-```typescript
-// GOOD: component ONLY re-renders when itemCount changes
-function CartBadge() {
-  const itemCount = useCartStore((state) => state.items.length);
-  return <span>{itemCount}</span>;
-}
-```
+Verify subscriptions and persisted effects at the appropriate layer.
 
----
-
-## Example 2: Server State Invalidation
-
-### Anti-pattern: Anti-pattern (Manually syncing server data into global state with useEffect)
-
-```typescript
-// BAD: manual sync, race conditions, stale cache bugs
-function UserProfile({ userId }) {
-  const { setUser } = useUserStore();
-  useEffect(() => {
-    fetch(`/api/users/${userId}`).then(res => res.json()).then(setUser);
-  }, [userId]);
-}
-```
-
-### Best practice: ContextOS Standard (Declarative TanStack Query caching)
-
-```typescript
-// GOOD: automatic caching, deduplication, background revalidation
-function UserProfile({ userId }: { userId: string }) {
-  const { data: user, isLoading, error } = useQuery({
-    queryKey: ['users', userId],
-    queryFn: () => fetchUserById(userId),
-    staleTime: 1000 * 60 * 5, // 5 minutes fresh
-  });
-
-  if (isLoading) return <SkeletonLoader />;
-  if (error) return <ErrorMessage error={error} />;
-  return <UserDetails user={user} />;
-}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

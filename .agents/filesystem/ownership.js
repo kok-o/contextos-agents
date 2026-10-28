@@ -7,7 +7,47 @@
  */
 
 const { computeExactHash, computeSemanticHash } = require('./lockfile-v2.js');
-const { hasConflictMarkers } = require('./managed-block.js');
+
+// Reconstruct complete versions, including a diff3 base, preserving their line
+// endings. A marker by itself (including a Markdown underline) proves nothing.
+function conflictSides(text) {
+  const ours = [];
+  const theirs = [];
+  const base = [];
+  let state = 'outside';
+  let found = false;
+  let hasBase = false;
+  let baseStart = 0;
+  for (const raw of text.match(/[^\n]*\n|[^\n]+$/g) || []) {
+    const line = raw.replace(/\r?\n$/, '');
+    if (/^<{7}(?: .*)?$/.test(line)) {
+      if (state !== 'outside') return null;
+      state = 'ours';
+      found = true;
+      baseStart = base.length;
+    } else if (/^\|{7}(?: .*)?$/.test(line)) {
+      if (state !== 'ours') return null;
+      state = 'base';
+      hasBase = true;
+      base.length = baseStart;
+    } else if (line === '=======') {
+      if (state !== 'ours' && state !== 'base') return null;
+      state = 'theirs';
+    } else if (/^>{7}(?: .*)?$/.test(line)) {
+      if (state !== 'theirs') return null;
+      state = 'outside';
+    } else {
+      if (state === 'outside' || state === 'ours') ours.push(raw);
+      if (state === 'outside' || state === 'theirs') theirs.push(raw);
+      // Two-way hunks have no discarded base text: use ours for that portion.
+      // A diff3 marker replaces it with the actual base, which must also match
+      // a recorded complete version before any of its bytes can be removed.
+      if (state !== 'theirs') base.push(raw);
+    }
+  }
+  return found && state === 'outside'
+    ? [ours.join(''), theirs.join(''), ...(hasBase ? [base.join('')] : [])] : null;
+}
 
 function isTextMedia(mediaType) {
   return /^text\/|yaml|json/.test(mediaType || '');
@@ -19,7 +59,7 @@ const TEXT_EXTENSION = /\.(md|mdc|txt|ya?ml|json|js|ts|py)$/i;
  * Owned means one of:
  *  - it still matches what ContextOS last wrote (byte-exact, or for text up to line endings),
  *    or matches the other side of a merged lockfile;
- *  - it is an unresolved merge of such files (conflict markers in a recorded text file);
+ *  - every complete merge version, including a diff3 base, matches recorded hashes;
  *  - it matches a legacy (lockfile v1) installation record.
  */
 function isStrictBoundedRule(relPath, record) {
@@ -27,15 +67,20 @@ function isStrictBoundedRule(relPath, record) {
 }
 
 function ownsDiskFile({ diskBuf, textLike, existing, alternates = [], legacyRecord = null, strict = false }) {
-  const diskExact = computeExactHash(diskBuf);
-  const diskSemantic = computeSemanticHash(diskBuf);
-  const matches = record => Boolean(record) && (
-    diskExact === record.exactSha256 || (textLike && diskSemantic === record.semanticTextSha256)
-  );
-  if (matches(existing) || alternates.some(matches)) return true;
+  const matchesOwned = content => {
+    const exact = computeExactHash(content);
+    const semantic = computeSemanticHash(content);
+    const matches = record => Boolean(record) && (
+      exact === record.exactSha256 || (textLike && semantic === record.semanticTextSha256)
+    );
+    return matches(existing) || alternates.some(matches) || Boolean(
+      !strict && legacyRecord?.managed && legacyRecord.sha256 === semantic.replace('sha256:', '')
+    );
+  };
+  if (matchesOwned(diskBuf)) return true;
   if (strict) return false;
-  if (existing && textLike && hasConflictMarkers(diskBuf.toString('utf8'))) return true;
-  return Boolean(legacyRecord && legacyRecord.managed && legacyRecord.sha256 === diskSemantic.replace('sha256:', ''));
+  const sides = textLike ? conflictSides(diskBuf.toString('utf8')) : null;
+  return Boolean(sides && sides.every(matchesOwned));
 }
 
 module.exports = { isTextMedia, ownsDiskFile, isStrictBoundedRule, TEXT_EXTENSION };

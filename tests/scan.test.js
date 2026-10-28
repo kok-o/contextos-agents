@@ -17,6 +17,136 @@ const { runScan } = require('../bin/lib/scan.js');
 const CTX_BIN = path.resolve(__dirname, '../bin/index.js');
 const NODE = process.execPath;
 
+test('F17: secret coverage includes tests paths and reports every exclusion', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-secret-coverage-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  execFileSync('git', ['init', '-q'], { cwd: root });
+  const token = 'ghp_' + 'Q7'.repeat(18);
+  for (const relative of ['src/config.js', 'tests/config.js', 'nested/tests/config.js']) {
+    const file = path.join(root, relative);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `const token = '${token}';\n`);
+    execFileSync('git', ['add', relative], { cwd: root });
+  }
+  const result = runScan({ cwd: root, enforce: true });
+  assert.strictEqual(result.code, 1);
+  for (const relative of ['src/config.js', 'tests/config.js', 'nested/tests/config.js']) {
+    assert.ok(result.findings.some(f => f.file === relative && f.ruleId === 'SEC-003'), relative);
+  }
+  assert.strictEqual(result.stats.contentFilesScanned, 3);
+  assert.deepStrictEqual(result.coverage.excluded, []);
+});
+
+test('F17: synthetic exceptions are exact-line and exact-path, with visible coverage', t => {
+  const crypto = require('crypto');
+  const exception = require('../bin/lib/secret-fixtures.json').entries.find(entry => entry.file === 'tests/tarball-smoke.test.js');
+  const lines = fs.readFileSync(path.resolve(__dirname, '..', exception.file), 'utf8').split(/\r?\n/);
+  const line = lines.find(value => crypto.createHash('sha256').update(value).digest('hex') === exception.lineSha256);
+  assert.ok(line);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-secret-exception-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  execFileSync('git', ['init', '-q'], { cwd: root });
+  fs.mkdirSync(path.join(root, 'tests'));
+  fs.writeFileSync(path.join(root, exception.file), line + '\n');
+  execFileSync('git', ['add', exception.file], { cwd: root });
+  const allowed = runScan({ cwd: root, enforce: true });
+  assert.strictEqual(allowed.code, 0);
+  assert.ok(allowed.coverage.excluded.some(item => item.file === exception.file && item.ruleId === exception.ruleId));
+  fs.writeFileSync(path.join(root, exception.file), line + ` const other = '${'ghp_' + 'R9'.repeat(18)}';\n`);
+  fs.writeFileSync(path.join(root, 'tests/other.test.js'), line + '\n');
+  execFileSync('git', ['add', 'tests'], { cwd: root });
+  const rejected = runScan({ cwd: root, enforce: true });
+  assert.strictEqual(rejected.code, 1);
+  assert.ok(rejected.findings.some(item => item.file === exception.file && item.ruleId === 'SEC-003'));
+  assert.ok(rejected.findings.some(item => item.file === 'tests/other.test.js' && item.ruleId === exception.ruleId));
+});
+
+test('F17: working-tree secret gate scans tests instead of excluding whole directories', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-secret-gate-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'bin/lib'), { recursive: true });
+  fs.copyFileSync(path.resolve(__dirname, '../scripts/check-secrets.js'), path.join(root, 'scripts/check-secrets.js'));
+  for (const file of fs.readdirSync(path.resolve(__dirname, '../bin/lib'))) {
+    if (/\.(?:js|json)$/.test(file)) fs.copyFileSync(path.resolve(__dirname, '../bin/lib', file), path.join(root, 'bin/lib', file));
+  }
+  execFileSync('git', ['init', '-q'], { cwd: root });
+  fs.mkdirSync(path.join(root, 'tests'));
+  fs.writeFileSync(path.join(root, 'tests/config.js'), `const token = '${'ghp_' + 'Q7'.repeat(18)}';\n`);
+  execFileSync('git', ['add', 'tests/config.js'], { cwd: root });
+  const result = require('child_process').spawnSync(NODE, ['scripts/check-secrets.js', '--all'], { cwd: root, encoding: 'utf8' });
+  assert.strictEqual(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /tests\/config.js/);
+});
+
+function stagedGateFixture(t) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-secret-staged-gate-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'bin/lib'), { recursive: true });
+  fs.copyFileSync(path.resolve(__dirname, '../scripts/check-secrets.js'), path.join(root, 'scripts/check-secrets.js'));
+  for (const file of fs.readdirSync(path.resolve(__dirname, '../bin/lib'))) {
+    if (/\.(?:js|json)$/.test(file)) fs.copyFileSync(path.resolve(__dirname, '../bin/lib', file), path.join(root, 'bin/lib', file));
+  }
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+  git('init', '-q');
+  git('config', 'user.name', 'ContextOS Fixture');
+  git('config', 'user.email', 'fixture@example.invalid');
+  git('config', 'core.autocrlf', 'false');
+  git('config', 'core.hooksPath', path.join(root, 'empty-hooks'));
+  git('config', 'diff.renames', 'true');
+  const run = () => require('child_process').spawnSync(NODE, ['scripts/check-secrets.js', '--staged'], { cwd: root, encoding: 'utf8' });
+  return { root, git, run };
+}
+
+for (const worktree of ['sanitized', 'deleted', 'unstaged-secret']) {
+  test(`F17 residual staged rename uses index bytes (${worktree})`, t => {
+    const { root, git, run } = stagedGateFixture(t);
+    const token = 'ghp_' + 'Q7'.repeat(18);
+    const clean = Array.from({ length: 100 }, (_, i) => `// harmless comment ${i}\n`).join('');
+    fs.writeFileSync(path.join(root, 'old.js'), clean);
+    git('add', 'old.js');
+    git('commit', '-q', '-m', 'clean original');
+    fs.renameSync(path.join(root, 'old.js'), path.join(root, 'renamed.js'));
+    fs.writeFileSync(path.join(root, 'renamed.js'), clean + (worktree === 'unstaged-secret' ? '// clean appended line\n' : `const token = '${token}';\n`));
+    git('add', '-A', '--', 'old.js', 'renamed.js');
+    const status = git('diff', '--cached', '--name-status');
+    t.diagnostic(`Real Git index status: ${status.trim()}`);
+    assert.match(status, /^R\d{3}\told\.js\trenamed\.js\r?\n$/);
+    if (worktree === 'deleted') fs.unlinkSync(path.join(root, 'renamed.js'));
+    else fs.writeFileSync(path.join(root, 'renamed.js'), worktree === 'sanitized' ? clean : `${clean}const token = '${token}';\n`);
+    const result = run();
+    assert.strictEqual(result.status, worktree === 'unstaged-secret' ? 0 : 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /Scanning 1 file/);
+    if (worktree !== 'unstaged-secret') {
+      assert.match(result.stderr, /GitHub Personal Access Token/);
+      assert.match(result.stderr, /renamed\.js:101/);
+      assert.ok(!result.stderr.includes(token), 'full token must not leak into diagnostics');
+    }
+  });
+}
+
+test('F17 residual staged type transition is scanned from the new index blob', t => {
+  const { root, git, run } = stagedGateFixture(t);
+  const oid = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd: root, input: 'harmless-target\n', encoding: 'utf8' }).trim();
+  git('update-index', '--add', '--cacheinfo', `120000,${oid},typed.js`);
+  git('commit', '-q', '-m', 'index-only symlink fixture');
+  const secretContent = `const token = '${'ghp_' + 'R9'.repeat(18)}';\n`;
+  fs.writeFileSync(path.join(root, 'typed.js'), secretContent);
+  // On Windows core.symlinks=false makes git add preserve a cached symlink's
+  // mode. Set the regular-file index mode explicitly for a portable real T.
+  const newOid = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd: root, input: secretContent, encoding: 'utf8' }).trim();
+  git('update-index', '--cacheinfo', `100644,${newOid},typed.js`);
+  const status = git('diff', '--cached', '--name-status');
+  t.diagnostic(`Real Git index status: ${status.trim()}`);
+  assert.match(status, /^T\ttyped\.js\r?\n$/);
+  fs.writeFileSync(path.join(root, 'typed.js'), '// sanitized worktree\n');
+  const result = run();
+  assert.strictEqual(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /typed\.js:1/);
+  assert.match(result.stderr, /GitHub Personal Access Token/);
+});
+
 test('Phase 5: Staged Index Scanner (scan.test.js)', async (t) => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-scan-test-'));
 

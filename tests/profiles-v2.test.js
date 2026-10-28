@@ -15,6 +15,73 @@ const os = require('os');
 const profiles = require('../.agents/profiles.js');
 const { CanonicalResolver } = require('../.agents/resolver/canonical-resolver.js');
 
+test('F07 applied package-name overrides follow touched files through the real WorkspaceGraph', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-profile-package-id-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, '.agents/profiles'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'apps/web'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'root', workspaces: ['apps/*'] }));
+  fs.writeFileSync(path.join(root, 'apps/web/package.json'), JSON.stringify({ name: '@repo/web' }));
+  fs.writeFileSync(path.join(root, 'apps/web/index.js'), '// web\n');
+  fs.writeFileSync(path.join(root, '.agents/profiles/root-base.yaml'), 'id: root-base\nname: Root base\n');
+  fs.writeFileSync(path.join(root, '.agents/profiles/special.yaml'), 'id: special\nname: Special\nexclude_skills: [fastapi]\n');
+  const { WorkspaceGraphBuilder } = require('../.agents/workspace/workspace-graph.js');
+  const builder = new WorkspaceGraphBuilder();
+  const graph = builder.build(root);
+  const nearest = builder.findNearestPackage('apps/web/index.js', graph);
+  assert.equal(nearest.id, '@repo/web');
+  assert.equal(nearest.name, undefined, 'the graph contract exposes id, not name');
+  profiles.applyProfile('root-base', root);
+  profiles.applyProfile('special', root, { scope: '@repo/web' });
+  const saved = JSON.parse(fs.readFileSync(path.join(root, '.agents/profile.json'), 'utf8'));
+  assert.equal(saved.overrides['@repo/web'], 'special');
+  assert.equal(profiles.getActiveProfile(root, '@repo/web').profile, 'special');
+  const registry = { skills: { fastapi: { estimatedTokens: 100 } }, dependencyGraph: { fastapi: [] } };
+  const resolver = new CanonicalResolver({ rootDir: root, registry });
+  for (const file of ['apps/web/index.js', 'apps\\web\\index.js', path.join(root, 'apps/web/index.js')]) {
+    const active = profiles.getActiveProfile(root, file);
+    assert.equal(active.profile, 'special', file);
+    assert.equal(active.scope, '@repo/web');
+    const result = resolver.resolve({ task: 'Use FastAPI', files: [file], installedOnly: true });
+    assert.ok(!result.skills.includes('fastapi'), file);
+  }
+  assert.equal(profiles.getActiveProfile(root, 'other/index.js').profile, 'root-base');
+  assert.ok(resolver.resolve({ task: 'Use FastAPI', files: ['other/index.js'], installedOnly: true }).skills.includes('fastapi'));
+});
+
+test('CR04 applied directory overrides treat absolute and relative touched paths identically', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-profile-absolute-scope-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  for (const dir of ['.agents/profiles', '.agents/project/skills/alpha', 'apps/web/src']) {
+    fs.mkdirSync(path.join(root, dir), { recursive: true });
+  }
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'root', workspaces: ['apps/*'] }));
+  fs.writeFileSync(path.join(root, 'apps/web/package.json'), JSON.stringify({ name: '@repo/web' }));
+  fs.writeFileSync(path.join(root, 'apps/web/src/rule.js'), '// web\n');
+  fs.writeFileSync(path.join(root, '.agents/project/skills/alpha/skill.yaml'), JSON.stringify({ id: 'alpha' }));
+  fs.writeFileSync(path.join(root, '.agents/project/skills/alpha/SKILL.md'), '# Alpha\n');
+  fs.writeFileSync(path.join(root, '.agents/profiles/broad.yaml'), 'id: broad\nname: Broad\n');
+  fs.writeFileSync(path.join(root, '.agents/profiles/narrow.yaml'), 'id: narrow\nname: Narrow\nexclude_skills: [alpha]\n');
+  profiles.applyProfile('broad', root);
+  profiles.applyProfile('broad', root, { scope: 'apps/web' });
+  profiles.applyProfile('narrow', root, { scope: 'apps/web/src' });
+  const { ManifestCompiler } = require('../.agents/compiler/manifest-compiler.js');
+  const compiled = new ManifestCompiler({ rootDir: root }).compile();
+  assert.equal(compiled.success, true, JSON.stringify(compiled.diagnostics));
+  const resolver = new CanonicalResolver({ rootDir: root, registry: compiled.registry });
+  for (const file of ['apps/web/src/rule.js', 'apps\\web\\src\\rule.js', path.join(root, 'apps/web/src/rule.js'), path.join(root, 'apps/web/src/rule.js').replace(/\\/g, '/')]) {
+    const active = profiles.getActiveProfile(root, file);
+    assert.equal(active.profile, 'narrow', file);
+    assert.equal(active.scope, 'apps/web/src', file);
+    assert.deepEqual(resolver.resolve({ task: 'Use alpha', files: [file], installedOnly: true }).skills, [], file);
+  }
+  assert.equal(profiles.getActiveProfile(root, path.join(root, 'apps/web/src')).profile, 'narrow', 'exact directory match');
+  for (const file of ['apps/web/src-other/rule.js', path.join(root, 'apps/web/src-other/rule.js'), path.join(root, 'outside/rule.js')]) {
+    assert.equal(profiles.getActiveProfile(root, file).profile, 'broad', file);
+    assert.deepEqual(resolver.resolve({ task: 'Use alpha', files: [file], installedOnly: true }).skills, ['alpha'], file);
+  }
+});
+
 test('nested profile overrides use the most specific scope regardless of insertion order', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-profile-specific-'));
   t.after(() => { assert.equal(path.dirname(root), os.tmpdir()); fs.rmSync(root, { recursive: true, force: true }); });

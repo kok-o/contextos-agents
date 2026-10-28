@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getSkillEntrypointPath, readSkillManifest, readSkillMetadata, collectSkillDirectories, collectAlwaysRules, readCoreRules, stripFrontmatter } = require('../shared.js');
+const { getSkillEntrypointPath, readSkillManifest, readSkillMetadata, collectSkillDirectories, collectAlwaysRules, readCoreRules, stripFrontmatter, relocateSkillLinks } = require('../shared.js');
 const { registerAdapter, applyArtifacts, createProvenanceHeader } = require('../pure-compiler.js');
 
 const GENERATOR_ID = 'copilot@2';
@@ -45,27 +45,21 @@ function render(context) {
     profileId: context?.profileId,
   });
 
-  const hasCoreRules = readCoreRules(context?.projectRoot) !== null;
+  const coreRules = readCoreRules(context?.projectRoot);
   const skills = collectSkillDirectories(context?.profile, context?.projectRoot);
   const alwaysRules = collectAlwaysRules(skills, { projectRoot: context.projectRoot, destination: '.github/copilot-instructions.md' });
 
   lines.push(prov + `# GitHub Copilot Instructions — ContextOS\n\n`);
 
-  if (hasCoreRules) {
-    lines.push(
-      `## Project Rules\n\n` +
-      `### Step 0 — Identify Before Acting\n\n` +
-      `When useful for substantial work, identify:\n` +
-      `\`\`\`\n1. WHAT DOMAIN?   → Frontend / Backend / Architecture / Full-Stack / DevOps\n2. WHAT PHASE?    → Define / Plan / Build / Verify / Review / Ship\n3. WHAT ROLE?     → Declare specialist role for this phase\n\`\`\`\n\n` +
-      `> **Anti-Spam Invariant**: Declare this strictly once at the start of a task or phase. Never repeat before intermediate tool calls or step updates.\n\n` +
-      `### Non-Negotiable Rules\n\n` +
-      `- **Zero-Assumption Investigation**: Never guess file paths or signatures. Inspect before modifying.\n` +
-      `- **Zero-Placeholder Production Code**: Never emit lazy stubs, \`// TODO\`, or partial code.\n` +
-      `- **Mandatory Proof-of-Work Verification**: Always run tests and validators before claiming completion.\n` +
-      `- **Surgical Blast Radius**: Modify only files strictly within scope.\n` +
-      `- **Fast-Track Exception**: Routine maintenance, git commands, version bumps, typo fixes, and diagnostics skip spec/plan ceremonies.\n\n` +
-      `---\n\n`
-    );
+  if (coreRules !== null) {
+    const skillDir = path.resolve(context.projectRoot, '.agents');
+    const body = relocateSkillLinks(coreRules, {
+      skillDir,
+      sourceFile: path.join(skillDir, 'AGENTS.md'),
+      destination: '.github/copilot-instructions.md',
+      projectRoot: context.projectRoot,
+    });
+    lines.push(`## Project Rules\n\n${body}\n\n---\n\n`);
   }
 
   if (alwaysRules.length > 0) {

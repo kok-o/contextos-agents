@@ -4,13 +4,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { parseEnv } = require('node:util');
-const { BLOCKED_EXACT_NAMES, BLOCKED_EXTENSIONS } = require('../bin/lib/scan');
+const { privateFile, validatePackagePaths } = require('./release-package-surface.cjs');
 const root = path.resolve(__dirname, '..');
 // These are reviewed, sanitized observations, not an exception for raw logs or
 // arbitrary files under their directories. Package inclusion stays disallowed.
 const publicEvidence = new Set([
   'docs/evidence/ci-r2-accepted-2026-10-02.json', 'docs/evidence/release-2.3.json',
   'docs/evidence/release-2.3.1.json', 'docs/evidence/release-2.3.2.json',
+  'docs/evidence/gemini-flash-3-8-rules-baseline.json',
+  'docs/evidence/gemini-flash-3-8-rules-scenarios.json',
   ...[
     'README.md', 'control.json', 'discovery.json', 'environment.json',
     'failed-attempts.json', 'final-checks.json', 'fixture.cjs', 'fixtures.json',
@@ -29,26 +31,13 @@ const publicEvidence = new Set([
 ]);
 const internalDocs = /^(?:CONTEXTOS_WORK_PLAN\.md|IMPROVEMENT_PLAN\.md|docs\/(?:PERSONAL_WORKFLOW_ROADMAP|AUDIT_.+|INDEPENDENT_REVIEW_.+|IMPLEMENTATION_STATUS_.+|STABILIZATION_.+|RELEASE_ACCEPTANCE_.+|API_BENCHMARK_.+|LUNA_BENCHMARK_.+|SOL_BENCHMARK_.+)\.md)$/;
 
-function privateFile(file) {
-  return file.split('/').some(part => (/^\.env(?:\.|$)/i.test(part) && part !== '.env.example') || BLOCKED_EXACT_NAMES.has(part.toLowerCase()))
-    || BLOCKED_EXTENSIONS.has(path.extname(file).toLowerCase()) || /\.(?:log|tgz|zip|bak|tmp)$/i.test(file);
-}
 function validateGitPaths(files) {
   const localProbes = new Set(['benchmarks/analyze-sol.js', 'benchmarks/continue-sol-capped.js', 'benchmarks/run-sol-agent.js', 'benchmarks/sol-session-smoke.js', 'benchmarks/verify-sol-evidence.js', 'scripts/collect-r2-evidence.cjs']);
   return files.filter(file => privateFile(file) || internalDocs.test(file) || localProbes.has(file)
     || (file.startsWith('docs/evidence/') && !publicEvidence.has(file))
     || /^(?:scratch|\.external-skills|\.swarm-worktrees|\.contextos-worktrees|node_modules)\//.test(file));
 }
-function validatePackagePaths(files, kind) {
-  const required = kind === 'core' ? ['package.json', 'README.md', 'LICENSE', 'NOTICE', 'bin/index.js', '.agents/AGENTS.md', '.agents/resolver/canonical-resolver.js']
-    : ['package.json', 'README.md', 'bin/mcp.mjs', 'dist/contextos/loader.js', 'dist/mcp/server.js'];
-  const permitted = kind === 'core' ? /^(?:bin|catalog|\.agents)\// : /^(?:dist|bin)\//;
-  const metadata = /^(?:package\.json|README(?:\.md)?|LICENSE(?:\..+)?|NOTICE|registry(?:\.v2)?(?:\.schema)?\.json)$/i;
-  return [...files.filter(file => privateFile(file) || (!permitted.test(file) && !metadata.test(file))
-    || /^\.agents\/(?:state|cache|transactions|project|mcp)\//.test(file)),
-  ...required.filter(file => !files.includes(file)).map(file => `Missing required file: ${file}`)];
-}
-function checkLinks(files) {
+function checkLinks(files, { coreOnly = false } = {}) {
   const selected = new Set(files);
   const docs = files.filter(file => /^(?:README|GUIDE|CONTRIBUTING|CHANGELOG)\.md$/.test(file) || /^docs\/.+\.md$/.test(file));
   const missing = [];
@@ -58,6 +47,8 @@ function checkLinks(files) {
       const target = match[1].split(/\s+"/)[0].replace(/^<|>$/g, '').split('#')[0];
       if (!target || /^(?:https?:|mailto:|app:|codex:|file:)/i.test(target)) continue;
       const resolved = path.relative(root, path.resolve(path.dirname(path.join(root, file)), decodeURI(target))).replace(/\\/g, '/');
+      // Optional companion links cannot be resolved in a core-only checkout.
+      if (coreOnly && resolved.startsWith('contextos-mcp/')) continue;
       if (!selected.has(resolved) && !files.some(item => item.startsWith(`${resolved}/`))) missing.push(`${file}: ${target}`);
     }
   }
@@ -110,9 +101,10 @@ function checkPublicInstructions(projectRoot = root, { coreOnly = false } = {}) 
 function main() {
   const coreOnly = process.argv.includes('--core-only');
   const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
-  const files = [...new Set(git(['ls-files', '-z']).concat(git(['ls-files', '--others', '--exclude-standard', '-z'])))];
-  const ignoredTracked = git(['ls-files', '-ci', '--exclude-standard', '-z']);
-  const violations = [...validateGitPaths(files), ...ignoredTracked.map(file => `Ignored but still tracked: ${file}`), ...checkLinks(files),
+  const inScope = file => !coreOnly || !/^(?:contextos-mcp|\.agents\/mcp)\//.test(file);
+  const files = [...new Set(git(['ls-files', '-z']).concat(git(['ls-files', '--others', '--exclude-standard', '-z'])))].filter(inScope);
+  const ignoredTracked = git(['ls-files', '-ci', '--exclude-standard', '-z']).filter(inScope);
+  const violations = [...validateGitPaths(files), ...ignoredTracked.map(file => `Ignored but still tracked: ${file}`), ...checkLinks(files, { coreOnly }),
     ...checkTestInventory(), ...checkPublicInstructions(root, { coreOnly })];
   const identities = [['.', require('../package.json')], ...(!coreOnly ? [['contextos-mcp', require('../contextos-mcp/package.json')]] : [])];
   for (const [folder, pkg] of identities) {
@@ -135,7 +127,7 @@ function main() {
     if (kind === 'core' && packed.unpackedSize > 2 * 1024 * 1024) violations.push('Core exceeds 2 MiB unpacked');
     return { kind, name: packed.name, version: packed.version, entries: paths.length, unpackedSize: packed.unpackedSize, files: paths };
   });
-  const report = { result: violations.length ? 'FAIL' : 'PASS', coreOnly, gitFiles: files.length, packages, violations };
+  const report = { result: violations.length ? 'FAIL' : 'PASS', coreOnly, excludedScopes: coreOnly ? ['contextos-mcp/**', '.agents/mcp/**', 'optional MCP documentation links'] : [], gitFiles: files.length, packages, violations };
   fs.mkdirSync(path.join(root, 'scratch'), { recursive: true });
   fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-surface.json' : 'scratch/release-surface.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ result: report.result, gitFiles: files.length, packages: packages.map(({ files, ...info }) => info), violations }, null, 2));

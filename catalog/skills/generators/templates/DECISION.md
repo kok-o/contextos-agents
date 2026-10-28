@@ -2,6 +2,7 @@
 
 **Date:** {{YYYY-MM-DD}}
 **Status:** {{proposed | accepted | deprecated | superseded}}
+<!-- Default to proposed until the actual decision/approval is evidenced. -->
 **Affected modules:** {{module_1}}, {{module_2}}
 
 ## Decision

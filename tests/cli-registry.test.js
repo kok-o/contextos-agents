@@ -6,22 +6,115 @@
 
 'use strict';
 
-const { test, describe } = require('node:test');
+const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const { COMMAND_REGISTRY, getCommand, isKnownCommand, getStatus } = require('../bin/commands.js');
 const { detectProjectAttributes } = require('../bin/lib/detector.js');
 
 const BIN_PATH = path.join(__dirname, '..', 'bin', 'index.js');
 const ROOT_DIR = path.join(__dirname, '..');
 
+describe('Registry schema validation workflow', () => {
+  const yaml = require('yaml');
+  const workflow = yaml.parse(fs.readFileSync(path.join(ROOT_DIR, '.github/workflows/validate-skills.yml'), 'utf8'));
+  const step = workflow.jobs['validate-registry'].steps.find(step => step.name === 'Validate registry.json against schema');
+  const schema = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'registry.schema.json'), 'utf8'));
+  const valid = () => ({ version: '1.0.0', description: 'Fixture registry', skills: [{
+    id: 'fixture/skill', name: 'skill', description: 'Controlled fixture', author: 'fixture',
+    tags: ['one'], npm: null, github: 'fixture/skill', path: null, builtin: true,
+    type: 'instruction-only', resources: ['SKILL.md'],
+  }] });
+  let base, counter = 0;
+  before(() => { base = fs.mkdtempSync(path.join(require('os').tmpdir(), 'ctx-registry-schema-')); });
+  after(() => { if (base) fs.rmSync(base, { recursive: true, force: true }); });
+
+  function validate(registry, fixtureSchema = schema) {
+    const cwd = path.join(base, String(counter++));
+    fs.mkdirSync(cwd);
+    fs.writeFileSync(path.join(cwd, 'registry.json'), JSON.stringify(registry));
+    fs.writeFileSync(path.join(cwd, 'registry.schema.json'), JSON.stringify(fixtureSchema));
+    const helper = path.join(ROOT_DIR, 'scripts/validate-registry.cjs');
+    if (fs.existsSync(helper)) {
+      fs.mkdirSync(path.join(cwd, 'scripts'));
+      fs.copyFileSync(helper, path.join(cwd, 'scripts/validate-registry.cjs'));
+    }
+    const script = path.join(cwd, 'workflow.sh');
+    fs.writeFileSync(script, step.run);
+    return spawnSync('bash', ['--noprofile', '--norc', '-e', '-o', 'pipefail', script.replace(/\\/g, '/')], {
+      cwd, encoding: 'utf8', env: { ...process.env, NODE_PATH: '', NODE_OPTIONS: '' },
+    });
+  }
+
+  test('accepts real registry and valid nullable optional fields without dev dependencies', () => {
+    for (const registry of [valid(), JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'registry.json'), 'utf8'))]) {
+      const result = validate(registry);
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /registry.json is valid/);
+    }
+  });
+
+  const negatives = [
+    ['version boolean', registry => { registry.version = true; }],
+    ['registry description number', registry => { registry.description = 1; }],
+    ['skills object', registry => { registry.skills = {}; }],
+    ['null skill', registry => { registry.skills = [null]; }],
+    ...['id', 'name', 'description', 'author'].map(key => [`${key} number`, registry => { registry.skills[0][key] = 1; }]),
+    ...['id', 'name', 'description', 'author'].map(key => [`missing ${key}`, registry => { delete registry.skills[0][key]; }]),
+    ['id pattern', registry => { registry.skills[0].id = 'INVALID/id'; }],
+    ['tags string', registry => { registry.skills[0].tags = 'tag'; }],
+    ['tags nested type', registry => { registry.skills[0].tags = [1]; }],
+    ...['npm', 'github', 'path'].map(key => [`${key} object`, registry => { registry.skills[0][key] = {}; }]),
+    ['builtin string', registry => { registry.skills[0].builtin = 'true'; }],
+    ['type enum', registry => { registry.skills[0].type = 'unknown'; }],
+    ['type number', registry => { registry.skills[0].type = 1; }],
+    ['resources string', registry => { registry.skills[0].resources = 'SKILL.md'; }],
+    ['resources nested type', registry => { registry.skills[0].resources = [1]; }],
+    ['missing version', registry => { delete registry.version; }],
+    ['missing skills', registry => { delete registry.skills; }],
+  ];
+  for (const [name, mutate] of negatives) {
+    test(`rejects ${name} according to registry.schema.json`, () => {
+      const registry = valid();
+      mutate(registry);
+      const result = validate(registry);
+      assert.equal(result.status, 1, `Invalid fixture accepted: ${name}\n${result.stdout}\n${result.stderr}`);
+      assert.match(result.stderr, /registry.json/);
+    });
+  }
+
+  test('uses the schema rather than a hard-coded list of registry fields', () => {
+    const fixtureSchema = structuredClone(schema);
+    fixtureSchema.definitions.SkillEntry.properties.name.enum = ['other-name'];
+    const result = validate(valid(), fixtureSchema);
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /enum|allowed/);
+  });
+
+  test('fails closed when the schema adds an unsupported validation keyword', () => {
+    const fixtureSchema = structuredClone(schema);
+    fixtureSchema.definitions.SkillEntry.properties.name.minLength = 99;
+    const result = validate(valid(), fixtureSchema);
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /Unsupported schema keyword: minLength/);
+  });
+
+  test('fails closed on an unresolved schema reference', () => {
+    const fixtureSchema = structuredClone(schema);
+    fixtureSchema.properties.skills.items.$ref = '#/definitions/Missing';
+    const result = validate(valid(), fixtureSchema);
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /Unresolved schema reference/);
+  });
+});
+
 describe('bin/commands.js — CLI Command Registry & Status', () => {
   test('COMMAND_REGISTRY declares all required ContextOS commands', () => {
     const requiredCommands = [
       'init', 'status', 'update', 'uninstall', 'doctor',
-      'validate', 'audit', 'export', 'profile', 'resolve',
+      'validate', 'audit', 'export', 'profile', 'resolve', 'index',
       'stats', 'watch', 'detect', 'install-skill', 'skill',
     ];
 
@@ -48,6 +141,9 @@ describe('bin/commands.js — CLI Command Registry & Status', () => {
     assert.ok(isKnownCommand('update'));
     assert.ok(isKnownCommand('doctor'));
     assert.ok(isKnownCommand('audit')); // alias
+    assert.ok(isKnownCommand('index'));
+    assert.equal(isKnownCommand('constructor'), false);
+    assert.equal(isKnownCommand('__proto__'), false);
     assert.equal(isKnownCommand('non-existent-command-xyz'), false);
   });
 

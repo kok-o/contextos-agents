@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
-const { validatePackagePaths } = require('./check-release-surface.cjs');
+const { validatePackagePaths } = require('./release-package-surface.cjs');
 const root = path.resolve(__dirname, '..');
 const registry = 'https://registry.npmjs.org';
 const digest = data => crypto.createHash('sha256').update(data).digest('hex');
@@ -84,13 +84,21 @@ async function registryArchive(pkg, fetcher = fetch) {
 }
 function authorize(pair, runNpm = npm) {
   runNpm(['whoami', '--json', '--registry', registry]);
+  let permissions;
   try {
-    const permissions = JSON.parse(runNpm(['access', 'list', 'packages', '--json', '--registry', registry]));
-    for (const pkg of pair) {
-      if (permissions && permissions[pkg.name] !== 'read-write') throw new Error(`${pkg.name}: read-write access not confirmed before publication`);
+    permissions = JSON.parse(runNpm(['access', 'list', 'packages', '--json', '--registry', registry]));
+  } catch {
+    // Unavailable checks cannot authorize a mutation. Keep npm diagnostics out
+    // of the report because they may contain registry credentials.
+    throw new Error('npm package access check unavailable; publication refused');
+  }
+  if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions)) {
+    throw new Error('npm package access check returned an invalid result; publication refused');
+  }
+  for (const pkg of pair) {
+    if (!Object.hasOwn(permissions, pkg.name) || permissions[pkg.name] !== 'read-write') {
+      throw new Error(`${pkg.name}: read-write access not confirmed before publication`);
     }
-  } catch (error) {
-    if (error.message && error.message.includes('read-write access not confirmed')) throw error;
   }
 }
 async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait = ms => new Promise(resolve => setTimeout(resolve, ms)), record = () => {}, tag } = {}) {
@@ -103,6 +111,8 @@ async function publishPair(pair, { inspect = registryArchive, runNpm = npm, wait
   for (let i = 0; i < pair.length; i++) {
     const pkg = pair[i];
     if (!present[i]) {
+      // Recheck immediately before handing the archive to npm, including on a retry.
+      verifyLocal([pkg]);
       try {
         runNpm(['publish', pkg.archive, '--ignore-scripts', '--access', 'public', '--registry', registry, ...(tag ? ['--tag', tag] : [])]);
       } catch (error) {

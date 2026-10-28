@@ -1,5 +1,9 @@
 # {{Project Name}} - Project Graph
 
+Human-readable mapping scaffold. Verify paths and installed skill IDs. These
+YAML blocks do not configure ContextOS automatically; use its documented manifest
+and project-graph schemas for executable configuration.
+
 ## Project
 
 ```yaml

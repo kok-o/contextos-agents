@@ -6,54 +6,309 @@
     {
       "id": "koko-o/ponytail-mindset",
       "name": "ponytail-mindset",
-      "description": "Minimalist coding mindset — 7-rung YAGNI ladder. Reduces code output ~54%.",
+      "description": "Choose a minimal maintainable implementation for substantive Build tasks while preserving safety and verification.",
       "author": "koko-o",
-      "tags": ["minimalism", "efficiency", "yagni"],
+      "tags": [
+        "minimalism",
+        "efficiency",
+        "yagni"
+      ],
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/ponytail-mindset",
       "builtin": true,
       "type": "instruction-only",
-      "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
+      "resources": [
+        "EXAMPLES.md",
+        "SKILL.md",
+        "TROUBLESHOOTING.md",
+        "VALIDATION.json"
+      ]
     },
     {
       "id": "koko-o/gstack-roles",
       "name": "gstack-roles",
-      "description": "23 specialist AI roles. Declare your role before each task phase.",
+      "description": "Compatibility alias for engineering-workflow with optional specialist review perspectives.",
       "author": "koko-o",
-      "tags": ["roles", "workflow", "planning"],
+      "tags": [
+        "roles",
+        "workflow",
+        "planning"
+      ],
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": ".agents/core/skills/gstack-roles",
       "builtin": true,
       "type": "instruction-only",
-      "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
+      "resources": [
+        "EXAMPLES.md",
+        "SKILL.md",
+        "TROUBLESHOOTING.md",
+        "VALIDATION.json"
+      ]
     },
     {
       "id": "koko-o/impeccable-design",
       "name": "impeccable-design",
-      "description": "50 deterministic design QA rules. Prevents AI design slop.",
+      "description": "Review visual interface quality against the brief, including hierarchy, alignment, density, typography and state consistency.",
       "author": "koko-o",
-      "tags": ["ui", "design", "frontend", "anti-patterns"],
+      "tags": [
+        "ui",
+        "design",
+        "frontend",
+        "anti-patterns"
+      ],
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": "catalog/skills/impeccable-design",
       "builtin": true,
       "type": "instruction-only",
-      "resources": ["EXAMPLES.md", "SKILL.md", "TROUBLESHOOTING.md", "VALIDATION.json"]
+      "resources": [
+        "EXAMPLES.md",
+        "SKILL.md",
+        "TROUBLESHOOTING.md",
+        "VALIDATION.json"
+      ]
     },
     {
       "id": "koko-o/graphify",
       "name": "graphify",
-      "description": "Codebase knowledge graph generator and architecture mapping guide. Instructs agents on AST dependency extraction and blast radius analysis.",
+      "description": "Build or inspect a bounded code dependency map using observed sources and available analyzers.",
       "author": "koko-o",
-      "tags": ["knowledge-graph", "ast", "tree-sitter", "dependencies", "architecture"],
+      "tags": [
+        "knowledge-graph",
+        "ast",
+        "tree-sitter",
+        "dependencies",
+        "architecture"
+      ],
       "npm": null,
       "github": "kok-o/contextos-agents",
       "path": "catalog/skills/graphify",
       "builtin": true,
       "type": "instruction-only",
-      "resources": ["EXAMPLES.md", "SKILL.md", "VALIDATION.json"]
+      "resources": [
+        "EXAMPLES.md",
+        "SKILL.md",
+        "VALIDATION.json"
+      ]
+    },
+    {
+      "id": "koko-o/frontend-design",
+      "name": "frontend-design",
+      "description": "Design or reshape frontend composition, typography, color and visual identity for a specific product and audience.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "ui",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/frontend-design",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json"
+      ]
+    },
+    {
+      "id": "koko-o/vercel-react-best-practices",
+      "name": "vercel-react-best-practices",
+      "description": "Implement and review React or Next.js performance improvements in data fetching, bundles, rendering and client boundaries.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "frontend",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/vercel-react-best-practices",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json",
+        "references/performance.md"
+      ]
+    },
+    {
+      "id": "koko-o/web-design-guidelines",
+      "name": "web-design-guidelines",
+      "description": "Review frontend usability and accessibility, including semantics, keyboard focus, forms, responsive layout and interface states.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "ui",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/web-design-guidelines",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "SKILL.md",
+        "SOURCES.json"
+      ]
+    },
+    {
+      "id": "koko-o/animate",
+      "name": "animate",
+      "description": "Implement purposeful web animations and transitions, including interruption, exit behavior and reduced-motion support.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "ui",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/animate",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json",
+        "references/motion.md"
+      ]
+    },
+    {
+      "id": "koko-o/animation-performance",
+      "name": "animation-performance",
+      "description": "Diagnose web animation stutter, dropped frames and expensive rendering using traces, then verify a targeted fix.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "frontend",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/animation-performance",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json"
+      ]
+    },
+    {
+      "id": "koko-o/review-animations",
+      "name": "review-animations",
+      "description": "Review existing web motion for purpose, timing, continuity, interruption, accessibility and performance evidence.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "ui",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/review-animations",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json"
+      ]
+    },
+    {
+      "id": "koko-o/pick-ui-library",
+      "name": "pick-ui-library",
+      "description": "Choose a frontend component or effects library by task, existing stack, accessibility, bundle cost and maintenance needs.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "frontend",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/pick-ui-library",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json",
+        "references/candidates.md"
+      ]
+    },
+    {
+      "id": "koko-o/webapp-testing",
+      "name": "webapp-testing",
+      "description": "Verify local web application flows in a browser with Playwright, including assertions, screenshots, console errors and responsive states.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "testing",
+        "frontend"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/webapp-testing",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "LICENSE.txt",
+        "SKILL.md",
+        "SOURCES.json",
+        "references/playwright.md"
+      ]
+    },
+    {
+      "id": "koko-o/humanizer",
+      "name": "humanizer",
+      "description": "Edit formulaic or AI-sounding prose while preserving facts, meaning, language and the writer's voice.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "writing",
+        "editing",
+        "anti-slop"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/humanizer",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "SKILL.md",
+        "LICENSE.txt",
+        "SOURCES.json",
+        "references/examples.md"
+      ]
+    },
+    {
+      "id": "koko-o/kill-ai-slop",
+      "name": "kill-ai-slop",
+      "description": "Review or refine generic AI-styled interfaces and UI copy using product intent, real content and observed usability.",
+      "author": "ContextOS contributors",
+      "tags": [
+        "ui",
+        "frontend",
+        "anti-slop"
+      ],
+      "npm": null,
+      "github": "kok-o/contextos-agents",
+      "path": "catalog/skills/kill-ai-slop",
+      "builtin": true,
+      "type": "instruction-only",
+      "resources": [
+        "skill.yaml",
+        "SKILL.md",
+        "LICENSE.txt",
+        "SOURCES.json",
+        "references/examples.md"
+      ]
     }
   ],
   "contributing": "https://github.com/kok-o/contextos-agents/blob/main/CONTRIBUTING.md#publishing-a-skill-as-a-plugin",

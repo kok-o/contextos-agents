@@ -31,7 +31,8 @@ const FIRST_COVERAGE_SKILLS = [
   },
   {
     id: 'adapters',
-    file: path.join(PROJECT_ROOT, 'catalog', 'skills', 'adapters', 'SKILL.md'),
+    // Adapter examples live in the skill's declared supporting resource.
+    file: path.join(PROJECT_ROOT, 'catalog', 'skills', 'adapters', 'EXAMPLES.md'),
     domain: 'adapters',
   },
   {

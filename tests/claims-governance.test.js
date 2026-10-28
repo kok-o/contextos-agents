@@ -15,6 +15,60 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { lintClaims } = require('../scripts/lint-claims');
+const os = require('os');
+
+test('F16: shipped registry descriptions match their canonical skill metadata', () => {
+  const yaml = require('../.agents/compiler/vendor/yaml.js');
+  const registry = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../registry.json'), 'utf8'));
+  for (const skill of registry.skills) {
+    const source = fs.readFileSync(path.resolve(__dirname, '..', skill.path, 'SKILL.md'), 'utf8');
+    const metadata = yaml.parse(source.match(/^---\r?\n([\s\S]*?)\r?\n---/)[1]);
+    assert.equal(skill.name, metadata.name);
+    assert.equal(skill.description, metadata.description.trim(), skill.id);
+  }
+});
+
+test('F16: claims lint rejects uncited quantitative claims in public JSON fields', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-json-claims-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'benchmarks'));
+  fs.writeFileSync(path.join(root, 'benchmarks/claims.json'), JSON.stringify({ claims: [] }));
+  fs.writeFileSync(path.join(root, 'registry.json'), JSON.stringify({ skills: [{ description: 'Reduces code output ~54%.' }] }));
+  const { spawnSync } = require('child_process');
+  const script = path.resolve(__dirname, '../scripts/lint-claims.js');
+  const result = spawnSync(process.execPath, ['-e', `require(${JSON.stringify(script)}).lintClaims({rootDir:${JSON.stringify(root)}})`], { encoding: 'utf8' });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /registry\.json.*skills.*description/);
+});
+
+for (const status of ['invalidated', 'deprecated', 'stale', 'aspirational', 'measured']) {
+  test(`CR08: public quantitative metadata requires current supported evidence (${status})`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-cited-json-claim-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    fs.mkdirSync(path.join(root, 'benchmarks'));
+    fs.writeFileSync(path.join(root, 'evidence.json'), JSON.stringify({ status }));
+    fs.writeFileSync(path.join(root, 'benchmarks/claims.json'), JSON.stringify({ claims: [{
+      id: 'claim-fixture', status, statement: 'Reduces output by 54%.', evidenceArtifact: 'evidence.json',
+    }] }));
+    fs.writeFileSync(path.join(root, 'registry.json'), JSON.stringify({ skills: [{ description: 'Reduces output by 54% claim-fixture.' }] }));
+    const script = path.resolve(__dirname, '../scripts/lint-claims.js');
+    const run = () => require('child_process').spawnSync(process.execPath, ['-e', `require(${JSON.stringify(script)}).lintClaims({rootDir:${JSON.stringify(root)}})`], { encoding: 'utf8' });
+    const result = run();
+    assert.equal(result.status, status === 'measured' ? 0 : 1, result.stdout + result.stderr);
+    if (status === 'measured') {
+      fs.writeFileSync(path.join(root, 'evidence.json'), JSON.stringify({ status: 'stale' }));
+      const staleEvidence = run();
+      assert.equal(staleEvidence.status, 1, staleEvidence.stdout + staleEvidence.stderr);
+      fs.writeFileSync(path.join(root, 'evidence.json'), JSON.stringify({ status: 'measured' }));
+      const claimsFile = path.join(root, 'benchmarks/claims.json');
+      const data = JSON.parse(fs.readFileSync(claimsFile, 'utf8'));
+      data.claims[0].validUntil = '2000-01-01T00:00:00.000Z';
+      fs.writeFileSync(claimsFile, JSON.stringify(data));
+      const expired = run();
+      assert.equal(expired.status, 1, expired.stdout + expired.stderr);
+    }
+  });
+}
 
 test('Claims Registry — schema validation and evidence linking', () => {
   const claimsPath = path.resolve('benchmarks/claims.json');

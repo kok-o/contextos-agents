@@ -1,0 +1,963 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-28",
+  "scope": "Instruction editorial review and engineering contracts; no model-adherence measurement.",
+  "entries": [
+    {
+      "id": "context-manager",
+      "path": ".agents/core/skills/context-manager",
+      "canonical": "context-os",
+      "decision": "retained",
+      "responsibility": "Compatibility alias for context-os context selection and budgeting.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "context-os",
+      "path": ".agents/core/skills/context-os",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Configure and debug ContextOS manifests, resolver selection, profiles, budgets, and adapter exports.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "engineering-workflow",
+      "path": ".agents/core/skills/engineering-workflow",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Scope implementation work, verify behavior, and report evidence using a proportional lifecycle.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "gemini-precision",
+      "path": ".agents/core/skills/gemini-precision",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Execution guidance for Gemini: inspect code, preserve scope, and report relevant verification evidence.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "gstack-roles",
+      "path": ".agents/core/skills/gstack-roles",
+      "canonical": "engineering-workflow",
+      "decision": "retained",
+      "responsibility": "Compatibility alias for engineering-workflow with optional specialist review perspectives.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "ponytail-mindset",
+      "path": ".agents/core/skills/ponytail-mindset",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Choose a minimal maintainable implementation for substantive Build tasks while preserving safety and verification.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "security",
+      "path": ".agents/core/skills/security",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Protect authentication, authorization, sensitive data, untrusted input, external integrations, and agent tool execution.",
+      "reason": "Existing concise core/compatibility guidance already preserves scope and evidence boundaries; original executable blocks retained.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "adapters",
+      "path": "catalog/skills/adapters",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Configure and verify ContextOS exports for Gemini/Antigravity, Claude Code, Cursor, GitHub Copilot, Aider, and Zed without editing generated projections.",
+      "reason": "Current exporter contracts already match actual paths and activation; preserve its tested examples.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "animate",
+      "path": "catalog/skills/animate",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Implement purposeful web animations and transitions, including interruption, exit behavior and reduced-motion support.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "animation-performance",
+      "path": "catalog/skills/animation-performance",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Diagnose web animation stutter, dropped frames and expensive rendering using traces, then verify a targeted fix.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "api-design",
+      "path": "catalog/skills/api-design",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Design or review API contracts, compatibility, validation, errors, pagination and retry-safe operations.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "architecture-diagrams",
+      "path": "catalog/skills/architecture-diagrams",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Explain observed system structure or flows with an appropriate architecture, sequence or data-flow diagram.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "brutalist-design",
+      "path": "catalog/skills/brutalist-design",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Apply an explicitly requested brutalist or industrial visual direction while preserving readability and interaction quality.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "ci-cd",
+      "path": "catalog/skills/ci-cd",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Create or repair CI/CD workflows using relevant checks, reproducible dependencies and explicit trust boundaries.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "database",
+      "path": "catalog/skills/database",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Design and diagnose database queries, schema changes, transactions, indexes and migration safety for the actual database.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "ddd",
+      "path": "catalog/skills/ddd",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Use domain modeling, aggregate boundaries and explicit invariants where business complexity justifies them.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "decisions",
+      "path": "catalog/skills/decisions",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Record or update significant engineering decisions with context, alternatives, consequences and evidence.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "docker",
+      "path": "catalog/skills/docker",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Build and diagnose container images and local container workflows with appropriate caching, runtime permissions and secret handling.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "fastapi",
+      "path": "catalog/skills/fastapi",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Implement and review FastAPI endpoints, validation, dependencies, lifecycle and Python I/O behavior.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md",
+        "skill-catalog-quality.test.js: generic Python negative routing and explicit FastAPI positive routing"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "frontend-design",
+      "path": "catalog/skills/frontend-design",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Design or reshape frontend composition, typography, color and visual identity for a specific product and audience.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "generators",
+      "path": "catalog/skills/generators",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Draft or update requested project documents using relevant templates and verified project facts.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "graphify",
+      "path": "catalog/skills/graphify",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Build or inspect a bounded code dependency map using observed sources and available analyzers.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "impeccable-design",
+      "path": "catalog/skills/impeccable-design",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Review visual interface quality against the brief, including hierarchy, alignment, density, typography and state consistency.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "interview-me",
+      "path": "catalog/skills/interview-me",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Clarify material requirements and constraints with focused questions while progressing from available project context.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "microservices",
+      "path": "catalog/skills/microservices",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Design or diagnose service boundaries, distributed consistency, contracts and failure handling when a distributed architecture is justified.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "minimalist-design",
+      "path": "catalog/skills/minimalist-design",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Apply a requested minimalist or editorial visual direction using clear hierarchy and deliberate restraint.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "nestjs",
+      "path": "catalog/skills/nestjs",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Implement and review NestJS modules, dependency injection, request boundaries and service lifecycle behavior.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "nextjs",
+      "path": "catalog/skills/nextjs",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Implement and review Next.js routes, server/client boundaries, data loading, caching and application lifecycle behavior.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "node",
+      "path": "catalog/skills/node",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Implement and diagnose Node.js services and tools using appropriate asynchronous work, errors, resources and process lifecycle handling.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "performance",
+      "path": "catalog/skills/performance",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Investigate web performance with representative measurements and targeted changes to loading, rendering, assets and work scheduling.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "pick-ui-library",
+      "path": "catalog/skills/pick-ui-library",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Choose a frontend component or effects library by task, existing stack, accessibility, bundle cost and maintenance needs.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "react",
+      "path": "catalog/skills/react",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Implement and review React components, state ownership, effects, identity and lifecycle behavior in the existing application.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "react-best-practices",
+      "path": "catalog/skills/react-best-practices",
+      "canonical": "react",
+      "decision": "updated",
+      "responsibility": "Compatibility catalog name for react; use the canonical skill for current guidance.",
+      "reason": "Shortened duplicate guidance while preserving the existing canonical redirect.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "redesign-audit",
+      "path": "catalog/skills/redesign-audit",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Assess and implement a requested redesign of an existing interface while preserving its content and functional contracts.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "review-animations",
+      "path": "catalog/skills/review-animations",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Review existing web motion for purpose, timing, continuity, interruption, accessibility and performance evidence.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "security-audit",
+      "path": "catalog/skills/security-audit",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Review concrete security boundaries and validate findings with scoped evidence, using an expanded audit workflow only when appropriate.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution",
+        "skill-catalog-quality.test.js: original containment block, allowed/denied/link cases"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "soft-design",
+      "path": "catalog/skills/soft-design",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Apply a requested soft, tactile visual direction with restrained surfaces, typography and motion.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "state-management",
+      "path": "catalog/skills/state-management",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Choose and implement state ownership, synchronization, subscriptions and mutation recovery in frontend applications.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "subagent-orchestrator",
+      "path": "catalog/skills/subagent-orchestrator",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Coordinate authorized delegated work with clear scope, context, ownership and integration checks when suitable tools are available.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "system-design",
+      "path": "catalog/skills/system-design",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Make proportionate architecture decisions using actual requirements, boundaries, workloads and operational constraints.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "terraform",
+      "path": "catalog/skills/terraform",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Inspect and change Terraform or OpenTofu infrastructure with explicit target, state, plan and authorization boundaries.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "testing",
+      "path": "catalog/skills/testing",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Choose and implement proportionate tests for observable behavior, important failures and integration boundaries.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "typescript",
+      "path": "catalog/skills/typescript",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Use TypeScript types, narrowing and compiler checks to express real contracts without hiding runtime uncertainty.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "ui-design",
+      "path": "catalog/skills/ui-design",
+      "canonical": "ui-ux-pro",
+      "decision": "updated",
+      "responsibility": "Compatibility catalog name for ui-ux-pro; use the canonical skill for current guidance.",
+      "reason": "Shortened duplicate guidance while preserving the existing canonical redirect.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "ui-ux-pro",
+      "path": "catalog/skills/ui-ux-pro",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Design or review product interaction flows, information structure, interface states and usable task completion.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "ux-design",
+      "path": "catalog/skills/ux-design",
+      "canonical": "ui-ux-pro",
+      "decision": "updated",
+      "responsibility": "Compatibility catalog name for ui-ux-pro; use the canonical skill for current guidance.",
+      "reason": "Shortened duplicate guidance while preserving the existing canonical redirect.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "vercel-optimize",
+      "path": "catalog/skills/vercel-optimize",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Investigate Vercel hosting performance or cost using supplied observations, scoped source inspection and version-aware platform guidance.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution",
+        "skill-catalog-quality.test.js: supplied/demo observations, cache eligibility, missing data, identity and bounded errors"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "vercel-react-best-practices",
+      "path": "catalog/skills/vercel-react-best-practices",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Implement and review React or Next.js performance improvements in data fetching, bundles, rendering and client boundaries.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "web-accessibility",
+      "path": "catalog/skills/web-accessibility",
+      "canonical": null,
+      "decision": "updated",
+      "responsibility": "Implement and review concrete web accessibility behavior, including semantics, names, keyboard focus, forms and motion preferences.",
+      "reason": "Scoped guidance, conditional technical decisions and truthful evidence/tool boundaries.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution",
+        "verify-skill-examples.js: declared original-source/structural scope; see catalog-quality.md"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "web-design-guidelines",
+      "path": "catalog/skills/web-design-guidelines",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Review frontend usability and accessibility, including semantics, keyboard focus, forms, responsive layout and interface states.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "webapp-testing",
+      "path": "catalog/skills/webapp-testing",
+      "canonical": null,
+      "decision": "retained",
+      "responsibility": "Verify local web application flows in a browser with Playwright, including assertions, screenshots, console errors and responsive states.",
+      "reason": "Recently scoped frontend guidance reviewed for overlap, tool boundaries and sources; no unsupported rewrite needed.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared metadata",
+        "catalog-export-integration.test.js: full 51-entry compilation, six adapters, resources and drift",
+        "skill-catalog-quality.test.js: standalone compilation and explicit resolution"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Live AI-client adherence and domain application outcomes"
+      ]
+    },
+    {
+      "id": "humanizer",
+      "path": "catalog/skills/humanizer",
+      "canonical": null,
+      "decision": "adapted",
+      "responsibility": "Edit formulaic or AI-sounding prose while preserving facts, meaning, language and the writer's voice.",
+      "reason": "Focused anti-slop review with provenance, language-aware judgment and observable validation; optional catalog installation.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared resources",
+        "anti-slop-catalog.test.js: selection, standalone compile, six adapter exports and resource preservation"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Model adherence and improvement in real-client generation outcomes"
+      ]
+    },
+    {
+      "id": "kill-ai-slop",
+      "path": "catalog/skills/kill-ai-slop",
+      "canonical": null,
+      "decision": "adapted",
+      "responsibility": "Review or refine generic AI-styled interfaces and UI copy using product intent, real content and observed usability.",
+      "reason": "Focused anti-slop review with provenance, language-aware judgment and observable validation; optional catalog installation.",
+      "checks": [
+        "skill-creator quick_validate.py: frontmatter",
+        "validate --catalog: manifest and declared resources",
+        "anti-slop-catalog.test.js: selection, standalone compile, six adapter exports and resource preservation"
+      ],
+      "status": "reviewed_local_contracts_passed",
+      "unverified": [
+        "Model adherence and improvement in real-client generation outcomes"
+      ]
+    }
+  ]
+}

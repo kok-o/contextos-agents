@@ -83,6 +83,12 @@ class ProjectMutationLock {
     return this.inspect() !== null;
   }
 
+  recoveryClaimPath(token) {
+    const claim = `${this.lockPath}.reap-${crypto.createHash('sha256').update(token).digest('hex')}`;
+    resolveManagedPath(this.projectRoot, path.relative(this.projectRoot, claim));
+    return claim;
+  }
+
   /**
    * Attempts to acquire the mutation lock exclusively.
    *
@@ -104,12 +110,27 @@ class ProjectMutationLock {
       autoReapStale = true,
     } = meta;
 
-    // Check for existing lock and inspect holder
+    let reapClaim = null;
+    // A claim is tied to the observed owner's immutable token. All contenders
+    // for that owner serialize before inspecting/removing it; a replacement
+    // owner has a different token and must never be removed by an old reader.
     const existing = this.inspect();
     if (existing) {
-      if (autoReapStale && existing.pid && !isPidAlive(existing.pid)) {
-        // Holder PID is dead, safe to reap stale lock
-        this.forceUnlock(`Auto-reaped stale lock from dead PID ${existing.pid}`);
+      if (autoReapStale && typeof existing.token === 'string' && existing.token &&
+          Number.isInteger(existing.pid) && existing.pid > 0 &&
+          (!existing.hostname || existing.hostname === os.hostname()) && !isPidAlive(existing.pid)) {
+        reapClaim = this.recoveryClaimPath(existing.token);
+        try {
+          // Never auto-reap this short-lived claim: doing so would recreate the
+          // stale-unlink race one level down. A crashed claimant fails closed
+          // until an explicit administrative forceUnlock removes its claim.
+          fs.writeFileSync(reapClaim, JSON.stringify({ pid: process.pid, hostname: os.hostname(), token: existing.token }), { flag: 'wx' });
+        } catch (err) {
+          if (err.code !== 'EEXIST') throw err;
+          throw new ProjectLockError(ERROR_CODES.BUSY,
+            'Stale lock recovery is already claimed. If its claimant crashed, stop all ContextOS writers and watchers, then run contextos recover --unlock --force',
+            { lockDetails: existing, recoveryClaim: reapClaim });
+        }
       } else {
         throw new ProjectLockError(
           ERROR_CODES.BUSY,
@@ -132,6 +153,12 @@ class ProjectMutationLock {
 
     let fd = null;
     try {
+      if (reapClaim) {
+        const current = this.inspect();
+        if (current?.token === existing.token && !isPidAlive(current.pid)) {
+          fs.unlinkSync(this.lockPath);
+        }
+      }
       // 'wx' flag opens for writing, failing if path already exists (O_CREAT | O_EXCL)
       fd = fs.openSync(this.lockPath, 'wx');
       fs.writeFileSync(fd, JSON.stringify(payload, null, 2), 'utf8');
@@ -153,6 +180,10 @@ class ProjectMutationLock {
         } catch {
           // Best effort close
         }
+      }
+      if (reapClaim) {
+        try { fs.unlinkSync(reapClaim); }
+        catch { /* A leftover claim for the replaced token is inert. */ }
       }
     }
 
@@ -200,12 +231,18 @@ class ProjectMutationLock {
    * Administratively forces removal of the lock.
    */
   forceUnlock(reason = 'Administrative force unlock') {
+    resolveManagedPath(this.projectRoot, path.relative(this.projectRoot, this.lockPath));
+    const existing = this.inspect();
     try {
       if (fs.existsSync(this.lockPath)) {
         fs.unlinkSync(this.lockPath);
       }
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
+    }
+    if (typeof existing?.token === 'string' && existing.token) {
+      const claim = this.recoveryClaimPath(existing.token);
+      try { fs.unlinkSync(claim); } catch (err) { if (err.code !== 'ENOENT') throw err; }
     }
     this.currentToken = null;
     return { success: true, reason };

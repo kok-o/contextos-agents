@@ -1,0 +1,12 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten for ContextOS: evidence-led diagnosis, browser/device caveats and scoped optimization.",
+  "license": "MIT",
+  "upstream": [
+    {
+      "url": "https://github.com/emilkowalski/skills/blob/main/skills/animation-performance/SKILL.md",
+      "gitBlobSha": "d688dd7c3ba143c6ae17efd2bc665380d5252c5a"
+    }
+  ]
+}

@@ -1,10 +1,14 @@
 schemaVersion: 2
 id: typescript
-name: TypeScript
+name: typescript
 category: frontend
 type: instruction-only
 requires: []
-optional: [zod, prisma]
+optional:
+  - zod
+  - prisma
+  - testing
+  - security
 conflicts: []
 weight: 9
 resources:
@@ -12,3 +16,5 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Use TypeScript types, narrowing and compiler checks to express real
+  contracts without hiding runtime uncertainty.

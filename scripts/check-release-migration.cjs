@@ -126,7 +126,10 @@ try {
   const candidateVersion = JSON.parse(cli('--version', '--json')).version;
   assert.equal(candidateVersion, require('../package.json').version);
   if (!coreOnly) run(process.execPath, [path.join(__dirname, 'check-installed-mcp.cjs'), consumer]);
-  else assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/contextos-mcp')), 'Core migration must not install MCP');
+  else {
+    assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/contextos-mcp')), 'Core migration must not install MCP');
+    assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/@contextos/mcp')), 'Core migration must not install the historical MCP package');
+  }
   // Preserve the entire upgraded configuration for manual reconciliation of later edits.
   const upgraded = path.join(consumer, 'upgraded-config');
   fs.mkdirSync(upgraded);

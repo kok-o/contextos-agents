@@ -1,0 +1,13 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Original condensed ContextOS adaptation of Vercel's performance priorities, with scoped caching and measurement guidance.",
+  "license": "MIT",
+  "upstream": [
+    {
+      "url": "https://github.com/vercel-labs/agent-skills/blob/main/skills/react-best-practices/SKILL.md",
+      "gitBlobSha": "237988de4a66dd8a71d30a2c24ebe1a86b58d04e"
+    }
+  ],
+  "upstreamLicenseDeclaration": "MIT in upstream SKILL.md; author: vercel"
+}

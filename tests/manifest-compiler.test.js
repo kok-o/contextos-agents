@@ -12,6 +12,159 @@ const path = require('node:path');
 const os = require('node:os');
 const { ManifestCompiler, CODES, parseYaml } = require('../.agents/compiler/manifest-compiler.js');
 
+for (const collision of ['security', 'shared-alias', 'Security', 'Shared-Alias']) {
+  test(`F04 compiler diagnoses alias collision with ${collision}`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-alias-collision-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    for (const [id, aliases] of [['aaa-security-note', [collision]], ['security', [collision.toLowerCase()]]]) {
+      const dir = path.join(root, '.agents/core/skills', id);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'SKILL.md'), `# ${id}\n`);
+      fs.writeFileSync(path.join(dir, 'skill.yaml'), JSON.stringify({ id, signals: { aliases } }));
+    }
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(result.registry, null);
+    assert.ok(result.diagnostics.some(d => d.code === CODES.DUPLICATE_ALIAS && d.path === '/signals/aliases' && d.message.toLowerCase().includes(collision.toLowerCase())), JSON.stringify(result.diagnostics));
+  });
+}
+
+const malformedManifests = [
+  [{ dependencies: { requires: 'missing-prerequisite' } }, '/dependencies/requires'],
+  [{ signals: { keywords: [{ value: 42, weight: 40 }] } }, '/signals/keywords/0/value'],
+  [{ requires: 'missing-prerequisite' }, '/requires'],
+  [{ optional: [42] }, '/optional/0'],
+  [{ conflicts: {} }, '/conflicts'],
+  [{ dependencies: [] }, '/dependencies'],
+  [{ dependencies: { requires: [null] } }, '/dependencies/requires/0'],
+  [{ dependencies: { optional: 'note' } }, '/dependencies/optional'],
+  [{ dependencies: { conflicts: false } }, '/dependencies/conflicts'],
+  [{ dependencies: { typo: [] } }, '/dependencies/typo'],
+  [{ signals: [] }, '/signals'],
+  [{ signals: { aliases: 'security' } }, '/signals/aliases'],
+  [{ signals: { aliases: [false] } }, '/signals/aliases/0'],
+  [{ signals: { keywords: [null] } }, '/signals/keywords/0'],
+  [{ signals: { keywords: [{ value: 'word' }] } }, '/signals/keywords/0/weight'],
+  [{ signals: { keywords: [{ value: 'word', weight: 101 }] } }, '/signals/keywords/0/weight'],
+  [{ signals: { keywords: [{ value: 'word', weight: 40, locale: 'bad' }] } }, '/signals/keywords/0/locale'],
+  [{ signals: { keywords: [{ value: 'word', weight: 40, typo: true }] } }, '/signals/keywords/0/typo'],
+  [{ signals: { fileGlobs: [{ value: false, weight: 40 }] } }, '/signals/fileGlobs/0/value'],
+  [{ signals: { packages: [{ ecosystem: 'npm', name: 42, weight: 40 }] } }, '/signals/packages/0/name'],
+  [{ signals: { packages: [{ ecosystem: 'bad', name: 'pkg', weight: 40 }] } }, '/signals/packages/0/ecosystem'],
+  [{ signals: { typo: [] } }, '/signals/typo'],
+  [{ context: { priority: '100' } }, '/context/priority'],
+  [{ context: { priority: 101 } }, '/context/priority'],
+  [{ context: { estimatedTokens: -1 } }, '/context/estimatedTokens'],
+  [{ context: { typo: true } }, '/context/typo'],
+  [{ resources: [null] }, '/resources/0'],
+  [{ resources: [{ path: 'SKILL.md', mode: 'bad' }] }, '/resources/0'],
+  [{ resources: [{ path: 'SKILL.md', typo: true }] }, '/resources/0'],
+  [{ rules: 'rule' }, '/rules'],
+  [{ rules: [null] }, '/rules/0'],
+  [{ rules: [{ id: 'RULE', level: 'must', enforcement: 'reference', summary: 42 }] }, '/rules/0/summary'],
+  [{ rules: [{ id: 'RULE', level: 'must', enforcement: 'reference', summary: 'Rule', tokenCost: -1 }] }, '/rules/0/tokenCost'],
+  [{ deprecated: 'false' }, '/deprecated'],
+  [{ canonical: 42 }, '/canonical'],
+  [{ description: 42 }, '/description'],
+  [{ displayName: false }, '/displayName'],
+  [{ version: true }, '/version'],
+  [{ schemaVersion: 3 }, '/schemaVersion'],
+  [{ category: 'bad' }, '/category'],
+  [{ weight: '9' }, '/weight'],
+  [{ entrypoint: false }, '/entrypoint'],
+  [{ unknown: true }, '/unknown'],
+];
+for (const [invalid, diagnosticPath] of malformedManifests) {
+  test(`F05 rejects raw manifest ${JSON.stringify(invalid)}`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-raw-manifest-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/core/skills/alpha');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Alpha\n');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), JSON.stringify({ id: 'alpha', ...invalid }));
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(result.registry, null);
+    assert.ok(result.diagnostics.some(d => d.code === CODES.SCHEMA_ERROR && d.path === diagnosticPath), JSON.stringify(result.diagnostics));
+  });
+}
+
+for (const dependency of ['constructor', '__proto__', 'toString']) {
+  test(`F05 unknown dependency ${dependency} produces a controlled diagnostic`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-unknown-dependency-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/core/skills/alpha');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Alpha\n');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), JSON.stringify({ id: 'alpha', dependencies: { requires: [dependency] } }));
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, false);
+    assert.ok(result.diagnostics.some(d => d.code === CODES.UNKNOWN_DEPENDENCY && d.message.includes(dependency)), JSON.stringify(result.diagnostics));
+  });
+}
+
+for (const raw of ['false', '0', 'null', '[]', 'alpha']) {
+  test(`F05 rejects non-object YAML documents before normalization: ${raw}`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-raw-document-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/core/skills/alpha');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Alpha\n');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), raw);
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, false);
+    assert.ok(result.diagnostics.some(d => d.code === CODES.SCHEMA_ERROR), JSON.stringify(result.diagnostics));
+  });
+}
+
+test('F05 valid raw nested fields survive compilation and actual resolution', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-valid-manifest-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const manifest = {
+    schemaVersion: 2, id: 'alpha', displayName: 'Alpha', version: '1.2.3', description: 'Policy',
+    type: 'instruction-only', category: 'general', entrypoint: 'SKILL.md', activation: 'auto',
+    signals: { aliases: ['alpha-note'], keywords: [{ value: 'widget', weight: 40, locale: 'en' }],
+      fileGlobs: [{ value: 'src/**/*.example', weight: 30 }], packages: [{ ecosystem: 'npm', name: 'pkg', weight: 35 }] },
+    dependencies: { requires: ['beta'], optional: ['note'], conflicts: ['other'] },
+    context: { priority: 80, estimatedTokens: 999 }, resources: [{ path: 'SKILL.md', mode: 'eager' }],
+    deprecated: false, rules: [{ id: 'ALPHA_RULE', level: 'should', enforcement: 'reference', summary: 'Policy rule', tokenCost: 10 }],
+  };
+  for (const id of ['alpha', 'beta']) {
+    const dir = path.join(root, '.agents/core/skills', id);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), `# ${id}\n`);
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), JSON.stringify(id === 'alpha' ? manifest : { id, resources: ['SKILL.md'] }));
+  }
+  const compiler = new ManifestCompiler({ rootDir: root });
+  const result = compiler.compile();
+  assert.strictEqual(result.success, true, JSON.stringify(result.diagnostics));
+  const compiled = result.registry.skills.alpha;
+  assert.deepStrictEqual(compiled.dependencies, manifest.dependencies);
+  assert.deepStrictEqual(compiled.signals.keywords, manifest.signals.keywords);
+  assert.deepStrictEqual(compiled.signals.fileGlobs, manifest.signals.fileGlobs);
+  assert.deepStrictEqual(compiled.signals.packages, manifest.signals.packages);
+  assert.deepStrictEqual(compiled.resources, manifest.resources);
+  assert.deepStrictEqual(compiled.rules, manifest.rules);
+  assert.strictEqual(compiled.context.priority, 80);
+  const { CanonicalResolver } = require('../.agents/resolver/canonical-resolver.js');
+  const resolved = new CanonicalResolver({ rootDir: root, registry: result.registry }).resolve({ task: 'Adjust widget', installedOnly: true });
+  assert.deepStrictEqual(new Set(resolved.skills), new Set(['alpha', 'beta']));
+});
+
+for (const category of ['engineering', 'design']) {
+  test(`F05 preserves the existing catalog authoring category ${category}`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-legacy-category-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const dir = path.join(root, '.agents/core/skills/alpha');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Alpha\n');
+    fs.writeFileSync(path.join(dir, 'skill.yaml'), JSON.stringify({ schemaVersion: 2, name: 'alpha', category }));
+    const result = new ManifestCompiler({ rootDir: root }).compile();
+    assert.strictEqual(result.success, true, JSON.stringify(result.diagnostics));
+    assert.strictEqual(result.registry.skills.alpha.category, category);
+  });
+}
+
 test('compiled registry honors its closed top-level schema without requiring a timestamp', () => {
   const schema = require('../registry.v2.schema.json');
   const result = new ManifestCompiler({ rootDir: path.resolve(__dirname, '..') }).compile();

@@ -1,10 +1,12 @@
 schemaVersion: 2
 id: ux-design
-name: UX Design
+name: ux-design
 category: design
 type: instruction-only
 requires: []
-optional: [ui-design, web-accessibility]
+optional:
+  - ui-design
+  - web-accessibility
 conflicts: []
 weight: 7
 deprecated: true
@@ -14,3 +16,5 @@ resources:
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Compatibility catalog name for ui-ux-pro; use the canonical skill
+  for current guidance.

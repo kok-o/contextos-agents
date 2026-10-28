@@ -1,113 +1,44 @@
 ---
-name: minimalist-ui
-description: Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.
+name: minimalist-design
+description: Apply a requested minimalist or editorial visual direction using
+  clear hierarchy and deliberate restraint.
 ---
 
-# Protocol: Premium Utilitarian Minimalism UI Architect
+# minimalist-design
 
 ## Overview
 
-An advanced frontend engineering directive for generating highly refined, ultra-minimalist, "document-style" web interfaces analogous to top-tier workspace platforms. This protocol strictly enforces a high-contrast warm monochrome palette, bespoke typographic hierarchies, meticulous structural macro-whitespace, bento-grid layouts, and an ultra-flat component architecture with deliberate muted pastel accents. It actively rejects standard generic SaaS design trends.
+Apply a requested minimalist or editorial visual direction using clear hierarchy and deliberate restraint. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-- When designing clean, editorial, or Notion-like document interfaces, workspaces, or notes apps.
-- When creating minimalist SaaS dashboards, personal essays, portfolios, or agency landing pages.
-- When asked for a "clean", "minimalist", "warm monochrome", or "flat bento-box" layout.
+The brief requests minimalist, restrained or editorial styling. It does not apply merely because a code change should be minimal.
 
 ## Rules & Patterns
 
-### 1. Absolute Negative Constraints (Banned Elements)
+Preserve the product's primary task, real content and brand. Reduce unnecessary decoration while retaining useful affordances, labels, status and navigation.
 
-The AI must strictly avoid the following generic web development defaults:
+Use a coherent type and spacing system. A warm palette, monochrome treatment, flat surfaces or editorial typography are options, not required colors or font families.
 
-- DO NOT use the "Inter", "Roboto", or "Open Sans" typefaces.
-- DO NOT use generic, thin-line icon libraries like "Lucide", "Feather", or standard "Heroicons".
-- DO NOT use Tailwind's default heavy drop shadows (e.g., `shadow-md`, `shadow-lg`, `shadow-xl`). Shadows must be practically non-existent or heavily customized to be ultra-diffuse and low opacity (< 0.05).
-- DO NOT use primary colored backgrounds for large elements or sections (e.g., no bright blue, green, or red hero sections).
-- DO NOT use gradients, neon colors, or 3D glassmorphism (beyond subtle navbar blurs).
-- DO NOT use `rounded-full` (pill shapes) for large containers, cards, or primary buttons.
-- DO NOT use emojis anywhere in code, markup, text content, headings, or alt text. Replace with proper icons or clean SVG primitives.
-- DO NOT use generic placeholder names like "John Doe", "Acme Corp", or "Lorem Ipsum". Use realistic, contextual content.
-- DO NOT use AI copywriting clichés: "Elevate", "Seamless", "Unleash", "Next-Gen", "Game-changer", "Delve". Write plain, specific language.
+Make density fit the task. Minimalism can support a compact working interface; large empty spaces and oversized headings are not universal requirements.
 
-### 2. Typographic Architecture
-
-The interface must rely on extreme typographic contrast and premium font selection to establish an editorial feel.
-
-- **Primary Sans-Serif (Body, UI, Buttons):** Use clean, geometric, or system-native fonts with character (`'SF Pro Display', 'Geist Sans', 'Helvetica Neue', 'Switzer', sans-serif`).
-- **Editorial Serif (Hero Headings & Quotes):** (`'Lyon Text', 'Newsreader', 'Playfair Display', 'Instrument Serif', serif`). Apply tight tracking (`-0.02em` to `-0.04em`) and tight line-height (`1.1`).
-- **Monospace (Code, Keystrokes, Meta-data):** (`'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace`).
-- **Text Colors:** Body text must never be absolute black (`#000000`). Use off-black/charcoal (`#111111` or `#2F3437`) with a generous line-height of `1.6` for legibility. Secondary text should be muted gray (`#787774`).
-
-### 3. Color Palette (Warm Monochrome + Spot Pastels)
-
-Color is a scarce resource, utilized only for semantic meaning or subtle accents.
-
-- **Canvas / Background:** Pure White `#FFFFFF` or Warm Bone/Off-White `#F7F6F3` / `#FBFBFA`.
-- **Primary Surface (Cards):** `#FFFFFF` or `#F9F9F8`.
-- **Structural Borders / Dividers:** Ultra-light gray `#EAEAEA` or `rgba(0,0,0,0.06)`.
-- **Accent Colors:** Exclusively use highly desaturated, washed-out pastels for tags, inline code backgrounds, or subtle icon backgrounds:
-  - Pale Red: `#FDEBEC` (Text: `#9F2F2D`)
-  - Pale Blue: `#E1F3FE` (Text: `#1F6C9F`)
-  - Pale Green: `#EDF3EC` (Text: `#346538`)
-  - Pale Yellow: `#FBF3DB` (Text: `#956400`)
-
-### 4. Component Specifications
-
-- **Bento Box Feature Grids:** Asymmetrical CSS Grid layouts. Cards have `border: 1px solid #EAEAEA`, crisp border-radius (`8px` to `12px` max), and generous internal padding (`24px` to `40px`).
-- **Primary Call-To-Action (Buttons):** Solid `#111111`, text `#FFFFFF`, radius `4px` to `6px`, no box-shadow. Micro-scale `transform: scale(0.98)` on active.
-- **Tags & Status Badges:** Pill-shaped (`rounded-full`), small typography (`text-xs`), uppercase with wide tracking (`0.05em`), pastel background.
-- **Accordions (FAQ):** Separated by `border-bottom: 1px solid #EAEAEA` without card boxes. Crisp `+` / `-` toggle icons.
-- **Keystroke Micro-UIs:** `<kbd className="border border-[#EAEAEA] rounded bg-[#F7F6F3] font-mono px-1.5 py-0.5 text-xs">`.
-
-### 5. Iconography & Imagery
-
-- **System Icons:** Phosphor Icons (Bold/Fill) or Radix UI Icons for crisp, technical strokes.
-- **Photography:** Desaturated images with warm tint and subtle grain overlay (`opacity: 0.04`).
-- **Depth:** Subtle ambient gradients (`radial-gradient` with warm tones at `opacity: 0.03`) or minimal geometric line patterns.
-
-### 6. Subtle Motion & Micro-Animations
-
-- **Scroll Entry:** Fade-in + `translateY(12px)` over 600ms via `IntersectionObserver`.
-- **Hover States:** Subtle card lift with ultra-diffuse shadow (`0 2px 8px rgba(0,0,0,0.04)`).
-- **Staggered Reveals:** Cascading delay (`calc(var(--index) * 80ms)`).
+Keep contrast, focus, target size and state changes clear. Native controls, black text, modest shadows and useful borders are valid when they serve the design.
 
 ## Code Examples
 
-```tsx
-export function BentoFeatureCard({ title, description, badge, tagColor = "blue" }: { title: string; description: string; badge: string; tagColor?: string }) {
-  return (
-    <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-xl p-8 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs uppercase tracking-wider font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#E1F3FE] text-[#1F6C9F]">
-          {badge}
-        </span>
-      </div>
-      <h3 className="font-serif text-2xl tracking-tight text-[#111111] mb-2">{title}</h3>
-      <p className="text-sm text-[#787774] leading-relaxed">{description}</p>
-    </div>
-  );
-}
-```
+A minimalist booking page can remove decorative panels while keeping price, availability, form labels and validation visible. Do not hide essential controls to make the screenshot look quieter.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-- [ ] Macro-whitespace established with generous vertical section padding (`py-24` to `py-32`).
-- [ ] No pure black (`#000000`) for text or backgrounds.
-- [ ] Borders use crisp `1px solid #EAEAEA` or `rgba(0,0,0,0.06)`.
-- [ ] No generic AI buzzwords or emojis used in copy.
-- [ ] Typography uses editorial serif headers paired with clean sans-serif body.
-- [ ] Card corners constrained to crisp 8px-12px radius; no pill containers.
+- [ ] Verify that the reduced design still communicates the full task.
+- [ ] Inspect real content, mobile layout, keyboard focus and error states.
 
 ## Common Mistakes
 
-- Using heavy saturated primary colors for hero backgrounds.
-- Adding default Tailwind drop-shadows (`shadow-lg`).
-- Cluttering interfaces with emojis instead of clean SVG icons.
-- Using default Inter or Roboto fonts without editorial contrast.
+Mistaking empty space for usability; enforcing one palette everywhere; removing affordances or content to simplify appearance.
 
 ## Integration Notes
 
-- Complements `ui-ux-pro` for color tokens and accessibility.
-- Integrates with `impeccable-design` for QA and anti-pattern enforcement.
+Optional companion guidance: frontend-design, web-design-guidelines. Use it only when relevant and available; the skill does not install tools or authorize external actions.

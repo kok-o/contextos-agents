@@ -7,6 +7,7 @@ const os = require('node:os');
 const { ManifestCompiler } = require('../.agents/compiler/manifest-compiler.js');
 const { CanonicalResolver } = require('../.agents/resolver/canonical-resolver.js');
 const { renderAdapters } = require('../.agents/adapters/pure-compiler.js');
+const { stripFrontmatter } = require('../.agents/adapters/shared.js');
 
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-focused-'));
@@ -102,6 +103,44 @@ test('only the compact bootstrap is always applied by default Cursor exports', t
   assert.deepEqual(always.map(a => a.path), ['.cursor/rules/00-project-rules.mdc']);
   assert.ok(always.reduce((sum, a) => sum + a.content.toString().length, 0) <= 6000);
   assert.ok(fs.readFileSync(path.join(root, '.agents/AGENTS.md'), 'utf8').length <= 4800);
+});
+
+test('Gemini projections deliver canonical execution guidance and resource updates, not root GEMINI.md', t => {
+  const { root } = fixture(t);
+  const skills = ['engineering-workflow', 'gemini-precision', 'ponytail-mindset'];
+  const prefixes = ['.agents/skills', '.agents/generated/gemini/skills'];
+  const render = () => new Map(renderAdapters(root, 'gemini').artifacts.map(a => [a.path, a.content.toString()]));
+  const before = render();
+  assert.equal(before.has('GEMINI.md'), false);
+  for (const skill of skills) {
+    const source = fs.readFileSync(path.join(root, '.agents/core/skills', skill, 'SKILL.md'), 'utf8');
+    const body = stripFrontmatter(source).replace(/\r\n?/g, '\n').trim();
+    for (const prefix of prefixes) {
+      assert.ok(before.get(`${prefix}/${skill}/SKILL.md`).includes(body), `${skill} body must reach ${prefix}`);
+    }
+  }
+  const updates = [
+    ['engineering-workflow', 'SKILL.md'],
+    ['engineering-workflow', 'references/workflow.md'],
+    ['gemini-precision', 'SKILL.md'],
+    ['gemini-precision', 'EXAMPLES.md'],
+    ['gemini-precision', 'TROUBLESHOOTING.md'],
+    ['ponytail-mindset', 'SKILL.md'],
+  ];
+  for (const [skill, resource] of updates) {
+    fs.appendFileSync(path.join(root, '.agents/core/skills', skill, resource), '\nCanonical delivery update.\n');
+  }
+  fs.writeFileSync(path.join(root, 'GEMINI.md'), 'Root-only instruction, not an exported skill.\n');
+  const after = render();
+  assert.equal(after.has('GEMINI.md'), false);
+  for (const [skill, resource] of updates) {
+    for (const prefix of prefixes) {
+      const destination = `${prefix}/${skill}/${resource}`;
+      assert.notEqual(after.get(destination), before.get(destination), destination);
+      assert.ok(after.get(destination).endsWith('Canonical delivery update.\n'), destination);
+      assert.equal(after.get(destination).includes('Root-only instruction'), false, destination);
+    }
+  }
 });
 
 test('resolve argument parsing excludes option values from the task and rejects invalid budgets', () => {

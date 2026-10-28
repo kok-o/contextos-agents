@@ -1,30 +1,39 @@
 ---
-name: FastAPI
-description: >
-  ContextOS skill for FastAPI
+name: fastapi
+description: Implement and review FastAPI endpoints, validation, dependencies,
+  lifecycle and Python I/O behavior.
 ---
 
-# FastAPI
+# fastapi
 
 ## Overview
 
-High-performance Python backend engineering using FastAPI, Pydantic v2, and async SQLAlchemy/Tortoise ORM. Enforces type-driven request validation, OpenAPI contracts, and async non-blocking endpoints.
+Implement and review FastAPI endpoints, validation, dependencies, lifecycle and Python I/O behavior. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate when building Python REST APIs, microservices, asynchronous background jobs, or integrating Python ML services into web backends.
+The project actually uses FastAPI or the task asks for it. A Python script or ML experiment alone is not a reason to add a web framework.
 
 ## Rules & Patterns
-<!-- Source: fastapi.md -->
 
-## FastAPI - Best Practices
+Inspect Python, FastAPI, Pydantic and database/HTTP library versions. Follow existing settings, dependencies and application layout; avoid prescribing a full repository/service architecture for a small endpoint.
 
-## Project Structure
+Use request and response models for their intended boundary. Validate allowed fields and authorize protected objects independently of Pydantic validation. Keep secrets and internal errors out of responses.
+
+Choose async def with genuinely awaitable libraries; synchronous path operations and dependencies are supported by FastAPI's execution model. Do not run blocking I/O directly on the event loop or assume adding async makes a synchronous library nonblocking.
+
+Own database sessions and clients at a deliberate lifecycle boundary with cleanup on failure. Lightweight in-process background tasks are not durable job delivery; use the existing durable mechanism when work must survive process loss.
+
+Use the project's maintained authentication and password libraries after checking their actual APIs. JWT is not required for every API; token validation and object-level authorization are separate.
+
+## Code Examples
+
+For a create-user endpoint, test invalid fields, a denied caller, the persisted response and failure cleanup. The examples below are partial patterns with stated fixtures/configuration, not an assembled production authentication service.
 
 ```
 app/
 ├── main.py              # App entry, CORS, middleware
-├── config.py            # Settings with Pydantic BaseSettings
+├── config.py            # App settings (version-specific library)
 ├── database.py          # Database session, engine
 ├── models/              # SQLAlchemy models
 │   ├── __init__.py
@@ -46,8 +55,6 @@ app/
     └── test_users.py
 ```
 
-## Pydantic Models
-
 ```python
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
@@ -63,74 +70,26 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 ```
 
-## Dependency Injection
-
 ```python
-from typing import AsyncGenerator
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-import jwt
+from collections.abc import AsyncIterator
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session() as session:
-        yield session
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token signature or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    user = await user_repo.get_by_id(db, user_id=user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
+# SQLAlchemy 2.x pattern: configure the factory at app setup, then supply
+# the returned dependency through the application's actual Depends wiring.
+def make_db_dependency(session_factory: async_sessionmaker[AsyncSession]):
+    async def get_db() -> AsyncIterator[AsyncSession]:
+        async with session_factory() as session:
+            yield session
+    return get_db
 ```
-
-## Async
-
-- **Use async** for all I/O operations (database, HTTP calls, file I/O)
-- **Never block the event loop** - no sync I/O in async endpoints
-- **Use `asyncio.gather`** for parallel async operations
-- **Background tasks** - use `BackgroundTasks` for non-critical work
-
-## Error Handling
 
 ```python
 from fastapi import HTTPException
 
 class AppException(HTTPException):
     def __init__(self, status_code: int, detail: str, code: str):
-        super().__init__(status_code=status_code, detail=detail)
-        self.code = code
+        super().__init__(status_code=status_code, detail={"code": code, "message": detail})
 ```
-
-## Security
-
-- **OAuth2 with JWT** - use `python-jose`
-- **Password hashing** - bcrypt via `passlib`
-- **CORS** - configure explicitly
-- **Rate limiting** - use `slowapi`
-- **Input validation** - Pydantic handles this automatically
-
-## Testing
 
 ```python
 import pytest
@@ -145,27 +104,15 @@ async def test_create_user(client: AsyncClient):
     assert response.status_code == 201
 ```
 
-## Anti-Patterns
-
-- [FAIL] Business logic in route handlers - use services
-- [FAIL] Raw SQL without ORM - use SQLAlchemy
-- [FAIL] Sync database calls - use async drivers
-- [FAIL] Hardcoded settings - use Pydantic BaseSettings
-- [FAIL] No schema validation - always use Pydantic models
-
-
-## Code Examples
-
-See `EXAMPLES.md` for detailed code examples.
-
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Run the app's actual endpoint tests when available; distinguish AST parsing from HTTP execution.
+- [ ] Check validation, authorization, dependency cleanup and error behavior.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Forcing an async ORM or JWT stack on every project; claiming model validation proves authorization; presenting copied parser fixtures as live API tests.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: api-design, security, testing. Use it only when relevant and available; the skill does not install tools or authorize external actions.

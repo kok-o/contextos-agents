@@ -1,14 +1,26 @@
 schemaVersion: 2
 id: react
-name: React
+name: react
 category: frontend
 type: instruction-only
-requires: [typescript]
-optional: [tailwind, react-query, zustand, next-auth]
-conflicts: [vue, angular, svelte]
+requires: []
+optional:
+  - tailwind
+  - react-query
+  - zustand
+  - next-auth
+  - typescript
+  - state-management
+  - vercel-react-best-practices
+conflicts:
+  - vue
+  - angular
+  - svelte
 weight: 8
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Implement and review React components, state ownership, effects,
+  identity and lifecycle behavior in the existing application.

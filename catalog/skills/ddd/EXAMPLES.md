@@ -1,42 +1,13 @@
-# ddd Examples - Anti-patterns vs ContextOS Standard
+# ddd scenarios
 
-## Example 1: Domain Entities vs Anemic Models
+## In scope
 
-### Anti-pattern: Anemic Domain Model with Leaky Setters
+For an order that cannot be paid after cancellation, identify the state transition and enforce it at the authoritative write boundary. A pure transition helper needs separate persistence/concurrency verification if the endpoint can race.
 
-```typescript
-// BAD: Zero business invariants; any caller can corrupt state
-class BankAccount {
-  public balance: number = 0;
-  public isFrozen: boolean = false;
-}
+## Verification
 
-// Logic leaked into controller or service
-account.balance -= 500; // Overdraft not checked!
-```
+Exercise accepted and rejected domain transitions.
 
-### Best practice: ContextOS Standard (Rich Domain Model with Guarded Invariants)
+Verify persistence and concurrency separately when the invariant depends on them.
 
-```typescript
-// GOOD: Invariants strictly enforced inside Aggregate Root
-class BankAccount {
-  private _balance: number;
-  private _isFrozen: boolean;
-
-  constructor(id: string, initialDeposit: Money) {
-    this._balance = initialDeposit.amount;
-    this._isFrozen = false;
-  }
-
-  public withdraw(amount: Money): void {
-    if (this._isFrozen) {
-      throw new AccountFrozenException('Cannot withdraw from a frozen account');
-    }
-    if (this._balance < amount.amount) {
-      throw new InsufficientFundsException('Insufficient funds for withdrawal');
-    }
-    this._balance -= amount.amount;
-    this.addDomainEvent(new MoneyWithdrawnEvent(this.id, amount));
-  }
-}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

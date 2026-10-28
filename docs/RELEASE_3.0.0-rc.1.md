@@ -1,5 +1,8 @@
 # ContextOS Core 3.0.0-rc.1
 
+> Historical RC.1 record: current release automation is documented in
+> [RELEASE_PROCESS](RELEASE_PROCESS.md); later changes require new evidence.
+
 Status: **core release candidate**, prepared 24 October 2026 for publication on
 25 October 2026 through npm's `next` tag. The [GitHub prerelease](https://github.com/kok-o/contextos-agents/releases/tag/v3.0.0-rc.1)
 and its linked publication workflow record whether registry acceptance completed.

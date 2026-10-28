@@ -12,9 +12,11 @@ Passing (a) says nothing about (b) or (c).
 
 ## Verification record
 
-The current core candidate is **3.0.0-rc.1** on npm's `next` tag. File-contract tests
-are separate from real client loading and model adherence; older client records
-below are historical observations, not fresh RC acceptance. MCP is excluded.
+The current checkout prepares **core 3.0.0**; see the
+[stable release checklist](RELEASE_3.0.0.md). File-contract tests are separate
+from real client loading and model adherence. Client records below retain their
+original RC or local-archive versions and do not establish fresh 3.0.0 client
+acceptance. MCP is excluded.
 
 | Client | Output | (a) File contract | (b) Client loaded | (c) Model followed |
 | --- | --- | --- | --- | --- |
@@ -25,7 +27,8 @@ below are historical observations, not fresh RC acceptance. MCP is excluded.
 | Zed | `.zed/rules.md`, `.zed/prompts/*.md` | Tested | Manual import only | Not verified |
 | Codex CLI | `.agents/skills/*/SKILL.md` | Tested; published RC.1 isolated fixtures checked | CLI 0.164.0-alpha.11.1 / Sol: native metadata list 1/1; exported body read in explicit mention 5/5 and automatic naming review 5/5 without source-search confounds; exported sibling resource read 1/1. See [versioned report](gemini_COMPATIBILITY.md). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls. One additional confounded automatic attempt retained. Small sample; enforced always/glob activation unsupported. |
 | Codex Desktop | `.agents/skills/*/SKILL.md` | Published RC.1; four isolated fixtures and final checks passed | About 26.1021.31345, backend 0.164.0-alpha.11.1, Sol/high: visible picker 1/1; native body injection 5/5 explicit; exported-body reads 5/5 automatic; native sibling resource and reference update observed. See [desktop record](gemini_COMPATIBILITY.md#desktop-observation-27-october-2026). | Matching confirmation 5/5 explicit and 5/5 automatic; absent in 5/5 arithmetic controls and the no-rule control. Resource/update confirmations observed. Small sample; always/glob enforcement unsupported. |
-| Gemini CLI | `.agents/skills/*/SKILL.md` | Tested | Not verified | Not verified |
+| Gemini CLI 0.65.0 | `.agents/skills/*/SKILL.md` | Tested; local 3.0.0 validation archive | Two exported workspace skills listed at native paths in trusted fixtures | Not verified: personal OAuth rejected with `UNSUPPORTED_CLIENT`; see [preflight](CORE_3_0_0_PREFLIGHT.md#legacy-gemini-cli) |
+| Antigravity CLI 1.4.8 | `.agents/skills/*/SKILL.md` | Local 3.0.0 validation archive | Separate client profile: automatic native body reads 2/2; sibling resources read in automatic, explicit and update cases | Gemini 3.8 Flash Medium / Google AI Pro: confirmations 2/2 automatic and 2/2 explicit; negative control and three resource cases passed. Personal-profile reads were blocked by a global telemetry hook and retained separately. Small sample; see [preflight](CORE_3_0_0_PREFLIGHT.md#antigravity-cli-through-the-subscription). |
 | Antigravity IDE 2.5.5 | `.agents/skills/*/SKILL.md`, `.agents/rules/contextos-*.md` | Tested | Native skill discovery, auto and explicit selection observed in a local build; native rule activation tested separately | Small-sample [skill trials](ANTIGRAVITY_SKILL_TRIALS.md), [activation results](ANTIGRAVITY_ACTIVATION_RESULTS.md), and [bounded-glob results](ANTIGRAVITY_BOUNDED_ADAPTER_RESULTS.md); published RC was not tested live. |
 
 Earlier Codex records are in [docs/evidence/](evidence/) and the
@@ -35,7 +38,10 @@ and a separate desktop group with actual picker selections and 25 fresh chats.
 Neither group is a reliability guarantee or an IDE-extension result. For the current Claude
 Code layout only skill discovery has been observed, once. Until the protocol
 below has been run, treat (b) and (c) as open for every client except these
-recorded surface/version observations.
+recorded surface/version observations. The [28 October preflight](CORE_3_0_0_PREFLIGHT.md)
+adds separate legacy Gemini discovery and Antigravity CLI subscription observations
+on a local 3.0.0 archive; it does not establish legacy Gemini inference or CLI
+always/glob activation.
 
 ### How to verify a client yourself
 
@@ -138,7 +144,7 @@ export and names the rule.
   - For Antigravity, `.agents/rules/contextos-<skill-name>.md` when activation is `always` or `globs`.
 - **Contract**:
   - Clean YAML frontmatter (`name`, `description`); examples, troubleshooting and references remain separate resources loaded on demand.
-  - In RC.1 this native-skills projection does not preserve `activation: always` or `globs` as native enforcement; every rule becomes an agent-selected skill. Codex CLI observations and their surface limits are recorded in [the versioned report](gemini_COMPATIBILITY.md).
+  - This native-skills projection does not preserve `activation: always` or `globs` as native enforcement; every rule becomes an agent-selected skill. The RC.1 Codex CLI observations and their surface limits are recorded in [the versioned report](gemini_COMPATIBILITY.md).
 - **Preservation Policy**:
   - Existing root `GEMINI.md` is untouched. Generated skills are protected against overwriting local modifications; use project overrides for customization.
 

@@ -379,7 +379,10 @@ function getActiveProfile(projectDir = process.cwd(), targetFileOrScope = null) 
 
   // Check for monorepo package override
   if (targetFileOrScope && lockData.overrides && typeof lockData.overrides === 'object') {
-    const normalizedScope = targetFileOrScope.replace(/\\/g, '/').replace(/^\.\//, '');
+    const targetScope = targetFileOrScope.replace(/\\/g, '/');
+    const normalizedScope = (path.isAbsolute(targetScope)
+      ? path.relative(projectDir, targetScope).replace(/\\/g, '/')
+      : targetScope).replace(/^\.\//, '');
 
     // 1. Direct key match in overrides
     let matchedProfileName = lockData.overrides[normalizedScope];
@@ -405,9 +408,9 @@ function getActiveProfile(projectDir = process.cwd(), targetFileOrScope = null) 
         const graph = builder.build(projectDir);
         const nearestPkg = builder.findNearestPackage(normalizedScope, graph);
         if (nearestPkg) {
-          if (lockData.overrides[nearestPkg.name]) {
-            matchedProfileName = lockData.overrides[nearestPkg.name];
-            matchedScope = nearestPkg.name;
+          if (lockData.overrides[nearestPkg.id]) {
+            matchedProfileName = lockData.overrides[nearestPkg.id];
+            matchedScope = nearestPkg.id;
           } else if (lockData.overrides[nearestPkg.root]) {
             matchedProfileName = lockData.overrides[nearestPkg.root];
             matchedScope = nearestPkg.root;

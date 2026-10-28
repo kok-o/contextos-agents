@@ -254,6 +254,46 @@ describe('Task 1.4a: Safe CLI update Command', () => {
     assert.equal(loadedLock.managedFiles['.agents/core/skills/deprecated-skill/SKILL.md'], undefined);
   });
 
+  test('F09 repeated update preserves existing user sidecars and delivers upstream to unused names', () => {
+    const rel = '.agents/core/skills/react/SKILL.md';
+    const target = path.join(tmpProject, rel);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, 'MY LOCAL RULE');
+    fs.writeFileSync(`${target}.contextos.new`, 'MY MERGE IN PROGRESS');
+    const lock = createLockfileData();
+    recordManagedFile(lock, rel, 'ORIGINAL');
+    saveLockfile(tmpProject, lock);
+    const options = { sourceAgentsDir: path.join(tmpSource, '.agents'), skipCompile: true };
+    for (const suffix of ['.1', '.2']) {
+      const result = runUpdate(tmpProject, options);
+      assert.equal(result.ok, true);
+      assert.equal(fs.readFileSync(`${target}.contextos.new`, 'utf8'), 'MY MERGE IN PROGRESS');
+      assert.equal(fs.readFileSync(target, 'utf8'), 'MY LOCAL RULE');
+      assert.match(fs.readFileSync(`${target}.contextos.new${suffix}`, 'utf8'), /Updated upstream react skill/);
+      assert.equal(result.plans.find(p => p.relPath === rel).conflictPath, `${rel}.contextos.new${suffix}`);
+    }
+  });
+
+  test('F09 preserves an outside junction sidecar and writes only a new contained file', () => {
+    const rel = '.agents/core/skills/react/SKILL.md';
+    const target = path.join(tmpProject, rel);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, 'MY LOCAL RULE');
+    const outside = path.join(tmpSource, 'outside');
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(outside, 'keep.md'), 'OUTSIDE');
+    fs.symlinkSync(outside, `${target}.contextos.new`, process.platform === 'win32' ? 'junction' : 'dir');
+    const lock = createLockfileData();
+    recordManagedFile(lock, rel, 'ORIGINAL');
+    saveLockfile(tmpProject, lock);
+    const result = runUpdate(tmpProject, { sourceAgentsDir: path.join(tmpSource, '.agents'), skipCompile: true });
+    assert.equal(result.ok, true);
+    assert.equal(fs.lstatSync(`${target}.contextos.new`).isSymbolicLink(), true);
+    assert.deepEqual(fs.readdirSync(outside), ['keep.md']);
+    assert.equal(fs.readFileSync(path.join(outside, 'keep.md'), 'utf8'), 'OUTSIDE');
+    assert.match(fs.readFileSync(`${target}.contextos.new.1`, 'utf8'), /Updated upstream react skill/);
+  });
+
   test('removes tool code that 2.x init copied into the project, but not edited files or generated outputs', () => {
     const projAgents = path.join(tmpProject, '.agents');
     const lock = createLockfileData({ version: '2.3.2' });

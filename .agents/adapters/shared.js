@@ -39,8 +39,9 @@ function collectSkillDirectories(overrideProfile = null, projectRoot = null) {
 
   if (profile && Array.isArray(profile.exclude_skills) && profile.exclude_skills.length > 0) {
     dirs = dirs.filter(dir => {
-      const skillName = path.basename(dir);
-      return !profile.exclude_skills.includes(skillName);
+      const manifest = readSkillManifest(dir);
+      const skillId = manifest.id || manifest.name || path.basename(dir);
+      return !profile.exclude_skills.includes(skillId);
     });
   }
 
@@ -137,8 +138,18 @@ function parseYamlFile(text, file) {
 /** Read the same manifest precedence and entrypoint used by the compiler. */
 function readSkillManifest(skillDir) {
   const manifestPath = ['skill.v2.yaml', 'skill.yaml'].map(name => path.join(skillDir, name)).find(file => fs.existsSync(file));
-  if (manifestPath) require('../filesystem/index.js').resolveManagedPath(skillDir, path.basename(manifestPath));
-  return manifestPath ? parseYamlFile(fs.readFileSync(manifestPath, 'utf8'), manifestPath) : {};
+  if (!manifestPath) return {};
+  require('../filesystem/index.js').resolveManagedPath(skillDir, path.basename(manifestPath));
+  const manifest = parseYamlFile(fs.readFileSync(manifestPath, 'utf8'), manifestPath);
+  const schemaError = require('../compiler/manifest-validation.js').validateRawManifest(manifest);
+  if (schemaError) {
+    const err = new Error(`Invalid skill manifest ${manifestPath}: ${schemaError.message}`);
+    err.code = 'CTX_ADAPTER_INVALID_MANIFEST';
+    err.file = manifestPath;
+    err.path = schemaError.path;
+    throw err;
+  }
+  return manifest;
 }
 
 function getSkillEntrypointPath(skillDir) {
@@ -301,7 +312,8 @@ function splitGlobs(value) {
     }
     result.push(current);
   }
-  return result.map(g => g.replace(/['"]/g, '').trim()).filter(Boolean);
+  // YAML parsing already removed syntax quotes; remaining quotes are literal glob data.
+  return result.map(g => g.trim()).filter(Boolean);
 }
 
 function readSkillFrontmatter(skillDir) {

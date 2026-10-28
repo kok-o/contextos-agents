@@ -1,7 +1,3 @@
-# generators Troubleshooting & Common Mistakes
+# generators troubleshooting
 
-## 1. Generic Boilerplate Generation
-
-- **Symptom**: Generated documentation contains placeholders like [Insert DB Name here].
-- **Root Cause**: Generating docs before clarifying core project constraints.
-- **Fix**: Run the interview-me protocol before generating technical documentation.
+This supporting path is retained for existing links. Read the current [scope and failure guidance](SKILL.md#common-mistakes) and [scenarios](EXAMPLES.md) for this skill. Diagnose the actual version, input and caller before changing behavior; this file adds no separate mandatory workflow.

@@ -7,8 +7,9 @@
  *   node scripts/gate-investigations.mjs <signals-file> [--threshold <n>] [--out <file>] [--help]
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { normalizeSignals, readJson } from './signals-format.mjs';
 
 function printHelp() {
   console.log(`
@@ -22,6 +23,7 @@ Arguments:
 
 Options:
   --threshold <n>        Invocation volume threshold for candidate evaluation (default: 5000)
+  --allow-demo          Permit explicitly labeled synthetic demonstration input
   --out <file>           Output destination file (default: stdout)
   --help, -h             Show this help message
 `);
@@ -40,11 +42,19 @@ let outFile = null;
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === '--threshold' && i + 1 < args.length) {
-    threshold = parseInt(args[++i], 10) || 5000;
+    const value = args[++i];
+    if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) {
+      console.error('--threshold must be a positive integer'); process.exit(1);
+    }
+    threshold = Number(value);
   } else if (arg === '--out' && i + 1 < args.length) {
     outFile = args[++i];
+  } else if (arg === '--allow-demo') {
+    continue;
   } else if (!arg.startsWith('-') && !signalsFile) {
     signalsFile = arg;
+  } else {
+    console.error('Unexpected or incomplete argument'); process.exit(1);
   }
 }
 
@@ -55,22 +65,32 @@ if (!signalsFile || !existsSync(signalsFile)) {
 
 let data = {};
 try {
-  data = JSON.parse(readFileSync(resolve(process.cwd(), signalsFile), 'utf8'));
+  data = readJson(resolve(process.cwd(), signalsFile));
 } catch (e) {
   console.error(`Error reading signals file: ${e.message}`);
   process.exit(1);
 }
 
 const candidates = [];
+const hypotheses = [];
+try { data = { ...data, ...normalizeSignals(data) }; }
+catch (error) { console.error(error.message); process.exit(1); }
+if (data.synthetic && !args.includes('--allow-demo')) {
+  console.error('Synthetic evidence requires explicit --allow-demo and cannot support production recommendations.');
+  process.exit(1);
+}
 const routes = data.routes || [];
 
 for (const r of routes) {
+  if (r.hasTelemetry === false) continue;
   if (r.invocations < threshold && r.p95DurationMs < 1000) {
     continue;
   }
 
   // 1. Caching Opportunity Gate
-  if (r.method === 'GET' && r.invocations >= threshold && (r.cacheable || r.currentCacheControl === 'no-store' || !r.currentCacheControl)) {
+  if (!r.route.startsWith('/.well-known/workflow/v1/') && r.method === 'GET' && r.invocations >= threshold && r.cacheable === true &&
+      r.authSensitive !== true && r.personalized !== true && !/\bprivate\b/i.test(r.currentCacheControl || '') &&
+      !/\b(?:s-maxage|max-age)\s*=\s*[1-9]\d*/i.test(r.currentCacheControl || '')) {
     candidates.push({
       id: `cache-opp-${r.route.replace(/[^a-zA-Z0-9]/g, '-')}`,
       scope: 'code',
@@ -83,12 +103,12 @@ for (const r of routes) {
         p95DurationMs: r.p95DurationMs,
         currentCacheControl: r.currentCacheControl
       },
-      reason: `High volume GET route (${r.invocations.toLocaleString()} invocations) lacking edge/CDN cache headers.`
+      reason: 'Supplied observations mark a public GET route as eligible for cache-policy review; verify authorization and freshness before changes.'
     });
   }
 
   // 2. High Latency / Cold Start Gate
-  if (r.p95DurationMs >= 1000 || r.coldStartRate >= 0.1) {
+  if (!r.route.startsWith('/.well-known/workflow/v1/') && (r.p95DurationMs >= 1000 || r.coldStartRate >= 0.1)) {
     candidates.push({
       id: `latency-coldstart-${r.route.replace(/[^a-zA-Z0-9]/g, '-')}`,
       scope: 'code',
@@ -101,7 +121,7 @@ for (const r of routes) {
         coldStartRate: r.coldStartRate,
         invocations: r.invocations
       },
-      reason: `P95 execution latency (${r.p95DurationMs}ms) or cold start rate (${Math.round(r.coldStartRate * 100)}%) warrants runtime or bundling optimization.`
+      reason: 'Supplied latency observations warrant tracing; they do not establish a root cause or a duration reduction.'
     });
   }
 }
@@ -110,10 +130,11 @@ for (const r of routes) {
 const middlewareList = data.middleware || [];
 for (const mw of middlewareList) {
   if (!mw.hasMatcher) {
-    candidates.push({
+    hypotheses.push({
       id: 'platform-middleware-unfiltered',
       scope: 'platform',
       category: 'middleware-overhead',
+      evidenceKind: 'static-hypothesis',
       route: '/*',
       file: mw.file,
       priority: 'high',
@@ -121,7 +142,7 @@ for (const mw of middlewareList) {
         hasMatcher: false,
         runtime: mw.runtime
       },
-      reason: 'Middleware runs globally across all asset/data requests without a path matcher config.'
+      reason: 'The text scan did not recognize a matcher; verify configuration and measured requests before recommending changes.'
     });
   }
 }
@@ -129,9 +150,13 @@ for (const mw of middlewareList) {
 const gatedResult = {
   timestamp: new Date().toISOString(),
   projectId: data.projectId || 'unknown',
+  synthetic: data.synthetic,
+  telemetrySource: data.telemetrySource,
+  provenanceVerified: false,
   gateThreshold: threshold,
   totalCandidates: candidates.length,
-  candidates
+  candidates,
+  hypotheses
 };
 
 const outputJson = JSON.stringify(gatedResult, null, 2);

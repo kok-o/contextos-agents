@@ -9,6 +9,43 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { createLockfileData, recordManagedFile, saveLockfile } = require('../bin/lib/lockfile.js');
+const { ownsDiskFile } = require('../.agents/filesystem/ownership.js');
+const { computeExactHash, computeSemanticHash } = require('../.agents/filesystem/lockfile-v2.js');
+
+describe('Generated text ownership during conflict recovery', () => {
+  const ours = '# Rules\n\nUse transactions.\n';
+  const theirs = '# Rules\n\nKeep backups.\n';
+  const record = content => ({ exactSha256: computeExactHash(content), semanticTextSha256: computeSemanticHash(content) });
+  const owned = (content, options = {}) => ownsDiskFile({ diskBuf: Buffer.from(content), textLike: true,
+    existing: record(ours), alternates: [record(theirs)], ...options });
+
+  test('a Markdown underline and standalone or malformed markers never authorize changed text', () => {
+    for (const addition of ['\nLocal notes\n=======\nKeep these edits.\n', '\n<<<<<<< HEAD\nLocal notes\n',
+      '\n>>>>>>> other\n', '\n<<<<<<< HEAD\n=======\n>>>>>>> other\n=======\n']) {
+      assert.equal(owned(ours + addition), false, addition);
+    }
+  });
+
+  test('both complete merge sides must match recorded bytes, including unchanged surrounding text', () => {
+    const conflict = `<<<<<<< HEAD\n${ours}=======\n${theirs}>>>>>>> other\n`;
+    assert.equal(owned(conflict), true);
+    assert.equal(owned(conflict.replace('Keep backups.', 'User edits not in either lock record.')), false);
+    assert.equal(owned(conflict + '\nUser edits outside the conflict.\n'), false);
+    assert.equal(owned(conflict, { alternates: [] }), false);
+    assert.equal(owned(conflict, { strict: true }), false);
+    assert.equal(owned(conflict.replace(/\n/g, '\r\n')), true, 'normal line-ending changes remain supported');
+  });
+
+  test('diff3 recovery requires the historical base to match a recorded complete version too', () => {
+    const base = '# Rules\n\nOriginal generated rule.\n';
+    const conflict = `<<<<<<< HEAD\n${ours}||||||| base\n${base}=======\n${theirs}>>>>>>> other\n`;
+    const knownVersions = { alternates: [record(theirs), record(base)] };
+    assert.equal(owned(conflict, knownVersions), true);
+    assert.equal(owned(conflict), false, 'an unrecorded historical base cannot authorize deleting its bytes');
+    assert.equal(owned(conflict.replace(base, 'MY_UNOWNED_NOTES\n'), knownVersions), false);
+    assert.equal(owned(conflict.replace(base, '||||||| duplicate base\n'), knownVersions), false);
+  });
+});
 
 describe('Task 1.3: Adapter Cleanup Safety (Cursor, Zed)', () => {
   let tmpDir;

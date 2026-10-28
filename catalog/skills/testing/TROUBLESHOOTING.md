@@ -1,18 +1,3 @@
-# Testing Troubleshooting Guide
+# testing troubleshooting
 
-## Common Issues & Fixes
-
-### 1. `act(...)` warning in React Testing Library
-
-- **Cause**: An asynchronous state update triggered after the test completed.
-- **Fix**: Ensure all async operations are awaited using `await waitFor(() => ...)` or `await screen.findByRole(...)`.
-
-### 2. Tests pass in isolation but fail in concurrent test runs
-
-- **Cause**: Shared in-memory state or un-reset singleton.
-- **Fix**: Reset all mocks and in-memory databases in `beforeEach(() => vi.clearAllMocks())` and `afterEach(() => cleanup())`.
-
-### 3. Playwright timeout waiting for selector
-
-- **Cause**: Element is animating or blocked behind a modal/overlay.
-- **Fix**: Use web-first assertions like `await expect(page.getByRole('button')).toBeVisible()` which automatically retry until timeout.
+This supporting path is retained for existing links. Read the current [scope and failure guidance](SKILL.md#common-mistakes) and [scenarios](EXAMPLES.md) for this skill. Diagnose the actual version, input and caller before changing behavior; this file adds no separate mandatory workflow.

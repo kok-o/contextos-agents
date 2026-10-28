@@ -1,14 +1,29 @@
 schemaVersion: 2
 id: nextjs
-name: Next.js
+name: nextjs
 category: frontend
 type: instruction-only
-requires: [react, typescript]
-optional: [tailwind, prisma, next-auth, react-query]
-conflicts: [vue, angular, remix]
+requires: []
+optional:
+  - tailwind
+  - prisma
+  - next-auth
+  - react-query
+  - react
+  - typescript
+  - vercel-react-best-practices
+conflicts:
+  - vue
+  - angular
+  - remix
 weight: 9
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+description: Implement and review Next.js routes, server/client boundaries, data
+  loading, caching and application lifecycle behavior.
+signals:
+  aliases:
+    - next.js

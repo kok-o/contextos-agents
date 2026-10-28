@@ -1,5 +1,9 @@
 # {{Project Name}} - Database Schema
 
+Record the actual engine/version. The table below illustrates PostgreSQL syntax;
+adapt it to the selected engine. Indexes need query evidence, and updated_at needs
+an explicit application or database update mechanism.
+
 ## Database Engine
 
 {{e.g., PostgreSQL 16}}
@@ -33,7 +37,7 @@
 <!-- How are schema changes applied? -->
 - Tool: {{e.g., Prisma Migrate, Alembic, Knex}}
 - Naming: `YYYYMMDD_HHMMSS_description`
-- Rule: Never modify existing migrations, always create new ones
+- Preserve already applied/shared migrations; follow the tool and team policy for unapplied local drafts
 
 ## Seed Data
 <!-- What data needs to exist for the app to work? -->

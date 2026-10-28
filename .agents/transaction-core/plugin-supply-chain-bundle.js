@@ -27,7 +27,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/plugins/adapter.ts
+// .agents/transaction-core/supply-chain-src/adapter.ts
 var adapter_exports = {};
 __export(adapter_exports, {
   AtomicPluginUpdater: () => AtomicPluginUpdater,
@@ -41,10 +41,10 @@ __export(adapter_exports, {
 });
 module.exports = __toCommonJS(adapter_exports);
 
-// src/plugins/core/archive.ts
+// .agents/transaction-core/supply-chain-src/core/archive.ts
 var path = __toESM(require("node:path"), 1);
 
-// src/plugins/core/types.ts
+// .agents/transaction-core/supply-chain-src/core/types.ts
 var THREAT_CODES = {
   UNKNOWN_SOURCE_TYPE: "CTX_PLUGIN_UNKNOWN_SOURCE_TYPE",
   FLOATING_SOURCE_BLOCKED: "CTX_PLUGIN_FLOATING_SOURCE_BLOCKED",
@@ -63,7 +63,7 @@ var THREAT_CODES = {
   MODIFIED_LOCALLY: "CTX_PLUGIN_MODIFIED_LOCALLY"
 };
 
-// src/plugins/core/archive.ts
+// .agents/transaction-core/supply-chain-src/core/archive.ts
 var WINDOWS_RESERVED_NAMES = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
 function validateArchiveEntry(entryPath, limits = {}) {
   if (typeof entryPath !== "string" || !entryPath.trim()) {
@@ -167,7 +167,7 @@ function validateArchiveEntry(entryPath, limits = {}) {
   return { valid: true };
 }
 
-// src/plugins/core/digest.ts
+// .agents/transaction-core/supply-chain-src/core/digest.ts
 var crypto = __toESM(require("node:crypto"), 1);
 var fs = __toESM(require("node:fs"), 1);
 var path2 = __toESM(require("node:path"), 1);
@@ -224,7 +224,7 @@ function calculateTreeDigest(dirPath, _options = {}) {
   };
 }
 
-// src/plugins/core/grants.ts
+// .agents/transaction-core/supply-chain-src/core/grants.ts
 var fs2 = __toESM(require("node:fs"), 1);
 var path3 = __toESM(require("node:path"), 1);
 var ScriptGrantManager = class {
@@ -305,7 +305,7 @@ var ScriptGrantManager = class {
   }
 };
 
-// src/plugins/core/pinning.ts
+// .agents/transaction-core/supply-chain-src/core/pinning.ts
 var crypto2 = __toESM(require("node:crypto"), 1);
 var EXACT_COMMIT_SHA = /^[0-9a-f]{40}$/i;
 var EXACT_SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
@@ -370,7 +370,7 @@ function verifyNpmTarballIntegrity(tarballBuffer, expectedIntegrity) {
   return crypto2.timingSafeEqual(bufA, bufB);
 }
 
-// src/plugins/core/updater.ts
+// .agents/transaction-core/supply-chain-src/core/updater.ts
 var fs3 = __toESM(require("node:fs"), 1);
 var path4 = __toESM(require("node:path"), 1);
 var AtomicPluginUpdater = class _AtomicPluginUpdater {

@@ -1,6 +1,6 @@
 {
   "name": "contextos-agents",
-  "version": "3.0.0-rc.1",
+  "version": "3.0.0",
   "description": "Deterministic context and policy compiler for supported AI coding agents.",
   "bin": {
     "contextos": "./bin/index.js",
@@ -32,7 +32,7 @@
     ".agents/adapters",
     ".agents/core",
     ".agents/generated",
-    ".agents/plugins/contextos",
+    ".agents/plugins/contextos/*.json",
     ".agents/compiled",
     ".agents/compiler",
     ".agents/schemas",
@@ -42,20 +42,29 @@
     ".agents/customization-dx.js"
   ],
   "scripts": {
-    "build": "node .agents/ctx.js compile && node .agents/ctx.js export all",
+    "build": "node scripts/build-supply-chain.cjs --check && node scripts/build-release-secrets.cjs --check && node .agents/ctx.js compile && node .agents/ctx.js export all",
+    "build:supply-chain": "node scripts/build-supply-chain.cjs --write",
+    "check:supply-chain": "node scripts/build-supply-chain.cjs --check",
+    "check:supply-chain:mcp": "node scripts/build-supply-chain.cjs --check-mcp",
+    "build:release-secrets": "node scripts/build-release-secrets.cjs --write",
     "compile": "node .agents/ctx.js compile",
     "export": "node .agents/ctx.js export gemini",
     "validate": "node .agents/ctx.js validate",
     "validate:catalog": "node .agents/ctx.js validate --catalog",
     "lint:md": "markdownlint README.md CONTRIBUTING.md GUIDE.md \".agents/core/skills/**/*.md\" --ignore \".agents/generated/**\" --config .markdownlint.json",
     "check:secrets": "node scripts/check-secrets.js --all",
-    "check:consumer": "node scripts/check-release-install.cjs",
-    "check:migration": "node scripts/check-release-migration.cjs",
-    "check:release-surface": "node scripts/check-release-surface.cjs",
+    "check:secrets:core": "node scripts/check-secrets.js --all --core-only",
+    "check:secrets:mcp": "node scripts/check-secrets.js --all --mcp-only",
+    "check:consumer": "node scripts/check-release-install.cjs --core-only",
+    "check:migration": "node scripts/check-release-migration.cjs --core-only",
+    "check:release-surface": "node scripts/check-release-surface.cjs --core-only",
+    "check:consumer:pair": "node scripts/check-release-install.cjs",
+    "check:migration:pair": "node scripts/check-release-migration.cjs",
+    "check:release-surface:pair": "node scripts/check-release-surface.cjs",
     "setup:hooks": "node scripts/install-hooks.js",
     "watch": "node .agents/watch.js",
     "test:skills": "node scripts/verify-skill-examples.js",
-    "test": "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/benchmark-api.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js tests/mutation-paths.test.js tests/tarball-smoke.test.js tests/catalog-export-integration.test.js tests/consumer-gate.test.js tests/adapter-compatibility.test.js tests/consumer-init.test.js tests/skill-examples.test.js tests/scan.test.js tests/hooks.test.js tests/recovery-cli.test.js tests/doctor-v2.test.js tests/resolver-parity.test.js tests/watch-coalescing.test.js tests/consumer-stabilization.test.js tests/antigravity-globs.test.js tests/focused-context.test.js tests/spend-guard.test.js tests/maintenance-benchmark.test.js tests/luna-agent-benchmark.test.js tests/release-surface.test.js tests/core-skill-standard.test.js tests/scenarios.test.js tests/resolver-own-rules.test.js tests/cli-honesty.test.js",
+    "test": "node --test --test-concurrency=1 tests/install.test.js tests/lockfile.test.js tests/safe-writer.test.js tests/adapter-safety.test.js tests/update.test.js tests/uninstall.test.js tests/plugin-security.test.js tests/export.test.js tests/skills.test.js tests/validate.test.js tests/plugins.test.js tests/benchmark.test.js tests/benchmark-api.test.js tests/profile.test.js tests/resolver.test.js tests/cli-registry.test.js tests/profile-enforcement.test.js tests/doctor-hardening.test.js tests/manifest-compiler.test.js tests/canonical-resolver.test.js tests/workspace-graph.test.js tests/profiles-v2.test.js tests/safe-path.test.js tests/project-lock.test.js tests/journaled-transaction.test.js tests/pure-adapters.test.js tests/prompt-skill-system.test.js tests/runtime-state-machine.test.js tests/verification-reviewer-pipeline.test.js tests/durable-concurrency-locks.test.js tests/transactional-git.test.js tests/sandbox-execution.test.js tests/plugin-supply-chain.test.js tests/supply-chain-independence.test.js tests/platform-hardening.test.js tests/customization-dx.test.js tests/claims-governance.test.js tests/benchmark-v2.test.js tests/mutation-paths.test.js tests/tarball-smoke.test.js tests/catalog-export-integration.test.js tests/consumer-gate.test.js tests/adapter-compatibility.test.js tests/consumer-init.test.js tests/skill-examples.test.js tests/scan.test.js tests/hooks.test.js tests/recovery-cli.test.js tests/doctor-v2.test.js tests/resolver-parity.test.js tests/watch-coalescing.test.js tests/consumer-stabilization.test.js tests/antigravity-globs.test.js tests/focused-context.test.js tests/spend-guard.test.js tests/maintenance-benchmark.test.js tests/luna-agent-benchmark.test.js tests/release-surface.test.js tests/core-skill-standard.test.js tests/scenarios.test.js tests/resolver-own-rules.test.js tests/cli-honesty.test.js tests/skill-catalog-quality.test.js tests/anti-slop-catalog.test.js",
     "prepublishOnly": "npm run validate && npm run build",
     "test:core": "node scripts/test-core.cjs",
     "check:consumer:core": "node scripts/check-release-install.cjs --core-only",
@@ -91,10 +100,15 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "markdownlint-cli": "^0.43.0",
+    "markdownlint-cli": "^0.50.0",
     "yaml": "^2.9.0"
   },
+  "overrides": {
+    "micromark-extension-math": {
+      "katex": "^0.18.2"
+    }
+  },
   "publishConfig": {
-    "tag": "next"
+    "tag": "latest"
   }
 }

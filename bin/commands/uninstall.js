@@ -213,7 +213,18 @@ function removeToolState(projectDir) {
     if (!fs.existsSync(target)) continue;
     try {
       resolveManagedPath(projectDir, rel);
-      fs.rmSync(target, { recursive: true, force: true });
+      if (rel === '.agents/.contextos') {
+        // The uninstall lock must remain live throughout cleanup. Removing its
+        // parent would let another writer acquire the project mid-uninstall.
+        for (const entry of fs.readdirSync(target)) {
+          if (entry === 'locks') continue;
+          const childRel = `${rel}/${entry}`;
+          const { resolvedPath } = resolveManagedPath(projectDir, childRel);
+          fs.rmSync(resolvedPath, { recursive: true, force: true });
+        }
+      } else {
+        fs.rmSync(target, { recursive: true, force: true });
+      }
     } catch {
       // A derived cache that cannot be removed is not worth failing the uninstall for.
     }
@@ -269,6 +280,13 @@ function runUninstall(projectDir = process.cwd(), options = {}) {
   let deletedCount = 0;
   const outsideProject = [];
   try {
+    resolveManagedPath(projectDir, '.agents/.contextos/transactions');
+    const pending = JournaledTransaction.listPending(projectDir);
+    if (pending.length > 0) {
+      const message = `Uninstall blocked: pending transactions require explicit recovery (${pending.map(tx => tx.txId).join(', ')}). Run contextos recover; journals and backups were preserved.`;
+      console.error(`\n[ERROR] ${message}`);
+      return { ...planned, ok: false, executed: false, error: 'CTX_TX_RECOVERY_REQUIRED', message, pending };
+    }
     const tx = new JournaledTransaction(projectDir);
     for (const item of plans) {
       try {
@@ -302,11 +320,19 @@ function runUninstall(projectDir = process.cwd(), options = {}) {
     }
 
     if (tx.operations.length > 0) tx.commit();
+    removeToolState(projectDir);
   } finally {
     lock.release(token);
   }
 
-  removeToolState(projectDir);
+  // Only empty directories can be removed after releasing the lock. A new
+  // writer or user-created entry makes rmdir fail rather than being erased.
+  for (const rel of ['.agents/.contextos/locks', '.agents/.contextos']) {
+    try {
+      const { resolvedPath } = resolveManagedPath(projectDir, rel);
+      fs.rmdirSync(resolvedPath);
+    } catch { /* Nonempty, missing, or unsafe: leave it alone. */ }
+  }
 
   const targetAgentsDir = path.join(projectDir, '.agents');
   const remainingFiles = countFiles(targetAgentsDir);
@@ -318,7 +344,8 @@ function runUninstall(projectDir = process.cwd(), options = {}) {
 
   if (remainingFiles === 0) {
     try {
-      fs.rmSync(targetAgentsDir, { recursive: true, force: true });
+      resolveManagedPath(projectDir, '.agents');
+      fs.rmdirSync(targetAgentsDir);
       console.log('\n[OK] ContextOS completely uninstalled. .agents/ removed.');
     } catch (err) {
       console.warn(`[WARN] Could not remove .agents directory: ${err.message}`);

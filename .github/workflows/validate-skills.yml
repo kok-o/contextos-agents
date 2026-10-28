@@ -13,6 +13,12 @@ name: Validate Skills
 
 on:
   workflow_dispatch:
+    inputs:
+      core_stable_preflight:
+        description: 'Verify one reviewed stable core archive on all supported OS/Node combinations, without MCP or publication'
+        type: boolean
+        required: false
+        default: false
   pull_request:
     branches: [main, master]
   push:
@@ -23,11 +29,118 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  core-stable-archive:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.core_stable_preflight }}
+    name: Prepare reviewed stable core archive (no publication)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: git diff --exit-code
+      - name: Pack and verify the reviewed stable core archive
+        run: node -e "process.env.RELEASE_TAG = 'v' + require('./package.json').version; require('./scripts/publish-release.cjs').main('prepare', 'core-stable').catch(error => { console.error(error.message); process.exitCode = 1; });"
+      - name: Fetch the previous core archive for checkpoint rollback
+        run: |
+          mkdir -p scratch/previous-core
+          npm pack contextos-agents@2.3.2 --ignore-scripts --pack-destination scratch/previous-core
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-stable-candidate-${{ github.sha }}
+          path: |
+            scratch/release-candidate/*.tgz
+            scratch/previous-core/*.tgz
+            scratch/release-publish-prepared.json
+          if-no-files-found: error
+          overwrite: true
+
+  core-stable-preflight:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.core_stable_preflight }}
+    needs: core-stable-archive
+    name: Stable core acceptance (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    env:
+      CONTEXTOS_CORE_ONLY_TESTS: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-stable-candidate-${{ github.sha }}
+          path: scratch
+      - run: npm run build
+      - run: git diff --exit-code
+      - name: Verify the downloaded reviewed archive
+        run: node -e "process.env.RELEASE_TAG = 'v' + require('./package.json').version; require('./scripts/publish-release.cjs').main('verify', 'core-stable').catch(error => { console.error(error.message); process.exitCode = 1; });"
+      - run: npm run validate
+      - run: npm run validate:catalog
+      - run: node scripts/validate-registry.cjs
+      - run: npm run check:secrets:core
+      - run: npm run test:skills
+      - run: npm run lint:md
+      - name: Lint stable release instructions
+        run: npx --no-install markdownlint docs/PRODUCT_BOUNDARIES.md docs/ARCHITECTURE.md docs/RELEASE_PROCESS.md docs/RELEASE_3.0.0.md --config .markdownlint.json
+      - run: node .agents/ctx.js export all --check --json
+      - name: Run the complete core test suite
+        shell: pwsh
+        run: |
+          npm run test:core 2>&1 | Tee-Object -FilePath scratch/core-tests.log
+          exit $LASTEXITCODE
+      - name: Test publication recovery with controlled fixtures
+        run: node --test tests/release-publish.test.js
+      - run: npm run check:release-surface:core
+      - run: npm run check:consumer:core -- scratch/release-candidate
+      - name: Verify previous-version upgrade and checkpoint rollback
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          npm run check:migration:core -- scratch/previous-core/contextos-agents-2.3.2.tgz "scratch/release-candidate/contextos-agents-$version.tgz"
+          exit $LASTEXITCODE
+      - name: Recheck archive integrity after acceptance
+        run: node -e "process.env.RELEASE_TAG = 'v' + require('./package.json').version; require('./scripts/publish-release.cjs').main('verify', 'core-stable').catch(error => { console.error(error.message); process.exitCode = 1; });"
+      - name: Retain core-only acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-stable-evidence-${{ matrix.os }}-node-${{ matrix.node }}-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            scratch/core-tests.log
+            scratch/release-publish-prepared.json
+            scratch/release-core-install-result.json
+            scratch/release-core-migration-result.json
+            scratch/release-core-surface.json
+
   installed-consumer:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     uses: ./.github/workflows/consumer-install.yml
 
   # ───────────────────────────────────────────────────────────────────────────
   test:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: Tests (Node ${{ matrix.node }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -44,20 +157,26 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: "npm"
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
       - name: Scan codebase for secrets and credentials
-        run: npm run check:secrets
+        run: npm run check:secrets:core
 
       - name: Run test suite
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force scratch | Out-Null
-          npm test 2>&1 | Tee-Object -FilePath scratch/core-tests.log
+          npm run test:core 2>&1 | Tee-Object -FilePath scratch/core-tests.log
           exit $LASTEXITCODE
 
       - name: Test release publication recovery
+        env:
+          CONTEXTOS_CORE_ONLY_TESTS: "1"
         run: node --test tests/release-publish.test.js
 
       - name: Retain root test logs
@@ -69,6 +188,7 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-skills:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: ctx.js validate & drift check (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -100,6 +220,7 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   lint-frontmatter:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: YAML Frontmatter Lint
     runs-on: ubuntu-latest
     steps:
@@ -158,6 +279,7 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   lint-markdown:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: Markdown Lint
     runs-on: ubuntu-latest
     steps:
@@ -168,12 +290,12 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Install markdownlint-cli
-        run: npm install --no-save markdownlint-cli
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
 
       - name: Lint Markdown files
         run: |
-          npx markdownlint \
+          npx --no-install markdownlint \
             --config .markdownlint.json \
             "README.md" \
             "CONTRIBUTING.md" \
@@ -186,6 +308,7 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-registry:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: Registry Schema Validation
     runs-on: ubuntu-latest
     steps:
@@ -197,50 +320,11 @@ jobs:
           node-version: "22"
 
       - name: Validate registry.json against schema
-        run: |
-          node - << 'EOF'
-          const fs = require('fs');
-
-          const registry = JSON.parse(fs.readFileSync('registry.json', 'utf8'));
-          const schema   = JSON.parse(fs.readFileSync('registry.schema.json', 'utf8'));
-
-          // Minimal validation without ajv (no deps)
-          let errors = 0;
-
-          if (!registry.version) {
-            console.error('::error file=registry.json::Missing required field: version');
-            errors++;
-          }
-          if (!Array.isArray(registry.skills)) {
-            console.error('::error file=registry.json::Missing required field: skills (must be array)');
-            errors++;
-          } else {
-            for (const skill of registry.skills) {
-              const required = ['id', 'name', 'description', 'author'];
-              for (const field of required) {
-                if (!skill[field]) {
-                  console.error(`::error file=registry.json::Skill entry missing required field '${field}': ${JSON.stringify(skill)}`);
-                  errors++;
-                }
-              }
-              // id format: author/name
-              if (skill.id && !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(skill.id)) {
-                console.error(`::error file=registry.json::Skill id '${skill.id}' must match pattern author/name (lowercase, hyphens only)`);
-                errors++;
-              }
-            }
-          }
-
-          if (errors > 0) {
-            console.error(`\n${errors} registry.json error(s) found.`);
-            process.exit(1);
-          } else {
-            console.log(`registry.json is valid — ${registry.skills.length} skill(s) registered.`);
-          }
-          EOF
+        run: node scripts/validate-registry.cjs
 
   # ───────────────────────────────────────────────────────────────────────────
   validate-contextos-mcp:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: contextos-mcp (Node ${{ matrix.node }} on ${{ matrix.os }}, Lint, Test, Build, Pack Smoke-Test)
     runs-on: ${{ matrix.os }}
     strategy:
@@ -290,8 +374,21 @@ jobs:
         run: |
           npm pack --dry-run
           node bin/mcp.mjs --help
+  mcp-source-regressions:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
+    name: MCP source integration regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --ignore-scripts
+      - run: node --test --test-concurrency=1 tests/resolver-parity.test.js tests/runtime-state-machine.test.js tests/sandbox-execution.test.js tests/transactional-git.test.js tests/verification-reviewer-pipeline.test.js
+
   # ---------------------------------------------------------------------------
   oci-integration:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.core_stable_preflight }}
     name: OCI Sandbox Integration Smoke Test
     runs-on: ubuntu-latest
     steps:
@@ -310,6 +407,6 @@ jobs:
         run: docker --version
 
       - name: Run verification integration tests
-        run: npm test
+        run: node --test tests/sandbox-execution.test.js
         env:
           CONTEXTOS_REQUIRE_OCI: "1"

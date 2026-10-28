@@ -177,10 +177,8 @@ const DEFAULT_SIGNALS = {
       { value: 'pydantic', weight: 35 },
       { value: 'uvicorn', weight: 30 },
     ],
-    fileGlobs: [
-      { value: '**/main.py', weight: 20 },
-      { value: '**/requirements.txt', weight: 15 },
-    ],
+    // Python source/manifests alone do not establish a FastAPI application.
+    fileGlobs: [],
     packages: [{ ecosystem: 'pypi', name: 'fastapi', weight: 40 }],
   },
   nestjs: {
@@ -240,7 +238,7 @@ function parseYaml(yamlText, source = '') {
       code: CODES.PARSE_ERROR
     });
   }
-  return doc.toJS() || {};
+  return doc.toJS();
 }
 
 /**
@@ -294,6 +292,14 @@ class ManifestCompiler {
    */
   normalizeManifest(skillDir, rawYamlText) {
     const parsed = parseYaml(rawYamlText, `${path.relative(this.rootDir, skillDir).split(path.sep).join('/')}/skill.yaml`);
+    const schemaError = require('./manifest-validation.js').validateRawManifest(parsed);
+    if (schemaError) {
+      throw new DiagnosticError({
+        ...schemaError,
+        code: schemaError.path === '/entrypoint' && typeof parsed.entrypoint === 'string'
+          ? CODES.INVALID_PATH : CODES.SCHEMA_ERROR,
+      });
+    }
     const skillId = parsed.id || parsed.name || path.basename(skillDir);
     const displayName = parsed.displayName || parsed.name || skillId;
     const isV2 = parsed.schemaVersion === 2;
@@ -402,25 +408,6 @@ class ManifestCompiler {
    */
   validateSingleManifest(skillDir, manifest, manifestFile) {
     const relManifestPath = path.relative(this.rootDir, manifestFile);
-
-    // 0. Strict Schema Validation (additionalProperties: false)
-    const allowedKeys = new Set([
-      'schemaVersion', 'id', 'name', 'displayName', 'entrypoint', 'version', 
-      'description', 'type', 'category', 'dependencies', 'requires', 'optional', 
-      'conflicts', 'signals', 'context', 'weight', 'resources', 'deprecated', 
-      'canonical', 'rules', 'activation', 'globs', 'fileGlobs'
-    ]);
-    if (manifest._raw) {
-      for (const key of Object.keys(manifest._raw)) {
-        if (!allowedKeys.has(key)) {
-          this.addDiagnostic(
-            CODES.SCHEMA_ERROR,
-            `Strict Schema Validation Failed: Unknown property '${key}' is not allowed in schemaVersion 2.`,
-            { file: relManifestPath, path: `/${key}` }
-          );
-        }
-      }
-    }
 
     try {
       manifest.activation = require('../adapters/shared.js').resolveActivation(skillDir);
@@ -657,7 +644,7 @@ class ManifestCompiler {
    */
   compile() {
     this.diagnostics = [];
-    const manifestsById = {};
+    const manifestsById = Object.create(null);
     const skillDirs = require('../plugins.js').collectAllSkillDirs(path.dirname(this.agentsDir), {
       coreSkillsDir: this.coreSkillsDir,
       agentsDir: this.agentsDir,
@@ -697,6 +684,7 @@ class ManifestCompiler {
           `Failed to parse manifest at ${path.relative(this.rootDir, manifestFile || dir)}: ${err.message}`,
           { 
             file: path.relative(this.rootDir, manifestFile || dir),
+            path: err.diag?.path,
             line: err.diag ? err.diag.line : undefined,
             column: err.diag ? err.diag.column : undefined
           }
@@ -706,6 +694,25 @@ class ManifestCompiler {
 
     // 3. Cross-skill dependency graph validation
     this.validateDependencyGraph(manifestsById);
+
+    // Reserve every canonical ID before considering aliases, independent of
+    // directory order. An alias must never redirect another skill's identity.
+    const aliasOwners = new Map(Object.keys(manifestsById).map(id => [id, id]));
+    for (const id of Object.keys(manifestsById).sort()) {
+      const manifest = manifestsById[id];
+      for (const alias of manifest.signals.aliases) {
+        // Task alias matching is case-insensitive, so its namespace is too.
+        const key = alias.toLowerCase();
+        const owner = aliasOwners.get(key);
+        if (owner !== undefined && owner !== id) {
+          this.addDiagnostic(CODES.DUPLICATE_ALIAS,
+            `Alias '${alias}' for skill '${id}' collides with skill '${owner}'. Canonical IDs are reserved.`,
+            { file: manifest.source, path: '/signals/aliases' });
+        } else {
+          aliasOwners.set(key, id);
+        }
+      }
+    }
 
     // If any errors exist, stop and return diagnostics
     const hasErrors = this.diagnostics.some(d => d.severity === 'error');
@@ -719,7 +726,7 @@ class ManifestCompiler {
 
     // 4. Compute hashes, estimated tokens, aliases and packageMap
     const compiledSkills = {};
-    const aliases = {};
+    const aliases = Object.create(null);
     const deprecatedAliases = {};
     const packageMap = {};
     const dependencyGraph = {};

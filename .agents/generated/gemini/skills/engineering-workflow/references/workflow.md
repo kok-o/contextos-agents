@@ -64,6 +64,9 @@ learning statement or unrelated memory edits to every completion.
 ## Report evidence
 
 Name what changed, why, commands/results, tested scope, and remaining limitations.
+Base completion claims on observed changes and check results, not intended actions
+or printed tool-call text. A command's exit status alone does not establish the
+requested behavior. Keep the report brief for a small task.
 VALIDATION.json describes an evidence-report format, not proof that these rules
 were followed. Structural validation, example tests, and live client behavior
 are different evidence scopes.

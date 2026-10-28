@@ -1,79 +1,40 @@
-# Security Audit - Examples & Verification Scenarios
+# Bounded security review examples
 
-## Example 1: Adversarial Validation of Path Traversal
+## Existing-file containment
 
-### Hunter Report (Initial Finding)
-```markdown
-ID: CANDIDATE-01
-Component: User Avatar Download
-Location: src/routes/avatar.ts:18
-Sink: fs.createReadStream(path.join(__dirname, '../../uploads', req.query.file))
-Hypothesis: Attacker passes `?file=../../etc/passwd` to read arbitrary host files.
-```
+String prefixes are not directory boundaries: an allowed directory and a sibling
+can share a prefix. Pass Node's fs and path modules as the final two arguments.
+The original source block is exercised with real temporary files and outside
+links in tests/skill-catalog-quality.test.js.
 
-### Verifier Execution (Disproving Attempt)
-The verifier inspects the middleware chain and creates an isolated reproduction test:
-```typescript
-import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
-import path from 'node:path';
-
-function resolveAvatarPath(baseDir: string, requestedFile: string): string {
-  const safePath = path.resolve(baseDir, requestedFile);
-  if (!safePath.startsWith(baseDir)) {
-    throw new Error('Access denied: directory traversal detected');
+<!-- example: security-audit-contained-file -->
+```javascript
+export function resolveExistingFile(root, requested, fs, path) {
+  if (typeof requested !== 'string' || !requested || path.isAbsolute(requested)) {
+    throw new Error('An existing relative file path is required');
   }
-  return safePath;
+  const base = fs.realpathSync(root);
+  const target = fs.realpathSync(path.resolve(base, requested));
+  const relative = path.relative(base, target);
+  if (!relative || relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
+    throw new Error('File resolves outside the allowed directory');
+  }
+  if (!fs.statSync(target).isFile()) throw new Error('Expected an existing file');
+  return target;
 }
-
-describe('Avatar Path Resolution', () => {
-  const uploadsDir = path.resolve('/var/app/uploads');
-
-  it('rejects traversal attempts escaping uploads root', () => {
-    assert.throws(
-      () => resolveAvatarPath(uploadsDir, '../../etc/passwd'),
-      /Access denied: directory traversal detected/
-    );
-  });
-
-  it('allows safe filenames inside uploads root', () => {
-    const resolved = resolveAvatarPath(uploadsDir, 'user-123.png');
-    assert.equal(resolved, path.join(uploadsDir, 'user-123.png'));
-  });
-});
 ```
 
-### Verifier Verdict
-- If `resolveAvatarPath` was missing in source: Finding is **CONFIRMED** with source trace.
-- If middleware sanitized input before the handler: Finding is **DISPROVEN** and logged as invalid candidate with reason.
+This checks containment at that instant. It does not authorize access or provide
+a race-free file-opening primitive. The caller authorizes the object and uses
+the final decoded path consistently. Concurrent untrusted filesystem mutation
+requires a suitable descriptor/capability-based or transactional boundary.
+Missing files are rejected; do not adapt the example to writes by dropping the
+check. Prefer the project's maintained safe filesystem layer.
 
----
+## Finding scope
 
-## Example 2: Minimal Remediated Code Block
-
-```typescript
-// Vulnerable:
-// app.get('/files', (req, res) => {
-//   res.sendFile(path.join(PUBLIC_DIR, req.query.path as string));
-// });
-
-// Remediated (Surgical Blast Radius):
-import path from 'node:path';
-
-app.get('/files', (req, res) => {
-  const rawPath = String(req.query.path ?? '');
-  const normalizedPath = path.normalize(rawPath).replace(/^(\.\.[\/\\])+/, '');
-  const resolved = path.resolve(PUBLIC_DIR, normalizedPath);
-
-  if (!resolved.startsWith(PUBLIC_DIR)) {
-    return res.status(403).json({
-      error: {
-        code: 'FORBIDDEN',
-        message: 'Path traversal attempted'
-      }
-    });
-  }
-
-  res.sendFile(resolved);
-});
-```
+A focused download review records input, authorization, transformations, the
+file operation and a bounded reproduction. Separate a confirmed defect from
+unverified deployment assumptions. Reproduce with disposable files, not private
+production data. Independent verification helps when available; changing role
+labels in one model does not create an independent reviewer.

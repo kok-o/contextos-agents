@@ -81,6 +81,7 @@ Options:
   --dry-run           Preview what init or uninstall would change, without changing anything
   --force             init: refresh the bundled core files in an existing .agents/ (never deletes your rules)
                       export: replace a generated file even if it differs from the lockfile
+                      recover --unlock: clear an abandoned lock after stopping all writers and watchers
   --with-core         init: also install the seven bundled core skills and AGENTS.md (alias: --minimal)
   --all, --full       init: bundled core plus every catalog skill
   --yes, -y           uninstall: apply the plan (without it, uninstall only shows the plan)
@@ -109,6 +110,7 @@ Commands:
   profile <subcmd>    Manage profiles (list, apply, show, remove)
   export <target>     Export skills (gemini, claude, cursor, copilot, aider, zed, all)
   resolve <prompt>    Dynamically resolve minimal skills for a prompt or files
+  index               Generate a progressive index of installed skills
   stats               Estimate the size of the installed rule payload
   watch               Start continuous file watcher and auto-sync daemon
   detect              Analyze project and display detected tech stack & IDE
@@ -131,8 +133,8 @@ Plugin ref formats:
   username/repo                    GitHub repo with a SKILL.md at the root
   username/repo@commit             GitHub repo pinned to a commit
   username/repo/path/to/skill      GitHub skill in a subdirectory
-  npm-package-name                 A skill published as an npm package
-  @scope/npm-package               A scoped npm skill package
+  npm-package-name@1.2.3           An npm skill pinned to an exact version
+  @scope/npm-package@1.2.3         A scoped npm skill pinned to an exact version
 
 Examples:
   npx contextos-agents init                     Prepare .agents/project/skills for your own rules
@@ -571,14 +573,20 @@ if (mainCommand === 'install-skill') {
         }
 
         const { execFileSync } = require('child_process');
+        let failed = false;
         for (const skillRef of selectedSkills) {
           try {
             console.log(`\nInstalling ${skillRef}...`);
-            execFileSync(process.execPath, [ctxPath, 'skill', 'add', skillRef], { stdio: 'inherit' });
+            execFileSync(process.execPath, [packageCtxPath, 'skill', 'add', skillRef], {
+              cwd: flags.project,
+              stdio: 'inherit',
+            });
           } catch (e) {
+            failed = true;
             console.error(`Failed to install ${skillRef}`);
           }
         }
+        if (failed) process.exitCode = 1;
       } catch (error) {
         console.error('Failed to run interactive installer:', error.message);
         process.exit(1);

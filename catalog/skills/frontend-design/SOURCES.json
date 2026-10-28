@@ -1,0 +1,12 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Adapted and substantially rewritten for ContextOS: scoped discovery, existing design systems, implementation and observed validation.",
+  "license": "Apache-2.0",
+  "upstream": [
+    {
+      "url": "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+      "gitBlobSha": "a5333457c414d20d625f307df945842c0952ecc3"
+    }
+  ]
+}

@@ -5,12 +5,42 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
+const crypto = require('node:crypto');
+const vm = require('node:vm');
 const { spawnSync } = require('node:child_process');
 const { CORE_SKILLS, EXECUTABLE_EXAMPLES, coreSkillFiles, verifyCoreSkills } = require('../scripts/verify-core-skills.cjs');
 const { extractSkillExamples } = require('../scripts/verify-skill-examples');
 const { validateEvidenceReport, validateEvidenceSchema } = require('../.agents/validation-evidence');
 const { RuleCatalog, ENFORCEMENT_LEVELS } = require('../.agents/rules/rule-catalog');
 const ROOT = path.resolve(__dirname, '..');
+
+test('instruction baseline and prepared scenarios have structural provenance, not model-result claims', () => {
+  const evidenceDir = path.join(ROOT, 'docs/evidence');
+  const baseline = JSON.parse(fs.readFileSync(path.join(evidenceDir, 'gemini-flash-3-8-rules-baseline.json'), 'utf8'));
+  const pack = JSON.parse(fs.readFileSync(path.join(evidenceDir, 'gemini-flash-3-8-rules-scenarios.json'), 'utf8'));
+  assert.equal(baseline.kind, 'instruction-baseline-not-model-results');
+  assert.match(baseline.revision, /^[a-f0-9]{40}$/);
+  assert.equal(new Set(baseline.files.map(f => f.path)).size, baseline.files.length);
+  for (const file of baseline.files) {
+    assert.equal(crypto.createHash('sha256').update(file.content).digest('hex'), file.sha256, file.path);
+  }
+  assert.equal(pack.kind, 'frozen-manual-behavior-scenarios-not-results');
+  assert.equal(pack.protocol.status, 'prepared_not_run');
+  assert.equal(pack.protocol.modelCallsAuthorized, false);
+  assert.equal(pack.baseline, 'gemini-flash-3-8-rules-baseline.json');
+  assert.equal(new Set(pack.scenarios.map(s => s.id)).size, pack.scenarios.length);
+  assert.ok(pack.scenarios.some(s => s.id === 'discussion-control'));
+  assert.ok(pack.scenarios.some(s => s.id === 'typo-control'));
+  for (const scenario of pack.scenarios) {
+    assert.ok(scenario.prompt && scenario.acceptance.length && scenario.forbiddenActions.length, scenario.id);
+    assert.ok(Object.keys(scenario.initialFiles).length, scenario.id);
+    for (const relative of Object.keys(scenario.initialFiles)) {
+      assert.equal(path.isAbsolute(relative), false, relative);
+      assert.equal(relative.split(/[\\/]/).includes('..'), false, relative);
+    }
+    if (scenario.oracle) assert.doesNotThrow(() => new vm.Script(scenario.oracle), scenario.id);
+  }
+});
 
 test('all seven core bundles have original-source example or routing evidence with explicit scope', async () => {
   const results = await verifyCoreSkills();

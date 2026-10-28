@@ -7,8 +7,9 @@
  *   node scripts/merge-signals.mjs <signals-file> <codebase-file> [--out <file>] [--help]
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { normalizeSignals, readJson, relativeFile } from './signals-format.mjs';
 
 function printHelp() {
   console.log(`
@@ -64,20 +65,29 @@ let signalsData = {};
 let codebaseData = {};
 
 try {
-  signalsData = JSON.parse(readFileSync(resolve(process.cwd(), signalsPath), 'utf8'));
+  signalsData = readJson(resolve(process.cwd(), signalsPath));
 } catch (e) {
   console.error(`Error parsing signals JSON: ${e.message}`);
   process.exit(1);
 }
 
 try {
-  codebaseData = JSON.parse(readFileSync(resolve(process.cwd(), codebasePath), 'utf8'));
+  codebaseData = readJson(resolve(process.cwd(), codebasePath));
 } catch (e) {
   console.error(`Error parsing codebase JSON: ${e.message}`);
   process.exit(1);
 }
 
-const telemetryRoutes = signalsData.routes || [];
+try {
+  signalsData = normalizeSignals(signalsData);
+  if (!Array.isArray(codebaseData.routes)) throw new Error('Code scan requires a routes array');
+  for (const route of codebaseData.routes) {
+    if (!route || typeof route.route !== 'string' || !route.route.startsWith('/')) throw new Error('Invalid scanned route');
+    route.file = relativeFile(route.file);
+  }
+}
+catch (error) { console.error(error.message); process.exit(1); }
+const telemetryRoutes = signalsData.routes;
 const codeRoutes = codebaseData.routes || [];
 
 // Correlate metrics with source files
@@ -108,11 +118,12 @@ for (const cr of codeRoutes) {
     mergedRoutes.push({
       route: cr.route,
       method: 'GET',
-      invocations: 0,
-      p95DurationMs: 0,
-      avgDurationMs: 0,
-      coldStartRate: 0,
-      errorRate: 0,
+      hasTelemetry: false,
+      invocations: null,
+      p95DurationMs: null,
+      avgDurationMs: null,
+      coldStartRate: null,
+      errorRate: null,
       cacheable: cr.dynamic === 'force-static' || cr.revalidate != null,
       file: cr.file,
       frameworkConfig: {
@@ -128,7 +139,10 @@ for (const cr of codeRoutes) {
 const merged = {
   timestamp: new Date().toISOString(),
   projectId: signalsData.projectId || 'unknown',
-  windowDays: signalsData.windowDays || 14,
+  windowDays: signalsData.windowDays,
+  synthetic: signalsData.synthetic,
+  telemetrySource: signalsData.telemetrySource,
+  provenanceVerified: false,
   framework: codebaseData.framework || 'unknown',
   metrics: signalsData.metrics || {},
   middleware: codebaseData.middleware || [],

@@ -1,5 +1,8 @@
 # {{Project Name}} - System Architecture
 
+Describe the actual system, or label a proposed design explicitly. Omit layers
+the project does not need; the stack, cache and directory tree below are examples.
+
 ## Architecture Overview
 <!-- High-level architecture description and diagram -->
 

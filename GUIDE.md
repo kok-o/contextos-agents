@@ -18,8 +18,8 @@ Key system principles:
 
 ## 2. CLI Commands (`contextos` / `ctx.js`)
 
-This guide targets the **3.0.0-rc.1** core candidate on npm's `next` tag. Follow the
-[RC instructions](docs/RELEASE_3.0.0-rc.1.md) to install a pinned development dependency,
+This guide targets the prepared **3.0.0** core. Follow the
+[stable release instructions](docs/RELEASE_3.0.0.md) to install the reviewed local archive before publication, or a pinned registry version after publication,
 then use `npx --no-install contextos`. The compiler runs from the installed package;
 the project holds rules only, so there is no `.agents/ctx.js` to run.
 
@@ -51,7 +51,7 @@ deletes nothing, so your rules under `.agents/project/` are always safe.
 For a reproducible project setup:
 
 ```sh
-npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0-rc.1.tgz
+npm install --save-dev --save-exact /path/to/contextos-agents-3.0.0.tgz
 npx --no-install contextos init
 npx --no-install contextos compile
 npx --no-install contextos export all
@@ -189,7 +189,7 @@ contextos skill list --available
 contextos skill add react
 contextos skill add fastapi
 
-# Install all 36 catalog skills at once:
+# Install all 44 catalog skills at once:
 contextos skill add --all
 
 # Fork a built-in skill for local customization:
@@ -272,6 +272,20 @@ If a legacy journal lacks original file preconditions, resume is refused rather
 than guessing from the current contents. Preserve the journal and backups for
 manual reconciliation or rollback of operations with known original state.
 
+Dead-owner mutation locks are normally reclaimed automatically. If the process
+reclaiming a lock also crashes, its recovery claim stays in place and later
+commands stop with `CTX_PROJECT_BUSY`. Stop every ContextOS command and watcher
+for the project before explicitly clearing the abandoned lock:
+
+```bash
+contextos recover --unlock --force
+contextos recover --list
+```
+
+Unlocking preserves transaction journals and backups. Then choose `--resume` or
+`--rollback` for any interrupted transaction. Unlock cannot be combined with
+another recovery action, and it refuses a known live owner or recovery claimant.
+
 ### Validation and Testing
 
 ```bash
@@ -314,13 +328,13 @@ that a model followed the instructions or wrote correct application code.
 The [README](README.md#check-rule-changes-in-ci) contains a complete workflow.
 Pin both the action and its CLI input to the version your repository uses:
 
-The RC package and tag are not published yet. Until then, run the local
+The prepared 3.0.0 package and tag are not published yet. Until then, run the local
 `npx --no-install contextos gate --target all`; the example below is for after publication.
 
 ```yaml
-- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0-rc.1
+- uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0
   with:
-    version: '3.0.0-rc.1'
+    version: '3.0.0'
     adapters: 'all'
     working-directory: '.'
 ```
@@ -370,7 +384,7 @@ require a separate approval cycle or role declaration.
 
 ## 4. Key Core & Catalog Skills
 
-Your rules live in `.agents/project/skills/`. The package also carries seven core skills (copied into `.agents/core/skills/` by `init --with-core`) and `catalog/skills/` (36 on-demand domain skills installable via `contextos skill add <name>`):
+Your rules live in `.agents/project/skills/`. The package also carries seven core skills (copied into `.agents/core/skills/` by `init --with-core`) and `catalog/skills/` (44 on-demand domain skills installable via `contextos skill add <name>`):
 
 ### Core Skills (7)
 
@@ -382,19 +396,42 @@ Your rules live in `.agents/project/skills/`. The package also carries seven cor
 - **`context-manager`** - Compatibility alias for `context-os` selection and budgeting guidance.
 - **`gstack-roles`** - Compatibility alias for `engineering-workflow`, with optional specialist review perspectives.
 
-### Extended Catalog Skills (36)
+### Extended Catalog Skills (44)
 
 Installable into any project on demand via `contextos skill add <name>`, `contextos skill add --all`, or stack presets during `init`:
 
 - **Presets at Init (`--preset <name>`):**
-  - `frontend`: `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `web-accessibility`
+  - `frontend`: `react`, `nextjs`, `typescript`, `state-management`, and the eight focused frontend skills below. Legacy design packs and the deprecated `react-best-practices` alias remain available for individual installation; a new preset installation uses the focused skills.
   - `backend`: `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `database`, `ddd`
   - `devops`: `docker`, `ci-cd`, `terraform`, `security-audit`, `performance`
-  - `full` or `--all`: Installs all 36 catalog skills
+  - `full` or `--all`: Installs all 44 catalog skills
 - **Frontend & Design:** `react`, `react-best-practices`, `nextjs`, `typescript`, `ui-ux-pro`, `impeccable-design`, `state-management`, `ui-design`, `ux-design`, `web-accessibility`, `brutalist-design`, `minimalist-design`, `soft-design`, `redesign-audit`.
 - **Backend & Systems:** `system-design`, `api-design`, `node`, `fastapi`, `nestjs`, `microservices`, `ddd`, `database`.
 - **DevOps & Cloud:** `docker`, `ci-cd`, `terraform`, `security-audit`.
 - **Cross-Cutting & Architecture:** `testing`, `performance`, `decisions`, `architecture-diagrams`, `interview-me`, `subagent-orchestrator`, `graphify`, `vercel-optimize`, `adapters`, `generators`.
+
+### Focused frontend workflow
+
+These skills are on-demand guidance, not always-loaded rules or installed UI
+libraries. Install just the needed skill with `contextos skill add <name>`, or
+use `contextos init --preset frontend` to include the full frontend preset.
+
+| Skill | Task |
+| --- | --- |
+| `frontend-design` | Composition, typography, visual hierarchy and product identity |
+| `vercel-react-best-practices` | React/Next.js requests, bundles, rendering and cache boundaries |
+| `web-design-guidelines` | Usability, semantics, keyboard focus, forms and accessibility review |
+| `animate` | Implement transitions, interruption, exits and reduced-motion behavior |
+| `animation-performance` | Diagnose stutter with traces and verify a focused fix |
+| `review-animations` | Review motion purpose, timing, continuity and interaction correctness |
+| `pick-ui-library` | Choose tooling around the existing stack and actual constraints |
+| `webapp-testing` | Verify browser flows with Playwright assertions and useful artifacts |
+
+The ContextOS adaptations preserve user choices and existing dependencies. Each
+skill includes source URLs, reviewed upstream blob hashes and applicable license
+information. Supporting references are loaded only when relevant. Installing
+skills does not prove browser behavior or model adherence; see
+[catalog verification scope](docs/product/catalog-quality.md).
 
 ---
 

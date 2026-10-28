@@ -2,9 +2,19 @@ schemaVersion: 2
 name: soft-design
 category: design
 type: instruction-only
-description: High-end agency-grade UI architecture, haptic micro-aesthetics, and fluid spring motion choreography.
+description: Apply a requested soft, tactile visual direction with restrained
+  surfaces, typography and motion.
 version: 1.0.0
 resources:
   - EXAMPLES.md
   - SKILL.md
   - VALIDATION.json
+id: soft-design
+optional:
+  - frontend-design
+  - web-design-guidelines
+requires: []
+activation: auto
+signals:
+  aliases:
+    - high-end-visual-design

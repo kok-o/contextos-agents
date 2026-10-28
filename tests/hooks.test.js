@@ -15,6 +15,31 @@ const { execFileSync } = require('child_process');
 const CTX_BIN = path.resolve(__dirname, '../bin/index.js');
 const NODE = process.execPath;
 
+for (const operation of ['install', 'uninstall']) {
+  test(`F18: hook ${operation} honors --project without modifying the current repository`, t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-hook-project-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const current = path.join(root, 'current repo');
+    const target = path.join(root, 'target repo');
+    for (const dir of [current, target]) {
+      fs.mkdirSync(dir);
+      execFileSync('git', ['init', '-q'], { cwd: dir });
+    }
+    const currentHook = path.join(current, '.git/hooks/pre-commit');
+    const targetHook = path.join(target, '.git/hooks/pre-commit');
+    if (operation === 'uninstall') {
+      execFileSync(NODE, [CTX_BIN, 'hook', 'install'], { cwd: current });
+      execFileSync(NODE, [CTX_BIN, 'hook', 'install'], { cwd: target });
+    } else {
+      fs.writeFileSync(currentHook, '#!/bin/sh\necho current-only\n');
+    }
+    const original = fs.readFileSync(currentHook);
+    execFileSync(NODE, [CTX_BIN, 'hook', operation, '--project', target], { cwd: current });
+    assert.deepStrictEqual(fs.readFileSync(currentHook), original, 'current repo must remain byte-identical');
+    assert.strictEqual(fs.existsSync(targetHook), operation === 'install');
+  });
+}
+
 test('Phase 5: Git Hook Lifecycle & Safety (hooks.test.js)', async (t) => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-hook-test-'));
 

@@ -1,0 +1,31 @@
+schemaVersion: 2
+id: web-design-guidelines
+name: web-design-guidelines
+version: 1.0.0
+description: Review frontend usability and accessibility, including semantics,
+  keyboard focus, forms, responsive layout and interface states.
+category: ui
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: UI review
+      locale: en
+      weight: 40
+    - value: UX review
+      locale: en
+      weight: 40
+    - value: accessibility review
+      locale: en
+      weight: 40
+    - value: keyboard focus
+      locale: en
+      weight: 40
+    - value: аудит интерфейса
+      locale: ru
+      weight: 40
+    - value: проверь доступность
+      locale: ru
+      weight: 40
+resources:
+  - SOURCES.json

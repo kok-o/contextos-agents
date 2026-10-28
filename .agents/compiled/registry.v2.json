@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "compilerVersion": "2.0.0",
-  "sourceGraphHash": "sha256:b5494d4fc44970adc5bad179b22a4f154900e892ce58bc3de2b3e78b73bbb621",
+  "sourceGraphHash": "sha256:8ef99f14379be0c17fe7caa3781121fc77ad059aa0a5eceb07366e09ffae875a",
   "skills": {
     "context-manager": {
       "id": "context-manager",
@@ -149,9 +149,9 @@
         "mode": "auto",
         "globs": []
       },
-      "entrypointHash": "sha256:1c7d28c6f896e8c27d7e144c0880602c6640d904116b3949358124083b40b629",
-      "resourceTreeHash": "sha256:43fdd51dd1e05bca0d668ecf230dd3acf25ec5adb85e32d693f0dd35292c1fce",
-      "estimatedTokens": 481,
+      "entrypointHash": "sha256:2b6a28ca7b1867a248aa74f6b109d43b7db389bf415a25a28032c9c6a6ad113b",
+      "resourceTreeHash": "sha256:54250df74bcdfe3816909de2b874e98ca8afd1c4088ffa6fb8c7b3be8001a883",
+      "estimatedTokens": 615,
       "source": ".agents/core/skills/engineering-workflow/skill.yaml",
       "signals": {
         "aliases": [
@@ -168,7 +168,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 481
+        "estimatedTokens": 615
       },
       "resources": [
         {
@@ -208,9 +208,9 @@
         "mode": "auto",
         "globs": []
       },
-      "entrypointHash": "sha256:19840b3681878bbd0a4f5d5c6f3367e1435a3a11393dc8e8ae62ad0a99cbbd01",
-      "resourceTreeHash": "sha256:3cb01bf69c6e47e7462f7fbce3e51c2c1ce606a739ac51a79dc1ef1adaa682fd",
-      "estimatedTokens": 503,
+      "entrypointHash": "sha256:be41dd4166a6933080af1b67bf6d15922e9b9f57a8c9153468055eb31d95a21f",
+      "resourceTreeHash": "sha256:7d4aac0ee04796278f960cf29fcaf8aeff9c1a5df992dc10042a14d3706d8efc",
+      "estimatedTokens": 621,
       "source": ".agents/core/skills/gemini-precision/skill.yaml",
       "signals": {
         "aliases": [
@@ -227,7 +227,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 503
+        "estimatedTokens": 621
       },
       "resources": [
         {
@@ -322,9 +322,9 @@
         "mode": "auto",
         "globs": []
       },
-      "entrypointHash": "sha256:914ea397b7fa90606c72bdf192637901eb492f83b172e5d8b5115285de3bad76",
-      "resourceTreeHash": "sha256:bd957cbbe44d2f06259ff3390cda05895befd139a0fa3797b90d38206de516c5",
-      "estimatedTokens": 452,
+      "entrypointHash": "sha256:c51877868685f26169d22ecd3691d4c69350a022e34dd766c6af6ba59089327b",
+      "resourceTreeHash": "sha256:4dbc75a4abf4f608be239da047097d233a1f11d9c719f880a612edaa8ba7564c",
+      "estimatedTokens": 524,
       "source": ".agents/core/skills/ponytail-mindset/skill.yaml",
       "signals": {
         "aliases": [
@@ -341,7 +341,7 @@
       },
       "context": {
         "priority": 50,
-        "estimatedTokens": 452
+        "estimatedTokens": 524
       },
       "resources": [
         {

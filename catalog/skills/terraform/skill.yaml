@@ -1,14 +1,18 @@
 schemaVersion: 2
 name: terraform
-description: Production-grade Terraform and OpenTofu IaC guidance inspired by Anton Babenko. Enforces diagnose-first failure mode analysis, Safe Destroy Protocol, and modular composition.
+description: Inspect and change Terraform or OpenTofu infrastructure with
+  explicit target, state, plan and authorization boundaries.
 version: 1.0.0
 category: devops
 type: instruction-only
-requires:
-  - engineering-workflow
-  - decisions
+requires: []
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: terraform
+optional:
+  - engineering-workflow
+  - decisions
+  - security

@@ -2,10 +2,10 @@ schemaVersion: 2
 name: vercel-optimize
 category: devops
 type: runtime
-description: Observability-first Vercel performance and cost reduction optimization skill.
+description: Investigate Vercel hosting performance or cost using supplied
+  observations, scoped source inspection and version-aware platform guidance.
 version: 1.2.0
-requires:
-  - nextjs
+requires: []
 resources:
   - SKILL.md
   - VALIDATION.json
@@ -13,3 +13,10 @@ resources:
   - scripts/gate-investigations.mjs
   - scripts/merge-signals.mjs
   - scripts/scan-codebase.mjs
+  - scripts/signals-format.mjs
+id: vercel-optimize
+optional:
+  - nextjs
+  - performance
+  - security
+  - vercel-react-best-practices

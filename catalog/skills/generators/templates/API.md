@@ -1,5 +1,9 @@
 # {{Project Name}} - API Specification
 
+Record the existing contract, or label a proposed one explicitly. Reuse the
+project's authentication, error, pagination and versioning conventions; the
+shapes below are examples rather than a required API redesign.
+
 ## Base URL
 
 `{{base_url}}` (e.g., `https://api.example.com/v1`)
@@ -40,7 +44,7 @@
 
 ## Error Format
 
-All errors follow this format:
+Example error format (replace with the project's actual contract):
 
 ```json
 {
@@ -56,7 +60,7 @@ All errors follow this format:
 
 ```json
 {
-  "data": [...],
+  "data": [],
   "pagination": {
     "page": 1,
     "per_page": 20,

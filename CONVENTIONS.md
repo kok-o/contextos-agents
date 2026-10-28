@@ -22,11 +22,15 @@ existing authorization, and unrelated local changes.
 Read skill descriptions first. Load only relevant entrypoints, and read their
 examples or references only when those details are needed.
 
-For explicit selection and explanation, run:
+For explicit selection and explanation in a project with ContextOS installed
+locally, run:
 
 ```sh
-node .agents/ctx.js resolve "task description" --files src/example.ts --json
+npx --no-install contextos resolve "task description" --files src/example.ts --json
 ```
+
+In the ContextOS source checkout, use `node .agents/ctx.js` in place of
+`npx --no-install contextos`. Consumer projects do not receive `.agents/ctx.js`.
 
 The resolver estimates skill body tokens. Client instructions, tool output, and
 chat history consume additional context. A soft budget can overflow for required

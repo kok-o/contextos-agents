@@ -1,36 +1,13 @@
-# fastapi Examples - Anti-patterns vs ContextOS Standard
+# fastapi scenarios
 
-## Example 1: Asynchronous Route Handlers
+## In scope
 
-### Anti-pattern: Blocking I/O inside `async def`
+For a create-user endpoint, test invalid fields, a denied caller, the persisted response and failure cleanup. The examples below are partial patterns with stated fixtures/configuration, not an assembled production authentication service.
 
-```python
-# BAD: time.sleep or synchronous requests blocks the entire asyncio event loop!
-import time
-import requests
+## Verification
 
-@app.get("/slow")
-async def slow_route():
-    time.sleep(5)  # BLOCKS ALL CONCURRENT USERS!
-    return {"status": "done"}
-```
+Run the app's actual endpoint tests when available; distinguish AST parsing from HTTP execution.
 
-### Best practice: ContextOS Standard (Non-blocking Async or Def Offload)
+Check validation, authorization, dependency cleanup and error behavior.
 
-```python
-# GOOD: Use async non-blocking client (httpx) or standard def for sync CPU work
-import asyncio
-import httpx
-
-@app.get("/fast")
-async def fast_route():
-    async with httpx.AsyncClient() as client:
-        response = await client.get("https://api.example.com/data")
-    return response.json()
-
-# Or standard def (FastAPI automatically runs it in a background threadpool):
-@app.get("/sync-worker")
-def sync_worker():
-    time.sleep(5)  # Runs in worker thread without blocking event loop
-    return {"status": "done"}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

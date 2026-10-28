@@ -48,18 +48,20 @@ see [alternatives](docs/ALTERNATIVES.md) for an honest comparison.
 
 ## Quickstart
 
-This checkout targets **3.0.0-rc.1**, a **core release candidate** distributed
-through npm's `next` tag. See the [release status](https://github.com/kok-o/contextos-agents/releases/tag/v3.0.0-rc.1)
-and [RC instructions](docs/RELEASE_3.0.0-rc.1.md). The npm badge above describes the
-published package, not this checkout. MCP is outside this candidate.
+This checkout prepares **core 3.0.0**. Publication is a separate step; see the
+[stable release checklist](docs/RELEASE_3.0.0.md). The npm badge above describes
+the published package, not this checkout. MCP has its own release path.
 
 Requires **Node.js 22+** and npm. Run these commands in your project's root.
 This workflow does not call a model API.
 
 **1. Prepare the rule sources.**
 
+The registry install below is for after 3.0.0 is published. During preparation,
+install the [reviewed local archive](docs/RELEASE_3.0.0.md#try-the-prepared-archive).
+
 ```sh
-npm install --save-dev --save-exact contextos-agents@3.0.0-rc.1
+npm install --save-dev --save-exact contextos-agents@3.0.0
 npx --no-install contextos init
 ```
 
@@ -159,8 +161,9 @@ remain separate.
 <details>
 <summary>GitHub Actions example</summary>
 
-The following example becomes usable only after the RC package and tag are
-published. For this local candidate, use `npx --no-install contextos gate --target all`.
+The following example becomes usable only after the 3.0.0 package and tag are
+published. During preparation, use `npx --no-install contextos gate --target all`
+with the reviewed local package installed.
 After publication, save as `.github/workflows/contextos.yml`:
 
 ```yaml
@@ -171,9 +174,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0-rc.1
+      - uses: kok-o/contextos-agents/.github/actions/contextos-gate@v3.0.0
         with:
-          version: '3.0.0-rc.1'
+          version: '3.0.0'
           adapters: 'all'
           working-directory: '.'
 ```
@@ -220,10 +223,13 @@ limitations.
 ## Scope and evidence
 
 The core CLI manages rule sources, selection, exports and configuration checks.
-The optional [MCP package](contextos-mcp/README.md) is separate, in beta and
-frozen at read-only inspection (`npm install --save-dev contextos-mcp`); agent
-execution and runtime orchestration remain experimental and are not developed
-further until the core has external users.
+The optional [MCP package](contextos-mcp/README.md) is separate and maintained
+only for security and compatibility (`npm install --save-dev contextos-mcp`); agent
+execution and runtime orchestration remain experimental and are not expanded.
+Resuming MCP development requires a separate decision and a confirmed user scenario.
+Core has independent stable and RC [release paths](docs/RELEASE_PROCESS.md).
+Migration of the separate MCP package to its own maintenance workflow remains
+separate work.
 
 Consistent configuration does not guarantee that a model follows every rule.
 The [recorded calibration](docs/BENCHMARK_RESULTS.md) found no quality advantage

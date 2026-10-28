@@ -4,9 +4,9 @@ author: 'kok-o'
 
 inputs:
   version:
-    description: 'Version of contextos-agents package to run (e.g. 2.0.0, latest, or local)'
+    description: 'Exact contextos-agents version to install from the public npm registry, or local for a trusted action checkout'
     required: false
-    default: '3.0.0-rc.1'
+    default: '3.0.0'
   adapters:
     description: 'Target adapter(s) to verify (gemini, claude, cursor, copilot, aider, zed, all)'
     required: false
@@ -44,45 +44,57 @@ runs:
   using: 'composite'
   steps:
     - name: Set up Node.js ${{ inputs.node-version }}
+      id: setup-node
       uses: actions/setup-node@v4
+      env:
+        NODE_OPTIONS: ''
+        NODE_PATH: ''
+        NODE_EXTRA_CA_CERTS: ''
       with:
         node-version: ${{ inputs.node-version }}
-
-    - name: Validate Security Requirements
-      shell: bash
-      run: |
-        if [ "${{ inputs.require-secrets }}" = "true" ] || [ "${{ inputs.skip-secrets }}" = "false" ]; then
-          echo "::error::[SECRETS_SCANNER_NOT_CONFIGURED] Secret scanning is not_configured in ContextOS Gate v2.0. To avoid silent security degradation, this check fails closed. Please use a dedicated secrets scanner (e.g. gitleaks/gitleaks-action) in your workflow."
-          exit 2
-        fi
 
     - name: Run ContextOS Quality Gate
       id: run-gate
       shell: bash
+      env:
+        CONTEXTOS_ACTION_PATH: ${{ github.action_path }}
+        CONTEXTOS_NODE_VERSION: ${{ steps.setup-node.outputs.node-version }}
+        CONTEXTOS_VERSION: ${{ inputs.version }}
+        CONTEXTOS_PROJECT: ${{ inputs.working-directory }}
+        CONTEXTOS_ADAPTERS: ${{ inputs.adapters }}
+        CONTEXTOS_PROFILE: ${{ inputs.profile }}
+        CONTEXTOS_REQUIRE_SECRETS: ${{ inputs.require-secrets }}
+        CONTEXTOS_SKIP_SECRETS: ${{ inputs.skip-secrets }}
+        # Trusted action configuration; never inherit the consumer's npm registry.
+        CONTEXTOS_REGISTRY: https://registry.npmjs.org/
       run: |
-        CMD_ARGS=(gate --project "${{ inputs.working-directory }}" --target "${{ inputs.adapters }}" --github-annotations)
-        if [ -n "${{ inputs.profile }}" ]; then
-          CMD_ARGS+=(--profile "${{ inputs.profile }}")
+        # Resolve setup-node's installation directly, never node/npm/npx from a
+        # consumer-controlled PATH. Inputs enter through env, not shell source.
+        NODE_VERSION="${CONTEXTOS_NODE_VERSION#v}"
+        if [[ ! "$NODE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo '::error::Cannot locate the setup-node installation'
+          exit 2
         fi
-
-        if [ "${{ inputs.version }}" = "local" ]; then
-          RUNNER="node ${{ github.action_path }}/../../../bin/index.js"
+        case "$RUNNER_ARCH" in
+          X64|x64) ARCH=x64 ;;
+          X86|x86) ARCH=x86 ;;
+          ARM64|arm64) ARCH=arm64 ;;
+          ARM|arm) ARCH=armv7l ;;
+          *) echo '::error::Unsupported runner architecture'; exit 2 ;;
+        esac
+        if [[ "$RUNNER_OS" = Windows ]]; then
+          NODE="$RUNNER_TOOL_CACHE/node/$NODE_VERSION/$ARCH/node.exe"
         else
-          RUNNER="npx --yes contextos-agents@${{ inputs.version }}"
+          NODE="$RUNNER_TOOL_CACHE/node/$NODE_VERSION/$ARCH/bin/node"
         fi
-
-        set +e
-        $RUNNER "${CMD_ARGS[@]}"
-        GATE_CODE=$?
-        set -e
-
-        if [ $GATE_CODE -eq 0 ]; then
-          echo "status=pass" >> $GITHUB_OUTPUT
-        elif [ $GATE_CODE -eq 1 ]; then
-          echo "status=drift" >> $GITHUB_OUTPUT
-        else
-          echo "status=error" >> $GITHUB_OUTPUT
-        fi
-        echo "code=$GATE_CODE" >> $GITHUB_OUTPUT
-
-        exit $GATE_CODE
+        # Remove preloads/options before the first Node process is started.
+        # Windows resolves environment names case-insensitively; Bash does not.
+        shopt -s nocasematch
+        while IFS= read -r VAR; do
+          case "$VAR" in
+            NODE_*|OPENSSL_CONF|OPENSSL_MODULES|LD_PRELOAD|LD_LIBRARY_PATH|DYLD_INSERT_LIBRARIES|DYLD_LIBRARY_PATH)
+              unset "$VAR" ;;
+          esac
+        done < <(compgen -e)
+        shopt -u nocasematch
+        exec "$NODE" "$CONTEXTOS_ACTION_PATH/run-gate.cjs"

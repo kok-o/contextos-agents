@@ -1,0 +1,33 @@
+schemaVersion: 2
+id: webapp-testing
+name: webapp-testing
+version: 1.0.0
+description: Verify local web application flows in a browser with Playwright,
+  including assertions, screenshots, console errors and responsive states.
+category: testing
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: Playwright
+      locale: en
+      weight: 40
+    - value: browser test
+      locale: en
+      weight: 40
+    - value: end-to-end
+      locale: en
+      weight: 40
+    - value: e2e
+      locale: en
+      weight: 40
+    - value: проверь сайт
+      locale: ru
+      weight: 40
+    - value: проверка в браузере
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json
+  - references/playwright.md

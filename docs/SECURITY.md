@@ -15,9 +15,14 @@ test that exercises it, and what it does not.
 | Your text next to a managed block is preserved. | Marker-delimited block replace/remove; a conflict outside the block stops the export. | `tests/scenarios.test.js`, `tests/adapter-compatibility.test.js`. |
 | A multi-file change applies completely or not at all. An interrupted change is listed and rolled back by `contextos recover`. | Journaled transaction with backups and preconditions on the previous file hash. | `tests/journaled-transaction.test.js`, `tests/recovery-cli.test.js`. |
 | Two ContextOS processes do not write one project at the same time. | Project mutation lock. | `tests/project-lock.test.js`. |
-| Installing a skill does not run code from it. | npm sources are installed into a temporary prefix with `--ignore-scripts`; GitHub sources must be pinned to a 40-character commit unless `--allow-floating` is given; `--checksum` verifies the entrypoint. | `tests/plugin-supply-chain.test.js`, `tests/cli-honesty.test.js`. |
+| Installing a skill does not run code from it. | npm sources require an exact version (`package@1.2.3` or `@scope/package@1.2.3`); the downloaded archive is checked against registry SHA-512 integrity before installation into a temporary prefix with `--ignore-scripts`. GitHub sources must be pinned to a 40-character commit unless `--allow-floating` is given. `--checksum` verifies the entrypoint for remote, local and catalog sources. | `tests/plugins.test.js`, `tests/plugin-supply-chain.test.js`, `tests/cli-honesty.test.js`. |
 | The CI gate does not execute the pull request's scripts. | The gate runs from the pinned package, in process; it reads rule sources as data. | `tests/consumer-gate.test.js`. |
 | `doctor`, `resolve` and `compile` run the installed package, not code found in the project. | They load modules relative to the package. | `tests/consumer-gate.test.js` (a rogue `.agents/ctx.js` is not executed), `tests/cli-honesty.test.js` (doctor). |
+
+Conflict markers alone do not prove ownership of changed generated files.
+Automatic conflict recovery requires every reconstructed version, including a
+diff3 base when present, to match a recorded installation hash. Unrecorded text
+is preserved even when it appears inside the historical base section.
 
 To our knowledge ContextOS commands do not execute code that lives in rule
 sources or skills; a rule contributes text, plus declared resource files that
@@ -58,6 +63,13 @@ are copied unchanged. This was designed for, not independently audited.
 3. Install third-party skills from commits you have read, with
    `owner/repo@<commit>`.
 4. Keep secrets out of rule files. They are committed and read by models.
+
+If lock reclamation itself crashes, ContextOS leaves its claim intact and stops
+further mutation instead of risking two writers. Stop every ContextOS command
+and watcher for the project, then run `contextos recover --unlock --force`.
+This explicit administrative action clears the abandoned lock and claim while
+preserving transaction journals and backups; inspect them with `recover --list`
+before resuming work. Never run administrative unlock alongside another writer.
 
 ## Reporting a vulnerability
 

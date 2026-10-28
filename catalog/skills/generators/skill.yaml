@@ -2,9 +2,8 @@ schemaVersion: 2
 name: generators
 category: engineering
 type: compiler
-description: >
-  Generates complete project documentation (PRD, Architecture, Database, API, UI,
-  Roadmap, Tasks) from ideas and templates with incremental update support.
+description: Draft or update requested project documents using relevant
+  templates and verified project facts.
 version: 1.0.0
 resources:
   - EXAMPLES.md
@@ -20,3 +19,11 @@ resources:
   - templates/ROADMAP.md
   - templates/TASKS.md
   - templates/UI.md
+id: generators
+optional:
+  - decisions
+  - architecture-diagrams
+requires: []
+signals:
+  aliases:
+    - document-generator

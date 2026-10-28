@@ -1,40 +1,13 @@
-# nestjs Examples - Anti-patterns vs ContextOS Standard
+# nestjs scenarios
 
-## Example 1: Input Validation and DTOs
+## In scope
 
-### Anti-pattern: Untyped Body or Manual Validation in Controller
+For a new order route, verify the provider is registered, a denied user cannot read another tenant's order, and invalid runtime input is rejected by the actual configured pipe/schema.
 
-```typescript
-// BAD: No runtime validation, controller stuffed with business rules
-@Post('users')
-async create(@Body() body: any) {
-  if (!body.email || !body.email.includes('@')) {
-    throw new BadRequestException('Invalid email');
-  }
-  return this.usersService.create(body);
-}
-```
+## Verification
 
-### Best practice: ContextOS Standard (Class-Validator DTO + ValidationPipe)
+Run relevant module/endpoint tests and the project's type/build checks.
 
-```typescript
-// GOOD: Declarative runtime validation with clean separation
-export class CreateUserDto {
-  @IsEmail({}, { message: 'A valid email is required' })
-  email: string;
+Exercise validation, authorization and resource/error paths.
 
-  @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  password: string;
-}
-
-@Controller('users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  async create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
-  }
-}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

@@ -1,108 +1,42 @@
 ---
 name: architecture-diagrams
-description: >
-  Interactive, visual architecture and sequence diagrams as code. Generates beautiful, self-contained
-  SVG/HTML diagrams with motion, clear component boundaries, and verifiable data flows.
+description: Explain observed system structure or flows with an appropriate
+  architecture, sequence or data-flow diagram.
 ---
 
 # architecture-diagrams
 
 ## Overview
 
-Visual architecture engineering skill inspired by [tt-a1i/archify](https://github.com/tt-a1i/archify). Replaces static ASCII art and rigid default diagrams with crisp, self-contained SVG and responsive HTML diagrams featuring modern dark-mode palettes, pulse animations for event flows, and strict C4-model component boundaries.
+Explain observed system structure or flows with an appropriate architecture, sequence or data-flow diagram. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate whenever:
-
-- Designing or explaining distributed systems, microservices, or full-stack architectures.
-- Visualizing complex auth flows (OAuth2, PKCE), multi-step payment sagas, or CDC outbox data pipelines.
-- User requests an architecture diagram, flow chart, sequence diagram, or visual system design.
+The user needs an architecture map, a sequence diagram, an explanation of boundaries, or an update to an existing diagram.
 
 ## Rules & Patterns
 
-### 1. Diagram Types Supported
+Inspect the relevant sources and existing diagram conventions. Identify the question the diagram should answer and the level of detail needed. Distinguish deployed behavior, source-level structure and proposed design.
 
-1. **System Landscape / C4 Container Diagram**:
-   - Clients (Web, Mobile, Third-party) → API Gateway / CDN → Microservices / Serverless → Storage / Event Brokers.
-2. **Sequence Flow Diagram**:
-   - Step-by-step lifecycles with synchronous requests, asynchronous pub/sub events, and compensating transactions.
-3. **Data Pipeline & Event-Driven Topology**:
-   - Primary DB → Transactional Outbox → CDC (Debezium) → Kafka Topic → Consumers → Materialized Views.
+Show components, owners, trust boundaries and important interactions using consistent labels. Mark inferred or unverified relationships. A textual import is evidence of a dependency, not proof that a runtime call occurred.
 
-### 2. Aesthetic & Visual Invariants
+Choose the established format when one exists. Mermaid may suit a small engineering explanation; SVG/HTML can suit an interactive view; an exportable figure may need a dedicated renderer. Animation, dark backgrounds and interactive libraries are optional design decisions.
 
-- **Dark Theme by Default**: Surface `#0B0F19`, containers `#1E293B`, borders `#334155`, text `#F8FAFC`.
-- **Semantic Component Accents**:
-  - Client / Frontend: Sky Blue (`#38BDF8`)
-  - API Gateway / Router: Indigo (`#818CF8`)
-  - Business Services: Emerald Green (`#34D399`)
-  - Databases / Storage: Amber / Orange (`#F59E0B`)
-  - Message Brokers / Event Buses: Purple (`#A855F7`)
-- **Active Data-Flow Motion**: Use subtle CSS `@keyframes` on SVG stroke dashes (`stroke-dasharray`, `stroke-dashoffset`) to show active direction of messages and data streams.
-
----
+For generated HTML/SVG, encode untrusted labels and avoid executing repository content as markup or script. Preserve useful legends, readable text and a static or reduced-motion view when interaction is included.
 
 ## Code Examples
 
-### Standalone Animated SVG Data-Flow Pattern
-
-```html
-<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" class="bg-slate-950 rounded-xl p-4 w-full">
-  <defs>
-    <style>
-      .flow-line { stroke: #38BDF8; stroke-width: 2; stroke-dasharray: 6,6; animation: flow 1.5s linear infinite; }
-      @keyframes flow { to { stroke-dashoffset: -12; } }
-      .box { fill: #1E293B; stroke: #334155; stroke-width: 1.5; rx: 8; }
-      .text-title { fill: #F8FAFC; font-family: sans-serif; font-size: 14px; font-weight: 600; }
-      .text-sub { fill: #94A3B8; font-family: monospace; font-size: 11px; }
-    </style>
-  </defs>
-
-  <!-- Client Node -->
-  <rect x="30" y="70" width="160" height="60" class="box" />
-  <text x="110" y="96" text-anchor="middle" class="text-title">Next.js Client</text>
-  <text x="110" y="114" text-anchor="middle" class="text-sub">React 19 / RSC</text>
-
-  <!-- Data Flow -->
-  <line x1="190" y1="100" x2="330" y2="100" class="flow-line" />
-
-  <!-- API Gateway -->
-  <rect x="330" y="70" width="160" height="60" class="box" />
-  <text x="410" y="96" text-anchor="middle" class="text-title">API Gateway</text>
-  <text x="410" y="114" text-anchor="middle" class="text-sub">Auth & Rate Limiting</text>
-
-  <!-- Flow to Database -->
-  <line x1="490" y1="100" x2="630" y2="100" class="flow-line" />
-
-  <!-- Database -->
-  <rect x="630" y="70" width="140" height="60" class="box" />
-  <text x="700" y="96" text-anchor="middle" class="text-title">PostgreSQL</text>
-  <text x="700" y="114" text-anchor="middle" class="text-sub">Prisma / Outbox</text>
-</svg>
-```
-
----
+For a document download flow, show the caller, authorization boundary, metadata lookup and storage read in order. Mark an external storage service as unverified if only its configuration was found; do not invent a production topology.
 
 ## Validation Checklist
 
-- [ ] Diagram clearly identifies all component boundaries, ports, and protocols.
-- [ ] Visual hierarchy is unambiguous (clients on left/top, storage on right/bottom).
-- [ ] Motion/animation is purposeful and lightweight (no heavy canvas frameworks).
-- [ ] Accessible: nodes include semantic labels and readable color contrast.
-
----
+- [ ] Check relationships against sources and label assumptions.
+- [ ] Render the chosen format and inspect readable labels, edge direction and layout.
 
 ## Common Mistakes
 
-- **Messy cross-overs**: Laying out 20 boxes with overlapping lines instead of grouping into clean C4 layers.
-- **Unlabeled connections**: Lines without protocol (HTTPS, gRPC, WSS) or event payload descriptions.
-- **Overwhelming detail**: Drawing internal class diagrams when the user asked for a system-level overview.
-
----
+Drawing every file as a service; inventing runtime observations; using motion or a CDN library for a simple static explanation.
 
 ## Integration Notes
 
-- Triggers during `system-design` and `microservices` planning phases.
-- Used to generate visual architecture artifacts in Markdown walkthroughs and specs.
-- Pairs with `ui-ux-pro` for consistent aesthetic styling.
+Optional companion guidance: system-design, graphify. Use it only when relevant and available; the skill does not install tools or authorize external actions.

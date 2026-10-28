@@ -139,14 +139,15 @@ function uninstallHook(cwd = process.cwd()) {
   }
 }
 
-function hookCommand(args, flags) {
+function hookCommand(args, flags = {}) {
   const subCommand = args[1] ? args[1].toLowerCase().trim() : null;
+  const projectDir = path.resolve(flags.project || process.cwd());
 
   if (subCommand === 'install') {
-    installHook(process.cwd());
+    installHook(projectDir);
     process.exit(0);
   } else if (subCommand === 'uninstall') {
-    uninstallHook(process.cwd());
+    uninstallHook(projectDir);
     process.exit(0);
   } else {
     console.log('\nUsage: contextos hook <install|uninstall>\n');

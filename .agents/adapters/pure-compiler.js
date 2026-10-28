@@ -314,9 +314,9 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
     for (const art of artifacts) {
       const record = recordedContent(art);
       const exactSha256 = computeExactHash(art.content);
-      const semanticTextSha256 = computeSemanticHash(art.content);
-      const existingRecord = lockfileData.managedFiles?.[art.path];
       const textLike = isTextMedia(art.mediaType);
+      const semanticTextSha256 = textLike ? computeSemanticHash(art.content) : exactSha256;
+      const existingRecord = lockfileData.managedFiles?.[art.path];
 
       const absPath = path.resolve(absRoot, art.path);
       let diskHash = 'NONE';
@@ -332,13 +332,14 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
         if (diskHash === exactSha256 || (textLike && computeSemanticHash(diskBuf) === semanticTextSha256)) {
           needsWrite = false;
         } else if (!art.preservesUserContent && !options.force) {
+          const legacyRecord = legacyLock?.managedFiles?.[art.path] || legacyLock?.files?.[art.path];
           const owned = ownsDiskFile({
             diskBuf,
             textLike,
             existing: existingRecord,
             alternates: alternatesByPath[art.path] || [],
-            legacyRecord: legacyLock?.managedFiles?.[art.path] || legacyLock?.files?.[art.path],
-          });
+            legacyRecord: textLike ? legacyRecord : null,
+          }) || (!textLike && legacyRecord?.managed && diskHash === `sha256:${legacyRecord.sha256}`);
           if (!owned) throw ownershipError(art.path, 'overwrite');
         }
       }
@@ -350,7 +351,7 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
 
       lockfileManager.recordManagedFile(lockfileData, art.path, {
         exactSha256: computeExactHash(record),
-        semanticTextSha256: computeSemanticHash(record),
+        semanticTextSha256: textLike ? computeSemanticHash(record) : computeExactHash(record),
         kind: art.kind,
         generator: art.generator,
         mode: art.mode || 420,
@@ -434,7 +435,8 @@ function applyArtifacts(projectRoot, artifacts, options = {}) {
             if (!v1Record?.managed) throw ownershipError(relChild, 'prune untracked');
             const before = fs.readFileSync(absChild);
             const beforeHash = computeExactHash(before);
-            if (`sha256:${v1Record.sha256}` !== beforeHash && `sha256:${v1Record.sha256}` !== computeSemanticHash(before)) {
+            if (`sha256:${v1Record.sha256}` !== beforeHash &&
+                !(TEXT_EXTENSION.test(relChild) && `sha256:${v1Record.sha256}` === computeSemanticHash(before))) {
               throw ownershipError(relChild, 'prune modified legacy');
             }
             tx.stageDelete(relChild, { expectedBeforeHash: beforeHash });

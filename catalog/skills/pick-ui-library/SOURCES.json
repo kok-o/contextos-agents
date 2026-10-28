@@ -1,0 +1,12 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten for ContextOS: existing dependencies and requested tools take precedence; current sources must be verified.",
+  "license": "MIT",
+  "upstream": [
+    {
+      "url": "https://github.com/emilkowalski/skills/blob/main/skills/pick-ui-library/SKILL.md",
+      "gitBlobSha": "5e0028e988b88d2a88a019fdc978b4732243e467"
+    }
+  ]
+}

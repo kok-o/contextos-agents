@@ -1,0 +1,30 @@
+schemaVersion: 2
+id: pick-ui-library
+name: pick-ui-library
+version: 1.0.0
+description: Choose a frontend component or effects library by task, existing
+  stack, accessibility, bundle cost and maintenance needs.
+category: frontend
+type: instruction-only
+activation: auto
+signals:
+  keywords:
+    - value: choose UI library
+      locale: en
+      weight: 40
+    - value: pick UI library
+      locale: en
+      weight: 40
+    - value: component library
+      locale: en
+      weight: 40
+    - value: подбери библиотеку
+      locale: ru
+      weight: 40
+    - value: выбор UI библиотеки
+      locale: ru
+      weight: 40
+resources:
+  - LICENSE.txt
+  - SOURCES.json
+  - references/candidates.md

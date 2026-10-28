@@ -1,30 +1,13 @@
-# performance Examples - Anti-patterns vs ContextOS Standard
+# performance scenarios
 
-## Example 1: Dynamic Imports for Heavy Libraries
+## In scope
 
-### Anti-pattern: Static Import of Heavy Visualizers in Initial Bundle
+If a page is slow because of an image request, measure that path and test the appropriate asset/loading change before adding memoization throughout the app. Preserve a useful loading and error experience.
 
-```typescript
-// BAD: Adds 800KB (Monaco editor or Three.js) to the critical first-paint bundle!
-import { CodeEditor } from '@/components/CodeEditor';
+## Verification
 
-export default function Page() {
-  return <div><CodeEditor /></div>;
-}
-```
+Verify functional equivalence and the relevant metric under comparable conditions.
 
-### Best practice: ContextOS Standard (Lazy Load on Demand)
+Report measurement method, variability and untested environments.
 
-```typescript
-// GOOD: Dynamic import splits chunk, only downloads when component renders
-import dynamic from 'next/dynamic';
-
-const CodeEditor = dynamic(
-  () => import('@/components/CodeEditor'),
-  { loading: () => <EditorSkeleton />, ssr: false }
-);
-
-export default function Page() {
-  return <div><CodeEditor /></div>;
-}
-```
+These scenarios describe what to verify. Prose is not proof that a framework, service or AI client executed the workflow. Use real project fixtures and report unavailable integrations.

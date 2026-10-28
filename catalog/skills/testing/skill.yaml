@@ -1,14 +1,18 @@
 schemaVersion: 2
 name: testing
-description: Vitest, React Testing Library, and Playwright testing standards. Enforces TDD/BDD, test pyramid, zero brittle mocks, and complete assertion coverage.
+description: Choose and implement proportionate tests for observable behavior,
+  important failures and integration boundaries.
 version: 1.0.0
 category: engineering
 type: instruction-only
-requires:
-  - engineering-workflow
-  - typescript
+requires: []
 resources:
   - EXAMPLES.md
   - SKILL.md
   - TROUBLESHOOTING.md
   - VALIDATION.json
+id: testing
+optional:
+  - engineering-workflow
+  - typescript
+  - webapp-testing

@@ -17,6 +17,7 @@ const {
   computeHash,
 } = require('./lockfile.js');
 const { computeExactHash } = require('../../.agents/filesystem/lockfile-v2.js');
+const { resolveManagedPath } = require('../../.agents/filesystem/safe-path.js');
 
 // Classification and the eventual transaction precondition must describe the
 // same read. Installation hashes normalize CRLF; mutation hashes retain bytes.
@@ -72,8 +73,24 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
   }
 
   if (classification === 'MANAGED_MODIFIED') {
-    const conflictFullPath = `${fullPath}.contextos.new`;
-    const conflictRelPath = `${normRel}.contextos.new`;
+    // Sidecars are not managed installation files. An existing sidecar may
+    // hold a user's unfinished merge, even if we originally created it.
+    // lstat reserves all existing entries, including dangling symlinks, without
+    // reading or following them. Only the unused name becomes a write target.
+    let suffix = 0;
+    let conflictRelPath;
+    let conflictFullPath;
+    while (true) {
+      conflictRelPath = `${normRel}.contextos.new${suffix ? `.${suffix}` : ''}`;
+      conflictFullPath = path.join(projectDir, conflictRelPath);
+      try { fs.lstatSync(conflictFullPath); }
+      catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+        break;
+      }
+      suffix++;
+    }
+    resolveManagedPath(projectDir, conflictRelPath);
     return {
       action: 'CONFLICT',
       relPath: normRel,
@@ -82,7 +99,7 @@ function planFileWrite({ projectDir, relPath, content, lockData, options = {} })
       conflictPath: conflictRelPath,
       newContent: content,
       newHash,
-      expectedBeforeHash: inspectFile(conflictFullPath).beforeHash,
+      expectedBeforeHash: 'NONE',
       reason: 'USER_MODIFIED',
     };
   }

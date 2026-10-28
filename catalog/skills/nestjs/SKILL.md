@@ -1,139 +1,44 @@
 ---
-name: NestJS
-description: >
-  ContextOS skill for NestJS
+name: nestjs
+description: Implement and review NestJS modules, dependency injection, request
+  boundaries and service lifecycle behavior.
 ---
 
-# NestJS
+# nestjs
 
 ## Overview
 
-Enterprise Node.js architecture standard using NestJS, TypeScript, and RxJS. Enforces strict modularity, dependency injection, repository pattern, DTO validation via class-validator, and clean layered architecture.
+Implement and review NestJS modules, dependency injection, request boundaries and service lifecycle behavior. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate when building enterprise Node.js microservices, complex REST/GraphQL APIs, or scalable backends requiring strict architectural structure.
+The application actually uses NestJS or a requested change selects it. Preserve its installed version and existing module conventions.
 
 ## Rules & Patterns
-<!-- Source: nestjs.md -->
 
-## NestJS - Best Practices
+Inspect controllers, providers, modules and the actual validation/auth configuration. Register new dependencies in the real module path rather than producing unused classes.
 
-## Module Architecture
+Use DTOs or another configured runtime schema at the boundary. TypeScript annotations alone do not validate requests. Decide how unknown privilege-bearing fields are rejected and authorize the requested object separately from input parsing.
 
-- **One module per domain** - `UsersModule`, `AuthModule`, `OrdersModule`
-- **Feature modules** - encapsulate related controllers, services, repositories
-- **Shared module** - for cross-cutting concerns (logging, config, utils)
-- **Core module** - singleton services (database, auth guards)
+Keep controller and service responsibilities understandable at the project's scale. Extract reusable or complex business behavior when it helps; do not add layers solely to match a template.
 
-```
-src/
-├── modules/
-│   ├── users/
-│   │   ├── users.module.ts
-│   │   ├── users.controller.ts
-│   │   ├── users.service.ts
-│   │   ├── users.repository.ts
-│   │   ├── dto/
-│   │   │   ├── create-user.dto.ts
-│   │   │   └── update-user.dto.ts
-│   │   ├── entities/
-│   │   │   └── user.entity.ts
-│   │   └── users.spec.ts
-│   └── auth/
-├── shared/
-│   ├── guards/
-│   ├── interceptors/
-│   ├── pipes/
-│   └── filters/
-├── config/
-└── app.module.ts
-```
-
-## Dependency Injection
-
-```typescript
-@Injectable()
-export class UsersService {
-  constructor(
-    @InjectRepository(User) private readonly usersRepo: Repository<User>,
-    private readonly configService: ConfigService,
-  ) {}
-}
-```
-
-- Prefer constructor injection
-- Use custom providers for complex setup
-- Scope: default is Singleton, use REQUEST scope only when needed
-
-## DTOs and Validation
-
-```typescript
-import { IsEmail, IsString, MinLength } from 'class-validator';
-
-export class CreateUserDto {
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @MinLength(2)
-  name: string;
-}
-```
-
-- Always use DTOs for request validation
-- Use `ValidationPipe` globally
-- Separate Create/Update/Response DTOs
-
-## Guards, Interceptors, Pipes
-
-| Type | Purpose |
-| --- | --- |
-| **Guards** | Authentication, authorization |
-| **Interceptors** | Logging, transformation, caching |
-| **Pipes** | Validation, transformation |
-| **Filters** | Exception handling |
-
-Execution order: Guards → Interceptors → Pipes → Handler → Interceptors → Filters
-
-## Error Handling
-
-```typescript
-@Catch()
-export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
-    // Transform to standard error format
-  }
-}
-```
-
-## Testing
-
-- **Unit tests** - mock dependencies with `Test.createTestingModule()`
-- **E2E tests** - use `supertest` with a test module
-- **Mock everything** - services should be testable in isolation
-
-## Anti-Patterns
-
-- [FAIL] Business logic in controllers - use services
-- [FAIL] Direct database access in controllers - use repositories
-- [FAIL] Circular dependencies - refactor module structure
-- [FAIL] God modules - split large modules by domain
-- [FAIL] Not using DTOs - always validate input
-
+Handle errors, resource cleanup and async work using the framework's supported APIs. Check dependency scope to avoid putting request identity into a shared provider's mutable state.
 
 ## Code Examples
 
-See `EXAMPLES.md` for detailed code examples.
+For a new order route, verify the provider is registered, a denied user cannot read another tenant's order, and invalid runtime input is rejected by the actual configured pipe/schema.
+
+See [EXAMPLES.md](EXAMPLES.md) for scoped scenarios and evidence boundaries.
 
 ## Validation Checklist
 
-What to verify during the review phase before completing the task.
+- [ ] Run relevant module/endpoint tests and the project's type/build checks.
+- [ ] Exercise validation, authorization and resource/error paths.
 
 ## Common Mistakes
 
-Anti-patterns and things to explicitly avoid. See `TROUBLESHOOTING.md`.
+Assuming a DTO type performs validation by itself; unregistered providers; shared request state; unnecessary abstractions.
 
 ## Integration Notes
 
-How this skill interacts with other skills.
+Optional companion guidance: node, typescript, security. Use it only when relevant and available; the skill does not install tools or authorize external actions.

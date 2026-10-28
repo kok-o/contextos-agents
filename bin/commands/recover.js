@@ -1,7 +1,11 @@
 'use strict';
 
 const { JournaledTransaction, TX_STATES } = require('../../.agents/filesystem/journaled-transaction.js');
-const { ProjectMutationLock } = require('../../.agents/filesystem/project-lock.js');
+const { ProjectMutationLock, isPidAlive } = require('../../.agents/filesystem/project-lock.js');
+const { resolveManagedPath } = require('../../.agents/filesystem/safe-path.js');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
 
 // Minimal ANSI colors
 const isTTY = process.stdout.isTTY;
@@ -22,6 +26,46 @@ function recoverCommand(args, flags) {
 
   const resumeIdx = args.includes('--resume') ? args.indexOf('--resume') : args.indexOf('--continue');
   const txIdResume = resumeIdx !== -1 && args[resumeIdx + 1] && !args[resumeIdx + 1].startsWith('--') ? args[resumeIdx + 1] : null;
+
+  const isUnlock = args.includes('--unlock');
+  if ([isList, rollbackIdx !== -1, resumeIdx !== -1, isUnlock].filter(Boolean).length > 1) {
+    console.error(c.red('Choose exactly one recovery action: --list, --rollback, --resume, or --unlock.'));
+    process.exit(1);
+  }
+
+  if (isUnlock) {
+    if (!args.includes('--force') || args.includes('--dry-run')) {
+      console.error(c.red('Administrative unlock requires --force and cannot use --dry-run. Stop all ContextOS writers and watchers first, then run contextos recover --unlock --force.'));
+      process.exit(1);
+    }
+    try {
+      const lock = new ProjectMutationLock(ROOT);
+      resolveManagedPath(lock.projectRoot, path.relative(lock.projectRoot, lock.lockPath));
+      const holder = lock.inspect();
+      const active = payload => payload && Number.isInteger(payload.pid) && payload.pid > 0 &&
+        (!payload.hostname || payload.hostname === os.hostname()) && isPidAlive(payload.pid);
+      if (active(holder)) throw new Error(`Refusing to unlock a live owner (PID ${holder.pid}). Stop all ContextOS writers and watchers first.`);
+      if (holder?.hostname && holder.hostname !== os.hostname()) {
+        throw new Error('Cannot verify a lock owned by another host. Stop its writers and recover the lock on that host.');
+      }
+      if (typeof holder?.token === 'string' && holder.token) {
+        const claimPath = lock.recoveryClaimPath(holder.token);
+        let claimant;
+        try { claimant = JSON.parse(fs.readFileSync(claimPath, 'utf8')); }
+        catch (err) { if (err.code !== 'ENOENT' && !(err instanceof SyntaxError)) throw err; }
+        if (claimant?.hostname && claimant.hostname !== os.hostname()) {
+          throw new Error('Cannot verify lock recovery owned by another host. Stop its writers and recover the lock on that host.');
+        }
+        if (active(claimant)) throw new Error(`Refusing to interrupt active lock recovery (PID ${claimant.pid}). Stop all ContextOS writers and watchers first.`);
+      }
+      lock.forceUnlock('Explicit recover --unlock --force after stopping all writers');
+      console.log(c.green('✓ Project mutation lock and its recovery claim cleared. Transaction journals and backups were preserved; run contextos recover --list next.'));
+      process.exit(0);
+    } catch (err) {
+      console.error(c.red(`[ERROR] Administrative unlock failed: ${err.message}`));
+      process.exit(1);
+    }
+  }
 
   if (isList) {
     const pending = JournaledTransaction.listPending(ROOT);
@@ -69,7 +113,7 @@ function recoverCommand(args, flags) {
     process.exit(exitCode);
   }
 
-  console.log(c.red('Usage: contextos recover [--list] [--rollback <txId>] [--resume <txId>]'));
+  console.log(c.red('Usage: contextos recover --list | --rollback [txId] | --resume [txId] | --unlock --force'));
   process.exit(1);
 }
 

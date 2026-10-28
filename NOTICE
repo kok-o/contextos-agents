@@ -2,3 +2,26 @@ ContextOS (contextos-agents)
 Copyright 2026 ContextOS Contributors
 
 This product includes software developed at ContextOS (https://github.com/kok-o/contextos-agents).
+
+The focused frontend catalog contains ContextOS adaptations and references:
+- frontend-design and webapp-testing: Anthropic skills, Apache License 2.0.
+  https://github.com/anthropics/skills
+- vercel-react-best-practices: Vercel Engineering guidance, declared MIT upstream.
+  https://github.com/vercel-labs/agent-skills
+- web-design-guidelines: original ContextOS checklist referencing Vercel's
+  Web Interface Guidelines; the upstream guideline body is not vendored.
+  https://github.com/vercel-labs/web-interface-guidelines
+- animate, animation-performance, review-animations and pick-ui-library:
+  Emil Kowalski skills, MIT License; copyright (c) 2026 Emil Kowalski.
+  https://github.com/emilkowalski/skills
+
+Each adapted skill records source blob hashes and modification notes in
+SOURCES.json and includes the applicable third-party license in LICENSE.txt.
+
+Additional editorial catalog adaptations:
+- humanizer: blader/humanizer, MIT License; copyright (c) 2025 Siqi Chen.
+  https://github.com/blader/humanizer
+- kill-ai-slop: yetone/kill-ai-slop, Apache License 2.0.
+  https://github.com/yetone/kill-ai-slop
+These adaptations record pinned source commits and modification notes in
+their SOURCES.json files and include the upstream licenses in LICENSE.txt.

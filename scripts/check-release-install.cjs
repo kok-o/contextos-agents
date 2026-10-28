@@ -123,6 +123,18 @@ try {
   assert.ok(destructive.selected.some(skill => skill.id === 'security'));
   assert.ok(destructive.warnings.some(w => w.code === 'CTX_RESOLVER_BUDGET_EXCEEDED'));
   assert.equal(JSON.parse(cli('resolve', 'Remove unused imports from files', '--json')).risk.value, 'standard');
+  cli('index');
+  const index = JSON.parse(read('.agents/skills-index.json'));
+  assert.ok(index.skills.some(skill => skill.name === 'team-bare'));
+  assert.ok(index.skills.some(skill => skill.name === 'team-custom' && skill.path.endsWith('/RULES.md')));
+  for (const skill of index.skills) assert.ok(fs.existsSync(path.join(consumer, skill.path)), `Missing indexed entrypoint: ${skill.path}`);
+  const prototypeSelection = JSON.parse(cli('resolve', '@constructor', '--installed-only', '--json'));
+  assert.ok(prototypeSelection.skills.every(id => typeof id === 'string'), 'Resolver must not serialize inherited properties as null skills');
+  const checksumSource = path.join(consumer, 'checksum-source');
+  write('checksum-source/SKILL.md', '---\nname: checksum-source\ndescription: Integrity rejection fixture\n---\n# Integrity\nPreserve this controlled source until its checksum is verified.\n');
+  assert.throws(() => cli('skill', 'add', `local:${checksumSource}`, '--checksum', '0'.repeat(64)), error =>
+    error.status !== 0 && /Checksum mismatch/.test(String(error.stderr)), 'Installed package must reject a wrong local checksum');
+  assert.ok(!fs.existsSync(path.join(consumer, '.agents/plugins/checksum-source')), 'Rejected skill must not be installed');
   let typescriptResolution = null;
   if (!coreOnly) {
     const mcpPkgDir = ['contextos-mcp', '@contextos/mcp'].find(dir => fs.existsSync(path.join(consumer, 'node_modules', dir))) || 'contextos-mcp';
@@ -150,6 +162,7 @@ try {
     assert.equal(JSON.parse(read('mcp-handshake.json')).installedVersion, mcpVersion);
   } else {
     assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/contextos-mcp')), 'Core acceptance must not install MCP');
+    assert.ok(!fs.existsSync(path.join(consumer, 'node_modules/@contextos/mcp')), 'Core acceptance must not install the historical MCP package');
   }
   assert.equal(read('AGENTS.md'), userAgents);
   assert.ok(read('CLAUDE.md').startsWith(userClaude));
@@ -174,6 +187,7 @@ try {
     lifecycle: ['init', 'skill add', 'override', 'compile', 'export all', 'drift check', 'update', 'resolve', ...(!coreOnly ? ['MCP handshake'] : []), 'crash recovery', 'uninstall'],
     userInstructionsPreserved: true, userOverridePreserved: true, quickstartFixture: 'PASS',
     manifestlessAndCustomEntrypoint: 'PASS', manifestlessRoutingMetadata: 'PASS', destructiveTaskRouting: 'PASS', consumerPath: consumer,
+    indexedEntrypoints: 'PASS', prototypeSafeSelection: 'PASS', localChecksumRejection: 'PASS',
     productionOnlyInstall: true, typescriptResolution, outsideSourceTree: !consumer.startsWith(root + path.sep),
   };
   fs.writeFileSync(path.join(root, coreOnly ? 'scratch/release-core-install-result.json' : 'scratch/release-install-result.json'), JSON.stringify(result, null, 2) + '\n');

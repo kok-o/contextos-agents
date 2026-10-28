@@ -1,0 +1,12 @@
+{
+  "adaptation": "ContextOS",
+  "modified": "2026-10-28",
+  "changes": "Substantially rewritten for ContextOS: supported environment tools, readiness assertions, resource ownership and honest coverage.",
+  "license": "Apache-2.0",
+  "upstream": [
+    {
+      "url": "https://github.com/anthropics/skills/blob/main/skills/webapp-testing/SKILL.md",
+      "gitBlobSha": "4726215301db64a0cc4d41fc3219c61f37a30f4a"
+    }
+  ]
+}

@@ -1,31 +1,34 @@
 ---
-name: Web Accessibility
-description: >
-  ContextOS skill for Web Accessibility (WCAG 2.1 AA/AAA), ARIA dialog patterns, keyboard focus traps, and Web Interface Guidelines.
+name: web-accessibility
+description: Implement and review concrete web accessibility behavior, including
+  semantics, names, keyboard focus, forms and motion preferences.
 ---
 
-# Web Accessibility & Interface Guidelines
+# web-accessibility
 
 ## Overview
 
-Enforces universal accessibility compliance (WCAG 2.1 AA / AAA), rigorous semantic markup, keyboard navigability with focus traps, screen reader live regions, and Web Interface Guidelines standards.
+Implement and review concrete web accessibility behavior, including semantics, names, keyboard focus, forms and motion preferences. Match guidance to the actual task and project; this document does not implement an automatic enforcer.
 
 ## When to Use
 
-Activate whenever building, styling, or reviewing user interfaces, forms, modals, menus, navigation drawers, custom interactive widgets, or media elements.
-
-## Negative Constraints (What NOT to Do)
-
-1. **NEVER use `outline: none` without a custom `:focus-visible` replacement**: Keyboard users must always have a distinct, high-contrast visual focus ring.
-2. **NEVER use non-semantic elements (`<div onClick>`) for interactive triggers**: Always use native `<button>` or `<a href>`.
-3. **NEVER create modals or dialogs without keyboard focus traps**: Focus must remain trapped inside open dialogs during Tab / Shift-Tab navigation and restore to trigger on close.
-4. **NEVER rely exclusively on color to indicate state or errors**: Always pair colors with text labels, icons, or ARIA attributes (`aria-invalid="true"`).
-5. **NEVER trap screen readers with missing form labels or error associations**: Every input must link to `<label htmlFor="id">` and errors via `aria-describedby`.
-6. **NEVER play animations without honoring `prefers-reduced-motion`**: Respect user OS motion reduction preferences.
+An accessibility requirement or interaction barrier affects the task. This skill provides implementation detail; web-design-guidelines covers broader interface review.
 
 ## Rules & Patterns
 
-### 1. Focus Visible & High-Contrast Focus Rings
+Use native semantics and established components where they meet the need. Accessible names, visible labels, error associations and meaningful structure matter independently of visual styling.
+
+Check keyboard navigation and visible focus through the real flow. A modal and a nonmodal popover have different focus behavior; adding role or aria-modal does not create trapping, dismissal or focus restoration by itself.
+
+Use unique control IDs when an input component can repeat, preserve useful caller-provided descriptions and avoid overriding required relationships accidentally. Explain errors and state changes without relying only on color.
+
+Respect reduced-motion preferences and provide appropriate controls for persistent distracting content. Preserve zoom/reflow and alternatives to gesture-only or hover-only actions.
+
+Use current accessibility standards for the intended conformance target. Code examples and automated checks cover a limited surface; verify relevant browsers and assistive-technology interactions before claiming conformance.
+
+## Code Examples
+
+The dialog, focus CSS and form blocks below are partial implementation patterns. The local fixture simulates selected transitions and parses syntax; it does not certify real keyboard focus or assistive-technology behavior.
 
 ```css
 button:focus-visible,
@@ -41,8 +44,6 @@ button:focus:not(:focus-visible) {
 }
 ```
 
-### 2. Accessible Modal & Focus Trap Contract
-
 ```tsx
 import React, { useEffect, useRef } from 'react';
 
@@ -54,8 +55,8 @@ interface AccessibleModalProps {
 }
 
 /**
- * Accessible Modal Dialog (W3C ARIA APG Compliant)
- * Uses native HTMLDialogElement with .showModal() to guarantee:
+ * Illustrative controlled modal pattern; browser and assistive-technology checks remain necessary
+ * Uses native HTMLDialogElement with .showModal(); verify in the target environment:
  * 1. Native inert background (blocks screen reader and click bleed-through).
  * 2. Native keyboard focus trap (strictly keeps Tab cycles within dialog).
  * 3. Native Escape key cancellation and focus restoration to trigger element.
@@ -94,58 +95,39 @@ export function AccessibleModal({ isOpen, onClose, titleId, children }: Accessib
 }
 ```
 
-### 3. Accessible Forms & Error Association
-
 ```tsx
-export function EmailInput({ error, ...props }: { error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  const inputId = 'user-email';
-  const errorId = 'user-email-error';
+import { useId, type InputHTMLAttributes } from 'react';
 
+type EmailInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
+  error?: string;
+  label?: string;
+};
+
+export function EmailInput({ error, label = 'Email address', ...props }: EmailInputProps) {
+  const generatedId = useId();
+  const { id, 'aria-describedby': description, ...inputProps } = props;
+  const inputId = id || generatedId;
+  const errorId = inputId + '-error';
+  const describedBy = [description, error ? errorId : undefined].filter(Boolean).join(' ') || undefined;
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-medium">
-        Email Address <span aria-hidden="true" className="text-destructive">*</span>
-      </label>
-      <input
-        id={inputId}
-        type="email"
-        autoComplete="email"
-        required
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : undefined}
-        className="rounded-md border p-2 text-sm focus-visible:ring-2"
-        {...props}
-      />
-      {error && (
-        <p id={errorId} role="alert" className="text-xs text-destructive">
-          {error}
-        </p>
-      )}
+    <div>
+      <label htmlFor={inputId}>{label}</label>
+      <input {...inputProps} id={inputId} type="email" aria-invalid={error ? true : inputProps['aria-invalid']} aria-describedby={describedBy} />
+      {error && <p id={errorId} role="alert">{error}</p>}
     </div>
   );
 }
 ```
 
-## Code Examples
-
-See `EXAMPLES.md` for detailed dialog, menu, and form examples.
-
 ## Validation Checklist
 
-- [ ] All interactive elements are fully operable via Keyboard (`Tab`, `Enter`, `Space`, `Escape`).
-- [ ] Visual `:focus-visible` styling is distinct and high contrast (≥ 3:1).
-- [ ] Modals use `role="dialog"`, `aria-modal="true"`, focus trap, and restore focus on close.
-- [ ] Text contrast ratios satisfy WCAG AA (≥ 4.5:1 for normal text, ≥ 3:1 for large text).
-- [ ] Forms pair inputs with `<label htmlFor>`, valid `autocomplete` tokens, and `aria-invalid`.
-- [ ] Non-text media contains descriptive `alt` attributes or `aria-hidden="true"` for decorative icons.
+- [ ] Check names, labels, focus order/restoration, relevant contrast and reflow.
+- [ ] Separate static checks, simulated transitions, real-browser and assistive-technology evidence.
 
 ## Common Mistakes
 
-- Hiding outline focus indicators globally without `:focus-visible` fallback.
-- Forgetting to trap focus in modal dialogs or not returning focus to trigger when modal closes.
-- Missing `aria-expanded` attributes on disclosure buttons and dropdown toggles.
+Declaring universal WCAG compliance; trapping focus in nonmodal content; repeated static IDs; assuming ARIA adds interaction behavior.
 
 ## Integration Notes
 
-- Pairs with `ui-ux-pro` and `impeccable-design` for visual contrast and component standards.
-- Pairs with `react` and `nextjs` for accessible dialogs and focus restoration across route transitions.
+Optional companion guidance: web-design-guidelines, webapp-testing. Use it only when relevant and available; the skill does not install tools or authorize external actions.
